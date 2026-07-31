@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light only">
+<title>TEN — 메타 설계</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@700;900&family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDEFF2;--paper-2:#E3E6EB;--ink:#141821;--ink-soft:#4A5364;--ink-faint:#8A94A6;--rule:#C6CCD6;
+  --indigo:#2D3BAF;--teal:#0F8A80;--amber:#B87400;--crimson:#B03A3F;--violet:#6A4FBF;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:'Noto Sans KR',sans-serif;
+  -webkit-font-smoothing:antialiased;padding:20px 16px 60px;line-height:1.7}
+.wrap{max-width:1000px;margin:0 auto}
+h1{font-family:'Gothic A1';font-weight:900;font-size:clamp(26px,4vw,40px);letter-spacing:-.03em;line-height:1.1}
+h1 span{color:var(--teal)}
+.lede{font-size:15px;color:var(--ink-soft);font-weight:300;max-width:64ch;margin:10px 0 6px}
+.meta{font-family:'JetBrains Mono';font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint)}
+h2{font-family:'Gothic A1';font-weight:900;font-size:clamp(19px,2.6vw,25px);letter-spacing:-.02em;
+  margin:44px 0 6px;padding-top:20px;border-top:2px solid var(--ink)}
+h2 .n{font-family:'JetBrains Mono';font-size:11px;font-weight:500;color:var(--ink-faint);
+  letter-spacing:.16em;display:block;margin-bottom:6px}
+h3{font-family:'Gothic A1';font-weight:700;font-size:15px;margin:22px 0 7px}
+p{font-size:14px;color:var(--ink-soft);font-weight:300;max-width:70ch}
+p b,li b{color:var(--ink);font-weight:700}
+ul{margin:8px 0 8px 18px}
+li{font-size:14px;color:var(--ink-soft);font-weight:300;margin:4px 0}
+.note{font-family:'JetBrains Mono';font-size:11.5px;color:var(--ink-faint);line-height:1.65;margin-top:10px}
+
+table{border-collapse:collapse;width:100%;font-size:13px;margin:12px 0}
+th{text-align:left;font-family:'JetBrains Mono';font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-faint);padding:0 10px 8px 0;border-bottom:1.5px solid var(--ink);white-space:nowrap}
+td{padding:8px 10px 8px 0;border-bottom:1px solid var(--rule);color:var(--ink-soft);vertical-align:top}
+td:first-child{color:var(--ink);font-weight:700;white-space:nowrap}
+.mono{font-family:'JetBrains Mono';font-variant-numeric:tabular-nums}
+.tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.ok{color:var(--teal);font-weight:700}.bad{color:var(--crimson);font-weight:700}.warn{color:var(--amber);font-weight:700}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:16px 0}
+.arch{border-top:3px solid var(--k);padding:12px 0 0;--k:var(--ink)}
+.arch.w{--k:var(--amber)}.arch.t{--k:var(--ink)}.arch.g{--k:var(--teal)}.arch.s{--k:var(--violet)}
+.arch .k{font-family:'JetBrains Mono';font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--k);font-weight:700}
+.arch h4{font-family:'Gothic A1';font-weight:900;font-size:17px;margin:4px 0 6px}
+.arch p{font-size:12.5px;line-height:1.6}
+.arch .vs{font-family:'JetBrains Mono';font-size:11px;margin-top:8px;color:var(--ink-faint);line-height:1.8}
+.arch .vs b{font-weight:700}
+.arch .vs .up{color:var(--teal)}.arch .vs .dn{color:var(--crimson)}
+
+.wheel{display:block;margin:18px auto;max-width:520px;width:100%}
+.hole{border-left:3px solid var(--crimson);padding:2px 0 2px 14px;margin:12px 0}
+.hole .k{font-family:'JetBrains Mono';font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--crimson);font-weight:700}
+.fix{border-left:3px solid var(--teal);padding:2px 0 2px 14px;margin:12px 0}
+.fix .k{font-family:'JetBrains Mono';font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);font-weight:700}
+.formula{font-family:'JetBrains Mono';font-size:13px;font-weight:500;background:var(--ink);color:var(--paper);
+  padding:12px 16px;border-radius:4px;display:inline-block;margin:8px 0;line-height:1.9}
+.formula em{color:#5fd3c4;font-style:normal}
+.q{background:var(--paper-2);border:1px solid var(--rule);border-radius:6px;padding:14px 16px;margin:12px 0}
+.q h4{font-family:'Gothic A1';font-weight:700;font-size:14px;margin-bottom:4px}
+.q p{font-size:13px;margin:0}
+@media(max-width:640px){td,th{padding-right:6px}table{font-size:12px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="meta">TEN · META DESIGN · 2026.07</div>
+<h1>메타 설계 — <span>상성 구조</span>부터</h1>
+<p class="lede">카드를 더 붙이기 전에, 어떤 전략이 존재하고 무엇이 무엇을 잡는지를 먼저 고정한다. 이 문서는 아키타입 4축, 위협↔해답 페어, 발견된 구멍 5개, 그리고 그 구멍을 메우는 신규 카드 12종(예산 검산 완료)을 담는다.</p>
+<p class="note">전제: TEN은 <b>구축식</b>(30장 덱을 카드풀에서 직접 구성)이다. 고정 덱이라면 아키타입 절은 무의미하므로, 이 전제가 다르면 먼저 알려줄 것.</p>
+
+<h2><span class="n">01 — 출발점</span>이 게임의 자원은 &ldquo;공격 횟수&rdquo;다</h2>
+<p>TEN의 모든 상성은 두 개의 규칙에서 파생된다.</p>
+<ul>
+<li><b>크리처끼리 전투하지 않는다.</b> 보드는 제거되지 않는 한 단조 증가한다 → 선점한 쪽이 자동으로 벌어진다(스노우볼).</li>
+<li><b>초과 피해가 이월되지 않는다.</b> 수호 1개체는 <b>공격 1회</b>를 흡수한다. 피해량이 아니라 <b>횟수</b>가 방어 자원이다.</li>
+</ul>
+<p>두 번째 규칙이 메타의 뼈대다. <b>개체 수가 많은 쪽이 공격 횟수를 벌고</b>, <b>개체 수가 많은 쪽이 흡수 횟수도 번다.</b> 그래서 &ldquo;넓게 가느냐 크게 가느냐&rdquo;가 1차 갈림길이 되고, 광역·관통이 그 갈림길을 조정하는 손잡이가 된다.</p>
+
+<h2><span class="n">02 — 아키타입</span>네 개의 축</h2>
+<div class="cards">
+  <div class="arch w"><div class="k">Wide</div><h4>군세</h4>
+    <p>1~3코 다수 + 스택. 공격 횟수로 수호 벽을 소모시킨다. 슬롯을 빨리 채워 만석에 도달.</p>
+    <div class="vs"><span class="up">▲ 방벽</span> 수호 1개체=1회 흡수, 횟수로 압도<br><span class="dn">▼ 정예</span> 광역 한 장에 정리됨</div></div>
+  <div class="arch t"><div class="k">Tall</div><h4>정예</h4>
+    <p>4~6코 소수 고스탯 + 광역. 슬롯당 효율이 최고, 광역에 면역. 6마나 구간을 노린다.</p>
+    <div class="vs"><span class="up">▲ 군세</span> 광역 + 슬롯 효율<br><span class="dn">▼ 방벽</span> 초과 피해 소멸로 딜 낭비</div></div>
+  <div class="arch g"><div class="k">Bulwark</div><h4>방벽</h4>
+    <p>수호 다수 + 단일 제거. 템포를 팔아 시간을 사고 6마나 구간에서 역전한다.</p>
+    <div class="vs"><span class="up">▲ 정예</span> 큰 공격 1회를 싼 수호로 흡수<br><span class="dn">▼ 비상</span> 지상 수호가 통째로 무효</div></div>
+  <div class="arch s"><div class="k">Skies</div><h4>비상</h4>
+    <p>비행 + 인챈트. 보드 교전을 건너뛰고 확정 페이스 딜만 누적한다.</p>
+    <div class="vs"><span class="up">▲ 방벽</span> 수호 우회<br><span class="dn">▼ 군세·정예</span> 저HP, 총딜 레이스에서 밀림</div></div>
+</div>
+
+<svg class="wheel" viewBox="0 0 460 300" role="img" aria-label="아키타입 상성도">
+  <defs><marker id="a" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#4A5364"/></marker></defs>
+  <g font-family="Gothic A1" font-weight="900" font-size="15" text-anchor="middle">
+    <circle cx="230" cy="42" r="34" fill="none" stroke="#B87400" stroke-width="2.5"/>
+    <text x="230" y="48" fill="#B87400">군세</text>
+    <circle cx="392" cy="160" r="34" fill="none" stroke="#0F8A80" stroke-width="2.5"/>
+    <text x="392" y="166" fill="#0F8A80">방벽</text>
+    <circle cx="68" cy="160" r="34" fill="none" stroke="#141821" stroke-width="2.5"/>
+    <text x="68" y="166" fill="#141821">정예</text>
+    <circle cx="230" cy="258" r="34" fill="none" stroke="#6A4FBF" stroke-width="2.5"/>
+    <text x="230" y="264" fill="#6A4FBF">비상</text>
+  </g>
+  <g stroke="#4A5364" stroke-width="1.8" fill="none" marker-end="url(#a)">
+    <path d="M262,62 Q330,90 368,132"/>
+    <path d="M362,178 Q300,232 266,250"/>
+    <path d="M196,250 Q120,222 88,192"/>
+    <path d="M78,127 Q120,72 196,50"/>
+  </g>
+  <g font-family="JetBrains Mono" font-size="9.5" fill="#8A94A6">
+    <text x="340" y="86">횟수로 압도</text>
+    <text x="300" y="252">수호 우회</text>
+    <text x="96" y="248">레이스 우위</text>
+    <text x="96" y="66">광역</text>
+  </g>
+</svg>
+<p class="note">순환이 닫혀 있다 — 어느 축도 절대 우위가 아니다. 다만 <b>비상</b>은 정예·군세 양쪽에 밀리므로(1승 2패) 인챈트 축을 보강해야 대등해진다. 아래 신규 카드에서 다룬다.</p>
+
+<h2><span class="n">03 — 위협 ↔ 해답</span>모든 위협에는 값을 치른 해답이 있어야 한다</h2>
+<p>해답이 없으면 그 전략이 메타를 독식하고, 해답이 공짜면 그 전략이 사라진다. 여섯 쌍으로 정리한다.</p>
+<div class="tbl-scroll">
+<table>
+<tr><th>#</th><th>위협</th><th>해답</th><th>해답이 치르는 값</th><th>현황</th></tr>
+<tr><td>1</td><td>스택 (뭉치기)</td><td>광역</td><td>단일 제거보다 코스트당 수치가 낮음</td><td class="ok">충족</td></tr>
+<tr><td>2</td><td>수호 벽</td><td>비행 · <b>관통</b></td><td>비행=저HP / 관통=일반보다 낮은 HP</td><td class="warn">관통 없음</td></tr>
+<tr><td>3</td><td>고스탯 단일 (정예)</td><td>단일 제거 · <b>약화</b></td><td>1:1 교환, 템포 손실</td><td class="warn">약화 없음</td></tr>
+<tr><td>4</td><td>인챈트 엔진</td><td><b>파쇄</b> (충전 제거)</td><td>상대가 인챈트를 안 쓰면 낭비</td><td class="bad">전무</td></tr>
+<tr><td>5</td><td>광역 (군세 학살)</td><td><b>강화</b>(HP↑) · 분산 배치</td><td>강화는 슬롯·마나 추가 소모</td><td class="bad">전무</td></tr>
+<tr><td>6</td><td>비행 페이스</td><td><b>비행수호</b> · 직접 피해</td><td>5코 이상, 카드풀 2~3%로 제한</td><td class="bad">전무</td></tr>
+</table>
+</div>
+
+<h2><span class="n">04 — 구멍</span>지금 비어 있는 다섯 자리</h2>
+<div class="hole"><div class="k">Hole 01</div><h3>비행수호 0종 — 비행에 상한선이 없다</h3>
+<p>카드풀 목표는 2~3%인데 현재 0장이다. 지상 수호만으로는 비행을 절대 못 막으므로, 비행 덱이 방벽 덱을 무제한으로 두들긴다. <b>비행수호는 비행의 유일한 브레이크</b>다.</p></div>
+<div class="hole"><div class="k">Hole 02</div><h3>인챈트 대응 수단이 없다 — 설계는 있는데 미구현</h3>
+<p>설계 개요는 &ldquo;스펠이 크리처 HP와 인챈트 충전을 <b>같은 눈금</b>으로 다룬다&rdquo;고 명시했지만, 프로토타입은 스펠이 크리처만 때린다. 그래서 인챈트는 <b>깔면 확정 이득</b>이다. 이 규칙을 구현하면 신규 카드 없이도 페어 4가 절반은 해결된다.</p></div>
+<div class="hole"><div class="k">Hole 03</div><h3>캐치업이 없다 — 스노우볼이 설계적으로 방치됨</h3>
+<p>크리처 트레이드가 없으니 보드 격차는 자동으로 벌어지고, 뒤진 쪽이 따라잡을 도구가 없다. 설계 개요도 미확정으로 남겨둔 항목이다.</p></div>
+<div class="hole"><div class="k">Hole 04</div><h3>직접 피해 0종 — 방벽 덱을 뚫을 최종 수단 부재</h3>
+<p>티어표에 3코=5가 이미 있는데 카드가 없다. 수호를 무시하고 플레이어를 때리는 수단이 없으면, 완성된 수호 벽 앞에서 게임이 교착된다.</p></div>
+<div class="hole"><div class="k">Hole 05</div><h3>인챈트가 지속형 1종뿐 — 발동형·사용형 미사용</h3>
+<p>세 가지 소모 타입을 설계해놓고 하나만 쓴다. 인챈트 축(비상)이 약한 근본 원인이다.</p></div>
+
+<h2><span class="n">05 — 신규 효과 그룹</span>키워드와 예산 규칙</h2>
+
+<h3>관통 — 수호 스택의 카운터</h3>
+<p>초과 피해가 <b>같은 슬롯의 다음 개체로 이월</b>된다. 게임의 핵심 규칙(초과 피해 소멸)을 의도적으로 뒤집는 예외이므로, 비행보다 좁은 효과로 두고 가중치도 그 사이에 놓는다.</p>
+<div class="formula">일반 <em>2A</em> + H &nbsp;·&nbsp; <b>관통 <em>3A</em> + H</b> &nbsp;·&nbsp; 비행 <em>4A</em> + H</div>
+<p class="note">비행은 수호를 완전히 무시하지만, 관통은 수호를 &ldquo;소모시키며&rdquo; 지나간다 — 여전히 흡수는 당한다. 그래서 비행보다 싸다.</p>
+
+<h3>약화 — 제거가 아닌 템포 삭제</h3>
+<p>ATK를 영구히 X 낮춘다. 몸체가 남으므로 상대 슬롯을 계속 점유시킨다(만석 압박에 유리). 제거와 가치가 비슷하되 수호를 무력화하지는 못하므로 <b>단일 제거 티어의 0.75배</b>로 잡는다.</p>
+
+<h3>파쇄 — 인챈트 충전 제거</h3>
+<p>기존 설계의 &ldquo;같은 눈금&rdquo; 원칙을 카드로 구현. 상대가 인챈트를 안 쓰면 죽은 카드가 되므로, 저코스트에 높은 수치를 준다.</p>
+
+<h3>인챈트 소모 타입별 예산 계수 <span class="ok">(신규 규칙)</span></h3>
+<p>세 타입은 &ldquo;수명을 누가 통제하는가&rdquo;가 다르다. 그 차이를 예산에 반영한다.</p>
+<div class="tbl-scroll">
+<table>
+<tr><th>타입</th><th>수명 통제</th><th>계수</th><th>3코 목표 T</th><th>4코</th><th>6코</th></tr>
+<tr><td>지속형</td><td>예측 가능 (내 턴마다)</td><td class="mono">×1.00</td><td class="mono">16</td><td class="mono">23</td><td class="mono">39</td></tr>
+<tr><td>발동형</td><td>상대가 결정 → 불확실</td><td class="mono">×1.15</td><td class="mono">18</td><td class="mono">26</td><td class="mono">45</td></tr>
+<tr><td>사용형</td><td>내가 장악 → 프리미엄</td><td class="mono">×0.85</td><td class="mono">14</td><td class="mono">20</td><td class="mono">33</td></tr>
+</table>
+</div>
+<div class="formula">실효 산출 = 효과값 <em>E</em> × 충전 <em>C</em> × 대상 계수 &nbsp;&nbsp;(단일·상대 = 1.0 · <em>전체 = 3.5</em>)</div>
+<p class="note">&ldquo;전체&rdquo; 대상은 보드 크리처 수만큼 곱해진다. 평균 개체 수를 3.5로 잡아 예산에 반영한다 — 기존 설계의 &ldquo;E를 절반으로&rdquo;를 수치화한 것.</p>
+
+<h2><span class="n">06 — 신규 카드 12종</span>전부 예산 검산 통과</h2>
+<div class="tbl-scroll">
+<table>
+<tr><th>카드</th><th>종류</th><th>코스트</th><th>수치</th><th>검산</th><th>메우는 구멍 / 역할</th></tr>
+<tr><td>가시병</td><td>크리처</td><td class="mono">2</td><td class="mono">관통 2/2</td><td class="ok">8/8 적정</td><td>저코스트 관통 — 군세가 방벽을 뚫는 초반 도구</td></tr>
+<tr><td>돌파병</td><td>크리처</td><td class="mono">4</td><td class="mono">관통 4/6</td><td class="ok">18/18 적정</td><td>중반 관통 주력</td></tr>
+<tr><td>공성귀</td><td>크리처</td><td class="mono">6</td><td class="mono">관통 8/8</td><td class="ok">32/32 적정</td><td>방벽 덱 상대 피니셔</td></tr>
+<tr><td>천공수호</td><td>크리처</td><td class="mono">5</td><td class="mono">비행수호 3/7</td><td class="ok">26/26 적정</td><td><b>Hole 01</b> — 비행의 유일한 브레이크</td></tr>
+<tr><td>일격</td><td>스펠</td><td class="mono">2</td><td class="mono">약화 −3</td><td class="ok">티어 준수</td><td>제거 아닌 템포 삭제, 슬롯 점유 유지</td></tr>
+<tr><td>무장해제</td><td>스펠</td><td class="mono">4</td><td class="mono">약화 −6</td><td class="ok">티어 준수</td><td>고ATK 정예 대응</td></tr>
+<tr><td>불화살</td><td>스펠</td><td class="mono">1</td><td class="mono">직접 2</td><td class="ok">티어 준수</td><td><b>Hole 04</b> — 저코스트 캐치업</td></tr>
+<tr><td>파멸의 일격</td><td>스펠</td><td class="mono">5</td><td class="mono">직접 10</td><td class="ok">티어 준수</td><td>수호 벽 교착 해소</td></tr>
+<tr><td>파쇄</td><td>스펠</td><td class="mono">2</td><td class="mono">충전 −4</td><td class="ok">신설 티어</td><td><b>Hole 02</b> — 인챈트 대응</td></tr>
+<tr><td>군기</td><td>인챈트</td><td class="mono">4</td><td class="mono">전체 ATK+2 · C3</td><td class="ok">21/23</td><td>군세 피니셔 (충전 5→3 조정)</td></tr>
+<tr><td>경계망</td><td>인챈트</td><td class="mono">4</td><td class="mono">발동형 4×6</td><td class="ok">24/26</td><td><b>Hole 05</b> — 전개 억제, 발동형 첫 카드</td></tr>
+<tr><td>각성</td><td>인챈트</td><td class="mono">2</td><td class="mono">사용형 HP+4 ×2</td><td class="ok">8/9</td><td><b>Hole 05</b> — 광역 대응, 사용형 첫 카드</td></tr>
+</table>
+</div>
+<p class="note">기존 20종 + 12종 = <b>32종</b>. 군기·각성은 이미 데이터에 잠정 등록(매수 0)돼 있어 수치만 조정하면 된다.</p>
+
+<h2><span class="n">07 — 규칙 제안</span>카드로 못 푸는 것들</h2>
+<div class="fix"><div class="k">Rule 01</div><h3>후공 보상 — 첫 턴 추가 드로우 1장</h3>
+<p><b>Hole 03</b>의 절반. 크리처 트레이드가 없어 선공이 구조적으로 유리하므로, 후공은 시작 시 1장을 더 뽑는다. 카드가 아니라 규칙으로 처리해야 모든 덱에 공평하게 적용된다.</p></div>
+<div class="fix"><div class="k">Rule 02</div><h3>스펠의 &ldquo;같은 눈금&rdquo; 원칙 구현</h3>
+<p>모든 단일 제거 스펠이 <b>인챈트 충전도 같은 수치만큼</b> 깎을 수 있게 한다(대상 선택). 설계 개요에 이미 있는 원칙이며, 구현만으로 죽은 카드가 사라지고 페어 4가 성립한다. 파쇄는 그 위의 전문 카드가 된다.</p></div>
+
+<h2><span class="n">08 — 카드풀 배분 목표</span></h2>
+<div class="tbl-scroll">
+<table>
+<tr><th>분류</th><th>현재 (20종)</th><th>목표 (32종)</th><th>근거</th></tr>
+<tr><td>크리처</td><td class="mono">12 (60%)</td><td class="mono">16 (50%)</td><td>대응 카드 비중을 올려 스노우볼 억제</td></tr>
+<tr><td>ㄴ 수호</td><td class="mono">3 / 12 (25%)</td><td class="mono">6 / 16 (38%)</td><td>목표 35~40%</td></tr>
+<tr><td>ㄴ 비행</td><td class="mono">3 / 12 (25%)</td><td class="mono">3 / 16 (19%)</td><td>목표 8~10% — <b class="bad">여전히 과다</b></td></tr>
+<tr><td>ㄴ 비행수호</td><td class="mono">0</td><td class="mono">1 (6%)</td><td>목표 2~3% — 종류 수 기준으로는 1장이 최소</td></tr>
+<tr><td>ㄴ 관통</td><td class="mono">0</td><td class="mono">3 (19%)</td><td>신규 축</td></tr>
+<tr><td>스펠</td><td class="mono">5 (25%)</td><td class="mono">10 (31%)</td><td>해답 밀도 확보</td></tr>
+<tr><td>인챈트</td><td class="mono">3 (15%)</td><td class="mono">6 (19%)</td><td>비상 축 보강, 3개 소모 타입 모두 사용</td></tr>
+</table>
+</div>
+<p class="note"><b class="bad">주의</b> — 비행 비중은 종류 기준 19%로 목표(8~10%)를 크게 넘는다. 설계 개요는 &ldquo;비행이 30%를 넘으면 지상 수호가 통째로 무의미해진다&rdquo;고 경고했다. 카드풀이 32종으로 늘어도 비행을 3종으로 묶어두거나, 목표치를 &ldquo;덱 내 매수 기준&rdquo;으로 재정의할지 결정이 필요하다.</p>
+
+<h2><span class="n">09 — 결정이 필요한 것</span></h2>
+<div class="q"><h4>Q1. 구축식이 맞나?</h4><p>플레이어가 30장을 직접 구성하는가, 아니면 고정 덱인가. 구축식이 아니면 아키타입 절 전체가 무의미해진다.</p></div>
+<div class="q"><h4>Q2. 관통을 도입할 것인가?</h4><p>&ldquo;초과 피해 소멸&rdquo;은 이 게임의 정체성이다. 관통은 그 예외를 만든다 — 메타를 넓히지만 규칙의 선명함을 깎는다. 도입하지 않는다면 수호 벽의 해답은 비행·직접 피해뿐이 된다.</p></div>
+<div class="q"><h4>Q3. 비행 비중 기준</h4><p>8~10%가 <b>카드 종류</b> 기준인가 <b>덱 내 매수</b> 기준인가. 후자라면 현재 20% 초과 상태가 아니다.</p></div>
+<div class="q"><h4>Q4. 약화의 처리</h4><p>ATK를 0으로 만든 크리처는 &ldquo;공격하지 않는 몸체&rdquo;로 남는다. 수호가 아니면 사실상 슬롯 낭비인데, 이 상태를 그대로 둘지(만석 압박 도구) 아니면 ATK 0이면 소멸시킬지.</p></div>
+
+</div>
+</body>
+</html>
