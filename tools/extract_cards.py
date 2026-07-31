@@ -16,6 +16,7 @@ import csv
 import math
 import json
 import os
+import sys
 import openpyxl
 
 def color_req(cost):
@@ -39,7 +40,7 @@ ROOT = os.path.dirname(HERE)
 DATA = os.path.join(ROOT, "data")
 XLSX = os.path.join(DATA, "ten_balance.xlsx")
 
-TAG_MAP = {"일반": "normal", "수호": "guard", "비행": "fly", "비행수호": "flyguard"}
+TAG_MAP = {"일반": "normal", "수호": "guard", "비행": "fly", "비행수호": "flyguard", "관통": "pierce"}
 SPELL_MODE = {"단일": "dmg", "광역": "aoe", "직접": "direct"}
 DRAIN_MAP = {"지속형": "persistent", "발동형": "triggered", "사용형": "active"}
 
@@ -226,6 +227,15 @@ def build_pool(creatures, spells, enchants):
 
 
 def main():
+    # 카드 정본은 2026-07 부터 tools/gen_decks.py 의 DECKS 다.
+    # 이 스크립트를 그냥 돌리면 승격된 140종 CSV를 옛 xlsx 20종으로 덮어쓴다.
+    if "--force-legacy" not in sys.argv:
+        print("이 스크립트는 보류 상태입니다 (xlsx 20종 → CSV).")
+        print("현재 카드 정본은 tools/gen_decks.py 의 DECKS 이고,")
+        print("데이터 생성은 다음 명령을 씁니다:")
+        print("    python3 tools/promote_decks.py")
+        print("그래도 옛 파이프라인을 돌리려면 --force-legacy 를 붙이세요.")
+        sys.exit(2)
     sheets = load()
     rules = parse_rules(sheets["규칙상수"])
     creatures = parse_creatures(sheets["크리처"])

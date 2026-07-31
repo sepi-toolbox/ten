@@ -15,24 +15,34 @@ Claude는 매 세션이 시작될 때 이 파일을 기준으로 프로젝트 �
 - 성권 (sepi-toolbox) — 게임 시스템 디자이너. 규칙 설계와 데이터 테이블 작업이 중심.
 - 설명은 데이터 테이블·수치 중심으로. 기초 프로그래밍 지식 있음(깊은 내부 구현보다 규칙·밸런스 관점 우선).
 
-## 카드 데이터 편집 — 두 경로 (섞지 말 것: 한쪽이 다른 쪽을 덮어씀)
+## 카드 데이터 파이프라인 (2026-07 개편 — 정본이 xlsx에서 코드로 옮겨졌다)
 
-`data/`의 CSV·JSON은 **생성되는 산출물**이라 직접 손대지 않는다. 편집은 아래 둘 중 하나로 한다.
+**카드 정본은 `tools/gen_decks.py`의 `DECKS` 딕셔너리 하나뿐이다.** 140종 전부 여기 있다.
+`data/`의 CSV·JSON은 전부 **생성되는 산출물**이므로 직접 손대지 않는다.
 
-**경로 A — 스프레드시트 (데스크톱)**
-`data/ten_balance.xlsx` 수정 → `python3 tools/extract_cards.py` (xlsx → CSV·JSON)
-
-**경로 B — 카드 에디터 (아이패드/모바일, 기본 경로)**
-`tools/card_editor.html`을 브라우저로 열어 편집 → `JSON 내보내기`(ten_data.json) → Claude에게 전달 →
-`python3 tools/build_from_data.py ten_data.json` (ten_data.json → CSV·JSON)
-
-두 경로 모두 끝나면 **반드시** 검산하고, 통과(exit 0)해야 커밋한다:
 ```bash
-python3 tools/validate_budget.py     # 예산 초과·덱 불일치 시 exit 1
+# 1) 카드를 고친다 → tools/gen_decks.py 의 DECKS
+python3 tools/gen_decks.py --check      # 예산 검산만 (빠름)
+
+# 2) 데이터 생성
+python3 tools/promote_decks.py          # DECKS → creatures/spells/enchants.csv · cards.json · decks.json
+python3 tools/build_proto_data.py       # cards.json·decks.json → 프로토타입 POOL·DECKS 주입
+python3 tools/build_prototype.py        # 아트 data URI 주입 (공유 키로 중복 제거)
+python3 tools/build_editor.py           # CSV → card_editor.html · card_gallery.html
+python3 tools/build_deck_doc.py         # DECKS → docs/sample_decks.html
+
+# 3) 검산 — 통과(exit 0)해야 커밋한다
+python3 tools/validate_budget.py        # 예산 + CSV/POOL 동기화 + 7덱 40장
+
+# 4) 게시
+python3 tools/build_pages.py --push <GITHUB_TOKEN>
 ```
 
-데이터가 바뀌면 에디터 기본값도 갱신: `python3 tools/build_editor.py` (CSV → card_editor.html).
-주의: xlsx는 openpyxl로 열어 저장하면 검산 수식 캐시가 날아가므로 코드로 수정하지 않는다.
+- `tools/extract_cards.py`(xlsx → CSV)는 **보류 상태**다. 그냥 돌리면 승격된 140종을 옛 20종으로 덮어쓰므로
+  `--force-legacy` 없이는 exit 2로 멈춘다. `data/ten_balance.xlsx`는 보관용이다.
+- `tools/card_editor.html`로 편집한 결과를 되돌리려면 `build_from_data.py`가 아니라 **DECKS를 직접 고친다.**
+  에디터는 이제 시각 확인·검토용이다(140종 전부 표시).
+- `validate_budget.py`는 CSV가 DECKS와 어긋나면 실패한다 → 승격을 빠뜨리면 바로 잡힌다.
 
 ## 커밋 규칙
 
@@ -111,9 +121,9 @@ python3 tools/validate_budget.py     # 예산 초과·덱 불일치 시 exit 1
 - **덱 메커니즘**: 불=연소 러시 · 물=환류 템포 · 자연=증식 군세 · 강철=경화 방벽 · 대지=진형 공성 · 어둠=대가 어그로 · 빛=가호 지속.
 - **키워드 예산표는 `gen_decks.py`의 `KW`에 한 번만 정의**한다(배수 먼저·가감 나중). 1회성 효과는 `"-4|소환 시 …"` 형식으로 인라인 가감.
   환산 기준: 1마나 ≈ 예산 4 · HP 8 지불 = 1마나 · 드로우 1장 = 1.5마나. **대가 N만 예산을 더한다**(+N/2).
-- ⚠ 다음 단계: 140종을 `data/creatures.csv`·`spells.csv`·`enchants.csv`로 승격 → 프로토타입 DECKLIST를 속성별 단색 덱 7종으로 교체.
-  이름이 겹치는 기존 카드(석벽·창병·장군·파괴자·그리핀·검사·기사·파수병·방벽병·성화)는 **견본 덱 표를 정본**으로 삼는다.
-  기존 카드 중 **소멸**(5코 12피해)·**처형**(3코 6)은 개정 요격 티어 초과 상태 — 승격 시 함께 정리.
+- ✅ 승격 완료. 140종이 `data/`의 CSV·`cards.json`·`decks.json`에 들어갔고 프로토타입은 속성별 단색 덱 7종으로 교체됐다.
+  옛 20종 중 이름이 겹치던 카드는 견본 덱 표 값으로 통일됐고, 티어를 넘던 소멸·처형은 카드풀에서 빠졌다.
+  생성 아트 20장은 주제가 맞는 카드 80장에 재배정했다(`promote_decks.py`의 `ART_IMAGE`).
 
 ## 게시 (GitHub Pages)
 
@@ -123,6 +133,22 @@ python3 tools/validate_budget.py     # 예산 초과·덱 불일치 시 exit 1
 - 랜딩 페이지 원본은 `site_index.html`. 링크를 추가하려면 여기와 `build_pages.py`의 FILES/DOCS/DATA 목록을 함께 고친다.
 - ⚠ 클로드 앱 미리보기 창은 스크립트를 막아 프로토타입이 빈 화면으로 보인다. **프로토타입은 반드시 Pages 주소로 연다.**
   프로토타입은 외부 폰트를 비차단 로드하고(`media="print"` 스왑), 스크립트가 막히면 안내 배너를 띄운다.
+
+## 프로토타입 엔진 — 구현된 것과 텍스트뿐인 것
+
+140종을 넣으면서 규칙 일부만 실제로 돌아간다. **카드에는 전부 인쇄되지만 시뮬레이션은 아래까지다.**
+
+**구현됨**
+- 태그: 수호 · 비행 · **관통**(수호를 통째로 무시, `u.p`) · 비행수호
+- 스펠 분류: 단일(dmg) · 광역(aoe) · 요격(kill) · 바운스(bounce) · 드로우(draw) ·
+  회복(heal) · 강화(buff, `+N/+M` 파싱) · 소환(summon, `A/H … N개체` 파싱) · 파쇄(shatter)
+- 크리처 키워드: **대가 N**(소환 시 HP 지불) · **축복 N**(소환 시 HP 회복) — 실제 자원이 오가므로 구현
+- 덱 선택: 헤더 버튼 7개 → `setDeck(el)` → `newGame()`. 진행 중 전투는 `S.gen` 세대 카운터로 안전하게 중단된다.
+
+**아직 텍스트뿐 (카드에는 보이지만 엔진이 무시)**
+- 연소 · 폭산 · 증식 · 성장 · 연마 · 경화 · 가호 · 환류 · 밀물 · 진형 · 흡혈 · 부여(grant)
+- 이 중 경화·가호·환류·폭산은 **피해/파괴 처리를 함수 하나로 모아야** 깔끔하게 붙는다
+  (현재 피해 적용이 공격·단일스펠·광역·인챈트 네 군데에 흩어져 있음). 다음 리팩터 후보.
 
 ## 미확정 사항 (결정되면 README·이 파일 함께 갱신)
 

@@ -42,26 +42,37 @@ def inject_costs(html, rows):
     return html
 
 
-def main():
+def encode(full):
     from PIL import Image
-    art = {}
+    im = Image.open(full).convert("RGB")
+    if im.width > WIDTH:
+        im = im.resize((WIDTH, round(im.height * WIDTH / im.width)))
+    buf = io.BytesIO()
+    im.save(buf, "JPEG", quality=QUALITY)
+    return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
+
+
+def main():
+    # 여러 카드가 같은 그림 파일을 공유하므로 데이터 URI는 한 번만 싣고 이름은 키로 가리킨다.
+    src, name2key = {}, {}
     for r in load_rows():
         path = r.get("image") or ""
-        if not path:
+        full = os.path.join(ROOT, path) if path else ""
+        if not path or not os.path.exists(full):
             continue
-        full = os.path.join(ROOT, path)
-        if not os.path.exists(full):
-            continue
-        im = Image.open(full).convert("RGB")
-        if im.width > WIDTH:
-            im = im.resize((WIDTH, round(im.height * WIDTH / im.width)))
-        buf = io.BytesIO()
-        im.save(buf, "JPEG", quality=QUALITY)
-        art[r["name"]] = "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
+        key = os.path.splitext(os.path.basename(path))[0]
+        if key not in src:
+            src[key] = encode(full)
+        name2key[r["name"]] = key
 
     html = open(PROTO, encoding="utf-8").read()
     html = inject_costs(html, load_rows())
-    block = "/* ART_START */\nconst ART = " + json.dumps(art, ensure_ascii=False, indent=0) + ";\n/* ART_END */"
+    block = ("/* ART_START */\nconst ARTSRC = "
+             + json.dumps(src, ensure_ascii=False, indent=0)
+             + ";\nconst ARTKEY = " + json.dumps(name2key, ensure_ascii=False)
+             + ";\nconst ART = Object.fromEntries(Object.entries(ARTKEY)"
+               ".map(([n,k])=>[n,ARTSRC[k]]));\n/* ART_END */")
+    art = name2key
     if "/* ART_START */" in html:
         html = re.sub(r"/\* ART_START \*/.*?/\* ART_END \*/", lambda m: block, html, count=1, flags=re.S)
     else:

@@ -36,6 +36,11 @@
       "atk_w": 4,
       "hp_w": 2,
       "budget_adj": 2
+    },
+    "pierce": {
+      "atk_w": 3,
+      "hp_w": 1,
+      "budget_adj": 0
     }
   },
   "cost_budget": [

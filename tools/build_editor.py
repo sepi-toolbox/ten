@@ -20,7 +20,10 @@ ROOT = os.path.dirname(HERE)
 DATA = os.path.join(ROOT, "data")
 
 
-def embed_images(cards, width=480, quality=82):
+ART_SRC = {}
+
+
+def embed_images(cards, width=300, quality=70):
     """카드의 image 경로(assets/art/*.png)를 표시용 data URI(JPEG)로 치환.
     파일이 없으면 빈 문자열 → 템플릿이 SVG 폴백. 자립형 HTML을 위해 임베드한다."""
     try:
@@ -36,14 +39,16 @@ def embed_images(cards, width=480, quality=82):
         if not os.path.exists(full):
             c["image"] = ""
             continue
+        key = os.path.splitext(os.path.basename(path))[0]
         if path not in cache:
             im = Image.open(full).convert("RGB")
             if im.width > width:
                 im = im.resize((width, round(im.height * width / im.width)))
             buf = io.BytesIO()
             im.save(buf, "JPEG", quality=quality)
-            cache[path] = "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
-        c["image"] = cache[path]
+            ART_SRC[key] = "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
+            cache[path] = key
+        c["image"] = "@" + cache[path]
 
 # ---- 속성 팔레트 (프레임 색) ----
 ELEMENTS = {
@@ -134,8 +139,13 @@ def main():
         if not os.path.exists(tpl):
             continue
         html = open(tpl, encoding="utf-8").read()
+        resolver = ("(function(){const ARTSRC=" + json.dumps(ART_SRC, ensure_ascii=False)
+                    + ";const D=" + data_json
+                    + ";['creatures','spells','enchants'].forEach(k=>D[k].forEach("
+                      "c=>{if(c.image&&c.image[0]==='@')c.image=ARTSRC[c.image.slice(1)]||'';}));"
+                      "return D;})()")
         html = (html.replace("__MOTIFS__", mot).replace("__TYPEICONS__", icons)
-                    .replace("__ELEMENTS__", els).replace("__DATA__", data_json))
+                    .replace("__ELEMENTS__", els).replace("__DATA__", resolver))
         with open(os.path.join(HERE, f"{name}.html"), "w", encoding="utf-8") as f:
             f.write(html)
         print(f"wrote tools/{name}.html")

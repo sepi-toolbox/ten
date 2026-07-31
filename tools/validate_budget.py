@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """
-TEN — 카드 데이터 예산 검산기.
+TEN — 카드 데이터 검산 게이트. 통과하면 exit 0, 하나라도 어긋나면 exit 1.
 
-밸런스 시트의 '예산 검산'을 코드로 옮긴 것. data/ 의 CSV/JSON을 읽어
-예산 공식 대비 각 카드의 편차와 판정을 출력하고, 예산 초과 카드가 있거나
-덱 사이즈가 목표와 다르면 종료 코드 1을 반환한다. (CI 게이트로 사용 가능)
+세 가지를 본다.
 
-예산 공식:  P(n) = round(a·n + b + (n−1)² · k)  +  태그 예산 보정
-스탯 소모:  일반 2A+H · 수호 2A+2H · 비행 4A+H · 비행수호 4A+2H
+  1) 예산   설계 정본(gen_decks.py의 DECKS) 140종이 전부 예산 안에 있는가
+  2) 동기화 data/의 CSV·JSON이 설계와 정확히 일치하는가 (승격 후 드리프트 감지)
+  3) 덱     속성별 덱이 카드 23 + 지형 17 = 40장인가, 동명 2장 상한을 지키는가
+
+데이터를 고쳤으면 tools/promote_decks.py 를 다시 돌린 뒤 이 검산을 통과시킨다.
 """
 import csv
 import json
@@ -17,112 +18,134 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 DATA = os.path.join(ROOT, "data")
+sys.path.insert(0, HERE)
 
-
-def load_json(name):
-    with open(os.path.join(DATA, name), encoding="utf-8") as f:
-        return json.load(f)
+import gen_decks as G           # noqa: E402
+import promote_decks as P       # noqa: E402
 
 
 def load_csv(name):
-    with open(os.path.join(DATA, name), encoding="utf-8") as f:
+    path = os.path.join(DATA, name)
+    if not os.path.exists(path):
+        return None
+    with open(path, encoding="utf-8") as f:
         return list(csv.DictReader(f))
 
 
-def creature_budget(cost, tag, budget):
-    a, b, k = budget["a"], budget["b"], budget["k"]
-    base = int(a * cost + b + (cost - 1) ** 2 * k + 0.5)
-    return base
+def load_json(name):
+    path = os.path.join(DATA, name)
+    if not os.path.exists(path):
+        return None
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
 
 
 def main():
-    rules = load_json("rules.json")
-    budget = rules["budget"]
-    tags = rules["tags"]
-    creatures = load_csv("creatures.csv")
-    spells = load_csv("spells.csv")
-    enchants = load_csv("enchants.csv")
+    problems = []
+    print("=" * 72)
+    print("TEN 검산 — 예산 · 동기화 · 덱")
+    print("=" * 72)
 
-    problems = 0
-    print("=" * 68)
-    print("TEN 예산 검산")
-    print("=" * 68)
+    # ── 1) 예산 ───────────────────────────────────────────────
+    over = []
+    n_cr = n_sp = n_en = 0
+    for el, deck in G.DECKS.items():
+        for (nm, c, tag, a, h, cp, keys) in deck["creatures"]:
+            n_cr += 1
+            spent, bud, dv, _ = G.check_creature(c, tag, a, h, keys)
+            if dv > 0:
+                over.append(f"{G.KO[el]} {nm} 크리처 소모 {spent} > 예산 {bud}")
+            if tag in ("수호", "비행수호") and c > 1 and a > c - 1:
+                over.append(f"{G.KO[el]} {nm} 수호 ATK 캡 초과 ({a} > {c-1})")
+        for (nm, c, kind, val, ref, adj, cp, rule) in deck["spells"]:
+            n_sp += 1
+            vv, rr, dv = G.check_spell(kind, val, ref, adj)
+            if dv > 0:
+                over.append(f"{G.KO[el]} {nm} 스펠 {G.fmt(vv)} > 기준 {G.fmt(rr)}")
+        for (nm, c, dr, E, C, scope, cp, rule) in deck["enchants"]:
+            n_en += 1
+            eff, tgt, dv = G.check_enchant(c, dr, E, C, scope)
+            if dv > 2:
+                over.append(f"{G.KO[el]} {nm} 인챈트 {eff:.0f} > 예산 {tgt}")
+    total = n_cr + n_sp + n_en
+    print(f"\n[1] 예산  크리처 {n_cr} · 스펠 {n_sp} · 인챈트 {n_en} = {total}종")
+    print(f"    초과 {len(over)}건" + ("" if not over else ":"))
+    for m in over[:12]:
+        print(f"      ✗ {m}")
+    problems += over
 
-    print("\n[크리처]  코스트  태그      ATK/HP   소모P  예산P  편차  판정")
-    print("-" * 68)
-    for c in creatures:
-        cost, tag = int(c["cost"]), c["tag"]
-        atk, hp = int(c["atk"]), int(c["hp"])
-        w = tags[tag]
-        spent = w["atk_w"] * atk + w["hp_w"] * hp
-        bud = creature_budget(cost, tag, budget) + w["budget_adj"]
-        dev = spent - bud
-        if dev > 0:
-            verdict, problems = "초과", problems + 1
-        elif dev < 0:
-            verdict = "미달"
-        else:
-            verdict = "적정"
-        # 수호 ATK 캡: 코스트-1 초과 시 경고(만능 카드 방지)
-        cap_warn = " ⚠ATK캡" if tag in ("guard", "flyguard") and atk > cost - 1 and cost > 1 else ""
-        print(f"  {c['name']:<6}  {cost:^4}   {tag:<8} {atk:>3}/{hp:<3}  {spent:>4}  {bud:>4}  {dev:>+4}  {verdict}{cap_warn}")
+    # ── 2) 동기화 ─────────────────────────────────────────────
+    csvs = {"creatures.csv": load_csv("creatures.csv"),
+            "spells.csv": load_csv("spells.csv"),
+            "enchants.csv": load_csv("enchants.csv")}
+    cards = load_json("cards.json")
+    decks = load_json("decks.json")
+    rules = load_json("rules.json") or {}
+    target = rules.get("constants", {}).get("deck_size", 40)
 
-    print("\n[스펠]  코스트  분류    수치  기준티어  판정")
-    print("-" * 68)
-    tier = {t["cost"]: t for t in rules["spell_tier"]}
-    for s in spells:
-        cost, mode, val = int(s["cost"]), s["mode"], int(s["value"])
-        t = tier.get(cost, {})
-        ref = {"dmg": t.get("single"), "aoe": t.get("aoe"), "direct": t.get("direct")}.get(mode)
-        if ref is None:
-            verdict = "기준없음"
-        elif val > ref:
-            verdict, problems = "초과", problems + 1
-        elif val < ref:
-            verdict = "미달"
-        else:
-            verdict = "적정"
-        print(f"  {s['name']:<6}  {cost:^4}   {mode:<6} {val:>4}   {str(ref):>4}     {verdict}")
+    missing = [k for k, v in csvs.items() if v is None]
+    if cards is None:
+        missing.append("cards.json")
+    if decks is None:
+        missing.append("decks.json")
+    if missing:
+        problems.append("데이터 파일 없음: " + ", ".join(missing))
+        print(f"\n[2] 동기화  ✗ 파일 없음: {', '.join(missing)}")
+        print("    → python3 tools/promote_decks.py 를 먼저 실행하세요.")
+    else:
+        drift = []
+        n_data = sum(len(v) for v in csvs.values())
+        if n_data != total:
+            drift.append(f"CSV {n_data}종 ≠ 설계 {total}종")
+        pool = cards.get("pool", {})
+        if len(pool) != total:
+            drift.append(f"cards.json POOL {len(pool)}종 ≠ 설계 {total}종")
+        want = {}
+        for el, deck in G.DECKS.items():
+            for (nm, c, tag, a, h, cp, keys) in deck["creatures"]:
+                want[nm] = ("cr", c, G.color_req(c), el, a, h)
+            for (nm, c, kind, val, ref, adj, cp, rule) in deck["spells"]:
+                want[nm] = ("sp", c, G.color_req(c), el, None, None)
+            for (nm, c, dr, E, C, scope, cp, rule) in deck["enchants"]:
+                want[nm] = ("en", c, G.color_req(c), el, None, None)
+        for nm, w in want.items():
+            g = pool.get(nm)
+            if not g:
+                drift.append(f"{nm}: POOL에 없음")
+                continue
+            if g["c"] != w[1] or g["cc"] != w[2] or g.get("el") != w[3]:
+                drift.append(f"{nm}: 코스트/유색/속성 불일치")
+            if w[0] == "cr" and (g.get("a") != w[4] or g.get("h") != w[5]):
+                drift.append(f"{nm}: 스탯 불일치 (POOL {g.get('a')}/{g.get('h')} ≠ 설계 {w[4]}/{w[5]})")
+        print(f"\n[2] 동기화  CSV {n_data}종 · POOL {len(pool)}종 · 덱 {len(decks)}개")
+        print(f"    불일치 {len(drift)}건" + ("" if not drift else ":"))
+        for m in drift[:12]:
+            print(f"      ✗ {m}")
+        problems += drift
 
-    print("\n[인챈트]  코스트  소모타입     E×C  총산출T  예산T  판정")
-    print("-" * 68)
-    ct = {r["cost"]: r for r in rules["cost_budget"]}
-    for e in enchants:
-        if int(e["copies"] or 0) == 0:
-            continue  # 미채용(잠정) 카드는 검산 대상에서 제외
-        cost = int(e["cost"])
-        ev, ch = int(e["effect_value"]), int(e["charge"])
-        total = ev * ch
-        bud_t = ct.get(cost, {}).get("enchant_t")
-        dev = total - bud_t if bud_t is not None else 0
-        verdict = "적정" if dev == 0 else ("초과" if dev > 0 else "미달")
-        if dev > 0:
-            problems += 1
-        print(f"  {e['name']:<6}  {cost:^4}   {e['drain_type']:<10} {ev}×{ch}   {total:>4}    {str(bud_t):>4}   {verdict}")
+    # ── 3) 덱 ─────────────────────────────────────────────────
+    print("\n[3] 덱")
+    if decks:
+        cap = rules.get("constants", {}).get("copies_max", 2)
+        basics = set(P.BASIC_LAND.values())
+        for el, d in decks.items():
+            nc = sum(cp for _, cp in d["cards"])
+            nl = sum(cp for _, cp in d["lands"])
+            bad = [nm for nm, cp in d["cards"] if cp > cap and nm not in basics]
+            ok = (nc + nl == target) and not bad
+            print(f"    {'✓' if ok else '✗'} {G.KO[el]:<3} {d['name']:<10} "
+                  f"카드 {nc} + 지형 {nl} = {nc+nl}")
+            if nc + nl != target:
+                problems.append(f"{G.KO[el]} 덱 {nc+nl}장 ≠ {target}")
+            if bad:
+                problems.append(f"{G.KO[el]} 동명 {cap}장 초과: {', '.join(bad)}")
+        print(f"    (기본 지형은 동명 상한 예외 — 단색 덱은 같은 지형 {P.LAND_COUNT}장)")
 
-    # 덱 사이즈 검산
-    lands = load_csv("lands.csv") if os.path.exists(os.path.join(DATA, "lands.csv")) else []
-    cards = creatures + spells + enchants
-    deck = sum(int(c["copies"]) for c in cards) + rules["constants"].get("land_count", 0)
-    target = rules["constants"]["deck_size"]
-
-    cap = rules["constants"].get("copies_max", 2)
-    over_cap = [c["name"] for c in cards if int(c["copies"] or 0) > cap]
-    print(f"\n동명 카드 상한 {cap}장 — {'위반 없음' if not over_cap else '위반: ' + ', '.join(over_cap)}")
-    if over_cap:
-        problems += 1
-    print(f"지형 {len(lands)}종 정의 · 덱 내 지형 {rules['constants'].get('land_count',0)}장")
-    print("\n" + "=" * 68)
-    print(f"덱 총 장수(카드+지형): {deck} / 목표 {target}  →  {'OK' if deck == target else '불일치!'}")
-    if deck != target:
-        problems += 1
-    print(f"예산 초과/불일치 항목: {problems}")
-    print("=" * 68)
-
+    print("\n" + "=" * 72)
     if problems:
-        print("\n❌ 검산 실패 — 위 항목을 확인하세요.")
+        print(f"❌ 검산 실패 — 문제 {len(problems)}건")
         sys.exit(1)
-    print("\n✅ 모든 카드가 예산 범위 내. 덱 사이즈 일치.")
+    print(f"✅ 통과 — {total}종 예산 이내 · 데이터 동기화 · 7덱 모두 {target}장")
 
 
 if __name__ == "__main__":
