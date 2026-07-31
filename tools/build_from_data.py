@@ -58,6 +58,14 @@ def annotate_creatures(rows, rules):
     return rows
 
 
+def spell_text(s):
+    """스펠 효과문을 mode/value에서 생성 (설계 메모 note와 구분)."""
+    v = s["value"]
+    return {"dmg": f"크리처 1개체에 {v} 피해",
+            "aoe": f"적 전체 개체에 {v} 피해",
+            "direct": f"플레이어에게 {v} 피해 · 수호 무시"}.get(s["mode"], "")
+
+
 def build_pool(creatures, spells, enchants):
     pool = {}
     for c in creatures:
@@ -69,7 +77,7 @@ def build_pool(creatures, spells, enchants):
         pool[c["name"]] = e
     for s in spells:
         pool[s["name"]] = {"c": s["cost"], "k": "sp", "mode": s["mode"],
-                           "v": s["value"], "copies": s["copies"], "d": s.get("note", "")}
+                           "v": s["value"], "copies": s["copies"], "d": spell_text(s)}
     for en in enchants:
         if int(en.get("copies") or 0) == 0:
             continue  # 미채용 카드는 게임 풀에서 제외
