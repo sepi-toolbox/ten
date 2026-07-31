@@ -11,8 +11,11 @@ https://sepi-toolbox.github.io/ten/ 로 게시한다.)
 
 토큰은 다음 순서로 찾는다. **저장소 안에는 절대 두지 않는다 — 공개 저장소다.**
   1) --push 뒤에 직접 준 값
-  2) 환경변수 GITHUB_TOKEN
-  3) ~/.config/ten/token  (권한 600)
+  2) ~/.config/ten/token  (권한 600)
+  3) 환경변수 GITHUB_TOKEN
+환경변수를 마지막에 두는 이유: 이 클라우드 컨테이너는 GITHUB_TOKEN을
+"proxy-injected" 같은 더미 값으로 미리 채워 두는 경우가 있어, 먼저 보면
+진짜 토큰을 두고도 가짜로 인증을 시도하게 된다. 형식 검사도 함께 한다.
 """
 import os
 import shutil
@@ -90,14 +93,24 @@ def push(token):
 TOKEN_FILE = os.path.expanduser("~/.config/ten/token")
 
 
+def looks_like_token(t):
+    """github_pat_… / ghp_… / gho_… 형태이고 충분히 긴가."""
+    return bool(t) and len(t) >= 30 and t.split("_")[0] in ("github", "ghp", "gho", "ghs", "ghu")
+
+
 def find_token(argv, i):
-    """--push 뒤 인자 → GITHUB_TOKEN → ~/.config/ten/token 순으로 찾는다."""
+    """--push 뒤 인자 → ~/.config/ten/token → GITHUB_TOKEN 순으로 찾는다."""
     if i + 1 < len(argv) and not argv[i + 1].startswith("-"):
         return argv[i + 1]
-    if os.environ.get("GITHUB_TOKEN"):
-        return os.environ["GITHUB_TOKEN"]
     if os.path.exists(TOKEN_FILE):
-        return open(TOKEN_FILE, encoding="utf-8").read().strip()
+        t = open(TOKEN_FILE, encoding="utf-8").read().strip()
+        if t:
+            return t
+    env = os.environ.get("GITHUB_TOKEN", "").strip()
+    if looks_like_token(env):
+        return env
+    if env:
+        print(f"GITHUB_TOKEN 값이 토큰 형식이 아니라 무시함: {env[:16]}…")
     return None
 
 
