@@ -26,6 +26,37 @@ TAG_MAP = {"일반": "normal", "수호": "guard", "비행": "fly", "비행수호
 SPELL_MODE = {"단일": "dmg", "광역": "aoe", "직접": "direct"}
 DRAIN_MAP = {"지속형": "persistent", "발동형": "triggered", "사용형": "active"}
 
+# 카드명 → 기본 아트 모티프 (에디터/갤러리 공유 라이브러리 키)
+DEFAULT_ART = {
+    "파수병": "shield", "잔날개": "wings", "방벽병": "wall", "검사": "sword",
+    "전투매": "hawk", "석벽": "wall", "창병": "spear", "그리핀": "griffin",
+    "기사": "helmet", "와이번": "wyvern", "장군": "banner", "파괴자": "axe",
+    "화살": "arrow", "창격": "thrust", "처형": "exec", "화염비": "firerain",
+    "소멸": "burst", "성화": "flame", "군기": "flag", "각성": "awaken",
+}
+
+
+def load_existing_design():
+    """기존 CSV의 art/desc를 id 기준으로 보존 (xlsx 편집 시 시각 설정 유지)."""
+    design = {}
+    for fn in ("creatures.csv", "spells.csv", "enchants.csv"):
+        path = os.path.join(DATA, fn)
+        if not os.path.exists(path):
+            continue
+        with open(path, encoding="utf-8") as f:
+            for r in csv.DictReader(f):
+                if r.get("id"):
+                    design[r["id"]] = {"art": r.get("art", ""), "desc": r.get("desc", "")}
+    return design
+
+
+def apply_design(rows, existing, fallback):
+    for r in rows:
+        prev = existing.get(r["id"], {})
+        r["art"] = prev.get("art") or DEFAULT_ART.get(r["name"]) or fallback(r)
+        r["desc"] = prev.get("desc", "")
+    return rows
+
 
 def clean(row):
     row = list(row)
@@ -147,15 +178,20 @@ def main():
     spells = parse_spells(sheets["스펠"])
     enchants = parse_enchants(sheets["인챈트"])
 
+    existing = load_existing_design()
+    apply_design(creatures, existing, lambda r: "shield" if r["tag"] in ("guard", "flyguard") else ("hawk" if r["tag"] == "fly" else "sword"))
+    apply_design(spells, existing, lambda r: "burst")
+    apply_design(enchants, existing, lambda r: "flame")
+
     with open(os.path.join(DATA, "rules.json"), "w", encoding="utf-8") as f:
         json.dump(rules, f, ensure_ascii=False, indent=2)
 
     write_csv(os.path.join(DATA, "creatures.csv"), creatures,
-              ["id", "name", "cost", "tag", "atk", "hp", "copies", "budget_p", "verdict", "note"])
+              ["id", "name", "cost", "tag", "atk", "hp", "copies", "art", "desc", "budget_p", "verdict", "note"])
     write_csv(os.path.join(DATA, "spells.csv"), spells,
-              ["id", "name", "cost", "mode", "value", "copies", "note"])
+              ["id", "name", "cost", "mode", "value", "copies", "art", "desc", "note"])
     write_csv(os.path.join(DATA, "enchants.csv"), enchants,
-              ["id", "name", "cost", "drain_type", "effect_value", "charge", "target", "copies", "note"])
+              ["id", "name", "cost", "drain_type", "effect_value", "charge", "target", "copies", "art", "desc", "note"])
 
     pool = build_pool(creatures, spells, enchants)
     with open(os.path.join(DATA, "cards.json"), "w", encoding="utf-8") as f:

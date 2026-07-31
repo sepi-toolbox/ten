@@ -34,6 +34,15 @@ def autoid(rows, prefix):
     return rows
 
 
+def ensure_design(rows, fallback):
+    """에디터가 art/desc를 넘기지만, 누락 시 안전한 기본값을 채운다."""
+    for r in rows:
+        if not r.get("art"):
+            r["art"] = fallback(r)
+        r.setdefault("desc", "")
+    return rows
+
+
 def annotate_creatures(rows, rules):
     """예산 검산 컬럼(budget_p, verdict)을 재계산해 채운다 — CSV를 리치하게 유지."""
     b, tags = rules["budget"], rules["tags"]
@@ -73,16 +82,17 @@ def main():
         sys.exit("usage: python3 tools/build_from_data.py <ten_data.json>")
     d = json.load(open(sys.argv[1], encoding="utf-8"))
     rules = json.load(open(os.path.join(DATA, "rules.json"), encoding="utf-8"))
-    creatures = annotate_creatures(autoid(d["creatures"], "CR"), rules)
-    spells = autoid(d["spells"], "SP")
-    enchants = autoid(d["enchants"], "EN")
+    creatures = ensure_design(annotate_creatures(autoid(d["creatures"], "CR"), rules),
+                              lambda r: "shield" if r.get("tag") in ("guard", "flyguard") else ("hawk" if r.get("tag") == "fly" else "sword"))
+    spells = ensure_design(autoid(d["spells"], "SP"), lambda r: "burst")
+    enchants = ensure_design(autoid(d["enchants"], "EN"), lambda r: "flame")
 
     write_csv(os.path.join(DATA, "creatures.csv"), creatures,
-              ["id", "name", "cost", "tag", "atk", "hp", "copies", "budget_p", "verdict", "note"])
+              ["id", "name", "cost", "tag", "atk", "hp", "copies", "art", "desc", "budget_p", "verdict", "note"])
     write_csv(os.path.join(DATA, "spells.csv"), spells,
-              ["id", "name", "cost", "mode", "value", "copies", "note"])
+              ["id", "name", "cost", "mode", "value", "copies", "art", "desc", "note"])
     write_csv(os.path.join(DATA, "enchants.csv"), enchants,
-              ["id", "name", "cost", "drain_type", "effect_value", "charge", "target", "copies", "note"])
+              ["id", "name", "cost", "drain_type", "effect_value", "charge", "target", "copies", "art", "desc", "note"])
 
     pool = build_pool(creatures, spells, enchants)
     with open(os.path.join(DATA, "cards.json"), "w", encoding="utf-8") as f:

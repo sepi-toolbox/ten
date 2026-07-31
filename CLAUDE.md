@@ -62,8 +62,10 @@ python3 tools/validate_budget.py     # 예산 초과·덱 불일치 시 exit 1
 - 초기 커밋 + 규칙 결정 반영 완료. 카드 22종(크리처12·스펠5·인챈트1 채용 + 잠정2) 전부 예산 범위 내, 덱 30장 정합.
 - 프로토타입(`prototype/index.html`)에 위 확정 규칙 2건 반영됨(덱 소진 패배, 만석 소환 불가). 턴 종료 처리는 `크리처 공격 → 인챈트 발동(마지막)` 순.
 - 프로토타입은 아직 카드 풀(POOL)을 하드코딩 중 — `data/cards.json`을 읽도록 리팩터하는 것이 다음 후보.
-- `tools/card_editor.html` 추가: 아이패드용 카드 에디터(실시간 예산 검산 + ten_data.json 내보내기). 라운드트립 무손실 검증됨.
-- `tools/card_gallery.html` 추가: 카드 디자인 갤러리(타입/태그별 프레임 + 카드별 벡터 아트 + 효과 텍스트). 아트는 SVG 라인아트(래스터 일러스트 아님). 둘 다 `build_editor.py`로 함께 생성.
+- `tools/card_editor.html`: **비주얼 카드 디자이너**. 카드 그리드 → 탭하면 편집 모달(이름·코스트·프레임/태그·능력치·매수·효과설명·아트 선택 + 실시간 미리보기·예산 검산). ten_data.json 내보내기. 라운드트립 무손실.
+- `tools/card_gallery.html`: 카드 갤러리(보기 전용, 필터). 에디터와 동일 렌더.
+- 아트 라이브러리(20종 SVG 모티프)는 `build_editor.py`의 MOTIFS에서 한 번 정의 → 두 뷰어에 `__MOTIFS__`로 주입. 아트는 SVG 라인아트(래스터 일러스트 아님).
+- 데이터에 `art`(모티프 키)·`desc`(커스텀 효과문) 컬럼 추가됨. extract/build_from_data 모두 보존.
 
 ## 미확정 사항 (결정되면 README·이 파일 함께 갱신)
 
