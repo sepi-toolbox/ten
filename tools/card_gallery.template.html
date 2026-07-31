@@ -71,6 +71,7 @@ h1 span{color:var(--teal)}
 .spfoot{padding:7px 10px 11px;margin-top:auto;display:flex;justify-content:flex-end}
 .big{font-family:'JetBrains Mono';font-weight:700;font-size:20px;color:var(--fc)}
 .big small{font-size:9px;color:var(--ink-faint);font-weight:500}
+.art{overflow:hidden}.artimg{width:100%;height:100%;object-fit:cover;display:block}
 </style>
 </head>
 <body>
@@ -90,6 +91,7 @@ const DRAINKO = {persistent:'지속형', triggered:'발동형', active:'사용�
 /* ---------- 벡터 아트 모티프 (stroke=currentColor) ---------- */
 const S = (inner) => `<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
 const M = __MOTIFS__;
+function artBlock(c){return (c.image)?`<img class="artimg" src="${c.image}">`:art(c);}
 function art(c){
   const key=(c.art&&M[c.art])?c.art:(c.k==='sp'?'burst':c.k==='en'?'flame':(c.tag==='guard'||c.tag==='flyguard')?'shield':c.tag==='fly'?'hawk':'sword');
   return M[key];
@@ -128,7 +130,7 @@ function cardHTML(c){
   }
   return `<div class="card ${cls}">
     <div class="chead"><div class="cost">${c.cost}</div><div class="name">${c.name}</div></div>
-    <div class="art">${art(c)}</div>
+    <div class="art">${artBlock(c)}</div>
     <div class="tagrow">${chips}</div>
     <div class="eff">${effect(c)}</div>
     ${c.note && c.k==='cr' ? `<div class="flavor">${c.note}</div>`:''}

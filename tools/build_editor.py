@@ -9,13 +9,41 @@ data/의 CSV·rules.json을 읽어 뷰어를 생성한다:
 
   python3 tools/build_editor.py
 """
+import base64
 import csv
+import io
 import json
 import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 DATA = os.path.join(ROOT, "data")
+
+
+def embed_images(cards, width=480, quality=82):
+    """카드의 image 경로(assets/art/*.png)를 표시용 data URI(JPEG)로 치환.
+    파일이 없으면 빈 문자열 → 템플릿이 SVG 폴백. 자립형 HTML을 위해 임베드한다."""
+    try:
+        from PIL import Image
+    except ImportError:
+        return  # Pillow 없으면 경로만 유지(로컬 서빙 시 사용)
+    cache = {}
+    for c in cards:
+        path = c.get("image") or ""
+        if not path:
+            continue
+        full = os.path.join(ROOT, path)
+        if not os.path.exists(full):
+            c["image"] = ""
+            continue
+        if path not in cache:
+            im = Image.open(full).convert("RGB")
+            if im.width > width:
+                im = im.resize((width, round(im.height * width / im.width)))
+            buf = io.BytesIO()
+            im.save(buf, "JPEG", quality=quality)
+            cache[path] = "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
+        c["image"] = cache[path]
 
 # ---- 공유 아트 라이브러리 (semantic key → inner SVG, stroke=currentColor) ----
 MOTIFS = {
@@ -68,6 +96,7 @@ def main():
     spells = [num(r, "cost", "value", "copies") for r in load_csv("spells.csv")]
     enchants = [num(r, "cost", "effect_value", "charge", "copies") for r in load_csv("enchants.csv")]
 
+    embed_images(creatures + spells + enchants)
     blob = {"rules": rules, "creatures": creatures, "spells": spells, "enchants": enchants}
     data_json = json.dumps(blob, ensure_ascii=False)
     mot = motifs_js()

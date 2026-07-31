@@ -65,7 +65,8 @@ python3 tools/validate_budget.py     # 예산 초과·덱 불일치 시 exit 1
 - `tools/card_editor.html`: **비주얼 카드 디자이너**. 카드 그리드 → 탭하면 편집 모달(이름·코스트·프레임/태그·능력치·매수·효과설명·아트 선택 + 실시간 미리보기·예산 검산). ten_data.json 내보내기. 라운드트립 무손실.
 - `tools/card_gallery.html`: 카드 갤러리(보기 전용, 필터). 에디터와 동일 렌더.
 - 아트 라이브러리(20종 SVG 모티프)는 `build_editor.py`의 MOTIFS에서 한 번 정의 → 두 뷰어에 `__MOTIFS__`로 주입. 아트는 SVG 라인아트(래스터 일러스트 아님).
-- 데이터에 `art`(모티프 키)·`desc`(커스텀 효과문) 컬럼 추가됨. extract/build_from_data 모두 보존.
+- 데이터에 `art`(모티프 키)·`desc`(커스텀 효과문)·`image`(생성 아트 경로) 컬럼 추가됨. extract/build_from_data 모두 보존.
+- **생성 아트 연동**: `assets/art/<id>.png`에 카드별 일러스트. 카드에 `image` 있으면 그림, 없으면 SVG 모티프로 자동 폴백. `build_editor.py`가 이미지를 리사이즈·data URI로 임베드(자립형 HTML). 아트 소스 = ChatGPT 4×5 시트를 `tools/`(임시)에서 20분할 → assets/art. 새 아트 넣는 법: PNG를 assets/art/<id>.png로 두고 `build_editor.py` 재실행.
 
 ## 미확정 사항 (결정되면 README·이 파일 함께 갱신)
 

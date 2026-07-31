@@ -112,6 +112,7 @@ input[type=file]{display:none}
 #toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%) translateY(30px);background:var(--ink);color:var(--paper);
   font-family:'JetBrains Mono';font-size:12px;padding:11px 18px;border-radius:6px;opacity:0;transition:.25s;z-index:60;pointer-events:none;max-width:90vw;text-align:center}
 #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.art{overflow:hidden}.artimg{width:100%;height:100%;object-fit:cover;display:block}
 </style>
 </head>
 <body>
@@ -169,6 +170,7 @@ function verdict(c,k){
 const VKO={over:'초과',under:'미달',ok:'적정'};
 
 /* ===== 카드 렌더 ===== */
+function artBlock(c){return (c.image)?`<img class="artimg" src="${c.image}">`:art(c);}
 function art(c){const key=(c.art&&M[c.art])?c.art:(c.k==='sp'?'burst':c.k==='en'?'flame':c.tag==='guard'||c.tag==='flyguard'?'shield':c.tag==='fly'?'hawk':'sword');return M[key];}
 function defEffect(c){
   if(c.k==='cr'){const m={normal:'턴 종료 시 <b>ATK</b>만큼 상대를 공격.',guard:'<b>수호</b> — 대신 왼쪽부터 피해를 받는다.',fly:'<b>비행</b> — 비행 없는 수호를 무시.',flyguard:'<b>비행·수호</b> — 공중·지상 모두 막는다.'};return m[c.tag]||m.normal;}
@@ -186,7 +188,7 @@ function cardHTML(c,k){
   const vd=verdict(c,k);
   return `<div class="card ${cls}"><div class="vbadge ${vd.v}">${VKO[vd.v]}</div>
     <div class="chead"><div class="cost">${c.cost}</div><div class="nm">${c.name||'—'}</div></div>
-    <div class="art">${art(c)}</div>
+    <div class="art">${artBlock(c)}</div>
     <div class="tagrow"><span class="chip">${chip}</span></div>
     <div class="eff">${eff}</div>${foot}</div>`;
 }

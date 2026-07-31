@@ -1,13 +1,13 @@
-id,name,cost,tag,atk,hp,copies,budget_p,verdict,note
-CR01,파수병,1,guard,0,3,3,6,적정,1코 스택 주력. 흡수 1회 × 5중첩 가능
-CR02,잔날개,1,normal,1,2,1,4,적정,초반 페이스 확보용
-CR03,방벽병,2,guard,1,4,3,10,적정,중첩 시 딜도 누적되는 벽
-CR04,검사,2,normal,2,4,2,8,적정,커브 기본값
-CR05,전투매,2,fly,1,4,2,8,적정,저코스트 우회 딜
-CR06,석벽,3,guard,1,6,2,14,적정,단일 제거 3코로는 못 잡음
-CR07,창병,3,normal,4,4,2,12,적정,3코 최대 딜
-CR08,그리핀,3,fly,2,4,1,12,적정,수호 덱 상대 핵심
-CR09,기사,4,normal,6,6,1,18,적정,중반 전환점
-CR10,와이번,4,fly,4,2,1,18,적정,유리대포. 저코스트 제거에 취약
-CR11,장군,5,normal,8,8,1,24,적정,5코 피니셔 후보
-CR12,파괴자,6,normal,11,10,1,32,적정,결정력 카드. 대응은 5코 소멸뿐
+id,name,cost,tag,atk,hp,copies,art,desc,image,budget_p,verdict,note
+CR01,파수병,1,guard,0,3,3,shield,,assets/art/CR01.png,6,적정,1코 스택 주력. 흡수 1회 × 5중첩 가능
+CR02,잔날개,1,normal,1,2,1,wings,,assets/art/CR02.png,4,적정,초반 페이스 확보용
+CR03,방벽병,2,guard,1,4,3,wall,,assets/art/CR03.png,10,적정,중첩 시 딜도 누적되는 벽
+CR04,검사,2,normal,2,4,2,sword,,assets/art/CR04.png,8,적정,커브 기본값
+CR05,전투매,2,fly,1,4,2,hawk,,assets/art/CR05.png,8,적정,저코스트 우회 딜
+CR06,석벽,3,guard,1,6,2,wall,,assets/art/CR06.png,14,적정,단일 제거 3코로는 못 잡음
+CR07,창병,3,normal,4,4,2,spear,,assets/art/CR07.png,12,적정,3코 최대 딜
+CR08,그리핀,3,fly,2,4,1,griffin,,assets/art/CR08.png,12,적정,수호 덱 상대 핵심
+CR09,기사,4,normal,6,6,1,helmet,,assets/art/CR09.png,18,적정,중반 전환점
+CR10,와이번,4,fly,4,2,1,wyvern,,assets/art/CR10.png,18,적정,유리대포. 저코스트 제거에 취약
+CR11,장군,5,normal,8,8,1,banner,,assets/art/CR11.png,24,적정,5코 피니셔 후보
+CR12,파괴자,6,normal,11,10,1,axe,,assets/art/CR12.png,32,적정,결정력 카드. 대응은 5코 소멸뿐

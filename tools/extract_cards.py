@@ -37,7 +37,7 @@ DEFAULT_ART = {
 
 
 def load_existing_design():
-    """기존 CSV의 art/desc를 id 기준으로 보존 (xlsx 편집 시 시각 설정 유지)."""
+    """기존 CSV의 art/desc/image를 id 기준으로 보존 (xlsx 편집 시 시각 설정 유지)."""
     design = {}
     for fn in ("creatures.csv", "spells.csv", "enchants.csv"):
         path = os.path.join(DATA, fn)
@@ -46,7 +46,7 @@ def load_existing_design():
         with open(path, encoding="utf-8") as f:
             for r in csv.DictReader(f):
                 if r.get("id"):
-                    design[r["id"]] = {"art": r.get("art", ""), "desc": r.get("desc", "")}
+                    design[r["id"]] = {"art": r.get("art", ""), "desc": r.get("desc", ""), "image": r.get("image", "")}
     return design
 
 
@@ -55,6 +55,9 @@ def apply_design(rows, existing, fallback):
         prev = existing.get(r["id"], {})
         r["art"] = prev.get("art") or DEFAULT_ART.get(r["name"]) or fallback(r)
         r["desc"] = prev.get("desc", "")
+        # 생성 아트: 보존값 우선, 없으면 assets/art/<id>.png 존재 시 자동 연결
+        default_img = f"assets/art/{r['id']}.png"
+        r["image"] = prev.get("image") or (default_img if os.path.exists(os.path.join(ROOT, default_img)) else "")
     return rows
 
 
@@ -187,11 +190,11 @@ def main():
         json.dump(rules, f, ensure_ascii=False, indent=2)
 
     write_csv(os.path.join(DATA, "creatures.csv"), creatures,
-              ["id", "name", "cost", "tag", "atk", "hp", "copies", "art", "desc", "budget_p", "verdict", "note"])
+              ["id", "name", "cost", "tag", "atk", "hp", "copies", "art", "desc", "image", "budget_p", "verdict", "note"])
     write_csv(os.path.join(DATA, "spells.csv"), spells,
-              ["id", "name", "cost", "mode", "value", "copies", "art", "desc", "note"])
+              ["id", "name", "cost", "mode", "value", "copies", "art", "desc", "image", "note"])
     write_csv(os.path.join(DATA, "enchants.csv"), enchants,
-              ["id", "name", "cost", "drain_type", "effect_value", "charge", "target", "copies", "art", "desc", "note"])
+              ["id", "name", "cost", "drain_type", "effect_value", "charge", "target", "copies", "art", "desc", "image", "note"])
 
     pool = build_pool(creatures, spells, enchants)
     with open(os.path.join(DATA, "cards.json"), "w", encoding="utf-8") as f:
