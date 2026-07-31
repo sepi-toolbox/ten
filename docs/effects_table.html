@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light only">
+<title>TEN — 효과 종합표</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@700;900&family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDEFF2;--paper-2:#E3E6EB;--ink:#141821;--ink-soft:#4A5364;--ink-faint:#8A94A6;--rule:#C6CCD6;
+  --fire:#C1462E;--water:#2A6FB5;--nature:#3F8B3A;--steel:#6B7686;--earth:#8A6A33;--dark:#5B3E86;--light:#B8912A;
+  --ok:#0F8A80;--warn:#B87400;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:'Noto Sans KR',sans-serif;
+  -webkit-font-smoothing:antialiased;padding:18px 14px 60px;line-height:1.6}
+.wrap{max-width:1280px;margin:0 auto}
+h1{font-family:'Gothic A1';font-weight:900;font-size:clamp(23px,3.4vw,32px);letter-spacing:-.03em}
+.meta{font-family:'JetBrains Mono';font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint)}
+.lede{font-size:14px;color:var(--ink-soft);font-weight:300;max-width:70ch;margin:8px 0 14px}
+.filters{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.filters button{font-family:'JetBrains Mono';font-size:11px;font-weight:700;background:transparent;
+  border:1.5px solid var(--rule);color:var(--ink-soft);padding:6px 12px;border-radius:16px;cursor:pointer;min-height:32px}
+.filters button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.filters button[data-e="fire"].on{background:var(--fire);border-color:var(--fire)}
+.filters button[data-e="water"].on{background:var(--water);border-color:var(--water)}
+.filters button[data-e="nature"].on{background:var(--nature);border-color:var(--nature)}
+.filters button[data-e="steel"].on{background:var(--steel);border-color:var(--steel)}
+.filters button[data-e="earth"].on{background:var(--earth);border-color:var(--earth)}
+.filters button[data-e="dark"].on{background:var(--dark);border-color:var(--dark)}
+.filters button[data-e="light"].on{background:var(--light);border-color:var(--light)}
+.cnt{font-family:'JetBrains Mono';font-size:11px;color:var(--ink-faint);margin-bottom:10px}
+
+.tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--rule);border-radius:6px;background:#fff}
+table{border-collapse:collapse;width:100%;font-size:12.5px;min-width:940px}
+th{text-align:left;font-family:'JetBrains Mono';font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-faint);padding:10px 10px 8px;border-bottom:1.5px solid var(--ink);white-space:nowrap;
+  background:var(--paper-2);position:sticky;top:0;z-index:2}
+td{padding:9px 10px;border-bottom:1px solid var(--rule);color:var(--ink-soft);vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr.sep td{border-top:2px solid var(--el)}
+.el-cell{white-space:nowrap;font-weight:700;color:var(--el)!important;font-family:'Gothic A1'}
+.el-dot{display:inline-block;width:9px;height:9px;border-radius:2px;background:var(--el);margin-right:6px;vertical-align:middle}
+.kind{font-family:'JetBrains Mono';font-size:9px;font-weight:700;letter-spacing:.06em;padding:2px 6px;border-radius:3px;white-space:nowrap}
+.kind.kw{background:rgba(20,24,33,.07);color:var(--ink);border:1px solid var(--rule)}
+.kind.sp{background:var(--el);color:#fff}
+.nm{color:var(--ink)!important;font-weight:700;white-space:nowrap;font-size:13px}
+.cost{font-family:'JetBrains Mono';font-weight:700;color:var(--ink)!important;text-align:center}
+.rule{min-width:230px}
+.rule b{color:var(--ink);font-weight:700}
+.budget{font-family:'JetBrains Mono';font-size:11.5px;white-space:nowrap;color:var(--ink)!important}
+.ex{font-family:'JetBrains Mono';font-size:11px;min-width:150px}
+.ex b{color:var(--ink)}
+.v-ok{color:var(--ok);font-weight:700}.v-warn{color:var(--warn);font-weight:700}
+.ctr{font-size:11.5px;color:var(--ink-faint);min-width:140px}
+.note{font-family:'JetBrains Mono';font-size:11px;color:var(--ink-faint);line-height:1.7;margin-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">TEN · EFFECTS MASTER TABLE · 2026.07</div>
+<h1>효과 종합표 — 28종</h1>
+<p class="lede">속성마다 크리처 키워드 2 + 시그니처 스펠 2. 예산 환산식과 대표 카드 검산, 카운터를 한 표에 모았다. 상세 설계 근거는 <b>keywords.html</b>·<b>spells.html</b> 참조.</p>
+<div class="filters" id="f"></div>
+<div class="cnt" id="cnt"></div>
+<div class="tbl-scroll">
+<table><thead><tr>
+<th>속성</th><th>구분</th><th>이름</th><th>코스트</th><th>규칙</th><th>예산 환산</th><th>대표 카드 · 검산</th><th>카운터</th>
+</tr></thead><tbody id="tb"></tbody></table>
+</div>
+<p class="note">
+<b>읽는 법</b> — 크리처 키워드의 코스트 칸은 &ldquo;—&rdquo;다(스탯에 붙는 효과라 자체 코스트가 없음). 예산 환산에서 <b>음수</b>는 스탯을 깎아 능력을 산다는 뜻, <b>양수</b>(대가 X)는 대가를 치르고 스탯을 더 받는다는 뜻.<br>
+<b>중첩 규칙</b> — 배수(연소·증식)를 먼저 적용하고 가감을 나중에 더한다. 태그(수호·비행·관통)는 스탯 가중치라 서로 배타적이지만, 신규 키워드는 예산 가감이라 겹칠 수 있다.<br>
+<b>주의</b> — 분신·겁화는 대가를 붙여 티어를 의도적으로 넘는다. 검산기에 <b>대가 필드</b>를 두어 예외 처리해야 한다.
+</p>
+</div>
+
+<script>
+const EL={fire:['불','#C1462E'],water:['물','#2A6FB5'],nature:['자연','#3F8B3A'],
+  steel:['강철','#6B7686'],earth:['대지','#8A6A33'],dark:['어둠','#5B3E86'],light:['빛','#C9A227']};
+const D=[
+ ['fire','kw','연소 N','—','내 턴 종료를 <b>N회</b> 겪으면 소멸한다.','×1.5 (N=3) / ×2.0 (N=1)','불꽃정령 3코 <b>6/6</b> 연소3|18/18|ok','수호로 흘리기 · 바운스'],
+ ['fire','kw','폭산 X','—','소멸·파괴될 때 <b>적 전체 개체에 X 피해.</b>','−1.5X','화염조 4코 비행 <b>4/6</b>|22/22|ok','개체 분산 배치'],
+ ['fire','sp','분신','2','내 크리처 1개체 소멸 → <b>그 ATK만큼</b> 적 전체 피해.','광역 티어 2 → 실효 4','평균 ATK 4 가정|의도적 상향|warn','대가: 카드 1 + 슬롯 1'],
+ ['fire','sp','겁화','5','적 전체 <b>9 피해.</b> 내 크리처도 <b>3 피해.</b>','광역 티어 7 + 자해 2','5코 광역 9|자해 +2|warn','내 보드가 넓으면 손해'],
+
+ ['water','kw','환류','—','처음 파괴될 때 <b>손으로 돌아간다</b> (1회).','−6','심해수호 4코 수호 <b>1/6</b>|14/14|ok','광역 · 손패 압박'],
+ ['water','kw','밀물 N','—','소환 시 <b>N코 이하</b> 상대 크리처 1개체를 손으로.','−N','해류지기 4코 비행 <b>3/4</b>|16/16|ok','고코스트 위협'],
+ ['water','sp','역류','3','상대 크리처 1개체를 <b>손으로 되돌린다</b> (제한 없음).','바운스 티어 3코 = 1개체','바운스 무제한|적정|ok','영구 해답이 아님'],
+ ['water','sp','환수','2','내 크리처 1개체 회수 + <b>카드 1장 드로우.</b>','자기 바운스 + 드로우 1','2코 적정|적정|ok','덱 소진 = 패배'],
+
+ ['nature','kw','성장 +A/+H','—','내 턴 종료마다 상승. <b>최대 N회</b>까지.','−1.5 × 소모량 × N','묘목 2코 <b>0/2</b> → 4턴 뒤 4/6|2/2|ok','저코스트 제거로 조기 처리'],
+ ['nature','kw','증식','—','소환 시 <b>같은 이름 개체 1</b>을 같은 슬롯에 추가.','×0.5','번식체 3코 <b>2/2</b> ×2개체|6/6|ok','광역에 스택 전체 노출'],
+ ['nature','sp','번성','3','내 크리처 1개체에 <b>+2/+3</b> 영구 부여.','강화 티어 3코 = 7','소모 7|7/7|ok','강화 대상 제거 시 2장 손실'],
+ ['nature','sp','번식','4','<b>2/2 크리처 3개체</b>를 소환한다.','크리처 예산 환산','소모 18|18/18|ok','광역 한 장에 전멸'],
+
+ ['steel','kw','경화 N','—','받는 모든 피해를 <b>N 감소.</b>','−4N','중장병 4코 수호 <b>2/6</b>|16/16|ok','큰 단일 한 방 (정예)'],
+ ['steel','kw','연마 +A/+H','—','소환 시 <b>다른 내 크리처 1개체</b>에 영구 부여.','−(부여 소모량)','연마병 3코 <b>3/2</b> +1/+2|8/8|ok','강화 대상 제거'],
+ ['steel','sp','주조','2','내 크리처 1개체에 <b>경화 1</b> 부여.','경화1 = −4 = 2코 단일 4','2코 부여|4/4|ok','제거 티어 계산을 사후 교란'],
+ ['steel','sp','파쇄','2','상대 인챈트 1개의 <b>충전을 4 제거.</b>','파쇄 티어 2코 = 4','2코 파쇄|4/4|ok','인챈트 없으면 죽은 카드'],
+
+ ['earth','kw','관통','—','초과 피해가 <b>같은 슬롯 다음 개체로 이월.</b>','스탯 가중치 3A + H','가시병 2코 <b>2/2</b>|8/8|ok','수호 분산 · 경화'],
+ ['earth','kw','진형 +H','—','슬롯 <b>1~3번</b>에 있는 동안 HP +X.','−(부여 소모량)/2','성문지기 4코 수호 <b>2/6</b> → 앞자리 2/9|16/17|ok','앞자리를 비워 조건 파괴'],
+ ['earth','sp','함몰','3','상대 <b>슬롯 1~3번</b>의 크리처에 각각 <b>4 피해.</b>','광역 티어 3 + 대상 제한 1','3코 광역 4|대상 제한 +1|warn','수호를 뒤로 배치'],
+ ['earth','sp','관통 사격','2','크리처 1개체에 <b>3 피해</b>, 초과분 <b>이월.</b>','단일 티어 4 − 조건부 1','2코 단일 3|조건부 −1|ok','스택 안 쌓으면 약한 제거'],
+
+ ['dark','kw','대가 X','—','소환 시 <b>내 플레이어 HP를 X 지불.</b>','+X/2 (유일한 양수)','피의광신도 2코 <b>4/3</b> 대가6|11/11|ok','직접 피해 레이스 · 지연'],
+ ['dark','kw','흡혈 X','—','<b>플레이어를 공격</b>할 때 내 HP X 회복.','−1.5X','흡혈귀 3코 <b>2/5</b> 흡혈2|9/9|ok','수호로 차단 시 발동 자체 봉쇄'],
+ ['dark','sp','피의 계약','2','내 HP <b>6 지불</b> → 크리처 1개체에 <b>7 피해.</b>','단일 4 + HP6(+3)','2코 단일 7|7/7|ok','자기 HP가 대가'],
+ ['dark','sp','어둠의 부름','3','내 HP <b>8 지불</b> → <b>2/3 크리처 2개체</b> 소환.','12 + HP8(+4) = 16','소모 14|14/16|ok','빨리 못 이기면 자멸'],
+
+ ['light','kw','가호','—','받는 <b>첫 피해를 1회 무효화.</b>','−6','수호천사 4코 수호 <b>2/5</b>|14/14|ok','작은 피해 두 번 (군세)'],
+ ['light','kw','축복 X','—','소환 시 <b>내 플레이어 HP를 X 회복.</b>','−X/2 (대가의 대칭)','축복사제 3코 <b>2/4</b> 축복8|8/8|ok','회복량을 넘는 페이스'],
+ ['light','sp','가호의 빛','3','내 크리처 1개체에 <b>가호</b> 부여.','가호 −6 = 3코 단일 6','3코 부여|6/6|ok','초과 피해 소멸 규칙과 상승작용'],
+ ['light','sp','성광','4','내 플레이어 HP를 <b>16 회복.</b>','회복 티어 4코 = 16','4코 회복|16/16|ok','보드에 개입하지 않음'],
+];
+let cur='all';
+const F=[['all','전체'],...Object.entries(EL).map(([k,v])=>[k,v[0]])];
+function renderF(){document.getElementById('f').innerHTML=F.map(([k,l])=>
+  `<button class="${k===cur?'on':''}" data-e="${k}">${l}</button>`).join('');}
+function renderT(){
+  const rows=D.filter(d=>cur==='all'||d[0]===cur);
+  let prev=null;
+  document.getElementById('tb').innerHTML=rows.map(d=>{
+    const [el,kind,name,cost,rule,budget,ex,ctr]=d;
+    const [ko,c]=EL[el];
+    const sep=(prev&&prev!==el)?' class="sep"':(prev===null?'':'');
+    prev=el;
+    const [exName,exChk,exV]=ex.split('|');
+    return `<tr${sep} style="--el:${c}">
+      <td class="el-cell"><span class="el-dot"></span>${ko}</td>
+      <td><span class="kind ${kind}">${kind==='kw'?'크리처':'스펠'}</span></td>
+      <td class="nm">${name}</td>
+      <td class="cost">${cost}</td>
+      <td class="rule">${rule}</td>
+      <td class="budget">${budget}</td>
+      <td class="ex">${exName}<br><span class="v-${exV}">${exChk}</span></td>
+      <td class="ctr">${ctr}</td></tr>`;
+  }).join('');
+  const kw=rows.filter(d=>d[1]==='kw').length;
+  document.getElementById('cnt').textContent=`${rows.length}종 — 크리처 키워드 ${kw} · 스펠 ${rows.length-kw}`;
+}
+document.getElementById('f').addEventListener('click',e=>{
+  const b=e.target.closest('[data-e]'); if(!b)return; cur=b.dataset.e; renderF(); renderT();
+});
+renderF(); renderT();
+</script>
+</body>
+</html>
