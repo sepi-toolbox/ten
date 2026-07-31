@@ -41,18 +41,51 @@ STYLE = ("painterly digital fantasy illustration, dark storybook oil-painting fe
          "centered subject, shallow depth of field, no text, no letters, no numbers, "
          "no watermark, no border, no frame, no UI")
 
-# 프레임 기하 — 프로토타입 실측값 (카드 5:7, 수치는 카드 높이 대비 %)
-GEO = [("outer border", "3.1% of the card's width, all four sides"),
-       ("name / cost band", "from 2.2% down to 23.6% of card height"),
-       ("illustration window", "from 23.6% down to 56.8%"),
-       ("rules-text band", "from 56.9% down to 81.0%"),
-       ("stat band", "from 81.0% down to 97.8%")]
+# 속성 상징 — 이걸 못 박지 않으면 생성기가 제멋대로 다른 속성을 만들어 낸다
+ELSYM = {
+    "fire":   "a flame",
+    "water":  "a water droplet",
+    "nature": "a leaf",
+    "steel":  "an anvil with a crossed hammer",
+    "earth":  "a mountain peak over layered strata",
+    "dark":   "a crescent moon",
+    "light":  "a radiant sun",
+}
 
-TYPEKO = {"cr": "크리처", "sp": "스펠", "en": "인챈트"}
-TYPEART = {
-    "cr": "a heraldic shield motif worked into the top band",
-    "sp": "a starburst / arcane spark motif worked into the top band",
-    "en": "a faceted crystal motif worked into the top band",
+# 프레임 기하 — 프로토타입 CSS 실측값 (카드 5:7, 수치는 카드 높이 대비 %)
+BANDS = [
+    ("outer border", "3.1% of the card's width on all four sides"),
+    ("NAME PLATE", "2.2% down to 14.0% — a blank plate for the card name"),
+    ("COST STRIP", "14.0% down to 23.6% — a blank recessed strip, left-aligned, "
+                   "wide enough for six small circular gems in a row. Draw NO gems here, "
+                   "only the empty seat they will sit in."),
+    ("ILLUSTRATION WINDOW", "23.6% down to 56.8% — flat empty rectangle, one neutral dark colour"),
+    ("RULES PANEL", "56.9% down to 81.0% — a blank parchment panel"),
+    ("STAT BAND", "81.0% down to 97.8%"),
+]
+
+TYPEKO = {"cr": "크리처", "sp": "스펠", "en": "인챈트", "ld": "지형"}
+
+# 타입별로 달라지는 부분 — 하단 띠와 상단 표식
+TYPESPEC = {
+    "cr": ("a heraldic shield badge set into the top border",
+           "STAT BAND: two empty circular sockets, one at the far left and one at the far right, "
+           "each about 18% of the card's width across. They are empty recessed seats — "
+           "no numbers, no symbols inside. The strip between them is plain."),
+    "sp": ("a starburst / arcane spark badge set into the top border",
+           "STAT BAND: completely plain. No sockets, no ornament — spells print no stats."),
+    "en": ("a faceted crystal badge set into the top border",
+           "STAT BAND: ONE empty circular socket at the far right only, about 18% of the card's "
+           "width across, an empty recessed seat with nothing inside. The rest of the strip is plain."),
+    "ld": ("a rune-carved keystone badge set into the top border",
+           "STAT BAND: completely plain. No sockets."),
+}
+TYPENOTE = {
+    "cr": "This is a CREATURE frame — it must carry attack and health.",
+    "sp": "This is a SPELL frame — it prints no stats at all.",
+    "en": "This is an ENCHANT frame — it carries a single charge counter.",
+    "ld": "This is a TERRAIN frame — terrain cards cost nothing and print no stats. "
+          "OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead.",
 }
 
 # ── 카드별 그림 소재 (140종) ─────────────────────────────────
@@ -247,25 +280,84 @@ def card_prompt(nm, el, kind, tag=None):
             f"{STYLE}. Square 1:1 composition, subject centred with headroom.")
 
 
+FRAME_RULES = (
+    "Rules for every band:\n"
+    "  - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints "
+    "text into it later.\n"
+    "  - The illustration window is a flat empty rectangle in one neutral dark colour. "
+    "Absolutely nothing inside it; it gets replaced by artwork.\n"
+    "  - The name plate, cost strip, rules panel and stat sockets are empty seats, not filled "
+    "elements. Leave them clean and readable.\n"
+    "  - All ornament lives in the outer border, the corner pieces and the thin dividers "
+    "between bands: engraved metal, carved stone, worn leather.\n\n"
+    "Flat straight-on view, no perspective, no drop shadow, no background outside the card, "
+    "crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark."
+)
+
+
 def frame_prompt(el, k):
-    ko = G.KO[el]
-    geo = "\n".join(f"  - {a}: {b}" for a, b in GEO)
+    badge, statline = TYPESPEC[k]
+    bands = []
+    for nm, desc in BANDS:
+        if k == "ld" and nm == "COST STRIP":
+            continue
+        if k == "ld" and nm == "NAME PLATE":
+            desc = "2.2% down to 23.6% — a blank plate for the card name (no cost strip on terrain)"
+        if nm == "STAT BAND":
+            desc = desc + " — " + statline.split("STAT BAND: ")[1]
+        bands.append(f"  - {nm}: {desc}")
     return (
-        f"A single fantasy trading-card FRAME (border and panel structure only, no artwork "
-        f"inside the picture window, no text anywhere). Portrait card, exact 5:7 aspect ratio.\n\n"
-        f"Theme: the {EL_EN[el]} element — {ELMOOD[el]}. Accent colour {ELHEX[el]}.\n"
-        f"Card type marker: {TYPEART[k]}.\n\n"
-        f"The frame must divide the card into these horizontal bands, measured from the top "
-        f"as a percentage of the card's height:\n{geo}\n\n"
-        f"Rules for the bands:\n"
-        f"  - The illustration window is a plain flat empty rectangle in a single neutral dark "
-        f"colour. Absolutely nothing drawn inside it — it will be replaced by artwork.\n"
-        f"  - The name band, effect band and stat band are plain flat parchment panels with "
-        f"nothing printed on them. Leave them empty and readable.\n"
-        f"  - All ornament lives in the outer border and in the thin dividers between bands: "
-        f"engraved metal, carved stone, worn leather corners.\n\n"
-        f"Flat straight-on view, no perspective, no drop shadow, no background outside the card, "
-        f"crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark."
+        f"A single fantasy trading-card FRAME — border and panel structure only, no artwork, "
+        f"no text anywhere. Portrait card, exact 5:7 aspect ratio.\n\n"
+        f"Element: {EL_EN[el]}. Its symbol is {ELSYM[el]}, set in a round badge in the top-left "
+        f"corner of the border. Palette {ELMOOD[el]}, accent colour {ELHEX[el]}.\n"
+        f"Card type: {badge}. {TYPENOTE[k]}\n\n"
+        f"Divide the card into these horizontal bands, measured from the top as a percentage "
+        f"of the card's height:\n" + "\n".join(bands) + "\n\n" + FRAME_RULES
+    )
+
+
+def frame_sheet_prompt():
+    """7속성 × 4타입 = 28칸 한 장. 이게 기본 경로 — 톤이 저절로 맞는다."""
+    els = list(G.DECKS.keys())
+    elline = "\n".join(
+        f"  Column {i+1} — {EL_EN[e]}: symbol is {ELSYM[e]}, palette {ELMOOD[e]}, accent {ELHEX[e]}"
+        for i, e in enumerate(els))
+    rows = "\n".join(
+        f"  Row {i+1} — {TYPEKO[k]} ({k}): {TYPESPEC[k][0]}. {TYPENOTE[k]} {TYPESPEC[k][1]}"
+        for i, k in enumerate(["cr", "sp", "en", "ld"]))
+    bands = "\n".join(f"  - {nm}: {desc}" for nm, desc in BANDS)
+    return (
+        f"A single image laid out as a 7-column by 4-row grid of 28 fantasy trading-card FRAMES. "
+        f"Every cell is one complete empty card frame, portrait, exact 5:7 aspect ratio, with a "
+        f"black gutter between cells. Border and panel structure only — no artwork, no text.\n\n"
+        f"Columns are the seven elements (same element down each column):\n{elline}\n\n"
+        f"Rows are the four card types (same type across each row):\n{rows}\n\n"
+        f"All 28 frames share one identical layout, measured from the top as a percentage of "
+        f"card height:\n{bands}\n\n"
+        f"Only two things change between cells: the element colour and corner symbol (by column), "
+        f"and the type badge and stat band (by row). Everything else is identical.\n\n"
+        + FRAME_RULES
+    )
+
+
+def cost_module_prompt():
+    """코스트 동그라미는 프레임에 굽지 않고 별도 리소스로 만들어 붙인다."""
+    orbs = "\n".join(
+        f"  {i+1}. {EL_EN[e]} — a polished round gem in {ELHEX[e]}, {ELSYM[e]} faintly "
+        f"etched on its face" for i, e in enumerate(G.DECKS.keys()))
+    return (
+        "A single image laid out as a 4-column by 2-row grid of 8 separate small game icons, "
+        "each icon centred in its own cell.\n\n"
+        "Every icon is the same object: a circular resource gem seated in a thin metal ring, "
+        "viewed flat straight-on, like a UI token. Same size, same ring, same lighting in all "
+        "eight — only the gem colour changes.\n\n"
+        "The eight icons, in order:\n" + orbs + "\n"
+        "  8. generic — the same metal ring but EMPTY: a hollow socket with nothing in it, "
+        "showing dark shadow inside.\n\n"
+        "Put every icon on a solid flat pure magenta background (#FF00FF) so the background can "
+        "be keyed out. No gradients in the background, no shadows cast onto the background, no "
+        "text, no numbers, no labels, no border."
     )
 
 
@@ -284,23 +376,25 @@ def build():
             n += 1
             cards.append((el, n, nm, c, "en", dr, card_prompt(nm, el, "en")))
     for el in G.DECKS:
-        for k in ("cr", "sp", "en"):
+        for k in ("cr", "sp", "en", "ld"):
             frames.append((el, k, frame_prompt(el, k)))
     sheets = [(el, sheet_prompt(el)) for el in G.DECKS]
     missing = [nm for (_, _, nm, *_r) in cards if nm not in SUBJECT]
     return cards, frames, sheets, missing
 
 
-def md(cards, frames, sheets):
+def md(cards, frames, sheets, frame_sheet, cost):
     L = ["# TEN — 이미지 생성 프롬프트", "",
          "ChatGPT / DALL·E 용. 카드가 바뀌면 `python3 tools/gen_art_prompts.py`로 다시 만든다.", "",
-         "## 1. 프레임 21장 (7속성 × 3타입)", ""]
+         "## 1. 프레임 28칸 시트 (권장)  →  `frames-sheet.png`", "", "```", frame_sheet, "```", "",
+         "## 2. 코스트 모듈 8종  →  `cost-orbs.png`", "", "```", cost, "```", "",
+         "## 3. 프레임 개별 28장 (7속성 × 4타입)", ""]
     for el, k, p in frames:
         L += [f"### {G.KO[el]} · {TYPEKO[k]}  →  `frame-{el}-{k}.png`", "```", p, "```", ""]
-    L += ["## 2. 일러스트 — 속성별 4×5 시트 7장", ""]
+    L += ["## 4. 일러스트 — 속성별 4×5 시트 7장", ""]
     for el, p in sheets:
         L += [f"### {G.KO[el]} 20종 시트  →  `sheet-{el}.png`", "```", p, "```", ""]
-    L += ["## 3. 일러스트 — 카드별 개별 (재작업용) 140장", ""]
+    L += ["## 5. 일러스트 — 카드별 개별 (재작업용) 140장", ""]
     cur = None
     for el, n, nm, c, k, tag, p in cards:
         if el != cur:
@@ -364,31 +458,48 @@ def box(name, file, prompt, color):
             f'<pre>{html.escape(prompt)}</pre></div>')
 
 
-def build_html(cards, frames, sheets):
+def build_html(cards, frames, sheets, frame_sheet, cost):
     B = ['<div class="meta">TEN · IMAGE PROMPTS · 2026.07</div>',
-         '<h1>이미지 생성 프롬프트 — 프레임 21 + 일러스트 140</h1>',
+         '<h1>이미지 생성 프롬프트 — 프레임 28 + 코스트 모듈 + 일러스트 140</h1>',
          '<p class="lede">ChatGPT / DALL·E 기준. 각 상자의 <b>복사</b>를 눌러 그대로 붙여넣으면 된다. '
          '카드가 바뀌면 <code>python3 tools/gen_art_prompts.py</code>로 다시 만든다.</p>',
          '<div class="note"><b>먼저 읽을 것 — 파일 이름을 규칙대로 주셔야 자동으로 붙습니다.</b>'
-         '<ul><li>프레임: <code>frame-&lt;속성&gt;-&lt;타입&gt;.png</code> (예: <code>frame-fire-cr.png</code>)</li>'
+         '<ul><li>프레임 시트: <code>frames-sheet.png</code> · 코스트 모듈: <code>cost-orbs.png</code></li>'
+         '<li>프레임 개별: <code>frame-&lt;속성&gt;-&lt;타입&gt;.png</code> — 타입은 <code>cr sp en ld</code> (예: <code>frame-fire-cr.png</code>)</li>'
          '<li>시트: <code>sheet-&lt;속성&gt;.png</code> — 제가 20칸으로 잘라 씁니다</li>'
          '<li>개별: <code>art-&lt;속성&gt;-&lt;번호&gt;.png</code> (예: <code>art-dark-08.png</code>)</li></ul>'
-         '번호는 아래 3번 목록의 번호와 같습니다. 시트로 주시면 개별 파일은 필요 없습니다.</div>',
+         '번호는 아래 05번 목록의 번호와 같습니다. 시트로 주시면 개별 파일은 필요 없습니다.</div>',
+         '<div class="note" style="border-left-color:#B03A3F"><b>지난 시트에서 실제로 어긋났던 것.</b> '
+         '속성이 <b>강철·대지 대신 neutral·arcane</b>으로 바뀌어 나왔고, 이름판·코스트 자리·능력치 소켓이 '
+         '통째로 빠졌으며 세 타입이 작은 뱃지 하나만 빼고 같았습니다. 그래서 이번 프롬프트는 '
+         '<b>속성 7종의 상징을 하나씩 못 박고</b>, 타입별로 하단 띠를 다르게 지정했습니다. '
+         '받으시면 열 순서(불·물·자연·강철·대지·어둠·빛)부터 확인해 주세요.</div>',
          '<div class="note" style="border-left-color:#B87400"><b>DALL·E의 한계 두 가지.</b> '
          '투명 배경과 정확한 픽셀 좌표는 못 맞춥니다. 그래서 프레임 프롬프트는 '
          '<b>일러스트 창을 단색 빈 사각형</b>으로, <b>글자 들어갈 띠는 빈 판</b>으로 그리게 했습니다. '
          '받으면 제가 창 부분을 잘라내 투명하게 만들고 비율을 실제 카드(5:7)에 맞춰 보정합니다. '
+         '코스트 동그라미는 <b>순수 마젠타 배경(#FF00FF)</b>으로 받아서 제가 키잉해 투명화합니다. '
          '띠 위치가 % 단위로 정확히 안 나와도 괜찮습니다 — 순서와 대략의 비율만 맞으면 제가 맞춥니다.</div>',
-         '<h2><span>01 — 프레임</span>7속성 × 3타입 = 21장</h2>',
-         '<p>속성색과 타입 표식만 다르고 구조는 같습니다. 한 속성만 먼저 뽑아 확인한 뒤 나머지를 도는 걸 권합니다.</p>']
+         '<h2><span>01 — 프레임 · 한 장으로</span>7속성 × 4타입 = 28칸 (권장)</h2>',
+         '<p>지난번처럼 한 이미지에 전부 담는 방식입니다. <b>열이 속성, 행이 카드 타입</b>입니다. '
+         '한 장에서 뽑으면 28칸의 톤이 저절로 맞습니다. 이걸 먼저 돌려보고, 특정 칸만 이상하면 '
+         '아래 03번 개별 프롬프트로 그 칸만 다시 뽑으면 됩니다.</p>',
+         box("프레임 28칸 시트", "frames-sheet.png", frame_sheet, "#141821"),
+         '<h2><span>02 — 코스트 모듈</span>프레임에 굽지 말고 따로 붙인다</h2>',
+         '<p>코스트는 1~6개로 개수가 변하고 유색·무색 조합도 카드마다 다릅니다. 프레임에 그려 넣으면 '
+         '절대 안 맞습니다. <b>동그라미 8종(속성 7 + 무색 1)을 따로 리소스로 뽑아</b> 프레임의 코스트 '
+         '자리에 코드로 얹는 방식이 맞습니다.</p>',
+         box("자원 동그라미 8종", "cost-orbs.png", cost, "#B87400"),
+         '<h2><span>03 — 프레임 · 개별</span>특정 칸만 다시 뽑을 때 (28장)</h2>',
+         '<p>속성색·상징과 타입별 하단 띠만 다르고 나머지 구조는 전부 같습니다.</p>']
     for el, k, p in frames:
         B.append(box(f"{G.KO[el]} · {TYPEKO[k]}", f"frame-{el}-{k}.png", p, ELHEX[el]))
-    B += ['<h2><span>02 — 일러스트 · 시트</span>속성별 4×5 = 7장으로 140장</h2>',
+    B += ['<h2><span>04 — 일러스트 · 시트</span>속성별 4×5 = 7장으로 140장</h2>',
           '<p>한 번에 20칸을 뽑는 방식입니다. 지난번 4×5 시트와 같은 방법이고, '
           '이게 가장 빠르고 톤도 잘 맞습니다. 칸 순서는 아래 3번 목록 번호와 같습니다.</p>']
     for el, p in sheets:
         B.append(box(f"{G.KO[el]} 20종 시트", f"sheet-{el}.png", p, ELHEX[el]))
-    B += ['<h2><span>03 — 일러스트 · 개별</span>마음에 안 드는 칸만 다시 뽑을 때</h2>',
+    B += ['<h2><span>05 — 일러스트 · 개별</span>마음에 안 드는 칸만 다시 뽑을 때</h2>',
           '<p>시트에서 특정 칸만 마음에 안 들 때 그 카드만 개별로 다시 뽑습니다. 전부 돌릴 필요는 없습니다.</p>']
     cur = None
     for el, n, nm, c, k, tag, p in cards:
@@ -405,8 +516,9 @@ def main():
         print(f"⚠ 소재가 없는 카드 {len(missing)}종: {', '.join(missing[:10])}")
     out_html = os.path.join(ROOT, "docs", "art_prompts.html")
     out_md = os.path.join(ROOT, "docs", "art_prompts.md")
-    open(out_html, "w", encoding="utf-8").write(build_html(cards, frames, sheets))
-    open(out_md, "w", encoding="utf-8").write(md(cards, frames, sheets))
+    fs, cm = frame_sheet_prompt(), cost_module_prompt()
+    open(out_html, "w", encoding="utf-8").write(build_html(cards, frames, sheets, fs, cm))
+    open(out_md, "w", encoding="utf-8").write(md(cards, frames, sheets, fs, cm))
     print(f"프레임 {len(frames)} · 시트 {len(sheets)} · 카드 {len(cards)}")
     print(f"wrote {out_html}\nwrote {out_md}")
 
