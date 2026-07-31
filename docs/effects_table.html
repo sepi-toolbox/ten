@@ -46,6 +46,8 @@ tr.sep td{border-top:2px solid var(--el)}
 .kind{font-family:'JetBrains Mono';font-size:9px;font-weight:700;letter-spacing:.06em;padding:2px 6px;border-radius:3px;white-space:nowrap}
 .kind.kw{background:rgba(20,24,33,.07);color:var(--ink);border:1px solid var(--rule)}
 .kind.sp{background:var(--el);color:#fff}
+.kind.dr{background:#fff;color:var(--el);border:1.5px solid var(--el)}
+.kind.rm{background:var(--ink);color:#fff}
 .nm{color:var(--ink)!important;font-weight:700;white-space:nowrap;font-size:13px}
 .cost{font-family:'JetBrains Mono';font-weight:700;color:var(--ink)!important;text-align:center}
 .rule{min-width:230px}
@@ -61,8 +63,8 @@ tr.sep td{border-top:2px solid var(--el)}
 <body>
 <div class="wrap">
 <div class="meta">TEN · EFFECTS MASTER TABLE · 2026.07</div>
-<h1>효과 종합표 — 28종</h1>
-<p class="lede">속성마다 크리처 키워드 2 + 시그니처 스펠 2. 예산 환산식과 대표 카드 검산, 카운터를 한 표에 모았다. 상세 설계 근거는 <b>keywords.html</b>·<b>spells.html</b> 참조.</p>
+<h1>효과 종합표 — 42종</h1>
+<p class="lede">속성마다 크리처 키워드 2 + 시그니처 스펠 2 + 드로우 1 + 제거 1. 예산 환산식과 대표 카드 검산, 카운터를 한 표에 모았다. 상세 설계 근거는 <b>keywords.html</b>·<b>spells.html</b> 참조.</p>
 <div class="filters" id="f"></div>
 <div class="cnt" id="cnt"></div>
 <div class="tbl-scroll">
@@ -115,13 +117,28 @@ const D=[
  ['light','kw','축복 X','—','소환 시 <b>내 플레이어 HP를 X 회복.</b>','−X/2 (대가의 대칭)','축복사제 3코 <b>2/4</b> 축복8|8/8|ok','회복량을 넘는 페이스'],
  ['light','sp','가호의 빛','3','내 크리처 1개체에 <b>가호</b> 부여.','가호 −6 = 3코 단일 6','3코 부여|6/6|ok','초과 피해 소멸 규칙과 상승작용'],
  ['light','sp','성광','4','내 플레이어 HP를 <b>16 회복.</b>','회복 티어 4코 = 16','4코 회복|16/16|ok','보드에 개입하지 않음'],
+ ['fire','dr','섬광 계시','2','덱 위 <b>3장 공개.</b> 이번 턴에만 사용 가능, 턴 종료 시 소멸.','임펄스 ≈ 실질 1.3장 = 2코','불 정체성: 지금 아니면 사라짐|적정|ok','마나가 남아야 이득'],
+ ['fire','rm','소이탄','3','크리처에 <b>5 피해.</b> 초과분은 <b>상대 플레이어에게</b> 이월.','단일 6 → 5 + 이월','제거이자 페이스 딜|적정|ok','저HP 크리처엔 과잉'],
+ ['water','dr','조류 읽기','3','<b>카드 2장</b>을 뽑는다.','2장 = 3코 (순수·무조건)','드로우 본가 — 유일한 무조건|적정|ok','덱 소진 = 패배'],
+ ['water','rm','심연으로','4','상대 크리처 1개체를 <b>덱 아래로</b> 되돌린다.','바운스 3코 + 덱아래 1','파괴 아닌 영구 격리|적정|ok','상대 덱이 두꺼워짐'],
+ ['nature','dr','무성한 수확','3','내 <b>크리처 개체 수만큼</b> 뽑는다 (최대 3장).','기대 2장 = 3코','군세 전용 — 보드가 곧 카드|적정|ok','보드 비면 죽은 카드'],
+ ['nature','rm','야수의 습격','2','내 크리처 1개체의 <b>ATK만큼</b> 적 크리처에 피해.','평균 ATK 4 = 단일 4','상한 없음 — 큰 크리처면 8+|적정|ok','보드 없으면 사용 불가'],
+ ['steel','dr','병기고','2','덱에서 <b>크리처 1장</b>을 찾아 손으로.','튜터 ≈ 1.3장 = 2코','확정 탐색 — 콤보 안정화|적정|ok','크리처만 · 카드 수는 안 늘음'],
+ ['steel','rm','분쇄','4','크리처 1개체에 <b>8 피해.</b>','단일 티어 4코 = 8 (정가)','조건 없는 정직한 제거|적정|ok','경화·가호에 막힘'],
+ ['earth','dr','견고한 진지','3','크리처 <b>3개체 이상이면 2장</b>, 아니면 1장.','기대 1.8장 = 2.7코','보드 상태 참조|적정|ok','전개 전에는 손해'],
+ ['earth','rm','매몰','4','상대 <b>가장 왼쪽</b> 크리처를 파괴한다.','파괴 6코 − 위치 제한 2','수호는 앞자리 → 벽 파괴|적정|ok','상대가 배치로 회피 가능'],
+ ['dark','dr','금단의 지식','2','내 HP <b>8 지불</b> → <b>카드 2장</b>을 뽑는다.','2장 3코 − HP8(1코)','최저가 드로우|적정|ok','HP가 곧 승리 조건'],
+ ['dark','rm','잠식','4','내 HP <b>16 지불</b> → 크리처 1개체를 <b>파괴.</b>','파괴 6코 − HP16(2코)','조건 없는 확정 파괴|적정|ok','HP 16은 게임의 1/4'],
+ ['light','dr','계시','3','<b>카드 1장</b>을 뽑고 내 HP <b>6 회복.</b>','1장(1.5) + 회복6(1.5)','방어와 어드를 겸함|적정|ok','드로우 효율은 최하'],
+ ['light','rm','심판','3','<b>ATK 5 이상</b>인 크리처 1개체를 <b>파괴.</b>','파괴 6코 − 조건 3','정예 전용 확정 답|적정|ok','작은 크리처엔 무력'],
 ];
+const KIND={kw:'크리처',sp:'스펠',dr:'드로우',rm:'제거'};
 let cur='all';
-const F=[['all','전체'],...Object.entries(EL).map(([k,v])=>[k,v[0]])];
+const F=[['all','전체'],...Object.entries(EL).map(([k,v])=>[k,v[0]]),['#kw','크리처'],['#dr','드로우'],['#rm','제거']];
 function renderF(){document.getElementById('f').innerHTML=F.map(([k,l])=>
   `<button class="${k===cur?'on':''}" data-e="${k}">${l}</button>`).join('');}
 function renderT(){
-  const rows=D.filter(d=>cur==='all'||d[0]===cur);
+  const rows=D.filter(d=>cur==='all'||(cur[0]==='#'?d[1]===cur.slice(1):d[0]===cur));
   let prev=null;
   document.getElementById('tb').innerHTML=rows.map(d=>{
     const [el,kind,name,cost,rule,budget,ex,ctr]=d;
@@ -131,7 +148,7 @@ function renderT(){
     const [exName,exChk,exV]=ex.split('|');
     return `<tr${sep} style="--el:${c}">
       <td class="el-cell"><span class="el-dot"></span>${ko}</td>
-      <td><span class="kind ${kind}">${kind==='kw'?'크리처':'스펠'}</span></td>
+      <td><span class="kind ${kind}">${KIND[kind]}</span></td>
       <td class="nm">${name}</td>
       <td class="cost">${cost}</td>
       <td class="rule">${rule}</td>
@@ -139,8 +156,8 @@ function renderT(){
       <td class="ex">${exName}<br><span class="v-${exV}">${exChk}</span></td>
       <td class="ctr">${ctr}</td></tr>`;
   }).join('');
-  const kw=rows.filter(d=>d[1]==='kw').length;
-  document.getElementById('cnt').textContent=`${rows.length}종 — 크리처 키워드 ${kw} · 스펠 ${rows.length-kw}`;
+  const c={kw:0,sp:0,dr:0,rm:0}; rows.forEach(d=>c[d[1]]++);
+  document.getElementById('cnt').textContent=`${rows.length}종 — 크리처 키워드 ${c.kw} · 시그니처 스펠 ${c.sp} · 드로우 ${c.dr} · 제거 ${c.rm}`;
 }
 document.getElementById('f').addEventListener('click',e=>{
   const b=e.target.closest('[data-e]'); if(!b)return; cur=b.dataset.e; renderF(); renderT();
