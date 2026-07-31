@@ -63,6 +63,7 @@ python3 tools/validate_budget.py     # 예산 초과·덱 불일치 시 exit 1
 - 프로토타입(`prototype/index.html`)에 위 확정 규칙 2건 반영됨(덱 소진 패배, 만석 소환 불가). 턴 종료 처리는 `크리처 공격 → 인챈트 발동(마지막)` 순.
 - 프로토타입은 아직 카드 풀(POOL)을 하드코딩 중 — `data/cards.json`을 읽도록 리팩터하는 것이 다음 후보.
 - `tools/card_editor.html` 추가: 아이패드용 카드 에디터(실시간 예산 검산 + ten_data.json 내보내기). 라운드트립 무손실 검증됨.
+- `tools/card_gallery.html` 추가: 카드 디자인 갤러리(타입/태그별 프레임 + 카드별 벡터 아트 + 효과 텍스트). 아트는 SVG 라인아트(래스터 일러스트 아님). 둘 다 `build_editor.py`로 함께 생성.
 
 ## 미확정 사항 (결정되면 README·이 파일 함께 갱신)
 

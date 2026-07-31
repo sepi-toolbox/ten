@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light only">
+<title>TEN — 카드 갤러리</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@700;900&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDEFF2; --paper-2:#E3E6EB; --ink:#141821; --ink-soft:#4A5364;
+  --ink-faint:#8A94A6; --rule:#C6CCD6;
+  --indigo:#2D3BAF; --teal:#0F8A80; --amber:#B87400; --crimson:#B03A3F; --violet:#6A4FBF;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:'Noto Sans KR',sans-serif;-webkit-font-smoothing:antialiased;padding:16px}
+.wrap{max-width:1200px;margin:0 auto}
+h1{font-family:'Gothic A1';font-weight:900;font-size:22px;letter-spacing:-.03em}
+h1 span{color:var(--teal)}
+.sub{font-family:'JetBrains Mono';font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin:3px 0 14px}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.filters button{font-family:'JetBrains Mono';font-size:11.5px;font-weight:500;background:transparent;
+  border:1px solid var(--rule);color:var(--ink-soft);padding:8px 13px;border-radius:20px;cursor:pointer;min-height:36px}
+.filters button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:16px}
+
+/* ---------- 카드 ---------- */
+.card{
+  --fc:var(--ink);
+  position:relative;background:var(--paper);border:2.5px solid var(--fc);border-radius:14px;
+  overflow:hidden;display:flex;flex-direction:column;aspect-ratio:5/7;
+  box-shadow:0 3px 10px rgba(20,24,33,.12);
+}
+.card.guard{--fc:var(--teal)} .card.fly{--fc:var(--amber)}
+.card.flyguard{--fc:var(--amber)} .card.normal{--fc:var(--ink)}
+.card.sp{--fc:var(--crimson)} .card.en{--fc:var(--violet)}
+
+.chead{display:flex;align-items:center;gap:7px;padding:8px 9px 6px}
+.cost{flex:none;width:28px;height:28px;border-radius:50%;background:var(--indigo);color:#fff;
+  font-family:'JetBrains Mono';font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.name{font-family:'Gothic A1';font-weight:900;font-size:15px;letter-spacing:-.02em;line-height:1.1;flex:1}
+
+.art{position:relative;margin:0 9px;border-radius:8px;background:
+  linear-gradient(160deg,color-mix(in srgb,var(--fc) 14%,var(--paper)),color-mix(in srgb,var(--fc) 4%,var(--paper)));
+  border:1px solid color-mix(in srgb,var(--fc) 30%,transparent);
+  aspect-ratio:3/2;display:flex;align-items:center;justify-content:center}
+.art svg{width:62%;height:62%;color:var(--fc)}
+.flyguard .art::after{content:'';position:absolute;inset:0;border-radius:8px;box-shadow:inset 0 0 0 3px color-mix(in srgb,var(--teal) 45%,transparent)}
+
+.tagrow{display:flex;gap:5px;padding:8px 9px 4px;flex-wrap:wrap}
+.chip{font-family:'JetBrains Mono';font-size:8.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  border:1px solid var(--fc);color:var(--fc);padding:2px 6px;border-radius:3px}
+
+.eff{font-size:10.5px;line-height:1.5;color:var(--ink-soft);padding:2px 10px 6px;flex:1}
+.eff b{color:var(--ink);font-weight:700}
+.flavor{font-size:9px;font-style:italic;color:var(--ink-faint);padding:0 10px 8px;line-height:1.4}
+
+/* 충전 미터 (인챈트) */
+.meter{display:flex;gap:2px;padding:0 10px 8px}
+.meter i{width:9px;height:14px;border:1.5px solid var(--violet);border-radius:2px;background:color-mix(in srgb,var(--violet) 22%,transparent)}
+
+/* 하단 스탯 (크리처) */
+.stats{display:flex;justify-content:space-between;align-items:center;padding:7px 10px 10px;margin-top:auto}
+.stat{display:flex;align-items:center;gap:4px;font-family:'JetBrains Mono';font-weight:700;font-size:16px}
+.stat .ic{width:9px;height:9px;border-radius:2px;transform:rotate(45deg)}
+.stat.atk .ic{background:var(--crimson)} .stat.hp .ic{background:var(--teal)}
+.stat.atk{color:var(--crimson)} .stat.hp{color:var(--teal)}
+.copies{font-family:'JetBrains Mono';font-size:9px;color:var(--ink-faint);align-self:flex-end;padding:0 10px 9px}
+.spfoot{padding:7px 10px 11px;margin-top:auto;display:flex;justify-content:flex-end}
+.big{font-family:'JetBrains Mono';font-weight:700;font-size:20px;color:var(--fc)}
+.big small{font-size:9px;color:var(--ink-faint);font-weight:500}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>TE<span>N</span> — 카드 갤러리</h1>
+  <div class="sub">Card design draft · frames · vector art</div>
+  <div class="filters" id="filters"></div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<script>
+const DATA = {"rules": {"constants": {"start_hp": 60, "mana_cap": 6, "board_slots": 10, "stack_max": 5, "deck_size": 30}, "budget": {"a": 3, "b": 1, "k": 0.5, "enchant_a": 4, "enchant_b": 2}, "tags": {"normal": {"atk_w": 2, "hp_w": 1, "budget_adj": 0}, "guard": {"atk_w": 2, "hp_w": 2, "budget_adj": 2}, "fly": {"atk_w": 4, "hp_w": 1, "budget_adj": 0}, "flyguard": {"atk_w": 4, "hp_w": 2, "budget_adj": 2}}, "cost_budget": [{"cost": 1, "creature_p": 4, "enchant_t": 6}, {"cost": 2, "creature_p": 8, "enchant_t": 11}, {"cost": 3, "creature_p": 12, "enchant_t": 16}, {"cost": 4, "creature_p": 18, "enchant_t": 23}, {"cost": 5, "creature_p": 24, "enchant_t": 30}, {"cost": 6, "creature_p": 32, "enchant_t": 39}], "spell_tier": [{"cost": 1, "single": 2, "aoe": null, "direct": null}, {"cost": 2, "single": 4, "aoe": 2, "direct": null}, {"cost": 3, "single": 6, "aoe": 3, "direct": 5}, {"cost": 4, "single": 8, "aoe": 5, "direct": null}, {"cost": 5, "single": 12, "aoe": 7, "direct": null}, {"cost": 6, "single": 99, "aoe": 10, "direct": null}]}, "creatures": [{"id": "CR01", "name": "파수병", "cost": 1, "tag": "guard", "atk": 0, "hp": 3, "copies": 3, "budget_p": "6", "verdict": "적정", "note": "1코 스택 주력. 흡수 1회 × 5중첩 가능"}, {"id": "CR02", "name": "잔날개", "cost": 1, "tag": "normal", "atk": 1, "hp": 2, "copies": 1, "budget_p": "4", "verdict": "적정", "note": "초반 페이스 확보용"}, {"id": "CR03", "name": "방벽병", "cost": 2, "tag": "guard", "atk": 1, "hp": 4, "copies": 3, "budget_p": "10", "verdict": "적정", "note": "중첩 시 딜도 누적되는 벽"}, {"id": "CR04", "name": "검사", "cost": 2, "tag": "normal", "atk": 2, "hp": 4, "copies": 2, "budget_p": "8", "verdict": "적정", "note": "커브 기본값"}, {"id": "CR05", "name": "전투매", "cost": 2, "tag": "fly", "atk": 1, "hp": 4, "copies": 2, "budget_p": "8", "verdict": "적정", "note": "저코스트 우회 딜"}, {"id": "CR06", "name": "석벽", "cost": 3, "tag": "guard", "atk": 1, "hp": 6, "copies": 2, "budget_p": "14", "verdict": "적정", "note": "단일 제거 3코로는 못 잡음"}, {"id": "CR07", "name": "창병", "cost": 3, "tag": "normal", "atk": 4, "hp": 4, "copies": 2, "budget_p": "12", "verdict": "적정", "note": "3코 최대 딜"}, {"id": "CR08", "name": "그리핀", "cost": 3, "tag": "fly", "atk": 2, "hp": 4, "copies": 1, "budget_p": "12", "verdict": "적정", "note": "수호 덱 상대 핵심"}, {"id": "CR09", "name": "기사", "cost": 4, "tag": "normal", "atk": 6, "hp": 6, "copies": 1, "budget_p": "18", "verdict": "적정", "note": "중반 전환점"}, {"id": "CR10", "name": "와이번", "cost": 4, "tag": "fly", "atk": 4, "hp": 2, "copies": 1, "budget_p": "18", "verdict": "적정", "note": "유리대포. 저코스트 제거에 취약"}, {"id": "CR11", "name": "장군", "cost": 5, "tag": "normal", "atk": 8, "hp": 8, "copies": 1, "budget_p": "24", "verdict": "적정", "note": "5코 피니셔 후보"}, {"id": "CR12", "name": "파괴자", "cost": 6, "tag": "normal", "atk": 11, "hp": 10, "copies": 1, "budget_p": "32", "verdict": "적정", "note": "결정력 카드. 대응은 5코 소멸뿐"}], "spells": [{"id": "SP01", "name": "화살", "cost": 1, "mode": "dmg", "value": 2, "copies": 2, "note": "2코 크리처 1개체 처리"}, {"id": "SP02", "name": "창격", "cost": 2, "mode": "dmg", "value": 4, "copies": 2, "note": "3코 수호(HP 4~6) 대응"}, {"id": "SP03", "name": "처형", "cost": 3, "mode": "dmg", "value": 6, "copies": 2, "note": "4코 크리처까지 사정권"}, {"id": "SP04", "name": "화염비", "cost": 4, "mode": "aoe", "value": 5, "copies": 1, "note": "스택 덱의 유일한 해답"}, {"id": "SP05", "name": "소멸", "cost": 5, "mode": "dmg", "value": 12, "copies": 1, "note": "6코 크리처 대응 카드"}], "enchants": [{"id": "EN01", "name": "성화", "cost": 3, "drain_type": "persistent", "effect_value": 3, "charge": 5, "target": "상대", "copies": 2, "note": "내 턴 종료마다 상대에게 3 피해"}, {"id": "EN02", "name": "군기", "cost": 4, "drain_type": "persistent", "effect_value": 2, "charge": 5, "target": "전체", "copies": 0, "note": "내 크리처 전체 ATK +2 (미구현 · 잠정)"}, {"id": "EN03", "name": "각성", "cost": 2, "drain_type": "active", "effect_value": 5, "charge": 2, "target": "단일", "copies": 0, "note": "내 크리처 1개체 HP +5 (미구현 · 잠정)"}]};
+const TAGKO = {normal:'일반', guard:'수호', fly:'비행', flyguard:'비행수호'};
+const MODEKO = {dmg:'단일', aoe:'광역', direct:'직접'};
+const DRAINKO = {persistent:'지속형', triggered:'발동형', active:'사용형'};
+
+/* ---------- 벡터 아트 모티프 (stroke=currentColor) ---------- */
+const S = (inner) => `<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
+const M = {
+  파수병: S('<path d="M50 14 L80 25 V50 C80 71 66 82 50 88 C34 82 20 71 20 50 V25 Z"/>'),
+  잔날개: S('<path d="M50 30 L50 78"/><path d="M50 40 C34 30 20 34 14 46 C30 46 42 44 50 52"/><path d="M50 40 C66 30 80 34 86 46 C70 46 58 44 50 52"/>'),
+  방벽병: S('<rect x="20" y="30" width="60" height="44" rx="2"/><path d="M20 52 H80 M50 30 V52 M35 52 V74 M65 52 V74"/>'),
+  검사: S('<path d="M50 16 L50 66"/><path d="M38 60 L62 60"/><path d="M44 84 L56 84 M50 66 V84"/>'),
+  전투매: S('<path d="M50 40 C30 20 14 30 18 40 C34 40 44 46 50 56 C56 46 66 40 82 40 C86 30 70 20 50 40Z"/><path d="M50 56 L50 74"/>'),
+  석벽: S('<rect x="18" y="26" width="64" height="52" rx="2"/><path d="M18 44 H82 M18 62 H82 M40 26 V44 M62 44 V62 M40 62 V78"/>'),
+  창병: S('<path d="M50 16 L50 84"/><path d="M50 16 L40 34 M50 16 L60 34"/><path d="M40 50 L60 50"/>'),
+  그리핀: S('<path d="M30 44 C20 30 30 22 40 30"/><circle cx="40" cy="42" r="4" fill="currentColor" stroke="none"/><path d="M44 40 L58 36 L50 46"/><path d="M40 48 C40 68 60 74 74 60 C60 66 52 60 52 50"/><path d="M52 50 C66 40 80 46 84 56"/>'),
+  기사: S('<path d="M32 44 C32 26 68 26 68 44 V60 C68 76 32 76 32 60 Z"/><path d="M50 30 V22 M44 52 H60 M40 44 L44 44"/>'),
+  와이번: S('<path d="M24 40 C40 34 44 44 50 44 C56 44 60 34 76 40 C64 46 60 54 50 54 C40 54 36 46 24 40Z"/><path d="M50 54 C50 70 40 78 30 80 M50 54 C50 68 58 74 66 76"/>'),
+  장군: S('<path d="M30 20 V84"/><path d="M30 24 H74 L64 38 L74 52 H30"/>'),
+  파괴자: S('<path d="M50 18 L50 82"/><path d="M50 24 C28 24 24 46 40 50 C30 40 42 34 50 40"/><path d="M50 24 C72 24 76 46 60 50 C70 40 58 34 50 40"/>'),
+  화살: S('<path d="M18 82 L82 18"/><path d="M82 18 L62 22 M82 18 L78 38"/><path d="M18 82 L28 72 M18 82 L32 78 M18 82 L22 68"/>'),
+  창격: S('<path d="M16 84 L84 16"/><path d="M84 16 L66 20 L80 34"/><path d="M30 62 L38 70"/>'),
+  처형: S('<path d="M46 20 L46 84"/><path d="M46 26 C24 26 22 50 42 52 C30 42 40 34 46 40 C52 34 62 42 50 52 C70 50 68 26 46 26Z"/>'),
+  화염비: S('<path d="M28 26 L22 44 M50 22 L44 42 M72 26 L66 44"/><path d="M50 84 C40 84 34 76 40 66 C42 72 46 70 46 64 C54 68 60 76 50 84Z"/>'),
+  소멸: S('<circle cx="50" cy="50" r="14"/><path d="M50 12 V26 M50 74 V88 M12 50 H26 M74 50 H88 M24 24 L34 34 M66 66 L76 76 M76 24 L66 34 M34 66 L24 76"/>'),
+  성화: S('<path d="M50 78 C36 78 28 66 38 52 C41 60 47 58 46 50 C58 54 66 66 62 74 C60 78 55 78 50 78Z"/><path d="M40 86 H60"/>'),
+  군기: S('<path d="M34 16 V86"/><path d="M34 20 H78 L68 34 L78 48 H34"/>'),
+  각성: S('<path d="M50 84 V40"/><path d="M32 56 L50 38 L68 56"/><path d="M50 30 L50 16 M38 24 L34 18 M62 24 L66 18"/>'),
+};
+function art(c){
+  if(M[c.name]) return M[c.name];
+  if(c.k==='sp') return M['소멸'];
+  if(c.k==='en') return M['성화'];
+  if(c.tag==='guard'||c.tag==='flyguard') return M['파수병'];
+  if(c.tag==='fly') return M['전투매'];
+  return M['검사'];
+}
+
+/* ---------- 효과 텍스트 ---------- */
+function effect(c){
+  if(c.k==='cr'){
+    const map={
+      normal:'턴 종료 시 <b>ATK</b>만큼 상대를 공격한다.',
+      guard:'<b>수호</b> — 플레이어 대신 왼쪽 슬롯부터 피해를 받는다.',
+      fly:'<b>비행</b> — 비행 없는 수호를 무시하고 공격한다.',
+      flyguard:'<b>비행·수호</b> — 공중·지상 양쪽을 모두 막는다.',
+    };
+    return map[c.tag]||map.normal;
+  }
+  return `<b>${c.k==='sp'?MODEKO[c.mode]||'':DRAINKO[c.drain_type]||''}</b> · ${c.note||c.d||''}`;
+}
+function cardHTML(c){
+  const cls = c.k==='cr'?c.tag : c.k;
+  const chips = c.k==='cr'
+    ? `<span class="chip">${TAGKO[c.tag]||'크리처'}</span>`
+    : `<span class="chip">${c.k==='sp'?'스펠':'인챈트'}</span>`;
+  let foot;
+  if(c.k==='cr'){
+    foot=`<div class="stats">
+        <div class="stat atk"><span class="ic"></span>${c.atk}</div>
+        <div class="stat hp"><span class="ic"></span>${c.hp}</div>
+      </div><div class="copies">×${c.copies} in deck</div>`;
+  }else if(c.k==='en'){
+    foot=`<div class="meter">${'<i></i>'.repeat(Math.min(c.charge||0,10))}</div>
+      <div class="spfoot"><span class="big">${c.effect_value}<small> ×${c.charge} 충전</small></span></div>`;
+  }else{
+    foot=`<div class="spfoot"><span class="big">${c.value}<small> 위력</small></span></div>`;
+  }
+  return `<div class="card ${cls}">
+    <div class="chead"><div class="cost">${c.cost}</div><div class="name">${c.name}</div></div>
+    <div class="art">${art(c)}</div>
+    <div class="tagrow">${chips}</div>
+    <div class="eff">${effect(c)}</div>
+    ${c.note && c.k==='cr' ? `<div class="flavor">${c.note}</div>`:''}
+    ${foot}
+  </div>`;
+}
+
+/* ---------- 목록 / 필터 ---------- */
+function allCards(){
+  return [
+    ...DATA.creatures.map(c=>({...c,k:'cr'})),
+    ...DATA.spells.map(c=>({...c,k:'sp'})),
+    ...DATA.enchants.filter(c=>+c.copies>0).map(c=>({...c,k:'en'})),
+  ];
+}
+const FILTERS=[['all','전체'],['cr','크리처'],['sp','스펠'],['en','인챈트'],['guard','수호'],['fly','비행']];
+let cur='all';
+function match(c){
+  if(cur==='all')return true;
+  if(cur==='cr'||cur==='sp'||cur==='en')return c.k===cur;
+  if(cur==='guard')return c.tag==='guard'||c.tag==='flyguard';
+  if(cur==='fly')return c.tag==='fly'||c.tag==='flyguard';
+}
+function renderFilters(){
+  document.getElementById('filters').innerHTML=FILTERS.map(([k,l])=>
+    `<button class="${k===cur?'on':''}" data-f="${k}">${l}</button>`).join('');
+}
+function renderGrid(){
+  const cards=allCards().filter(match).sort((a,b)=>a.cost-b.cost);
+  document.getElementById('grid').innerHTML=cards.map(cardHTML).join('');
+}
+document.getElementById('filters').addEventListener('click',e=>{
+  const b=e.target.closest('[data-f]'); if(!b)return;
+  cur=b.dataset.f; renderFilters(); renderGrid();
+});
+renderFilters(); renderGrid();
+</script>
+</body>
+</html>

@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
-data/의 CSV·rules.json을 읽어 카드 에디터(card_editor.html)를 생성한다.
-데이터가 바뀌면 이 스크립트를 다시 돌려 에디터의 기본값을 최신으로 맞춘다.
+data/의 CSV·rules.json을 읽어 뷰어를 생성한다:
+  - tools/card_editor.html   (편집 + 실시간 예산 검산)
+  - tools/card_gallery.html  (카드 디자인 갤러리: 프레임 + 벡터 아트)
+데이터가 바뀌면 이 스크립트를 다시 돌려 두 뷰어의 기본값을 최신으로 맞춘다.
 
   python3 tools/build_editor.py
 """
@@ -35,13 +37,17 @@ def main():
     enchants = [num(r, "cost", "effect_value", "charge", "copies") for r in load_csv("enchants.csv")]
 
     blob = {"rules": rules, "creatures": creatures, "spells": spells, "enchants": enchants}
-    template = open(os.path.join(HERE, "card_editor.template.html"), encoding="utf-8").read()
-    html = template.replace("__DATA__", json.dumps(blob, ensure_ascii=False))
+    data_json = json.dumps(blob, ensure_ascii=False)
 
-    out = os.path.join(HERE, "card_editor.html")
-    with open(out, "w", encoding="utf-8") as f:
-        f.write(html)
-    print(f"wrote tools/card_editor.html  (crea={len(creatures)} spell={len(spells)} enchant={len(enchants)})")
+    for name in ("card_editor", "card_gallery"):
+        tpl = os.path.join(HERE, f"{name}.template.html")
+        if not os.path.exists(tpl):
+            continue
+        html = open(tpl, encoding="utf-8").read().replace("__DATA__", data_json)
+        with open(os.path.join(HERE, f"{name}.html"), "w", encoding="utf-8") as f:
+            f.write(html)
+        print(f"wrote tools/{name}.html")
+    print(f"cards: crea={len(creatures)} spell={len(spells)} enchant={len(enchants)}")
 
 
 if __name__ == "__main__":
