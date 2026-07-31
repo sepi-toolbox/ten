@@ -1,10 +1,13 @@
 {
   "constants": {
     "start_hp": 60,
-    "mana_cap": 6,
+    "mana_cap": 5,
     "board_slots": 10,
     "stack_max": 5,
-    "deck_size": 30
+    "deck_size": 40,
+    "hand_start": 7,
+    "copies_max": 2,
+    "land_count": 17
   },
   "budget": {
     "a": 3,

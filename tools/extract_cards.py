@@ -43,6 +43,19 @@ TAG_MAP = {"일반": "normal", "수호": "guard", "비행": "fly", "비행수호
 SPELL_MODE = {"단일": "dmg", "광역": "aoe", "직접": "direct"}
 DRAIN_MAP = {"지속형": "persistent", "발동형": "triggered", "사용형": "active"}
 
+# 지형 시스템 상수 — xlsx의 옛 값(덱30·마나6)을 덮어쓴다
+SYSTEM_CONSTANTS = {
+    "deck_size": 40, "hand_start": 7, "mana_cap": 5,
+    "copies_max": 2, "land_count": 17, "board_slots": 10, "stack_max": 5, "start_hp": 60,
+}
+
+# 샘플 3색 덱(강철·대지·어둠) 23장 — 프로토타입 DECKLIST와 동기화
+SAMPLE_DECK = {
+    "파수병": 2, "방벽병": 2, "검사": 2, "창병": 2, "기사": 2,
+    "창격": 2, "석벽": 2, "장군": 2,
+    "처형": 2, "성화": 2, "소멸": 2, "파괴자": 1,
+}
+
 # 카드명 → 속성 (잠정 배정: 아트·테마 기준. docs/element_design.html 참조)
 DEFAULT_ELEMENT = {
     "파수병": "steel", "방벽병": "steel", "검사": "steel", "창병": "steel", "기사": "steel",
@@ -224,7 +237,10 @@ def main():
     apply_design(spells, existing, lambda r: "burst")
     apply_design(enchants, existing, lambda r: "flame")
 
+    rules["constants"].update(SYSTEM_CONSTANTS)
     for grp in (creatures, spells, enchants):
+        for r in grp:
+            r["copies"] = SAMPLE_DECK.get(r["name"], 0)
         apply_cost(grp)
 
     with open(os.path.join(DATA, "rules.json"), "w", encoding="utf-8") as f:
