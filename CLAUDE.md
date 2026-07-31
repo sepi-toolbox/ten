@@ -15,18 +15,24 @@ Claude는 매 세션이 시작될 때 이 파일을 기준으로 프로젝트 �
 - 성권 (sepi-toolbox) — 게임 시스템 디자이너. 규칙 설계와 데이터 테이블 작업이 중심.
 - 설명은 데이터 테이블·수치 중심으로. 기초 프로그래밍 지식 있음(깊은 내부 구현보다 규칙·밸런스 관점 우선).
 
-## 절대 규칙: 밸런스 시트가 단일 원본(source of truth)
+## 카드 데이터 편집 — 두 경로 (섞지 말 것: 한쪽이 다른 쪽을 덮어씀)
 
-카드 수치는 **오직 `data/ten_balance.xlsx` 에서만** 수정한다.
-CSV/JSON(`creatures.csv`, `cards.json` 등)은 시트에서 **생성되는 산출물**이므로 직접 손대지 않는다.
+`data/`의 CSV·JSON은 **생성되는 산출물**이라 직접 손대지 않는다. 편집은 아래 둘 중 하나로 한다.
 
+**경로 A — 스프레드시트 (데스크톱)**
+`data/ten_balance.xlsx` 수정 → `python3 tools/extract_cards.py` (xlsx → CSV·JSON)
+
+**경로 B — 카드 에디터 (아이패드/모바일, 기본 경로)**
+`tools/card_editor.html`을 브라우저로 열어 편집 → `JSON 내보내기`(ten_data.json) → Claude에게 전달 →
+`python3 tools/build_from_data.py ten_data.json` (ten_data.json → CSV·JSON)
+
+두 경로 모두 끝나면 **반드시** 검산하고, 통과(exit 0)해야 커밋한다:
 ```bash
-pip install openpyxl
-python3 tools/extract_cards.py      # xlsx → data/의 CSV·JSON 재생성
-python3 tools/validate_budget.py    # 예산 검산. 초과·덱 불일치 시 exit 1
+python3 tools/validate_budget.py     # 예산 초과·덱 불일치 시 exit 1
 ```
 
-카드를 추가/수정한 뒤에는 **항상 위 두 스크립트를 순서대로 실행**하고, 검산이 통과(exit 0)해야 커밋한다.
+데이터가 바뀌면 에디터 기본값도 갱신: `python3 tools/build_editor.py` (CSV → card_editor.html).
+주의: xlsx는 openpyxl로 열어 저장하면 검산 수식 캐시가 날아가므로 코드로 수정하지 않는다.
 
 ## 커밋 규칙
 
@@ -56,6 +62,7 @@ python3 tools/validate_budget.py    # 예산 검산. 초과·덱 불일치 시 e
 - 초기 커밋 + 규칙 결정 반영 완료. 카드 22종(크리처12·스펠5·인챈트1 채용 + 잠정2) 전부 예산 범위 내, 덱 30장 정합.
 - 프로토타입(`prototype/index.html`)에 위 확정 규칙 2건 반영됨(덱 소진 패배, 만석 소환 불가). 턴 종료 처리는 `크리처 공격 → 인챈트 발동(마지막)` 순.
 - 프로토타입은 아직 카드 풀(POOL)을 하드코딩 중 — `data/cards.json`을 읽도록 리팩터하는 것이 다음 후보.
+- `tools/card_editor.html` 추가: 아이패드용 카드 에디터(실시간 예산 검산 + ten_data.json 내보내기). 라운드트립 무손실 검증됨.
 
 ## 미확정 사항 (결정되면 README·이 파일 함께 갱신)
 

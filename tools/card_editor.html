@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light only">
+<title>TEN — 카드 에디터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@700;900&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDEFF2; --paper-2:#E3E6EB; --ink:#141821; --ink-soft:#4A5364;
+  --ink-faint:#8A94A6; --rule:#C6CCD6; --slot:#D6DAE2;
+  --indigo:#2D3BAF; --teal:#0F8A80; --amber:#B87400; --crimson:#B03A3F; --violet:#6A4FBF;
+  --ok:#0F8A80; --over:#B03A3F; --under:#B87400;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--paper);color:var(--ink);font-family:'Noto Sans KR',sans-serif;
+  -webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;padding-bottom:80px;
+}
+.wrap{max-width:1100px;margin:0 auto;padding:14px}
+
+/* header */
+.top{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);
+  padding:12px 14px;margin:-14px -14px 16px;}
+.top h1{font-family:'Gothic A1';font-weight:900;font-size:20px;letter-spacing:-.03em}
+.top h1 span{color:var(--teal)}
+.sub{font-family:'JetBrains Mono';font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin-top:3px}
+.stats{display:flex;gap:8px;margin-top:11px;flex-wrap:wrap}
+.stat{border:1px solid var(--rule);border-radius:4px;padding:7px 11px;background:var(--paper-2);flex:1;min-width:96px}
+.stat .n{font-family:'JetBrains Mono';font-weight:700;font-size:19px;line-height:1;font-variant-numeric:tabular-nums}
+.stat .l{font-family:'JetBrains Mono';font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:5px}
+.stat.bad .n{color:var(--over)} .stat.good .n{color:var(--ok)}
+
+/* action buttons */
+.acts{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap}
+button{font-family:'JetBrains Mono';font-size:12px;font-weight:500;letter-spacing:.04em;
+  background:var(--ink);color:var(--paper);border:1px solid var(--ink);
+  padding:10px 14px;border-radius:4px;cursor:pointer;transition:.13s;min-height:40px}
+button.ghost{background:transparent;color:var(--ink);border-color:var(--rule)}
+button:active{opacity:.7}
+button.sm{padding:7px 11px;font-size:11px;min-height:34px}
+
+/* section */
+section{margin-bottom:26px}
+h2{font-family:'Gothic A1';font-weight:700;font-size:15px;margin-bottom:9px;display:flex;align-items:center;gap:9px}
+h2 .dot{width:10px;height:10px;border-radius:2px;display:inline-block}
+.tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--rule);border-radius:5px;background:var(--paper-2)}
+table{border-collapse:collapse;width:100%;font-family:'JetBrains Mono';font-size:12.5px;min-width:560px}
+th{text-align:left;font-weight:500;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-faint);padding:9px 8px;border-bottom:1px solid var(--ink);white-space:nowrap;background:var(--paper-2);position:sticky;top:0}
+td{padding:5px 8px;border-bottom:1px solid var(--rule);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+input,select{font-family:inherit;font-size:12.5px;border:1px solid var(--rule);border-radius:3px;
+  padding:7px 6px;background:var(--paper);color:var(--ink);width:100%;min-height:36px}
+input:focus,select:focus{outline:2px solid var(--indigo);outline-offset:-1px;border-color:var(--indigo)}
+input.name{font-family:'Noto Sans KR';font-weight:700}
+input[inputmode="numeric"]{text-align:center;font-weight:700}
+td.name{min-width:96px} td.num{width:64px} td.tag{width:104px} td.copies{width:60px}
+td.derived{width:118px;white-space:nowrap}
+.verdict{font-weight:700;font-size:11px}
+.verdict.ok{color:var(--ok)} .verdict.over{color:var(--over)} .verdict.under{color:var(--under)}
+.warn{color:var(--amber);font-size:10px;margin-left:4px}
+.calc{color:var(--ink-faint);font-size:10.5px}
+.del{background:transparent;border:1px solid var(--rule);color:var(--crimson);width:34px;height:34px;
+  min-height:34px;padding:0;border-radius:3px;font-size:15px}
+.addrow{margin-top:8px}
+.hint{font-family:'JetBrains Mono';font-size:10.5px;color:var(--ink-faint);margin-top:6px;line-height:1.6}
+
+/* toast */
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%) translateY(30px);
+  background:var(--ink);color:var(--paper);font-family:'JetBrains Mono';font-size:12px;
+  padding:11px 18px;border-radius:6px;opacity:0;transition:.25s;z-index:50;pointer-events:none;max-width:90vw;text-align:center}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+input[type=file]{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>TE<span>N</span> — 카드 에디터</h1>
+    <div class="sub">Balance data · live budget check</div>
+    <div class="stats">
+      <div class="stat" id="st-deck"><div class="n">–</div><div class="l">덱 / 목표 30</div></div>
+      <div class="stat" id="st-over"><div class="n">–</div><div class="l">예산 초과</div></div>
+      <div class="stat" id="st-guard"><div class="n">–</div><div class="l">수호 비중</div></div>
+      <div class="stat" id="st-fly"><div class="n">–</div><div class="l">비행 비중</div></div>
+    </div>
+    <div class="acts">
+      <button id="export">⤓ JSON 내보내기</button>
+      <button class="ghost" id="copy">⧉ JSON 복사</button>
+      <button class="ghost" id="loadBtn">↥ 파일 불러오기</button>
+      <input type="file" id="file" accept=".json">
+    </div>
+    <div class="hint">편집 후 <b>JSON 내보내기</b>(또는 <b>복사</b>)해서 Claude 채팅으로 보내면, 검산·커밋·push까지 이어집니다. 예산 초과(빨강)가 0인지 확인하세요.</div>
+  </div>
+
+  <section>
+    <h2><span class="dot" style="background:var(--ink)"></span>크리처</h2>
+    <div class="tbl-scroll"><table id="tbl-crea"><thead><tr>
+      <th>카드명</th><th>코스트</th><th>태그</th><th>ATK</th><th>HP</th><th>매수</th><th>검산</th><th></th>
+    </tr></thead><tbody></tbody></table></div>
+    <button class="ghost sm addrow" data-add="crea">+ 크리처 추가</button>
+  </section>
+
+  <section>
+    <h2><span class="dot" style="background:var(--crimson)"></span>스펠</h2>
+    <div class="tbl-scroll"><table id="tbl-spell"><thead><tr>
+      <th>카드명</th><th>코스트</th><th>분류</th><th>수치</th><th>매수</th><th>검산</th><th></th>
+    </tr></thead><tbody></tbody></table></div>
+    <button class="ghost sm addrow" data-add="spell">+ 스펠 추가</button>
+  </section>
+
+  <section>
+    <h2><span class="dot" style="background:var(--violet)"></span>인챈트</h2>
+    <div class="tbl-scroll"><table id="tbl-ench"><thead><tr>
+      <th>카드명</th><th>코스트</th><th>소모타입</th><th>효과 E</th><th>충전 C</th><th>대상</th><th>매수</th><th>검산</th><th></th>
+    </tr></thead><tbody></tbody></table></div>
+    <button class="ghost sm addrow" data-add="ench">+ 인챈트 추가</button>
+    <div class="hint">매수 0 = 덱 미채용(설계 보관용). 검산·덱 집계에서 제외됩니다.</div>
+  </section>
+</div>
+<div id="toast"></div>
+
+<script>
+/* ====== 데이터 (빌드 시 주입) ====== */
+const DATA = {"rules": {"constants": {"start_hp": 60, "mana_cap": 6, "board_slots": 10, "stack_max": 5, "deck_size": 30}, "budget": {"a": 3, "b": 1, "k": 0.5, "enchant_a": 4, "enchant_b": 2}, "tags": {"normal": {"atk_w": 2, "hp_w": 1, "budget_adj": 0}, "guard": {"atk_w": 2, "hp_w": 2, "budget_adj": 2}, "fly": {"atk_w": 4, "hp_w": 1, "budget_adj": 0}, "flyguard": {"atk_w": 4, "hp_w": 2, "budget_adj": 2}}, "cost_budget": [{"cost": 1, "creature_p": 4, "enchant_t": 6}, {"cost": 2, "creature_p": 8, "enchant_t": 11}, {"cost": 3, "creature_p": 12, "enchant_t": 16}, {"cost": 4, "creature_p": 18, "enchant_t": 23}, {"cost": 5, "creature_p": 24, "enchant_t": 30}, {"cost": 6, "creature_p": 32, "enchant_t": 39}], "spell_tier": [{"cost": 1, "single": 2, "aoe": null, "direct": null}, {"cost": 2, "single": 4, "aoe": 2, "direct": null}, {"cost": 3, "single": 6, "aoe": 3, "direct": 5}, {"cost": 4, "single": 8, "aoe": 5, "direct": null}, {"cost": 5, "single": 12, "aoe": 7, "direct": null}, {"cost": 6, "single": 99, "aoe": 10, "direct": null}]}, "creatures": [{"id": "CR01", "name": "파수병", "cost": 1, "tag": "guard", "atk": 0, "hp": 3, "copies": 3, "budget_p": "6", "verdict": "적정", "note": "1코 스택 주력. 흡수 1회 × 5중첩 가능"}, {"id": "CR02", "name": "잔날개", "cost": 1, "tag": "normal", "atk": 1, "hp": 2, "copies": 1, "budget_p": "4", "verdict": "적정", "note": "초반 페이스 확보용"}, {"id": "CR03", "name": "방벽병", "cost": 2, "tag": "guard", "atk": 1, "hp": 4, "copies": 3, "budget_p": "10", "verdict": "적정", "note": "중첩 시 딜도 누적되는 벽"}, {"id": "CR04", "name": "검사", "cost": 2, "tag": "normal", "atk": 2, "hp": 4, "copies": 2, "budget_p": "8", "verdict": "적정", "note": "커브 기본값"}, {"id": "CR05", "name": "전투매", "cost": 2, "tag": "fly", "atk": 1, "hp": 4, "copies": 2, "budget_p": "8", "verdict": "적정", "note": "저코스트 우회 딜"}, {"id": "CR06", "name": "석벽", "cost": 3, "tag": "guard", "atk": 1, "hp": 6, "copies": 2, "budget_p": "14", "verdict": "적정", "note": "단일 제거 3코로는 못 잡음"}, {"id": "CR07", "name": "창병", "cost": 3, "tag": "normal", "atk": 4, "hp": 4, "copies": 2, "budget_p": "12", "verdict": "적정", "note": "3코 최대 딜"}, {"id": "CR08", "name": "그리핀", "cost": 3, "tag": "fly", "atk": 2, "hp": 4, "copies": 1, "budget_p": "12", "verdict": "적정", "note": "수호 덱 상대 핵심"}, {"id": "CR09", "name": "기사", "cost": 4, "tag": "normal", "atk": 6, "hp": 6, "copies": 1, "budget_p": "18", "verdict": "적정", "note": "중반 전환점"}, {"id": "CR10", "name": "와이번", "cost": 4, "tag": "fly", "atk": 4, "hp": 2, "copies": 1, "budget_p": "18", "verdict": "적정", "note": "유리대포. 저코스트 제거에 취약"}, {"id": "CR11", "name": "장군", "cost": 5, "tag": "normal", "atk": 8, "hp": 8, "copies": 1, "budget_p": "24", "verdict": "적정", "note": "5코 피니셔 후보"}, {"id": "CR12", "name": "파괴자", "cost": 6, "tag": "normal", "atk": 11, "hp": 10, "copies": 1, "budget_p": "32", "verdict": "적정", "note": "결정력 카드. 대응은 5코 소멸뿐"}], "spells": [{"id": "SP01", "name": "화살", "cost": 1, "mode": "dmg", "value": 2, "copies": 2, "note": "2코 크리처 1개체 처리"}, {"id": "SP02", "name": "창격", "cost": 2, "mode": "dmg", "value": 4, "copies": 2, "note": "3코 수호(HP 4~6) 대응"}, {"id": "SP03", "name": "처형", "cost": 3, "mode": "dmg", "value": 6, "copies": 2, "note": "4코 크리처까지 사정권"}, {"id": "SP04", "name": "화염비", "cost": 4, "mode": "aoe", "value": 5, "copies": 1, "note": "스택 덱의 유일한 해답"}, {"id": "SP05", "name": "소멸", "cost": 5, "mode": "dmg", "value": 12, "copies": 1, "note": "6코 크리처 대응 카드"}], "enchants": [{"id": "EN01", "name": "성화", "cost": 3, "drain_type": "persistent", "effect_value": 3, "charge": 5, "target": "상대", "copies": 2, "note": "내 턴 종료마다 상대에게 3 피해"}, {"id": "EN02", "name": "군기", "cost": 4, "drain_type": "persistent", "effect_value": 2, "charge": 5, "target": "전체", "copies": 0, "note": "내 크리처 전체 ATK +2 (미구현 · 잠정)"}, {"id": "EN03", "name": "각성", "cost": 2, "drain_type": "active", "effect_value": 5, "charge": 2, "target": "단일", "copies": 0, "note": "내 크리처 1개체 HP +5 (미구현 · 잠정)"}]};
+const R = DATA.rules;
+
+const TAGS = {normal:'일반', guard:'수호', fly:'비행', flyguard:'비행수호'};
+const MODES = {dmg:'단일', aoe:'광역', direct:'직접'};
+const DRAIN = {persistent:'지속형', triggered:'발동형', active:'사용형'};
+const TARGETS = ['상대','전체','단일','자신'];
+
+/* ====== 예산 계산 (validate_budget.py 미러) ====== */
+function creatureBudget(cost, tag){
+  const b=R.budget, t=R.tags[tag]||R.tags.normal;
+  return Math.floor(b.a*cost + b.b + Math.pow(cost-1,2)*b.k + 0.5) + t.budget_adj;
+}
+function creatureSpent(tag, atk, hp){
+  const t=R.tags[tag]||R.tags.normal; return t.atk_w*atk + t.hp_w*hp;
+}
+function spellRef(cost, mode){
+  const t=R.spell_tier.find(x=>x.cost===cost); if(!t) return null;
+  return mode==='dmg'?t.single : mode==='aoe'?t.aoe : mode==='direct'?t.direct : null;
+}
+function enchantBudget(cost){
+  const c=R.cost_budget.find(x=>x.cost===cost); return c?c.enchant_t:null;
+}
+function verdictOf(dev){ return dev>0?'over' : dev<0?'under' : 'ok'; }
+function verdictLabel(v){ return v==='over'?'초과' : v==='under'?'미달' : '적정'; }
+
+/* ====== 렌더 ====== */
+const num = v => `<input inputmode="numeric" value="${v}">`;
+
+function render(){
+  renderCrea(); renderSpell(); renderEnch(); recompute();
+}
+function renderCrea(){
+  const tb=document.querySelector('#tbl-crea tbody'); tb.innerHTML='';
+  DATA.creatures.forEach((c,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td class="name"><input class="name" data-k="creatures" data-i="${i}" data-f="name" value="${c.name||''}"></td>
+      <td class="num"><input inputmode="numeric" data-k="creatures" data-i="${i}" data-f="cost" value="${c.cost}"></td>
+      <td class="tag"><select data-k="creatures" data-i="${i}" data-f="tag">${
+        Object.entries(TAGS).map(([k,v])=>`<option value="${k}"${c.tag===k?' selected':''}>${v}</option>`).join('')}</select></td>
+      <td class="num"><input inputmode="numeric" data-k="creatures" data-i="${i}" data-f="atk" value="${c.atk}"></td>
+      <td class="num"><input inputmode="numeric" data-k="creatures" data-i="${i}" data-f="hp" value="${c.hp}"></td>
+      <td class="copies"><input inputmode="numeric" data-k="creatures" data-i="${i}" data-f="copies" value="${c.copies}"></td>
+      <td class="derived"><span id="v-creatures-${i}"></span></td>
+      <td><button class="del" data-del="creatures" data-i="${i}">✕</button></td>`;
+    tb.appendChild(tr);
+  });
+}
+function renderSpell(){
+  const tb=document.querySelector('#tbl-spell tbody'); tb.innerHTML='';
+  DATA.spells.forEach((c,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td class="name"><input class="name" data-k="spells" data-i="${i}" data-f="name" value="${c.name||''}"></td>
+      <td class="num"><input inputmode="numeric" data-k="spells" data-i="${i}" data-f="cost" value="${c.cost}"></td>
+      <td class="tag"><select data-k="spells" data-i="${i}" data-f="mode">${
+        Object.entries(MODES).map(([k,v])=>`<option value="${k}"${c.mode===k?' selected':''}>${v}</option>`).join('')}</select></td>
+      <td class="num"><input inputmode="numeric" data-k="spells" data-i="${i}" data-f="value" value="${c.value}"></td>
+      <td class="copies"><input inputmode="numeric" data-k="spells" data-i="${i}" data-f="copies" value="${c.copies}"></td>
+      <td class="derived"><span id="v-spells-${i}"></span></td>
+      <td><button class="del" data-del="spells" data-i="${i}">✕</button></td>`;
+    tb.appendChild(tr);
+  });
+}
+function renderEnch(){
+  const tb=document.querySelector('#tbl-ench tbody'); tb.innerHTML='';
+  DATA.enchants.forEach((c,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td class="name"><input class="name" data-k="enchants" data-i="${i}" data-f="name" value="${c.name||''}"></td>
+      <td class="num"><input inputmode="numeric" data-k="enchants" data-i="${i}" data-f="cost" value="${c.cost}"></td>
+      <td class="tag"><select data-k="enchants" data-i="${i}" data-f="drain_type">${
+        Object.entries(DRAIN).map(([k,v])=>`<option value="${k}"${c.drain_type===k?' selected':''}>${v}</option>`).join('')}</select></td>
+      <td class="num"><input inputmode="numeric" data-k="enchants" data-i="${i}" data-f="effect_value" value="${c.effect_value}"></td>
+      <td class="num"><input inputmode="numeric" data-k="enchants" data-i="${i}" data-f="charge" value="${c.charge}"></td>
+      <td class="tag"><select data-k="enchants" data-i="${i}" data-f="target">${
+        TARGETS.map(t=>`<option value="${t}"${c.target===t?' selected':''}>${t}</option>`).join('')}</select></td>
+      <td class="copies"><input inputmode="numeric" data-k="enchants" data-i="${i}" data-f="copies" value="${c.copies}"></td>
+      <td class="derived"><span id="v-enchants-${i}"></span></td>
+      <td><button class="del" data-del="enchants" data-i="${i}">✕</button></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+/* ====== 검산 재계산 (입력 포커스 유지: derived 셀만 갱신) ====== */
+function recompute(){
+  let over=0, deck=0, guardCopies=0, flyCopies=0, creCopies=0;
+  DATA.creatures.forEach((c,i)=>{
+    const cost=+c.cost||0, atk=+c.atk||0, hp=+c.hp||0, cp=+c.copies||0;
+    const bud=creatureBudget(cost,c.tag), spent=creatureSpent(c.tag,atk,hp), dev=spent-bud;
+    const v=verdictOf(dev);
+    if(v==='over') over++;
+    deck+=cp; creCopies+=cp;
+    if(c.tag==='guard'||c.tag==='flyguard') guardCopies+=cp;
+    if(c.tag==='fly'||c.tag==='flyguard') flyCopies+=cp;
+    const cap=(c.tag==='guard'||c.tag==='flyguard')&&atk>cost-1&&cost>1;
+    document.getElementById(`v-creatures-${i}`).innerHTML=
+      `<span class="calc">${spent}/${bud} </span><span class="verdict ${v}">${verdictLabel(v)}</span>`+
+      (cap?`<span class="warn">⚠ATK캡</span>`:'');
+  });
+  DATA.spells.forEach((c,i)=>{
+    const cost=+c.cost||0, val=+c.value||0, cp=+c.copies||0;
+    const ref=spellRef(cost,c.mode);
+    deck+=cp;
+    let v='ok', label;
+    if(ref===null||ref===undefined){ label='기준없음'; v='under'; }
+    else { const dev=val-ref; v=verdictOf(dev); label=verdictLabel(v); if(v==='over') over++; }
+    document.getElementById(`v-spells-${i}`).innerHTML=
+      `<span class="calc">${val}/${ref==null?'–':ref} </span><span class="verdict ${v}">${label}</span>`;
+  });
+  DATA.enchants.forEach((c,i)=>{
+    const cost=+c.cost||0, ev=+c.effect_value||0, ch=+c.charge||0, cp=+c.copies||0;
+    const total=ev*ch, bud=enchantBudget(cost), dev=bud==null?0:total-bud;
+    const active=cp>0;
+    let v=bud==null?'under':verdictOf(dev);
+    if(active){ deck+=cp; if(v==='over') over++; }
+    document.getElementById(`v-enchants-${i}`).innerHTML=
+      `<span class="calc">${total}/${bud==null?'–':bud} </span>`+
+      `<span class="verdict ${active?v:'ok'}" style="${active?'':'opacity:.4'}">${active?verdictLabel(v):'미채용'}</span>`;
+  });
+
+  setStat('st-deck', deck, `덱 / 목표 ${R.constants.deck_size}`, deck===R.constants.deck_size?'good':'bad');
+  setStat('st-over', over, '예산 초과', over===0?'good':'bad');
+  const gp = creCopies? Math.round(guardCopies/creCopies*100):0;
+  const fp = creCopies? Math.round(flyCopies/creCopies*100):0;
+  setStat('st-guard', gp+'%', '수호 (목표 35~40)', gp>=35&&gp<=40?'good':'');
+  setStat('st-fly', fp+'%', '비행 (목표 8~10)', fp>=8&&fp<=10?'good':'');
+}
+function setStat(id, n, l, cls){
+  const el=document.getElementById(id);
+  el.className='stat'+(cls?' '+cls:'');
+  el.querySelector('.n').textContent=n;
+  el.querySelector('.l').textContent=l;
+}
+
+/* ====== 입력 처리 ====== */
+document.body.addEventListener('input', e=>{
+  const t=e.target; if(!t.dataset.k) return;
+  const {k,i,f}=t.dataset;
+  DATA[k][+i][f] = t.value;
+  recompute();
+});
+document.body.addEventListener('click', e=>{
+  const del=e.target.closest('[data-del]');
+  if(del){ DATA[del.dataset.del].splice(+del.dataset.i,1); render(); return; }
+  const add=e.target.closest('[data-add]');
+  if(add){ addRow(add.dataset.add); }
+});
+function addRow(kind){
+  if(kind==='crea') DATA.creatures.push({name:'새 크리처',cost:1,tag:'normal',atk:1,hp:2,copies:1,note:''});
+  if(kind==='spell') DATA.spells.push({name:'새 스펠',cost:1,mode:'dmg',value:2,copies:1,note:''});
+  if(kind==='ench') DATA.enchants.push({name:'새 인챈트',cost:2,drain_type:'persistent',effect_value:2,charge:5,target:'상대',copies:0,note:''});
+  render();
+}
+
+/* ====== 내보내기 / 불러오기 ====== */
+function cleaned(){
+  const norm = (arr, numFields) => arr.map(o=>{
+    const out={...o}; numFields.forEach(f=>out[f]=+out[f]||0); return out;
+  });
+  return {
+    rules: DATA.rules,
+    creatures: norm(DATA.creatures, ['cost','atk','hp','copies']),
+    spells: norm(DATA.spells, ['cost','value','copies']),
+    enchants: norm(DATA.enchants, ['cost','effect_value','charge','copies']),
+  };
+}
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(cleaned(),null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='ten_data.json'; a.click();
+  URL.revokeObjectURL(url); toast('ten_data.json 내보냄 — 채팅으로 보내주세요');
+}
+document.getElementById('export').onclick=exportJSON;
+document.getElementById('copy').onclick=async()=>{
+  const text=JSON.stringify(cleaned(),null,2);
+  try{ await navigator.clipboard.writeText(text); toast('JSON 복사됨 — 채팅에 붙여넣기'); }
+  catch(_){ toast('복사 실패 — 내보내기를 쓰세요'); }
+};
+document.getElementById('loadBtn').onclick=()=>document.getElementById('file').click();
+document.getElementById('file').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const d=JSON.parse(r.result);
+      if(d.creatures) DATA.creatures=d.creatures;
+      if(d.spells) DATA.spells=d.spells;
+      if(d.enchants) DATA.enchants=d.enchants;
+      if(d.rules) DATA.rules=d.rules;
+      render(); toast('불러옴');
+    }catch(_){ toast('불러오기 실패 — JSON 형식 확인'); }
+  };
+  r.readAsText(f);
+};
+let toastT;
+function toast(m){
+  const el=document.getElementById('toast'); el.textContent=m; el.classList.add('on');
+  clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('on'),2200);
+}
+
+render();
+</script>
+</body>
+</html>
