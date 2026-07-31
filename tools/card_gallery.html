@@ -63,6 +63,7 @@ h1 span{color:var(--teal)}
 .stat{display:flex;align-items:center;gap:4px;font-family:'JetBrains Mono';font-weight:700;font-size:16px}
 .stat .ic{width:9px;height:9px;border-radius:2px;transform:rotate(45deg)}
 .stat.atk .ic{background:var(--crimson)} .stat.hp .ic{background:var(--teal)}
+.stat.charge .ic{background:var(--violet)} .stat.charge{color:var(--violet)}
 .stat.atk{color:var(--crimson)} .stat.hp{color:var(--teal)}
 .copies{font-family:'JetBrains Mono';font-size:9px;color:var(--ink-faint);align-self:flex-end;padding:0 10px 9px}
 .spfoot{padding:7px 10px 11px;margin-top:auto;display:flex;justify-content:flex-end}
@@ -137,9 +138,7 @@ function effect(c){
 }
 function cardHTML(c){
   const cls = c.k==='cr'?c.tag : c.k;
-  const chips = c.k==='cr'
-    ? `<span class="chip">${TAGKO[c.tag]||'크리처'}</span>`
-    : `<span class="chip">${c.k==='sp'?'스펠':'인챈트'}</span>`;
+  const chips = `<span class="chip">${c.k==='cr'?'크리처':(c.k==='sp'?'스펠':'인챈트')}</span>`;
   let foot;
   if(c.k==='cr'){
     foot=`<div class="stats">
@@ -147,10 +146,11 @@ function cardHTML(c){
         <div class="stat hp"><span class="ic"></span>${c.hp}</div>
       </div><div class="copies">×${c.copies} in deck</div>`;
   }else if(c.k==='en'){
-    foot=`<div class="meter">${'<i></i>'.repeat(Math.min(c.charge||0,10))}</div>
-      <div class="spfoot"><span class="big">${c.effect_value}<small> ×${c.charge} 충전</small></span></div>`;
+    foot=`<div class="stats"><div></div>
+        <div class="stat charge"><span class="ic"></span>${c.charge}</div>
+      </div><div class="copies">×${c.copies} in deck</div>`;
   }else{
-    foot='';
+    foot=`<div class="copies">×${c.copies} in deck</div>`;
   }
   return `<div class="card ${cls}">
     <div class="chead"><div class="cost">${c.cost}</div><div class="name">${c.name}</div></div>

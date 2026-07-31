@@ -72,6 +72,7 @@ input[type=file]{display:none}
 .st{display:flex;align-items:center;gap:3px;font-family:'JetBrains Mono';font-weight:700;font-size:15px}
 .st .ic{width:8px;height:8px;border-radius:2px;transform:rotate(45deg)}
 .st.atk .ic{background:var(--crimson)} .st.hp .ic{background:var(--teal)}
+.st.charge .ic{background:var(--violet)} .st.charge{color:var(--violet)}
 .st.atk{color:var(--crimson)} .st.hp{color:var(--teal)}
 .spfoot{padding:6px 9px 10px;margin-top:auto;display:flex;justify-content:flex-end}
 .big{font-family:'JetBrains Mono';font-weight:700;font-size:18px;color:var(--fc)}
@@ -192,10 +193,10 @@ function cardHTML(c,k){
   c.k = k==='creatures'?'cr':k==='spells'?'sp':'en';
   const cls=c.k==='cr'?c.tag:c.k;
   const eff=(c.desc&&c.desc.trim())?c.desc:defEffect(c);
-  const chip=c.k==='cr'?TAGKO[c.tag]:(c.k==='sp'?'스펠':'인챈트');
+  const chip=c.k==='cr'?'크리처':(c.k==='sp'?'스펠':'인챈트');
   let foot;
   if(c.k==='cr') foot=`<div class="stnums"><div class="st atk"><span class="ic"></span>${c.atk}</div><div class="st hp"><span class="ic"></span>${c.hp}</div></div>`;
-  else if(c.k==='en') foot=`<div class="meter">${'<i></i>'.repeat(Math.min(+c.charge||0,10))}</div><div class="spfoot"><span class="big">${c.effect_value}<small> ×${c.charge}</small></span></div>`;
+  else if(c.k==='en') foot=`<div class="stnums"><div></div><div class="st charge"><span class="ic"></span>${c.charge}</div></div>`;
   else foot='';
   const vd=verdict(c,k);
   return `<div class="card ${cls}"><div class="vbadge ${vd.v}">${VKO[vd.v]}</div>
