@@ -31,6 +31,17 @@ def load_rows():
     return rows
 
 
+def inject_costs(html, rows):
+    """POOL의 각 카드에 cc(유색 요구)를 주입한다. (CE는 ELEM 블록에서 이미 선언됨)"""
+    import re as _re
+    cc = {r["name"]: int(r.get("cost_color") or 1) for r in rows}
+    html = _re.sub(r"const CARDEL=\{[^}]*\};[^\n]*\n", "", html, count=1)
+    for name, v in cc.items():
+        pat = _re.compile(r"(" + _re.escape(name) + r":\{c:\d+,k:'[a-z]{2}')(?!,cc:)")
+        html = pat.sub(lambda m: m.group(1) + f",cc:{v}", html, count=1)
+    return html
+
+
 def main():
     from PIL import Image
     art = {}
@@ -49,6 +60,7 @@ def main():
         art[r["name"]] = "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
 
     html = open(PROTO, encoding="utf-8").read()
+    html = inject_costs(html, load_rows())
     block = "/* ART_START */\nconst ART = " + json.dumps(art, ensure_ascii=False) + ";\n/* ART_END */"
     if "/* ART_START */" in html:
         html = re.sub(r"/\* ART_START \*/.*?/\* ART_END \*/", lambda m: block, html, count=1, flags=re.S)

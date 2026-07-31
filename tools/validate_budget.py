@@ -101,12 +101,19 @@ def main():
         print(f"  {e['name']:<6}  {cost:^4}   {e['drain_type']:<10} {ev}×{ch}   {total:>4}    {str(bud_t):>4}   {verdict}")
 
     # 덱 사이즈 검산
-    deck = sum(int(c["copies"]) for c in creatures) + \
-        sum(int(s["copies"]) for s in spells) + \
-        sum(int(e["copies"]) for e in enchants)
+    lands = load_csv("lands.csv") if os.path.exists(os.path.join(DATA, "lands.csv")) else []
+    cards = creatures + spells + enchants
+    deck = sum(int(c["copies"]) for c in cards) + rules["constants"].get("land_count", 0)
     target = rules["constants"]["deck_size"]
+
+    cap = rules["constants"].get("copies_max", 2)
+    over_cap = [c["name"] for c in cards if int(c["copies"] or 0) > cap]
+    print(f"\n동명 카드 상한 {cap}장 — {'위반 없음' if not over_cap else '위반: ' + ', '.join(over_cap)}")
+    if over_cap:
+        problems += 1
+    print(f"지형 {len(lands)}종 정의 · 덱 내 지형 {rules['constants'].get('land_count',0)}장")
     print("\n" + "=" * 68)
-    print(f"덱 총 카드 수: {deck} / 목표 {target}  →  {'OK' if deck == target else '불일치!'}")
+    print(f"덱 총 장수(카드+지형): {deck} / 목표 {target}  →  {'OK' if deck == target else '불일치!'}")
     if deck != target:
         problems += 1
     print(f"예산 초과/불일치 항목: {problems}")

@@ -10,9 +10,26 @@ id가 비어 있으면 CR/SP/EN 접두사로 자동 부여한다.
 rules는 편집 대상이 아니므로 입력 파일의 rules는 무시하고 data/rules.json을 유지한다.
 """
 import csv
+import math
 import json
 import os
 import sys
+
+def color_req(cost):
+    """유색 자원 요구량. 기본 규칙 = ceil((cost-1)/2), 1~3 범위."""
+    return min(3, max(1, math.ceil((int(cost) - 1) / 2)))
+
+
+def apply_cost(rows, copies_max=2):
+    """코스트를 유색/무색으로 분해하고 동명 상한을 적용한다."""
+    for r in rows:
+        c = int(r["cost"])
+        cc = int(r.get("cost_color") or 0) or color_req(c)
+        r["cost_color"] = min(cc, c)
+        r["cost_generic"] = c - r["cost_color"]
+        r["copies"] = min(int(r.get("copies") or 0), copies_max)
+    return rows
+
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -97,12 +114,15 @@ def main():
     spells = ensure_design(autoid(d["spells"], "SP"), lambda r: "burst")
     enchants = ensure_design(autoid(d["enchants"], "EN"), lambda r: "flame")
 
+    for grp in (creatures, spells, enchants):
+        apply_cost(grp)
+
     write_csv(os.path.join(DATA, "creatures.csv"), creatures,
-              ["id", "name", "cost", "tag", "atk", "hp", "copies", "element", "art", "desc", "image", "budget_p", "verdict", "note"])
+              ["id", "name", "cost", "tag", "atk", "hp", "copies", "cost_color", "cost_generic", "element", "art", "desc", "image", "budget_p", "verdict", "note"])
     write_csv(os.path.join(DATA, "spells.csv"), spells,
-              ["id", "name", "cost", "mode", "value", "copies", "element", "art", "desc", "image", "note"])
+              ["id", "name", "cost", "mode", "value", "copies", "cost_color", "cost_generic", "element", "art", "desc", "image", "note"])
     write_csv(os.path.join(DATA, "enchants.csv"), enchants,
-              ["id", "name", "cost", "drain_type", "effect_value", "charge", "target", "copies", "element", "art", "desc", "image", "note"])
+              ["id", "name", "cost", "drain_type", "effect_value", "charge", "target", "copies", "cost_color", "cost_generic", "element", "art", "desc", "image", "note"])
 
     pool = build_pool(creatures, spells, enchants)
     with open(os.path.join(DATA, "cards.json"), "w", encoding="utf-8") as f:

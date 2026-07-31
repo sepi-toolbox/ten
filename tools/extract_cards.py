@@ -13,9 +13,26 @@ TEN — 밸런스 시트(ten_balance.xlsx)를 엔진용 데이터 테이블로 �
 값을 수정한 뒤 이 스크립트를 다시 돌리면 데이터 테이블이 재생성된다.
 """
 import csv
+import math
 import json
 import os
 import openpyxl
+
+def color_req(cost):
+    """유색 자원 요구량. 기본 규칙 = ceil((cost-1)/2), 1~3 범위."""
+    return min(3, max(1, math.ceil((int(cost) - 1) / 2)))
+
+
+def apply_cost(rows, copies_max=2):
+    """코스트를 유색/무색으로 분해하고 동명 상한을 적용한다."""
+    for r in rows:
+        c = int(r["cost"])
+        cc = int(r.get("cost_color") or 0) or color_req(c)
+        r["cost_color"] = min(cc, c)
+        r["cost_generic"] = c - r["cost_color"]
+        r["copies"] = min(int(r.get("copies") or 0), copies_max)
+    return rows
+
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -57,7 +74,7 @@ def load_existing_design():
         with open(path, encoding="utf-8") as f:
             for r in csv.DictReader(f):
                 if r.get("id"):
-                    design[r["id"]] = {"art": r.get("art", ""), "desc": r.get("desc", ""), "image": r.get("image", ""), "element": r.get("element", "")}
+                    design[r["id"]] = {"art": r.get("art", ""), "desc": r.get("desc", ""), "image": r.get("image", ""), "element": r.get("element", ""), "cost_color": r.get("cost_color", "")}
     return design
 
 
@@ -66,6 +83,7 @@ def apply_design(rows, existing, fallback):
         prev = existing.get(r["id"], {})
         r["art"] = prev.get("art") or DEFAULT_ART.get(r["name"]) or fallback(r)
         r["desc"] = prev.get("desc", "")
+        r["cost_color"] = prev.get("cost_color", "")
         r["element"] = prev.get("element") or DEFAULT_ELEMENT.get(r["name"], "steel")
         # 생성 아트: 보존값 우선, 없으면 assets/art/<id>.png 존재 시 자동 연결
         default_img = f"assets/art/{r['id']}.png"
@@ -206,15 +224,18 @@ def main():
     apply_design(spells, existing, lambda r: "burst")
     apply_design(enchants, existing, lambda r: "flame")
 
+    for grp in (creatures, spells, enchants):
+        apply_cost(grp)
+
     with open(os.path.join(DATA, "rules.json"), "w", encoding="utf-8") as f:
         json.dump(rules, f, ensure_ascii=False, indent=2)
 
     write_csv(os.path.join(DATA, "creatures.csv"), creatures,
-              ["id", "name", "cost", "tag", "atk", "hp", "copies", "element", "art", "desc", "image", "budget_p", "verdict", "note"])
+              ["id", "name", "cost", "tag", "atk", "hp", "copies", "cost_color", "cost_generic", "element", "art", "desc", "image", "budget_p", "verdict", "note"])
     write_csv(os.path.join(DATA, "spells.csv"), spells,
-              ["id", "name", "cost", "mode", "value", "copies", "element", "art", "desc", "image", "note"])
+              ["id", "name", "cost", "mode", "value", "copies", "cost_color", "cost_generic", "element", "art", "desc", "image", "note"])
     write_csv(os.path.join(DATA, "enchants.csv"), enchants,
-              ["id", "name", "cost", "drain_type", "effect_value", "charge", "target", "copies", "element", "art", "desc", "image", "note"])
+              ["id", "name", "cost", "drain_type", "effect_value", "charge", "target", "copies", "cost_color", "cost_generic", "element", "art", "desc", "image", "note"])
 
     pool = build_pool(creatures, spells, enchants)
     with open(os.path.join(DATA, "cards.json"), "w", encoding="utf-8") as f:

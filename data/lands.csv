@@ -1,0 +1,15 @@
+id,name,kind,produces,produces2,tapped,copies,element,note
+LD01,화산,basic,fire,,0,0,fire,불 자원 1 생성 · 즉시 사용
+LD02,심해,basic,water,,0,0,water,물 자원 1 생성 · 즉시 사용
+LD03,수림,basic,nature,,0,0,nature,자연 자원 1 생성 · 즉시 사용
+LD04,대장간,basic,steel,,0,0,steel,강철 자원 1 생성 · 즉시 사용
+LD05,고원,basic,earth,,0,0,earth,대지 자원 1 생성 · 즉시 사용
+LD06,심연,basic,dark,,0,0,dark,어둠 자원 1 생성 · 즉시 사용
+LD07,성소,basic,light,,0,0,light,빛 자원 1 생성 · 즉시 사용
+LD08,성채 관문,dual,steel,earth,1,0,steel,두 속성 중 택1 · 놓은 턴 사용 불가
+LD09,썩은 늪,dual,dark,nature,1,0,dark,두 속성 중 택1 · 놓은 턴 사용 불가
+LD10,증기 협곡,dual,water,fire,1,0,water,두 속성 중 택1 · 놓은 턴 사용 불가
+LD11,신성 병기고,dual,light,steel,1,0,light,두 속성 중 택1 · 놓은 턴 사용 불가
+LD12,용암 지대,dual,fire,earth,1,0,fire,두 속성 중 택1 · 놓은 턴 사용 불가
+LD13,범람원,dual,water,nature,1,0,water,두 속성 중 택1 · 놓은 턴 사용 불가
+LD14,여명의 경계,dual,dark,light,1,0,dark,두 속성 중 택1 · 놓은 턴 사용 불가

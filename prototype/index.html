@@ -310,6 +310,21 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
 .ztico{flex:none;width:20px;height:20px;color:var(--zc)}
 .ztico svg{width:100%;height:100%;display:block}
 .hc{border-left-width:4px!important}
+
+/* ---- 지형 · 코스트 동그라미 ---- */
+.lnd{width:14px;height:18px;border-radius:3px;border:1px solid rgba(0,0,0,.5);position:relative;
+  box-shadow:0 1px 2px rgba(0,0,0,.5),inset 0 1px 1px rgba(255,255,255,.3)}
+.lnd.used{opacity:.28;filter:grayscale(.7)}
+.lnd.ent{opacity:.45;border-style:dashed}
+.lnd b{position:absolute;right:0;top:0;bottom:0;width:50%;border-radius:0 2px 2px 0}
+.mtxt{font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--gold);margin-left:6px;letter-spacing:.05em}
+.cpips{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:3px}
+.cp{width:9px;height:9px;border-radius:50%;flex:none;box-sizing:border-box}
+.cp.g{background:transparent;border:1.5px solid rgba(107,77,31,.85)}
+.cp.c{border:1px solid rgba(0,0,0,.45)}
+.hc.lnd{width:74px;height:auto;border-radius:6px;border-left-width:4px}
+.hc .lpip{display:flex;gap:3px;margin:5px 0}
+.hc .lpip i{width:13px;height:13px;border-radius:50%;border:1px solid rgba(0,0,0,.45)}
 </style>
 </head>
 <body>
@@ -382,42 +397,57 @@ const ART = {"파수병": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2w
 /* ART_END */
 const POOL={
   /* 크리처 : 2A+H=P / 수호 2A+2H=P+2 / 비행 4A+H=P */
-  파수병:{c:1,k:'cr',a:0,h:3,g:1,copies:3},
-  잔날개:{c:1,k:'cr',a:1,h:2,copies:1},
-  방벽병:{c:2,k:'cr',a:1,h:4,g:1,copies:3},
-  검사:{c:2,k:'cr',a:2,h:4,copies:2},
-  전투매:{c:2,k:'cr',a:1,h:4,f:1,copies:2},
-  석벽:{c:3,k:'cr',a:1,h:6,g:1,copies:2},
-  창병:{c:3,k:'cr',a:4,h:4,copies:2},
-  그리핀:{c:3,k:'cr',a:2,h:4,f:1,copies:1},
-  기사:{c:4,k:'cr',a:6,h:6,copies:1},
-  와이번:{c:4,k:'cr',a:4,h:2,f:1,copies:1},
-  장군:{c:5,k:'cr',a:8,h:8,copies:1},
-  파괴자:{c:6,k:'cr',a:11,h:10,copies:1},
+  파수병:{c:1,k:'cr',cc:1,a:0,h:3,g:1,copies:3},
+  잔날개:{c:1,k:'cr',cc:1,a:1,h:2,copies:1},
+  방벽병:{c:2,k:'cr',cc:1,a:1,h:4,g:1,copies:3},
+  검사:{c:2,k:'cr',cc:1,a:2,h:4,copies:2},
+  전투매:{c:2,k:'cr',cc:1,a:1,h:4,f:1,copies:2},
+  석벽:{c:3,k:'cr',cc:1,a:1,h:6,g:1,copies:2},
+  창병:{c:3,k:'cr',cc:1,a:4,h:4,copies:2},
+  그리핀:{c:3,k:'cr',cc:1,a:2,h:4,f:1,copies:1},
+  기사:{c:4,k:'cr',cc:2,a:6,h:6,copies:1},
+  와이번:{c:4,k:'cr',cc:2,a:4,h:2,f:1,copies:1},
+  장군:{c:5,k:'cr',cc:2,a:8,h:8,copies:1},
+  파괴자:{c:6,k:'cr',cc:3,a:11,h:10,copies:1},
   /* 스펠 */
-  화살:{c:1,k:'sp',mode:'dmg',v:2,copies:2,d:'크리처 1개체에 2 피해'},
-  창격:{c:2,k:'sp',mode:'dmg',v:4,copies:2,d:'크리처 1개체에 4 피해'},
-  처형:{c:3,k:'sp',mode:'dmg',v:6,copies:2,d:'크리처 1개체에 6 피해'},
-  화염비:{c:4,k:'sp',mode:'aoe',v:5,copies:1,d:'적 전체 개체에 5 피해'},
-  소멸:{c:5,k:'sp',mode:'dmg',v:12,copies:1,d:'크리처 1개체에 12 피해'},
+  화살:{c:1,k:'sp',cc:1,mode:'dmg',v:2,copies:2,d:'크리처 1개체에 2 피해'},
+  창격:{c:2,k:'sp',cc:1,mode:'dmg',v:4,copies:2,d:'크리처 1개체에 4 피해'},
+  처형:{c:3,k:'sp',cc:1,mode:'dmg',v:6,copies:2,d:'크리처 1개체에 6 피해'},
+  화염비:{c:4,k:'sp',cc:2,mode:'aoe',v:5,copies:1,d:'적 전체 개체에 5 피해'},
+  소멸:{c:5,k:'sp',cc:2,mode:'dmg',v:12,copies:1,d:'크리처 1개체에 12 피해'},
   /* 인챈트 : 지속형, 턴 종료마다 충전 1 소모 */
-  성화:{c:3,k:'en',v:3,ch:5,copies:2,d:'내 턴 종료마다 상대에게 3 피해'}
+  성화:{c:3,k:'en',cc:1,v:3,ch:5,copies:2,d:'내 턴 종료마다 상대에게 3 피해'}
 };
-const MAXHP=60,SLOTS=10,STACKMAX=5,MANACAP=6;
+/* LAND_START */
+const LANDS={
+  대장간:{els:['steel'],dual:0}, 고원:{els:['earth'],dual:0}, 심연:{els:['dark'],dual:0},
+  화산:{els:['fire'],dual:0}, 심해:{els:['water'],dual:0}, 수림:{els:['nature'],dual:0}, 성소:{els:['light'],dual:0},
+  '성채 관문':{els:['steel','earth'],dual:1}
+};
+/* 샘플 3색 덱(강철·대지·어둠) 40장 = 지형 17 + 카드 23 */
+const DECKLIST=[
+  ['대장간',6],['고원',5],['심연',4],['성채 관문',2],
+  ['파수병',2],['방벽병',2],['검사',2],['창병',2],['기사',2],
+  ['창격',2],['석벽',2],['장군',2],
+  ['처형',2],['성화',2],['소멸',2],['파괴자',1]
+];
+/* LAND_END */
+const MAXHP=60,SLOTS=10,STACKMAX=5,MANACAP=5,HANDSTART=7;
 
 function buildDeck(){
   const d=[];
-  for(const n in POOL){for(let i=0;i<POOL[n].copies;i++)d.push(n);}
+  DECKLIST.forEach(([n,k])=>{for(let i=0;i<k;i++)d.push(n);});
   for(let i=d.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[d[i],d[j]]=[d[j],d[i]];}
   return d;
 }
+const isLand=n=>!!LANDS[n];
 const S={};
 function newGame(){
   S.turn=1; S.active='me'; S.over=false; S.sel=null; S.mode=null; S.busy=false; S.fx=null; S.aoeFx=null; S.spawn=null; S.reveal=null;
   ['me','ai'].forEach(p=>{
-    S[p]={hp:MAXHP,mana:0,max:0,deck:buildDeck(),hand:[],board:Array(SLOTS).fill(null),fatigue:0};
+    S[p]={hp:MAXHP,deck:buildDeck(),hand:[],board:Array(SLOTS).fill(null),lands:[],landPlayed:false};
   });
-  for(let i=0;i<4;i++){draw('me');draw('ai');}
+  for(let i=0;i<HANDSTART;i++){draw('me');draw('ai');}
   document.getElementById('log').innerHTML='';
   document.getElementById('over').classList.remove('on');
   log('게임 시작 — 양측 HP 60','t');
@@ -433,6 +463,38 @@ function log(t,c=''){
   const l=document.getElementById('log');
   const d=document.createElement('div');
   d.className=c;d.textContent=t;l.appendChild(d);l.scrollTop=l.scrollHeight;
+}
+
+
+/* ============ 지형 · 마나 ============ */
+function freeLands(p){ return S[p].lands.filter(l=>!l.used&&!l.entering); }
+function manaLeft(p){ return freeLands(p).length; }
+function colorLeft(p,el){ return freeLands(p).filter(l=>l.els.includes(el)).length; }
+function canPay(p,name){
+  const c=POOL[name]; if(!c) return false;
+  const el=CE[name]||'steel';
+  const cc=Math.min(+c.cc||1, c.c);
+  return colorLeft(p,el)>=cc && manaLeft(p)>=c.c;
+}
+function pay(p,name){
+  const c=POOL[name], el=CE[name]||'steel';
+  const cc=Math.min(+c.cc||1, c.c);
+  const pool=freeLands(p);
+  const colored=pool.filter(l=>l.els.includes(el)).slice(0,cc);
+  colored.forEach(l=>l.used=true);
+  const rest=freeLands(p).slice(0,c.c-cc);
+  rest.forEach(l=>l.used=true);
+}
+function playLand(p,name){
+  if(S[p].landPlayed) return false;
+  if(S[p].lands.length>=MANACAP){       /* 홍수 완화: 상한 도달 시 버리고 드로우 */
+    log(`${p==='me'?'나':'상대'} ${name} 폐기 → 카드 1장`,'t'); draw(p); S[p].landPlayed=true; return true;
+  }
+  const L=LANDS[name];
+  S[p].lands.push({name,els:L.els.slice(),entering:!!L.dual,used:false});
+  S[p].landPlayed=true;
+  log(`${p==='me'?'나':'상대'} ${name} 배치${L.dual?' (다음 턴부터 가동)':''}`,'t');
+  return true;
 }
 
 /* ============ 보드 조작 ============ */
@@ -574,11 +636,11 @@ async function drainEnchants(p){
 /* ============ 턴 ============ */
 function startTurn(p){
   const P=S[p];
-  P.max=Math.min(S.turn,MANACAP);
-  P.mana=P.max;
+  P.landPlayed=false;
+  P.lands.forEach(l=>{l.used=false;l.entering=false;});
   draw(p);
-  if(checkEnd())return;              // 덱 소진 = 즉시 패배
-  log(`— 턴 ${S.turn} · ${p==='me'?'내 턴':'상대 턴'} (마나 ${P.mana})`,'t');
+  if(checkEnd())return;
+  log(`— 턴 ${S.turn} · ${p==='me'?'내 턴':'상대 턴'} (지형 ${P.lands.length})`,'t');
   render();
   if(p==='ai')setTimeout(aiTurn,520);
 }
@@ -613,7 +675,12 @@ async function aiTurn(){
   let guard=0;
   while(guard++<14){
     await sleep(300);
-    const playable=P.hand.map((n,i)=>({n,i,c:POOL[n]})).filter(x=>x.c.c<=P.mana);
+    /* 지형 먼저 */
+    if(!P.landPlayed){
+      const li=P.hand.findIndex(isLand);
+      if(li>=0){ playLand('ai',P.hand[li]); P.hand.splice(li,1); render(); continue; }
+    }
+    const playable=P.hand.map((n,i)=>({n,i,c:POOL[n]})).filter(x=>x.c&&canPay('ai',x.n));
     if(!playable.length)break;
 
     /* 1) 광역 : 내 개체가 3 이상이면 */
@@ -623,7 +690,7 @@ async function aiTurn(){
       await reveal('ai',aoe.n);
       log(`상대 ${aoe.n} 사용 — 내 전체 개체에 ${aoe.c.v} 피해`,'a');
       S.me.board.forEach(u=>{if(u&&u.kind==='cr')u.insts.forEach(i=>i.hp-=aoe.c.v);});
-      P.mana-=aoe.c.c;P.hand.splice(aoe.i,1);
+      pay('ai',aoe.n);P.hand.splice(aoe.i,1);
       S.aoeFx={side:'me',v:aoe.c.v};render();
       phaseCard(aoe.n);
       await sleep(760);
@@ -648,7 +715,7 @@ async function aiTurn(){
       u.insts[0].hp-=k.x.c.v;
       log(`상대 ${k.x.n} → 내 ${u.name} ${before}→${Math.max(0,u.insts[0].hp)}`,'a');
       log(`  ${u.name} 1개체 파괴`,'a');
-      P.mana-=k.x.c.c;P.hand.splice(k.x.i,1);
+      pay('ai',k.x.n);P.hand.splice(k.x.i,1);
       S.fx={tSide:'me',tIdx:k.j,dmg:k.x.c.v,struck:true,kill:`${u.name} 파괴`};
       render();
       await sleep(640);
@@ -677,7 +744,7 @@ async function aiTurn(){
       placeCreature('ai',u.n,slot);
       log(`상대 ${u.n} 소환 [슬롯 ${slot+1}]${stacked?' (중첩 '+P.board[slot].insts.length+')':''}`,u.c.g?'g':(u.c.f?'f':''));
     }
-    P.mana-=u.c.c;P.hand.splice(u.i,1);
+    pay('ai',u.n);P.hand.splice(u.i,1);
     S.spawn={side:'ai',idx:slot};render();
     await sleep(480);
     S.spawn=null;render();
@@ -700,8 +767,13 @@ async function reveal(side,name){
 /* ============ 입력 ============ */
 function selectCard(i){
   if(S.over||S.busy||S.active!=='me')return;
-  const n=S.me.hand[i],c=POOL[n];
-  if(c.c>S.me.mana)return;
+  const n=S.me.hand[i];
+  if(isLand(n)){                                  /* 지형은 즉시 배치 */
+    if(S.me.landPlayed)return;
+    playLand('me',n); S.me.hand.splice(i,1); S.sel=null; S.mode=null; render(); return;
+  }
+  const c=POOL[n];
+  if(!canPay('me',n))return;
   if(S.sel===i){S.sel=null;S.mode=null;render();return;}
   S.sel=i;
   if(c.k==='cr')S.mode='place';
@@ -733,7 +805,7 @@ async function clickSlot(side,idx){
     const dead=u.insts[0].hp<=0;
     log(`나 ${n} → 상대 ${u.name} ${b}→${Math.max(0,u.insts[0].hp)}`,'a');
     if(dead)log(`  ${u.name} 1개체 파괴`,'a');
-    S.me.mana-=c.c;S.me.hand.splice(S.sel,1);S.sel=null;S.mode=null;
+    pay('me',n);S.me.hand.splice(S.sel,1);S.sel=null;S.mode=null;
     S.busy=true;
     S.fx={tSide:'ai',tIdx:idx,dmg:c.v,struck:true,kill:dead?`${u.name} 파괴`:null};
     render();
@@ -743,14 +815,14 @@ async function clickSlot(side,idx){
     cleanup('ai');render();
     return;
   }else return;
-  S.me.mana-=c.c;S.me.hand.splice(S.sel,1);S.sel=null;S.mode=null;render();
+  pay('me',n);S.me.hand.splice(S.sel,1);S.sel=null;S.mode=null;render();
 }
 async function castSelectedAoe(){
   if(S.busy)return;
   const n=S.me.hand[S.sel],c=POOL[n];
   log(`나 ${n} 사용 — 상대 전체 개체에 ${c.v} 피해`,'a');
   S.ai.board.forEach(u=>{if(u&&u.kind==='cr')u.insts.forEach(i=>i.hp-=c.v);});
-  S.me.mana-=c.c;S.me.hand.splice(S.sel,1);S.sel=null;S.mode=null;
+  pay('me',n);S.me.hand.splice(S.sel,1);S.sel=null;S.mode=null;
   S.busy=true;S.aoeFx={side:'ai',v:c.v};render();
   phaseCard(n);
   await sleep(760);
@@ -795,9 +867,12 @@ function render(){
   document.getElementById('foeHpBar').style.width=Math.max(0,S.ai.hp/MAXHP*100)+'%';
   ['me','ai'].forEach(p=>{
     const el=document.getElementById(p==='me'?'myMana':'foeMana');
-    let h='';
-    for(let i=0;i<MANACAP;i++) h+=`<i class="${i<S[p].mana?'full':(i<S[p].max?'spent':'')}" style="${i<S[p].max?'':'opacity:.18'}"></i>`;
-    el.innerHTML=h;
+    el.innerHTML=S[p].lands.map(l=>{
+      const c=(EL[l.els[0]]||EL.steel).c;
+      const cls=l.entering?'ent':(l.used?'used':'');
+      const dual=l.els.length>1?`<b style="background:${(EL[l.els[1]]||EL.steel).c}"></b>`:'';
+      return `<i class="lnd ${cls}" style="background:${c}" title="${l.name}">${dual}</i>`;
+    }).join('')+`<span class="mtxt">${manaLeft(p)}/${S[p].lands.length}</span>`;
     document.getElementById(p==='me'?'myCnt':'foeCnt').textContent=`손 ${S[p].hand.length} · 덱 ${S[p].deck.length}`;
   });
   document.getElementById('turnMeta').textContent=`TURN ${S.turn} · ${S.active==='me'?'내 턴':'상대 턴'}`;
@@ -875,17 +950,29 @@ function render(){
   }
   // hand
   document.getElementById('hand').innerHTML=S.me.hand.map((n,i)=>{
-    const c=POOL[n];
+    if(isLand(n)){
+      const L=LANDS[n], c1=(EL[L.els[0]]||EL.steel).c;
+      const no=(!mine||S.me.landPlayed)?' no':'';
+      return `<div class="hc lnd${no}" data-h="${i}" style="border-left-color:${c1}">
+        <div class="n">${n}</div>
+        <div class="lpip">${L.els.map(e=>`<i style="background:${(EL[e]||EL.steel).c}"></i>`).join('')}</div>
+        <div class="t">지형${L.dual?' · 대기':''}</div></div>`;
+    }
+    const c=POOL[n]; if(!c)return '';
     let cls='hc';
     if(c.k==='cr')cls+=c.g?' g':(c.f?' f':'');
     if(c.k==='sp')cls+=' sp'; if(c.k==='en')cls+=' en';
-    if(c.c>S.me.mana||!mine)cls+=' no';
+    if(!mine||!canPay('me',n))cls+=' no';
     if(S.sel===i)cls+=' sel';
+    const el=CE[n]||'steel', cc=Math.min(+c.cc||1,c.c);
+    const cpc=`<i class="cp c" style="background:${(EL[el]||EL.steel).c}"></i>`;
+    const pips=cpc.repeat(cc)+'<i class="cp g"></i>'.repeat(c.c-cc);
     const body=c.k==='cr'
       ? `<div class="s">${c.a}/${c.h}</div><div class="t">${[c.g?'수호':'',c.f?'비행':''].filter(Boolean).join('·')||'크리처'}</div>`
       : `<div class="d">${c.d}</div><div class="t">${c.k==='sp'?'스펠':'인챈트'}</div>`;
     const ha=ART[n]?`<div class="hart" style="background-image:url(${ART[n]})"></div>`:'';
-    return `<div class="${cls}" data-h="${i}" style="border-left-color:${elc(n)}"><div class="cost">${c.c}</div><div class="n">${n}</div>${ha}${body}</div>`;
+    return `<div class="${cls}" data-h="${i}" style="border-left-color:${elc(n)}">
+      <div class="cpips">${pips}</div><div class="n">${n}</div>${ha}${body}</div>`;
   }).join('');
   document.querySelectorAll('.hc').forEach(el=>{el.onclick=()=>selectCard(+el.dataset.h);});
   // hint
