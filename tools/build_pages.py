@@ -34,7 +34,7 @@ FILES = [
     ("tools/card_editor.html",     "editor.html"),
 ]
 DOCS = ["sample_decks", "land_system", "meta_design", "element_design",
-        "keywords", "spells", "effects_table", "design_deck"]
+        "keywords", "spells", "effects_table", "design_deck", "art_prompts"]
 DATA = ["sample_decks.csv", "creatures.csv", "spells.csv", "enchants.csv",
         "lands.csv", "rules.json", "cards.json"]
 
