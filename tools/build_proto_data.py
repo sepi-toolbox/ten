@@ -92,9 +92,12 @@ def main():
     # ── POOL 교체 ──────────────────────────────────────────────
     fpath = os.path.join(DATA, "frames.json")
     frames = json.load(open(fpath, encoding="utf-8")) if os.path.exists(fpath) else {}
+    opath = os.path.join(DATA, "orbs.json")
+    orbs = json.load(open(opath, encoding="utf-8")) if os.path.exists(opath) else {}
     poolblock = ("/* POOL_START */\nconst POOL=" + j(pool)
                  + ";\nconst GLOSSARY=" + j(GLOSSARY)
-                 + ";\nconst FRAMES=" + j(frames) + ";\n/* POOL_END */")
+                 + ";\nconst FRAMES=" + j(frames)
+                 + ";\nconst ORBS=" + j(orbs) + ";\n/* POOL_END */")
     if "/* POOL_START */" in html:
         html = re.sub(r"/\* POOL_START \*/.*?/\* POOL_END \*/", lambda m: poolblock,
                       html, count=1, flags=re.S)
@@ -102,7 +105,7 @@ def main():
         html = re.sub(r"const POOL=\{.*?\n\};", lambda m: poolblock, html, count=1, flags=re.S)
 
     open(PROTO, "w", encoding="utf-8").write(html)
-    print(f"injected: POOL {len(pool)}종 · 덱 {len(dk)}개 · 지형 {len(lands)}종 · 프레임 {len(frames)}장")
+    print(f"injected: POOL {len(pool)}종 · 덱 {len(dk)}개 · 지형 {len(lands)}종 · 프레임 {len(frames)}장 · 오브 {len(orbs)}종")
 
 
 if __name__ == "__main__":
