@@ -65,6 +65,44 @@ body::before{
   box-shadow:0 0 8px rgba(77,111,212,.7),inset 0 1px 2px rgba(255,255,255,.4)}
 .bar .cnt{font-family:'Cinzel',serif;font-size:10px;color:var(--gold);letter-spacing:.08em;opacity:.85}
 
+/* ---- 지형존 (land zone) ---- */
+.lzwrap{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.lz{display:grid;grid-template-columns:repeat(5,minmax(0,64px));gap:6px;padding:8px 9px;
+  background:linear-gradient(180deg,rgba(0,0,0,.34),rgba(0,0,0,.12));
+  border:1px solid var(--rule);border-radius:8px;box-shadow:inset 0 0 26px rgba(0,0,0,.6)}
+.lz .lt{position:relative;border-radius:5px;padding:16px 3px 4px;min-height:52px;
+  border:1px solid #4a371f;background:linear-gradient(180deg,#1e150d,#150e08);
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.6);transition:.18s}
+.lz .lt.has{border-color:var(--lc);border-left-width:3px;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--lc) 22%,#150e08),#150e08)}
+.lz .lt.ent{border-style:dashed;opacity:.72}
+.lz .lt.used{filter:grayscale(.4);opacity:.8}
+.lz .lt.empty{border-style:dashed;border-color:#3a2c19;opacity:.4}
+.lz .lt.empty::after{content:'+';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-family:'Cinzel',serif;font-size:15px;color:#6b5430}
+/* 자원 토큰 — 지형 위에 올라간다 */
+.lz .tok{position:absolute;top:4px;left:50%;transform:translateX(-50%);
+  width:17px;height:17px;border-radius:50%;border:1px solid rgba(255,255,255,.55);
+  transition:transform .2s cubic-bezier(.3,.9,.4,1),opacity .2s}
+.lz .tok::after{content:'';position:absolute;inset:2px 3px auto 3px;height:5px;border-radius:50%;
+  background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,0))}
+.lz .tok.ent{background:#2a2013!important;border-style:dashed;border-color:#6b5430;box-shadow:none!important}
+.lz .tok.ent::after{display:none}
+.lz .tok.gone{background:transparent!important;border:1px dashed #5a4526;box-shadow:none!important;
+  transform:translateX(-50%) scale(.7);opacity:.55}
+.lz .tok.gone::after{display:none}
+.lz .lnm{font-family:'Gowun Batang',serif;font-size:8.5px;line-height:1.15;text-align:center;
+  color:var(--gold);opacity:.9;word-break:keep-all}
+.lz .lt.used .lnm{opacity:.68}
+.lz .lt.ent::after{content:'대기';position:absolute;top:3px;right:4px;font-family:'Cinzel',serif;
+  font-size:7px;letter-spacing:.1em;color:var(--gold);opacity:.75}
+.lz .lt.used::after{content:'소모';position:absolute;top:3px;right:4px;font-family:'Cinzel',serif;
+  font-size:7px;letter-spacing:.1em;color:var(--rule);opacity:.85}
+.lzinfo{font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.06em;line-height:1.5}
+.lzinfo b{display:block;font-size:17px;color:var(--gold-bright)}
+.lzinfo s{display:block;font-size:9px;opacity:.6;text-decoration:none;letter-spacing:.14em}
+
 /* ---- board ---- */
 .board{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin-bottom:14px;padding:9px;
   background:linear-gradient(180deg,rgba(0,0,0,.32),rgba(0,0,0,.14));
@@ -422,11 +460,18 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
       <div class="mana" id="foeMana"></div>
       <div class="cnt" id="foeCnt">손 0 · 덱 0</div>
     </div>
+    <div class="lbl">상대 지형</div>
+    <div class="lzwrap"><div class="lz" id="foeLz"></div><div class="lzinfo" id="foeLzInfo"></div></div>
+
     <div class="lbl">상대 보드</div>
     <div class="board" id="foeBoard"></div>
 
     <div class="lbl">내 보드</div>
     <div class="board" id="myBoard"></div>
+
+    <div class="lbl">내 지형</div>
+    <div class="lzwrap"><div class="lz" id="myLz"></div><div class="lzinfo" id="myLzInfo"></div></div>
+
     <div class="bar me" id="myBar">
       <div class="who">나</div>
       <div class="hp" id="myHp">60</div>
@@ -549,6 +594,26 @@ function log(t,c=''){
 function freeLands(p){ return S[p].lands.filter(l=>!l.used&&!l.entering); }
 function manaLeft(p){ return freeLands(p).length; }
 function colorLeft(p,el){ return freeLands(p).filter(l=>l.els.includes(el)).length; }
+
+/* 지형존 — 지형 타일 위에 자원 토큰이 올라간다. 쓰면 토큰이 버려진다(빈 소켓). */
+function lzHTML(p){
+  const L=S[p].lands; let h='';
+  for(let i=0;i<MANACAP;i++){
+    const l=L[i];
+    if(!l){ h+='<div class="lt empty"></div>'; continue; }
+    const c1=(EL[l.els[0]]||EL.steel).c;
+    const c2=l.els[1]?(EL[l.els[1]]||EL.steel).c:null;
+    const fill=c2?`linear-gradient(135deg,${c1} 0 50%,${c2} 50% 100%)`:c1;
+    const st=l.entering?'ent':(l.used?'used':'rdy');
+    const tip=l.entering?'배치한 턴에는 쓸 수 없다':(l.used?'이번 턴 사용함':'사용 가능');
+    const tok=st==='rdy'
+      ? `<i class="tok" style="background:${fill};box-shadow:0 0 9px ${c1}"></i>`
+      : `<i class="tok ${st==='ent'?'ent':'gone'}"></i>`;
+    h+=`<div class="lt has ${st}" style="--lc:${c1}" title="${l.name} · ${tip}">`
+      +`${tok}<span class="lnm">${l.name}</span></div>`;
+  }
+  return h;
+}
 function canPay(p,name){
   const c=POOL[name]; if(!c) return false;
   const el=CE[name]||'steel';
@@ -965,12 +1030,10 @@ function render(){
   document.getElementById('foeHpBar').style.width=Math.max(0,S.ai.hp/MAXHP*100)+'%';
   ['me','ai'].forEach(p=>{
     const el=document.getElementById(p==='me'?'myMana':'foeMana');
-    el.innerHTML=S[p].lands.map(l=>{
-      const c=(EL[l.els[0]]||EL.steel).c;
-      const cls=l.entering?'ent':(l.used?'used':'');
-      const dual=l.els.length>1?`<b style="background:${(EL[l.els[1]]||EL.steel).c}"></b>`:'';
-      return `<i class="lnd ${cls}" style="background:${c}" title="${l.name}">${dual}</i>`;
-    }).join('')+`<span class="mtxt">${manaLeft(p)}/${S[p].lands.length}</span>`;
+    el.innerHTML=`<span class="mtxt">${manaLeft(p)}/${S[p].lands.length}</span>`;
+    document.getElementById(p==='me'?'myLz':'foeLz').innerHTML=lzHTML(p);
+    document.getElementById(p==='me'?'myLzInfo':'foeLzInfo').innerHTML=
+      `<b>${manaLeft(p)}</b><s>/ ${S[p].lands.length} 지형</s>`;
     document.getElementById(p==='me'?'myCnt':'foeCnt').textContent=`손 ${S[p].hand.length} · 덱 ${S[p].deck.length}`;
   });
   document.getElementById('turnMeta').textContent=`TURN ${S.turn} · ${S.active==='me'?'내 턴':'상대 턴'}`;
