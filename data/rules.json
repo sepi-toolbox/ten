@@ -1,0 +1,108 @@
+{
+  "constants": {
+    "start_hp": 60,
+    "mana_cap": 6,
+    "board_slots": 10,
+    "stack_max": 5,
+    "deck_size": 30
+  },
+  "budget": {
+    "a": 3,
+    "b": 1,
+    "k": 0.5,
+    "enchant_a": 4,
+    "enchant_b": 2
+  },
+  "tags": {
+    "normal": {
+      "atk_w": 2,
+      "hp_w": 1,
+      "budget_adj": 0
+    },
+    "guard": {
+      "atk_w": 2,
+      "hp_w": 2,
+      "budget_adj": 2
+    },
+    "fly": {
+      "atk_w": 4,
+      "hp_w": 1,
+      "budget_adj": 0
+    },
+    "flyguard": {
+      "atk_w": 4,
+      "hp_w": 2,
+      "budget_adj": 2
+    }
+  },
+  "cost_budget": [
+    {
+      "cost": 1,
+      "creature_p": 4,
+      "enchant_t": 6
+    },
+    {
+      "cost": 2,
+      "creature_p": 8,
+      "enchant_t": 11
+    },
+    {
+      "cost": 3,
+      "creature_p": 12,
+      "enchant_t": 16
+    },
+    {
+      "cost": 4,
+      "creature_p": 18,
+      "enchant_t": 23
+    },
+    {
+      "cost": 5,
+      "creature_p": 24,
+      "enchant_t": 30
+    },
+    {
+      "cost": 6,
+      "creature_p": 32,
+      "enchant_t": 39
+    }
+  ],
+  "spell_tier": [
+    {
+      "cost": 1,
+      "single": 2,
+      "aoe": null,
+      "direct": null
+    },
+    {
+      "cost": 2,
+      "single": 4,
+      "aoe": 2,
+      "direct": null
+    },
+    {
+      "cost": 3,
+      "single": 6,
+      "aoe": 3,
+      "direct": 5
+    },
+    {
+      "cost": 4,
+      "single": 8,
+      "aoe": 5,
+      "direct": null
+    },
+    {
+      "cost": 5,
+      "single": 12,
+      "aoe": 7,
+      "direct": null
+    },
+    {
+      "cost": 6,
+      "single": 99,
+      "aoe": 10,
+      "direct": null
+    }
+  ]
+}
