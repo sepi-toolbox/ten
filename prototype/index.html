@@ -313,7 +313,7 @@ function newGame(){
 }
 function draw(p){
   const P=S[p];
-  if(!P.deck.length){P.fatigue++;P.hp-=P.fatigue;log(`${p==='me'?'나':'상대'} 덱 소진 — ${P.fatigue} 피해`,'a');return;}
+  if(!P.deck.length){P.deckout=true;P.hp=0;log(`${p==='me'?'나':'상대'} 덱 소진 — 패배`,'a');return;}
   if(P.hand.length>=8){P.deck.pop();return;}
   P.hand.push(P.deck.pop());
 }
@@ -465,6 +465,7 @@ function startTurn(p){
   P.max=Math.min(S.turn,MANACAP);
   P.mana=P.max;
   draw(p);
+  if(checkEnd())return;              // 덱 소진 = 즉시 패배
   log(`— 턴 ${S.turn} · ${p==='me'?'내 턴':'상대 턴'} (마나 ${P.mana})`,'t');
   render();
   if(p==='ai')setTimeout(aiTurn,520);
@@ -473,9 +474,9 @@ async function endTurn(){
   if(S.busy)return;
   S.busy=true;S.sel=null;S.mode=null;render();
   const p=S.active;
-  await resolveAttacks(p);
+  await resolveAttacks(p);           // 크리처 공격 먼저
   if(checkEnd()){S.busy=false;return;}
-  await drainEnchants(p);
+  await drainEnchants(p);            // 인챈트 발동은 마지막 (잠정)
   if(checkEnd()){S.busy=false;return;}
   S.busy=false;
   if(p==='me'){S.active='ai';startTurn('ai');}
