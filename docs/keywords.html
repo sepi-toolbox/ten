@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light only">
+<title>TEN — 속성 키워드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@700;900&family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDEFF2;--paper-2:#E3E6EB;--ink:#141821;--ink-soft:#4A5364;--ink-faint:#8A94A6;--rule:#C6CCD6;
+  --fire:#C1462E;--water:#2A6FB5;--nature:#3F8B3A;--steel:#6B7686;--earth:#8A6A33;--dark:#5B3E86;--light:#B8912A;
+  --ok:#0F8A80;--bad:#B03A3F;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:'Noto Sans KR',sans-serif;
+  -webkit-font-smoothing:antialiased;padding:20px 16px 60px;line-height:1.7}
+.wrap{max-width:1020px;margin:0 auto}
+h1{font-family:'Gothic A1';font-weight:900;font-size:clamp(26px,4vw,38px);letter-spacing:-.03em;line-height:1.1}
+.lede{font-size:15px;color:var(--ink-soft);font-weight:300;max-width:66ch;margin:10px 0 6px}
+.meta{font-family:'JetBrains Mono';font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint)}
+h2{font-family:'Gothic A1';font-weight:900;font-size:clamp(18px,2.4vw,23px);margin:40px 0 6px;padding-top:18px;border-top:2px solid var(--ink)}
+h2 .n{font-family:'JetBrains Mono';font-size:11px;font-weight:500;color:var(--ink-faint);letter-spacing:.16em;display:block;margin-bottom:6px}
+p{font-size:14px;color:var(--ink-soft);font-weight:300;max-width:70ch}
+p b,td b{color:var(--ink);font-weight:700}
+.note{font-family:'JetBrains Mono';font-size:11.5px;color:var(--ink-faint);line-height:1.65;margin-top:10px}
+table{border-collapse:collapse;width:100%;font-size:13px;margin:12px 0}
+th{text-align:left;font-family:'JetBrains Mono';font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-faint);padding:0 10px 8px 0;border-bottom:1.5px solid var(--ink);white-space:nowrap}
+td{padding:8px 10px 8px 0;border-bottom:1px solid var(--rule);color:var(--ink-soft);vertical-align:top}
+td:first-child{color:var(--ink);font-weight:700;white-space:nowrap}
+.mono{font-family:'JetBrains Mono';font-variant-numeric:tabular-nums}
+.tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.ok{color:var(--ok);font-weight:700}
+
+.el{border:1px solid var(--rule);border-left:6px solid var(--c);border-radius:6px;padding:14px 18px;margin:16px 0;background:var(--paper-2);--c:var(--ink)}
+.el.fire{--c:var(--fire)}.el.water{--c:var(--water)}.el.nature{--c:var(--nature)}
+.el.steel{--c:var(--steel)}.el.earth{--c:var(--earth)}.el.dark{--c:var(--dark)}.el.light{--c:var(--light)}
+.el .eh{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+.el h3{font-family:'Gothic A1';font-weight:900;font-size:20px;color:var(--c)}
+.el .theme{font-size:12.5px;color:var(--ink-faint);font-family:'JetBrains Mono'}
+.kw{background:var(--paper);border:1px solid var(--rule);border-radius:5px;padding:11px 14px;margin:10px 0}
+.kw .kh{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+.kw .name{font-family:'Gothic A1';font-weight:900;font-size:16px;color:var(--c)}
+.kw .cost{font-family:'JetBrains Mono';font-size:10.5px;font-weight:700;color:var(--ink);
+  background:var(--paper-2);border:1px solid var(--rule);border-radius:3px;padding:1px 7px}
+.kw .rule{font-size:13.5px;color:var(--ink);margin:5px 0 0;font-weight:400}
+.kw .why{font-size:12.5px;color:var(--ink-soft);font-weight:300;margin-top:5px}
+.kw .ex{font-family:'JetBrains Mono';font-size:11.5px;color:var(--ink-soft);margin-top:7px;padding-top:6px;border-top:1px dashed var(--rule)}
+.kw .ex b{color:var(--ink)}
+.kw .ctr{font-family:'JetBrains Mono';font-size:11px;color:var(--bad);margin-top:5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="meta">TEN · CREATURE KEYWORDS · 2026.07</div>
+<h1>속성 키워드 — 14종</h1>
+<p class="lede">수호·비행처럼 크리처에 붙는 효과 유형을 속성마다 2개씩 정의한다. 각 키워드는 그 속성의 <b>자원 레버</b>를 크리처 단위로 구현한 것이며, 예산 환산식과 카운터를 함께 갖는다. 대표 카드 14종은 전부 검산을 통과했다.</p>
+
+<h2><span class="n">00 — 원칙</span>키워드는 자원 레버의 크리처 버전이다</h2>
+<p>속성이 &ldquo;무엇을 팔아 무엇을 사는가&rdquo;라면, 키워드는 그 거래를 <b>크리처 한 장 안에서</b> 성립시킨다. 그래서 키워드마다 <b>예산 환산식</b>이 반드시 붙는다 — 공짜 능력은 없고, 스탯에서 값을 치르거나(음수) 스탯을 더 받는다(양수).</p>
+<p class="note">기존 키워드 3종(수호·비행·관통)은 <b>스탯 가중치</b>로 가격이 매겨진다(2A+2H / 4A+H / 3A+H). 신규 14종은 대부분 <b>예산 가감</b> 방식이며, 연소·증식만 배수를 쓴다.</p>
+
+<div class="el fire">
+  <div class="eh"><h3>불</h3><span class="theme">Lever · 크리처 수명 — 수명을 팔아 스탯을 산다</span></div>
+  <div class="kw"><div class="kh"><span class="name">연소 N</span><span class="cost">예산 ×1.5 (N=3) / ×2.0 (N=1)</span></div>
+    <p class="rule">내 턴 종료를 <b>N회</b> 겪으면 소멸한다.</p>
+    <p class="why">보드가 단조 증가하는 이 게임에서 &ldquo;사라짐&rdquo;은 가장 순수한 대가다. 같은 코스트의 1.5~2배 스탯을 받되, 상대는 그냥 버티기만 해도 답이 된다.</p>
+    <div class="ex"><b>불꽃정령</b> 3코 <b>6/6</b> 연소3 — 18/18 <span class="ok">적정</span> · 4코급 스탯을 3코에</div>
+    <div class="ctr">▼ 카운터 — 수호로 흘리기 · 바운스로 시간 뺏기</div></div>
+  <div class="kw"><div class="kh"><span class="name">폭산 X</span><span class="cost">예산 −1.5X</span></div>
+    <p class="rule">이 크리처가 소멸·파괴될 때 <b>적 전체 개체에 X 피해.</b></p>
+    <p class="why">연소와 짝을 이뤄 &ldquo;타이머 달린 광역&rdquo;이 된다. 상대는 카운트를 보며 전개해야 하므로, 군세 덱의 확장을 지연시킨다.</p>
+    <div class="ex"><b>화염조</b> 4코 비행 <b>4/6</b> 연소3·폭산3 — 22/22 <span class="ok">적정</span></div>
+    <div class="ctr">▼ 카운터 — 개체를 분산해 광역 손실 최소화</div></div>
+</div>
+
+<div class="el water">
+  <div class="eh"><h3>물</h3><span class="theme">Lever · 카드 — 되돌려 다시 쓴다</span></div>
+  <div class="kw"><div class="kh"><span class="name">환류</span><span class="cost">예산 −6</span></div>
+    <p class="rule">처음 파괴될 때 소멸하지 않고 <b>손으로 돌아간다</b> (1회).</p>
+    <p class="why">제거를 &ldquo;마나 지연&rdquo;으로 바꾼다. 상대의 제거 한 장을 헛돌게 하되, 다시 내려면 코스트를 또 내야 하므로 템포는 잃는다.</p>
+    <div class="ex"><b>심해수호</b> 4코 수호 <b>1/6</b> 환류 — 14/14 <span class="ok">적정</span></div>
+    <div class="ctr">▼ 카운터 — 광역으로 여러 개체 동시 정리 · 손패 상한 활용</div></div>
+  <div class="kw"><div class="kh"><span class="name">밀물 N</span><span class="cost">예산 −N</span></div>
+    <p class="rule">소환 시 <b>N코스트 이하</b> 상대 크리처 1개체를 손으로 되돌린다.</p>
+    <p class="why">영구 해답이 아니라 시간을 사는 개입. 물이 유일하게 &ldquo;제거 없이 보드를 치우는&rdquo; 속성인 이유.</p>
+    <div class="ex"><b>해류지기</b> 4코 비행 <b>3/4</b> 밀물2 — 16/16 <span class="ok">적정</span></div>
+    <div class="ctr">▼ 카운터 — 고코스트 위협 · 되돌아온 카드를 재전개할 마나</div></div>
+</div>
+
+<div class="el nature">
+  <div class="eh"><h3>자연</h3><span class="theme">Lever · 턴 — 현재를 팔아 미래를 산다</span></div>
+  <div class="kw"><div class="kh"><span class="name">성장 +A/+H (최대 N회)</span><span class="cost">예산 −1.5 × (부여 소모량) × N</span></div>
+    <p class="rule">내 턴 종료마다 ATK/HP가 오른다. <b>최대 N회</b>까지.</p>
+    <p class="why">상한을 두지 않으면 가격을 매길 수 없다. N을 명시함으로써 &ldquo;몇 턴 뒤 몇 스탯&rdquo;이 계산 가능해지고, 상대는 <b>지금 제거를 쓸지</b>를 선택하게 된다.</p>
+    <div class="ex"><b>묘목</b> 2코 <b>0/2</b> 성장 +1/+1 (최대4) — 2/2 <span class="ok">적정</span> · 4턴 뒤 <b>4/6</b> (4코급)</div>
+    <div class="ctr">▼ 카운터 — 저코스트 제거로 조기 처리 · 성장 전 압박</div></div>
+  <div class="kw"><div class="kh"><span class="name">증식</span><span class="cost">예산 ×0.5</span></div>
+    <p class="rule">소환 시 <b>같은 이름 개체 1을 추가</b>로 같은 슬롯에 소환한다(스택).</p>
+    <p class="why">공격 횟수를 두 배로 벌면서 슬롯은 하나만 쓴다. 스택 규칙(동명 5중첩)을 직접 활용하는 유일한 키워드.</p>
+    <div class="ex"><b>번식체</b> 3코 <b>2/2</b> 증식 — 6/6 <span class="ok">적정</span> · 실질 2개체 = 총 4 ATK</div>
+    <div class="ctr">▼ 카운터 — 광역 한 장에 스택 전체가 노출</div></div>
+</div>
+
+<div class="el steel">
+  <div class="eh"><h3>강철</h3><span class="theme">Lever · 피해량 — 받는 피해를 깎는다</span></div>
+  <div class="kw"><div class="kh"><span class="name">경화 N</span><span class="cost">예산 −4N</span></div>
+    <p class="rule">받는 모든 피해를 <b>N 감소</b>한다.</p>
+    <p class="why">스펠 티어는 &ldquo;자기 코스트 +1 등급까지 정확히 처치&rdquo;로 설계돼 있다. 경화 1은 그 계산을 어긋나게 해 상대의 제거 한 장을 통째로 헛돌게 만든다. <b>작은 딜을 무력화</b>하므로 군세에 강하고 정예에 약하다.</p>
+    <div class="ex"><b>중장병</b> 4코 수호 <b>2/6</b> 경화1 — 16/16 <span class="ok">적정</span></div>
+    <div class="ctr">▼ 카운터 — 큰 단일 피해 한 방 (초과분이 어차피 소멸하므로 정예가 유리)</div></div>
+  <div class="kw"><div class="kh"><span class="name">연마 +A/+H</span><span class="cost">부여 스탯 소모량만큼 차감</span></div>
+    <p class="rule">소환 시 <b>다른 내 크리처 1개체</b>에 영구히 +A/+H를 부여한다.</p>
+    <p class="why">스탯을 한 개체에 몰아 광역 내성과 슬롯 효율을 동시에 얻는다. 정예 축의 핵심 도구.</p>
+    <div class="ex"><b>연마병</b> 3코 <b>3/2</b> 연마 +1/+2 — 8/8 <span class="ok">적정</span></div>
+    <div class="ctr">▼ 카운터 — 강화된 대상을 제거해 2장 값을 한 번에 회수</div></div>
+</div>
+
+<div class="el earth">
+  <div class="eh"><h3>대지</h3><span class="theme">Lever · 슬롯 — 배치 순서를 자원으로 쓴다</span></div>
+  <div class="kw"><div class="kh"><span class="name">관통</span><span class="cost">스탯 가중치 3A + H</span></div>
+    <p class="rule">초과 피해가 소멸하지 않고 <b>같은 슬롯의 다음 개체로 이월</b>된다.</p>
+    <p class="why">게임의 핵심 규칙(초과 피해 소멸)을 의도적으로 뒤집는 예외. 수호 스택의 유일한 정면 해답이며, 우회하는 비행(4A+H)보다 싸다.</p>
+    <div class="ex"><b>가시병</b> 2코 <b>2/2</b> 관통 — 8/8 <span class="ok">적정</span></div>
+    <div class="ctr">▼ 카운터 — 수호를 분산 배치 · 경화로 이월량 감소</div></div>
+  <div class="kw"><div class="kh"><span class="name">진형 +H</span><span class="cost">조건부 → 부여 소모량의 절반 차감</span></div>
+    <p class="rule">슬롯 <b>1~3번</b>에 있는 동안 HP +X.</p>
+    <p class="why">&ldquo;왼쪽부터 자동으로 맞는다&rdquo;는 규칙 때문에 앞자리는 원래 위험한 자리다. 진형은 그 위험을 보상으로 바꿔 <b>벽이 스스로 두꺼워지게</b> 한다.</p>
+    <div class="ex"><b>성문지기</b> 4코 수호 <b>2/6</b> 진형 +3 — 16/17 <span class="ok">여유</span> · 앞자리면 <b>2/9</b></div>
+    <div class="ctr">▼ 카운터 — 앞자리를 빠르게 비워 조건을 깨기 · 비행으로 우회</div></div>
+</div>
+
+<div class="el dark">
+  <div class="eh"><h3>어둠</h3><span class="theme">Lever · 플레이어 HP — 피를 팔아 즉발을 산다</span></div>
+  <div class="kw"><div class="kh"><span class="name">대가 X</span><span class="cost">예산 +X/2</span></div>
+    <p class="rule">소환 시 <b>내 플레이어 HP를 X 지불</b>한다.</p>
+    <p class="why">HP 60을 소비 가능한 자원으로 다룬다. 지불한 만큼 예산을 초과하는 스탯을 받으므로, 어둠 덱은 구조적으로 &ldquo;빨리 이기지 못하면 자멸&rdquo;한다.</p>
+    <div class="ex"><b>피의광신도</b> 2코 <b>4/3</b> 대가6 — 11/11 <span class="ok">적정</span> · 3코급 스탯을 2코에</div>
+    <div class="ctr">▼ 카운터 — 직접 피해로 레이스 · 수호로 시간 끌어 자멸 유도</div></div>
+  <div class="kw"><div class="kh"><span class="name">흡혈 X</span><span class="cost">예산 −1.5X</span></div>
+    <p class="rule">이 크리처가 <b>플레이어를 공격</b>할 때 내 HP를 X 회복한다.</p>
+    <p class="why">대가와 짝을 이뤄 지불한 HP를 회수한다. 중요한 것은 <b>수호에 막히면 발동하지 않는다</b>는 점 — 방벽 덱이 흡혈의 자연스러운 카운터가 된다.</p>
+    <div class="ex"><b>흡혈귀</b> 3코 <b>2/5</b> 흡혈2 — 9/9 <span class="ok">적정</span></div>
+    <div class="ctr">▼ 카운터 — 수호로 차단 (플레이어 타격 자체를 봉쇄)</div></div>
+</div>
+
+<div class="el light">
+  <div class="eh"><h3>빛</h3><span class="theme">Lever · 플레이어 HP — 피를 벌고 지킨다</span></div>
+  <div class="kw"><div class="kh"><span class="name">가호</span><span class="cost">예산 −6</span></div>
+    <p class="rule">이 크리처가 받는 <b>첫 피해를 1회 무효화</b>한다.</p>
+    <p class="why">초과 피해가 소멸하는 규칙과 결합하면 강력하다 — 12 피해 제거도 &ldquo;1회&rdquo;로 계산돼 통째로 무효가 된다. 정예의 고코스트 크리처를 제거로부터 지키는 도구.</p>
+    <div class="ex"><b>수호천사</b> 4코 수호 <b>2/5</b> 가호 — 14/14 <span class="ok">적정</span></div>
+    <div class="ctr">▼ 카운터 — 작은 피해를 두 번 (군세의 다중 공격이 가호를 먼저 벗김)</div></div>
+  <div class="kw"><div class="kh"><span class="name">축복 X</span><span class="cost">예산 −X/2</span></div>
+    <p class="rule">소환 시 <b>내 플레이어 HP를 X 회복</b>한다.</p>
+    <p class="why">어둠의 <b>대가</b>와 정확히 대칭인 키워드. 스탯을 팔아 시계를 뒤로 돌린다 — 6마나 구간까지 도달할 턴을 직접 만들어낸다.</p>
+    <div class="ex"><b>축복사제</b> 3코 <b>2/4</b> 축복8 — 8/8 <span class="ok">적정</span> · 2코급 스탯 + HP 8</div>
+    <div class="ctr">▼ 카운터 — 회복량을 넘는 페이스 · 직접 피해로 압축</div></div>
+</div>
+
+<h2><span class="n">01 — 예산 환산 요약</span></h2>
+<div class="tbl-scroll">
+<table>
+<tr><th>키워드</th><th>속성</th><th>방식</th><th>환산</th><th>비고</th></tr>
+<tr><td>수호</td><td>강철·대지·빛</td><td>스탯 가중치</td><td class="mono">2A + 2H, 예산 +2</td><td>기존</td></tr>
+<tr><td>비행</td><td>물·불·어둠</td><td>스탯 가중치</td><td class="mono">4A + H</td><td>기존</td></tr>
+<tr><td>관통</td><td>대지</td><td>스탯 가중치</td><td class="mono">3A + H</td><td>신규 · 채택 확정</td></tr>
+<tr><td>연소 N</td><td>불</td><td>배수</td><td class="mono">×1.5 (N=3) / ×2.0 (N=1)</td><td>수명 판매</td></tr>
+<tr><td>폭산 X</td><td>불</td><td>가감</td><td class="mono">−1.5X</td><td>사망 시 광역</td></tr>
+<tr><td>환류</td><td>물</td><td>가감</td><td class="mono">−6</td><td>1회 한정</td></tr>
+<tr><td>밀물 N</td><td>물</td><td>가감</td><td class="mono">−N</td><td>N코 이하 바운스</td></tr>
+<tr><td>성장</td><td>자연</td><td>가감</td><td class="mono">−1.5 × 소모량 × 횟수</td><td>상한 필수</td></tr>
+<tr><td>증식</td><td>자연</td><td>배수</td><td class="mono">×0.5</td><td>스택 활용</td></tr>
+<tr><td>경화 N</td><td>강철</td><td>가감</td><td class="mono">−4N</td><td>제거 티어 교란</td></tr>
+<tr><td>연마</td><td>강철</td><td>가감</td><td class="mono">−(부여 소모량)</td><td>영구 강화</td></tr>
+<tr><td>진형 +H</td><td>대지</td><td>가감</td><td class="mono">−(부여 소모량)/2</td><td>조건부라 절반</td></tr>
+<tr><td>대가 X</td><td>어둠</td><td>가감</td><td class="mono">+X/2</td><td>유일한 양수</td></tr>
+<tr><td>흡혈 X</td><td>어둠</td><td>가감</td><td class="mono">−1.5X</td><td>수호에 봉쇄됨</td></tr>
+<tr><td>가호</td><td>빛</td><td>가감</td><td class="mono">−6</td><td>1회 무효</td></tr>
+<tr><td>축복 X</td><td>빛</td><td>가감</td><td class="mono">−X/2</td><td>대가의 대칭</td></tr>
+</table>
+</div>
+
+<h2><span class="n">02 — 키워드 상성</span>모든 키워드에 카운터가 있다</h2>
+<div class="tbl-scroll">
+<table>
+<tr><th>키워드</th><th>강한 상대</th><th>약한 상대</th><th>구조적 이유</th></tr>
+<tr><td>경화</td><td>군세 (작은 딜)</td><td>정예 (큰 한 방)</td><td>초과 피해가 어차피 소멸 → 큰 딜은 경화를 무시</td></tr>
+<tr><td>가호</td><td>정예 (제거 1장)</td><td>군세 (다중 타격)</td><td>&ldquo;1회 무효&rdquo;는 공격 횟수가 많은 쪽에 먼저 벗겨짐</td></tr>
+<tr><td>증식</td><td>방벽 (횟수 압도)</td><td>광역</td><td>스택은 슬롯을 아끼지만 광역에 통째로 노출</td></tr>
+<tr><td>관통</td><td>수호 스택</td><td>분산 배치 · 경화</td><td>이월은 같은 슬롯 안에서만</td></tr>
+<tr><td>흡혈</td><td>무방비 페이스</td><td>수호</td><td>플레이어 타격이 막히면 발동 자체가 안 됨</td></tr>
+<tr><td>성장</td><td>느린 덱</td><td>저코스트 제거</td><td>성장 전에 죽이면 그냥 저스탯 카드</td></tr>
+<tr><td>연소</td><td>즉발 승부</td><td>버티기</td><td>상대가 아무것도 안 해도 사라짐</td></tr>
+<tr><td>환류</td><td>단일 제거</td><td>광역 · 손패 압박</td><td>돌아와도 마나를 다시 내야 함</td></tr>
+</table>
+</div>
+<p class="note">경화↔가호가 정확히 반대 방향인 점이 중요하다 — 강철은 군세를 막고 빛은 정예를 지킨다. 두 방어 키워드가 서로 다른 축을 커버하므로, 방벽 덱은 어느 쪽 상대를 만나느냐에 따라 다른 카드를 채용하게 된다.</p>
+
+<h2><span class="n">03 — 다음 단계</span></h2>
+<p>키워드가 확정되면 데이터 스키마에 <b>keywords 컬럼</b>(복수 태그 허용)을 추가하고, 검산기에 각 환산식을 구현한다. 그 뒤 속성별 카드를 채워 현재 불균형(강철5·대지4·어둠4 vs 빛1)을 해소한다.</p>
+<p class="note">주의 — 태그(수호·비행·관통)는 <b>스탯 가중치</b>라 서로 배타적이지만, 신규 키워드는 <b>예산 가감</b>이라 여러 개를 겹칠 수 있다(예: 연소3 + 폭산3). 겹칠 때는 배수를 먼저 적용하고 가감을 나중에 더한다.</p>
+
+</div>
+</body>
+</html>
