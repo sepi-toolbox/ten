@@ -45,6 +45,28 @@ def embed_images(cards, width=480, quality=82):
             cache[path] = "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
         c["image"] = cache[path]
 
+# ---- 속성 팔레트 (프레임 색) ----
+ELEMENTS = {
+    "fire":   {"ko": "불",   "c": "#C1462E"},
+    "water":  {"ko": "물",   "c": "#2A6FB5"},
+    "nature": {"ko": "자연", "c": "#3F8B3A"},
+    "steel":  {"ko": "강철", "c": "#6B7686"},
+    "earth":  {"ko": "대지", "c": "#8A6A33"},
+    "dark":   {"ko": "어둠", "c": "#5B3E86"},
+    "light":  {"ko": "빛",   "c": "#C9A227"},
+}
+
+# ---- 카드 타입 아이콘 (이름 왼쪽. fill=currentColor) ----
+TYPEICONS = {
+    # 크리처 — 투구 쓴 병사
+    "cr": '<path d="M50 8c-13 0-22 9-22 21v9c0 4 2 7 5 9l-3 8c-1 3 1 6 4 6h32c3 0 5-3 4-6l-3-8c3-2 5-5 5-9v-9c0-12-9-21-22-21zM39 30h22v6H39z"/>'
+          '<path d="M26 62c-8 3-13 11-13 20v6c0 2 2 4 4 4h66c2 0 4-2 4-4v-6c0-9-5-17-13-20l-9-3-15 12-15-12z"/>',
+    # 스펠 — 4방향 섬광
+    "sp": '<path d="M50 4l9 28 28 9-28 9-9 28-9-28-28-9 28-9z"/><circle cx="20" cy="22" r="5"/><circle cx="80" cy="78" r="4"/>',
+    # 인챈트 — 룬 크리스탈
+    "en": '<path d="M50 6l26 22-10 44-16 22-16-22-10-44z"/>',
+}
+
 # ---- 공유 아트 라이브러리 (semantic key → inner SVG, stroke=currentColor) ----
 MOTIFS = {
     "shield": '<path d="M50 14 L80 25 V50 C80 71 66 82 50 88 C34 82 20 71 20 50 V25 Z"/>',
@@ -101,12 +123,19 @@ def main():
     data_json = json.dumps(blob, ensure_ascii=False)
     mot = motifs_js()
 
+    svg_open = '<svg viewBox="0 0 100 100" fill="currentColor">'
+    icons = "{" + ",".join(
+        "{k}: '{o}{v}</svg>'".format(k=k, o=svg_open, v=v) for k, v in TYPEICONS.items()
+    ) + "}"
+    els = json.dumps(ELEMENTS, ensure_ascii=False)
+
     for name in ("card_editor", "card_gallery"):
         tpl = os.path.join(HERE, f"{name}.template.html")
         if not os.path.exists(tpl):
             continue
         html = open(tpl, encoding="utf-8").read()
-        html = html.replace("__MOTIFS__", mot).replace("__DATA__", data_json)
+        html = (html.replace("__MOTIFS__", mot).replace("__TYPEICONS__", icons)
+                    .replace("__ELEMENTS__", els).replace("__DATA__", data_json))
         with open(os.path.join(HERE, f"{name}.html"), "w", encoding="utf-8") as f:
             f.write(html)
         print(f"wrote tools/{name}.html")

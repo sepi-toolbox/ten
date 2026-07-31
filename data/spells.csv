@@ -1,6 +1,6 @@
-id,name,cost,mode,value,copies,art,desc,image,note
-SP01,화살,1,dmg,2,2,arrow,,assets/art/SP01.png,2코 크리처 1개체 처리
-SP02,창격,2,dmg,4,2,thrust,,assets/art/SP02.png,3코 수호(HP 4~6) 대응
-SP03,처형,3,dmg,6,2,exec,,assets/art/SP03.png,4코 크리처까지 사정권
-SP04,화염비,4,aoe,5,1,firerain,,assets/art/SP04.png,스택 덱의 유일한 해답
-SP05,소멸,5,dmg,12,1,burst,,assets/art/SP05.png,6코 크리처 대응 카드
+id,name,cost,mode,value,copies,element,art,desc,image,note
+SP01,화살,1,dmg,2,2,nature,arrow,,assets/art/SP01.png,2코 크리처 1개체 처리
+SP02,창격,2,dmg,4,2,earth,thrust,,assets/art/SP02.png,3코 수호(HP 4~6) 대응
+SP03,처형,3,dmg,6,2,dark,exec,,assets/art/SP03.png,4코 크리처까지 사정권
+SP04,화염비,4,aoe,5,1,fire,firerain,,assets/art/SP04.png,스택 덱의 유일한 해답
+SP05,소멸,5,dmg,12,1,dark,burst,,assets/art/SP05.png,6코 크리처 대응 카드

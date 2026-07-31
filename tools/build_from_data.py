@@ -41,6 +41,7 @@ def ensure_design(rows, fallback):
             r["art"] = fallback(r)
         r.setdefault("desc", "")
         r.setdefault("image", "")
+        r.setdefault("element", "steel")
     return rows
 
 
@@ -97,11 +98,11 @@ def main():
     enchants = ensure_design(autoid(d["enchants"], "EN"), lambda r: "flame")
 
     write_csv(os.path.join(DATA, "creatures.csv"), creatures,
-              ["id", "name", "cost", "tag", "atk", "hp", "copies", "art", "desc", "image", "budget_p", "verdict", "note"])
+              ["id", "name", "cost", "tag", "atk", "hp", "copies", "element", "art", "desc", "image", "budget_p", "verdict", "note"])
     write_csv(os.path.join(DATA, "spells.csv"), spells,
-              ["id", "name", "cost", "mode", "value", "copies", "art", "desc", "image", "note"])
+              ["id", "name", "cost", "mode", "value", "copies", "element", "art", "desc", "image", "note"])
     write_csv(os.path.join(DATA, "enchants.csv"), enchants,
-              ["id", "name", "cost", "drain_type", "effect_value", "charge", "target", "copies", "art", "desc", "image", "note"])
+              ["id", "name", "cost", "drain_type", "effect_value", "charge", "target", "copies", "element", "art", "desc", "image", "note"])
 
     pool = build_pool(creatures, spells, enchants)
     with open(os.path.join(DATA, "cards.json"), "w", encoding="utf-8") as f:

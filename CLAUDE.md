@@ -67,6 +67,10 @@ python3 tools/validate_budget.py     # 예산 초과·덱 불일치 시 exit 1
 - `tools/card_editor.html`: **비주얼 카드 디자이너**. 카드 그리드 → 탭하면 편집 모달(이름·코스트·프레임/태그·능력치·매수·효과설명·아트 선택 + 실시간 미리보기·예산 검산). ten_data.json 내보내기. 라운드트립 무손실.
 - `tools/card_gallery.html`: 카드 갤러리(보기 전용, 필터). 에디터와 동일 렌더.
 - 아트 라이브러리(20종 SVG 모티프)는 `build_editor.py`의 MOTIFS에서 한 번 정의 → 두 뷰어에 `__MOTIFS__`로 주입. 아트는 SVG 라인아트(래스터 일러스트 아님).
+- **속성 체계(7종)**: fire·water·nature·steel·earth·dark·light. **카드 프레임 색 = 속성**, **카드 타입(크리처/스펠/인챈트) = 이름 왼쪽 아이콘**, 태그(수호·비행·관통) = 효과문 첫머리 굵은 키워드. 팔레트·아이콘은 `build_editor.py`의 ELEMENTS/TYPEICONS에서 정의 → 템플릿에 주입.
+  - 프로토타입 **보드 슬롯은 태그 색 유지**(수호=에메랄드 광채/비행=호박 점선) — 전투 중에는 규칙 정보가 우선. 속성 색은 확대 카드·손패 좌측 띠에 적용.
+  - 기존 20종 속성은 아트·테마 기준 **잠정 배정**(강철5·대지4·어둠4·물2·자연2·불2·빛1) — 불균형하므로 재배정 검토 필요.
+- 설계 문서: `docs/meta_design.html`(아키타입·상성·위협↔해답), `docs/element_design.html`(7속성 메인+서브2·가격 규칙). 관통 채택 확정.
 - 데이터에 `art`(모티프 키)·`desc`(커스텀 효과문)·`image`(생성 아트 경로) 컬럼 추가됨. extract/build_from_data 모두 보존.
 - **생성 아트 연동**: `assets/art/<id>.png`에 카드별 일러스트. 카드에 `image` 있으면 그림, 없으면 SVG 모티프로 자동 폴백. `build_editor.py`가 이미지를 리사이즈·data URI로 임베드(자립형 HTML). 아트 소스 = ChatGPT 4×5 시트를 `tools/`(임시)에서 20분할 → assets/art. 새 아트 넣는 법: PNG를 assets/art/<id>.png로 두고 `build_editor.py` 재실행.
 

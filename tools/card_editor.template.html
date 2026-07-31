@@ -112,6 +112,16 @@ input[type=file]{display:none}
   font-family:'JetBrains Mono';font-size:12px;padding:11px 18px;border-radius:6px;opacity:0;transition:.25s;z-index:60;pointer-events:none;max-width:90vw;text-align:center}
 #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 .art{overflow:hidden}.artimg{width:100%;height:100%;object-fit:cover;display:block}
+
+/* ---- 속성 프레임 + 타입 아이콘 ---- */
+.card{border-color:var(--el,var(--ink))!important}
+.art{background:linear-gradient(160deg,color-mix(in srgb,var(--el) 16%,var(--paper)),color-mix(in srgb,var(--el) 5%,var(--paper)))!important;
+  border-top-color:color-mix(in srgb,var(--el) 60%,transparent)!important;
+  border-bottom-color:color-mix(in srgb,var(--el) 60%,transparent)!important}
+.tico{flex:none;width:17px;height:17px;color:var(--el);opacity:.92}
+.tico svg{width:100%;height:100%;display:block}
+.chip{border-color:var(--el)!important;color:var(--el)!important}
+.card .art svg{color:var(--el)}
 </style>
 </head>
 <body>
@@ -146,6 +156,8 @@ const DATA = __DATA__;
 const R = DATA.rules;
 const S = (inner) => `<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
 const M = __MOTIFS__;
+const TI = __TYPEICONS__;
+const EL = __ELEMENTS__;
 const ARTLABELS = {shield:'방패',wings:'날개',wall:'성벽',sword:'검',hawk:'매',spear:'창',griffin:'그리핀',helmet:'투구',wyvern:'비룡',banner:'군기',axe:'도끼',arrow:'화살',thrust:'창격',exec:'처형',firerain:'화염비',burst:'폭발',flame:'불꽃',flag:'깃발',awaken:'각성',star:'별'};
 const TAGKO={normal:'일반',guard:'수호',fly:'비행',flyguard:'비행수호'};
 const MODEKO={dmg:'단일',aoe:'광역',direct:'직접'};
@@ -193,14 +205,15 @@ function cardHTML(c,k){
   c.k = k==='creatures'?'cr':k==='spells'?'sp':'en';
   const cls=c.k==='cr'?c.tag:c.k;
   const eff=(c.desc&&c.desc.trim())?c.desc:defEffect(c);
-  const chip=c.k==='cr'?'크리처':(c.k==='sp'?'스펠':'인챈트');
+  const chip=(EL[c.element]||EL.steel).ko;
   let foot;
   if(c.k==='cr') foot=`<div class="stnums"><div class="st atk"><span class="ic"></span>${c.atk}</div><div class="st hp"><span class="ic"></span>${c.hp}</div></div>`;
   else if(c.k==='en') foot=`<div class="stnums"><div></div><div class="st charge"><span class="ic"></span>${c.charge}</div></div>`;
   else foot='';
   const vd=verdict(c,k);
-  return `<div class="card ${cls}"><div class="vbadge ${vd.v}">${VKO[vd.v]}</div>
-    <div class="chead"><div class="cost">${c.cost}</div><div class="nm">${c.name||'—'}</div></div>
+  const el=EL[c.element]||EL.steel;
+  return `<div class="card ${cls}" style="--el:${el.c}"><div class="vbadge ${vd.v}">${VKO[vd.v]}</div>
+    <div class="chead"><div class="cost">${c.cost}</div><div class="tico">${TI[c.k]}</div><div class="nm">${c.name||'—'}</div></div>
     <div class="art">${artBlock(c)}</div>
     <div class="tagrow"><span class="chip">${chip}</span></div>
     <div class="eff">${eff}</div>${foot}</div>`;
@@ -251,6 +264,7 @@ function openEditor(k,i){
       <div class="pvwrap"><div class="pv" id="pv"></div><div class="vline" id="vline"></div></div>
       <div class="fields">
         <div class="row"><div class="field" style="flex:2"><label>이름</label><input data-f="name" value="${c.name||''}"></div>${fieldNum(k,i,'cost','코스트')}</div>
+        <div class="field"><label>속성 (프레임 색)</label><select data-f="element">${Object.entries(EL).map(([v,o])=>`<option value="${v}"${(c.element||'steel')===v?' selected':''}>${o.ko}</option>`).join('')}</select></div>
         ${typeFields}
         ${fieldNum(k,i,'copies','덱 매수')}
         <div class="field"><label>효과·설명 (비우면 자동)</label><textarea data-f="desc" placeholder="예: 크리처 1개체에 4 피해">${c.desc||''}</textarea></div>

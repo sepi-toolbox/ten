@@ -70,6 +70,16 @@ h1 span{color:var(--teal)}
 .big{font-family:'JetBrains Mono';font-weight:700;font-size:20px;color:var(--fc)}
 .big small{font-size:9px;color:var(--ink-faint);font-weight:500}
 .art{overflow:hidden}.artimg{width:100%;height:100%;object-fit:cover;display:block}
+
+/* ---- 속성 프레임 + 타입 아이콘 ---- */
+.card{border-color:var(--el,var(--ink))!important}
+.art{background:linear-gradient(160deg,color-mix(in srgb,var(--el) 16%,var(--paper)),color-mix(in srgb,var(--el) 5%,var(--paper)))!important;
+  border-top-color:color-mix(in srgb,var(--el) 60%,transparent)!important;
+  border-bottom-color:color-mix(in srgb,var(--el) 60%,transparent)!important}
+.tico{flex:none;width:17px;height:17px;color:var(--el);opacity:.92}
+.tico svg{width:100%;height:100%;display:block}
+.chip{border-color:var(--el)!important;color:var(--el)!important}
+.card .art svg{color:var(--el)}
 </style>
 </head>
 <body>
@@ -89,6 +99,8 @@ const DRAINKO = {persistent:'지속형', triggered:'발동형', active:'사용�
 /* ---------- 벡터 아트 모티프 (stroke=currentColor) ---------- */
 const S = (inner) => `<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
 const M = __MOTIFS__;
+const TI = __TYPEICONS__;
+const EL = __ELEMENTS__;
 function artBlock(c){return (c.image)?`<img class="artimg" src="${c.image}">`:art(c);}
 function art(c){
   const key=(c.art&&M[c.art])?c.art:(c.k==='sp'?'burst':c.k==='en'?'flame':(c.tag==='guard'||c.tag==='flyguard')?'shield':c.tag==='fly'?'hawk':'sword');
@@ -117,7 +129,7 @@ function effect(c){
 }
 function cardHTML(c){
   const cls = c.k==='cr'?c.tag : c.k;
-  const chips = `<span class="chip">${c.k==='cr'?'크리처':(c.k==='sp'?'스펠':'인챈트')}</span>`;
+  const chips = `<span class="chip">${(EL[c.element]||EL.steel).ko}</span>`;
   let foot;
   if(c.k==='cr'){
     foot=`<div class="stats">
@@ -131,8 +143,9 @@ function cardHTML(c){
   }else{
     foot=`<div class="copies">×${c.copies} in deck</div>`;
   }
-  return `<div class="card ${cls}">
-    <div class="chead"><div class="cost">${c.cost}</div><div class="name">${c.name}</div></div>
+  const el=EL[c.element]||EL.steel;
+  return `<div class="card ${cls}" style="--el:${el.c}">
+    <div class="chead"><div class="cost">${c.cost}</div><div class="tico">${TI[c.k]}</div><div class="name">${c.name}</div></div>
     <div class="art">${artBlock(c)}</div>
     <div class="tagrow">${chips}</div>
     <div class="eff">${effect(c)}</div>
