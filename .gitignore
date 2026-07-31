@@ -11,3 +11,8 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# 토큰·비밀값은 저장소에 절대 넣지 않는다 (공개 저장소)
+*token*
+*.pat
+.env

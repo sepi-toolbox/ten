@@ -112,7 +112,7 @@ body::before{
   border:1px solid var(--rule);border-radius:8px;
   box-shadow:inset 0 0 30px rgba(0,0,0,.6)}
 .slot{
-  aspect-ratio:47/70;border:1px solid #4a371f;border-radius:5px;
+  aspect-ratio:5/7;container-type:inline-size;border:1px solid #4a371f;border-radius:5px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   position:relative;background:linear-gradient(180deg,#1e150d,#150e08);
   cursor:default;transition:.16s;padding:2px;overflow:hidden;font-family:'Gowun Batang',serif;
@@ -326,7 +326,7 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
   border:1.5px solid rgba(107,77,31,.7)}
 
 /* ---- 롱프레스 카드 확대 ---- */
-.slot,.hc{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.slot,.hc,.hcw{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .zoom{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;
   background:rgba(8,5,3,.82);backdrop-filter:blur(3px);padding:20px}
 .zoom.on{display:flex;animation:zfade .16s ease both}
@@ -378,24 +378,43 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
 .hc .lpip{display:flex;gap:3px;margin:5px 0}
 .hc .lpip i{width:13px;height:13px;border-radius:50%;border:1px solid rgba(0,0,0,.45)}
 
-/* ---- 통합 카드 ---- */
-.tcard{--el:#8894A6;position:relative;display:flex;flex-direction:column;overflow:hidden;
+/* ---- 통합 카드 ----
+   카드 규격은 폭(--cw) 하나로 결정된다. 내부 치수는 전부 --cw의 비율이므로
+   보드·손패·확대가 완전히 같은 비율이고, 효과문이 길어져도 카드 크기는 변하지 않는다. */
+.tcard{
+  --cw:86px;                       /* 유일한 크기 손잡이 */
+  --el:#8894A6;
+  width:var(--cw); aspect-ratio:5/7;   /* 규격 고정 — 내용이 크기를 바꾸지 못한다 */
+  position:relative;display:flex;flex-direction:column;overflow:hidden;
   background:linear-gradient(180deg,var(--parch),var(--parch-2));color:var(--ink);
-  border:3px solid var(--el);border-radius:7px;box-shadow:0 2px 6px rgba(0,0,0,.5)}
-.thead{padding:3px 5px 2px;border-bottom:1px solid color-mix(in srgb,var(--el) 30%,transparent)}
-.tname{font-family:'Gowun Batang',serif;font-weight:700;line-height:1.1;color:var(--ink)}
-.tcost{display:flex;gap:2px;flex-wrap:wrap;margin-top:2px}
-.cp{border-radius:50%;flex:none;box-sizing:border-box}
+  border:calc(var(--cw)*.034) solid var(--el);
+  border-radius:calc(var(--cw)*.075);
+  box-shadow:0 2px 6px rgba(0,0,0,.5)}
+.thead{flex:none;padding:calc(var(--cw)*.045) calc(var(--cw)*.06) calc(var(--cw)*.03);
+  border-bottom:1px solid color-mix(in srgb,var(--el) 30%,transparent)}
+.tname{font-family:'Gowun Batang',serif;font-weight:700;color:var(--ink);
+  font-size:calc(var(--cw)*.125);line-height:1.12;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tcost{display:flex;gap:calc(var(--cw)*.022);flex-wrap:wrap;margin-top:calc(var(--cw)*.03)}
+.cp{border-radius:50%;flex:none;box-sizing:border-box;
+  width:calc(var(--cw)*.093);height:calc(var(--cw)*.093)}
 .cp.c{border:1px solid rgba(0,0,0,.45)}
 .cp.g{background:transparent;border:1.5px solid rgba(90,67,38,.8)}
-.tart{background-size:cover;background-position:center;background-color:#1a120a;
-  border-top:2px solid color-mix(in srgb,var(--el) 55%,transparent);
-  border-bottom:2px solid color-mix(in srgb,var(--el) 55%,transparent)}
-.tbody{flex:1;min-height:0}
-.teff{color:var(--ink-soft);overflow:hidden}
+.tart{flex:1;min-height:calc(var(--cw)*.30);
+  background-size:cover;background-position:center;background-color:#1a120a;position:relative;
+  border-top:calc(var(--cw)*.023) solid color-mix(in srgb,var(--el) 55%,transparent);
+  border-bottom:calc(var(--cw)*.023) solid color-mix(in srgb,var(--el) 55%,transparent)}
+.tbody{flex:none;overflow:hidden;
+  height:calc(var(--cw)*.04 + var(--cw)*.082*1.35*3)}   /* 여백 + 정확히 3줄 */
+.teff{color:var(--ink-soft);overflow:hidden;
+  font-size:calc(var(--cw)*.082);line-height:1.35;
+  padding:calc(var(--cw)*.04) calc(var(--cw)*.06) 0;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3}
 .teff b{color:var(--ink);font-weight:700}
-.tstat{display:flex;justify-content:space-between;align-items:center}
+.tstat{flex:none;display:flex;justify-content:space-between;align-items:center;
+  padding:calc(var(--cw)*.025) calc(var(--cw)*.05) calc(var(--cw)*.045)}
 .tb{display:flex;align-items:center;justify-content:center;border-radius:50%;
+  width:calc(var(--cw)*.2);height:calc(var(--cw)*.2);font-size:calc(var(--cw)*.115);
   font-family:'Cinzel',serif;font-weight:700;border:1.5px solid;box-shadow:0 1px 3px rgba(0,0,0,.5)}
 .tb.a{background:#3a1512;border-color:#e0796e;color:#ffd9d2}
 .tb.h{background:#0d2b25;border-color:#4fc4a6;color:#d6fff2}
@@ -403,45 +422,22 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
 .tb.h.dmg{background:#6b1410;border-color:#ff9a88;color:#fff;box-shadow:0 0 7px rgba(255,90,74,.65)}
 .tb.a.dmg{background:#4a3a10;border-color:#e0b25e;color:#fff3d0}
 .tb.buf{background:#1d4a12;border-color:#8ce06a;color:#e8ffdc}
-.tstk{position:absolute;top:2px;right:3px;z-index:3;font-family:'Cinzel',serif;font-weight:700;font-size:9px;
-  color:#f2d488;background:rgba(8,5,3,.85);border:1px solid #7c5a30;border-radius:3px;padding:0 3px}
-.tpips{position:absolute;right:3px;display:flex;flex-direction:column;gap:1px;align-items:flex-end;z-index:3}
-.tpips i{font-family:'Cinzel',serif;font-style:normal;font-size:8px;font-weight:700;
-  background:rgba(13,43,37,.92);border:1px solid #4fc4a6;color:#d6fff2;border-radius:3px;padding:0 3px}
+.tstk{position:absolute;top:calc(var(--cw)*.025);right:calc(var(--cw)*.035);z-index:3;
+  font-family:'Cinzel',serif;font-weight:700;font-size:calc(var(--cw)*.105);
+  color:#f2d488;background:rgba(8,5,3,.85);border:1px solid #7c5a30;
+  border-radius:3px;padding:0 calc(var(--cw)*.035)}
+.tpips{position:absolute;right:calc(var(--cw)*.035);bottom:calc(var(--cw)*.26);
+  display:flex;flex-direction:column;gap:1px;align-items:flex-end;z-index:3}
+.tpips i{font-family:'Cinzel',serif;font-style:normal;font-weight:700;font-size:calc(var(--cw)*.093);
+  background:rgba(13,43,37,.92);border:1px solid #4fc4a6;color:#d6fff2;
+  border-radius:3px;padding:0 calc(var(--cw)*.035)}
 .tpips i.dmg{background:rgba(107,20,16,.92);border-color:#ff7a66;color:#fff}
 
-/* 크기 변형 */
-.tcard.sm{width:100%;height:100%;border-width:2px;border-radius:5px}
-.tcard.sm .tname{font-size:8.5px;text-align:center}
-.tcard.sm .thead{padding:2px 3px 1px}
-.tcard.sm .tcost{justify-content:center;gap:1.5px;margin-top:1px}
-.tcard.sm .cp{width:5px;height:5px}
-.tcard.sm .tart{flex:1;min-height:0}
-.tcard.sm .tbody{display:none}
-.tcard.sm .tstat{position:absolute;left:0;right:0;bottom:0;padding:2px 3px;z-index:2}
-.tcard.sm .tb{width:17px;height:17px;font-size:10px}
-.tcard.sm .tpips{bottom:21px}
-.tcard.sm .tart{flex:1;min-height:0;border-bottom:none}
-
-.tcard.md{width:86px}
-.tcard.md .tname{font-size:11px}
-.tcard.md .cp{width:8px;height:8px}
-.tcard.md .tart{height:52px}
-.tcard.md .teff{font-size:8px;line-height:1.35;padding:3px 5px;
-  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
-.tcard.md .tstat{padding:2px 4px 4px}
-.tcard.md .tb{width:17px;height:17px;font-size:10px}
-
-.tcard.lg{width:min(72vw,260px);border-width:4px;border-radius:11px}
-.tcard.lg .thead{padding:8px 11px 5px}
-.tcard.lg .tname{font-size:19px}
-.tcard.lg .cp{width:14px;height:14px}
-.tcard.lg .tcost{gap:3px;margin-top:5px}
-.tcard.lg .tart{aspect-ratio:1/1}
-.tcard.lg .teff{font-size:12.5px;line-height:1.55;padding:9px 12px 4px}
-.tcard.lg .tstat{padding:5px 12px 11px}
-.tcard.lg .tb{width:32px;height:32px;font-size:17px}
-.tcard.lg .tpips{bottom:52px;right:10px}
+/* 크기 — 세 곳 모두 같은 규격, 폭만 다르다 */
+.tcard.sm{--cw:100cqw}                       /* 보드: 슬롯 폭에 맞춘다 */
+.tcard.md{--cw:86px}                         /* 손패 */
+.tcard.lg{--cw:min(72vw,260px)}              /* 확대 */
+@supports not (width:1cqw){ .tcard.sm{--cw:84px} }
 
 /* 손패 래퍼 */
 .hcw{flex:none;cursor:pointer;transition:.15s}
@@ -451,11 +447,9 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
 .hcw.no:hover{transform:none}
 .slot.occ{padding:0;background:transparent;border:none!important;box-shadow:none!important}
 
-.tcard.md.land .landart{height:52px;background:
+.tcard.land{border-style:dashed}
+.tcard.land .landart{height:100%;background:
   radial-gradient(circle at 50% 40%, color-mix(in srgb,var(--el) 55%,transparent), transparent 70%), #16100a}
-.tcard.md.land .landart::after{content:'';position:absolute;inset:0}
-.tcard.md.land{border-style:dashed}
-.tcard.md .tart{position:relative}
 </style>
 </head>
 <body>
@@ -1314,6 +1308,7 @@ function render(){
         <div class="thead"><div class="tname">${n}</div><div class="tcost">${pips}</div></div>
         <div class="tart landart"></div>
         <div class="tbody"><div class="teff">${L.dual?'두 속성 중 <b>택1</b>. 놓은 턴에는 쓸 수 없다.':'<b>지형</b> — 자원 1을 생성한다.'}</div></div>
+        <div class="tstat"></div>
       </div></div>`;
     }
     const c=POOL[n]; if(!c)return '';
@@ -1356,8 +1351,25 @@ document.getElementById('again').onclick=newGame;
 
 /* ============ 롱프레스 카드 확대 ============ */
 function zoomHTML(name,u){
-  if(!POOL[name])return '';
-  return tcardHTML(name,{size:'lg',unit:u})+'<div class="zhint">아무 곳이나 눌러 닫기</div>';
+  if(POOL[name]) return tcardHTML(name,{size:'lg',unit:u})+'<div class="zhint">아무 곳이나 눌러 닫기</div>';
+  if(LANDS[name]){                               /* 지형 카드 */
+    const L=LANDS[name], c1=(EL[L.els[0]]||EL.steel).c;
+    const pips=L.els.map(e=>`<i class="cp c" style="background:${(EL[e]||EL.steel).c}"></i>`).join('');
+    return `<div class="tcard lg land" style="--el:${c1}">
+      <div class="thead"><div class="tname">${name}</div><div class="tcost">${pips}</div></div>
+      <div class="tart landart"></div>
+      <div class="tbody"><div class="teff">${L.dual?'두 속성 중 <b>택1</b>. 놓은 턴에는 쓸 수 없다.':'<b>지형</b> — 자원 1을 생성한다.'}</div></div>
+      <div class="tstat"></div></div><div class="zhint">아무 곳이나 눌러 닫기</div>`;
+  }
+  if(u&&u.token){                                /* 소환된 토큰 */
+    return `<div class="tcard lg" style="--el:#8894A6">
+      <div class="thead"><div class="tname">${name}</div><div class="tcost"></div></div>
+      <div class="tart"></div>
+      <div class="tbody"><div class="teff"><b>토큰</b> — 스펠이 만들어 낸 개체. 손으로 돌아가지 않는다.</div></div>
+      <div class="tstat"><span class="tb a">${u.a}</span><span class="tb h">${Math.max(0,u.insts[0]?u.insts[0].hp:0)}</span></div>
+      </div><div class="zhint">아무 곳이나 눌러 닫기</div>`;
+  }
+  return '';
 }
 let lpT=null, lpFired=false;
 function showZoom(name,u){
@@ -1370,20 +1382,25 @@ function hideZoom(){
   if(!z.classList.contains('on'))return;
   z.classList.remove('on'); z.innerHTML=''; lpFired=true;   // 닫는 탭이 카드 플레이로 이어지지 않도록
 }
+let lpX=0,lpY=0;
 document.addEventListener('pointerdown',e=>{
   if(document.getElementById('zoom').classList.contains('on'))return;
-  const slot=e.target.closest('.slot.occ'), hc=e.target.closest('.hc');
+  const slot=e.target.closest('.slot.occ'), hc=e.target.closest('.hcw,.hc');
   let name=null,u=null;
   if(slot){ u=S[slot.dataset.side==='me'?'me':'ai'].board[+slot.dataset.idx]; if(u)name=u.name; }
   else if(hc){ name=S.me.hand[+hc.dataset.h]; }
   if(!name)return;
-  lpFired=false; clearTimeout(lpT);
-  lpT=setTimeout(()=>showZoom(name,u),430);
+  lpFired=false; clearTimeout(lpT); lpX=e.clientX; lpY=e.clientY;
+  lpT=setTimeout(()=>showZoom(name,u),420);
 });
-['pointerup','pointercancel','pointermove','scroll'].forEach(ev=>
-  document.addEventListener(ev,()=>clearTimeout(lpT),{passive:true}));
+/* 손가락이 조금 흔들려도 취소되지 않도록 이동 임계값을 둔다 */
+document.addEventListener('pointermove',e=>{
+  if(lpT&&Math.hypot(e.clientX-lpX,e.clientY-lpY)>12){clearTimeout(lpT);lpT=null;}
+},{passive:true});
+['pointerup','pointercancel','scroll'].forEach(ev=>
+  document.addEventListener(ev,()=>{clearTimeout(lpT);lpT=null;},{passive:true}));
 document.addEventListener('click',e=>{ if(lpFired){e.stopPropagation();e.preventDefault();lpFired=false;} },true);
-document.addEventListener('contextmenu',e=>{ if(e.target.closest('.slot.occ,.hc'))e.preventDefault(); });
+document.addEventListener('contextmenu',e=>{ if(e.target.closest('.slot.occ,.hcw,.hc'))e.preventDefault(); });
 
 newGame();
 </script>

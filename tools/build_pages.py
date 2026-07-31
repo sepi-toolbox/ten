@@ -7,7 +7,12 @@ force push 한다. (공개 저장소에 gh-pages 브랜치를 올리면 GitHub P
 https://sepi-toolbox.github.io/ten/ 로 게시한다.)
 
   python3 tools/build_pages.py             # 빌드만 (/tmp/ten-pages 에 생성)
-  python3 tools/build_pages.py --push TOKEN  # 빌드 + gh-pages 강제 푸시
+  python3 tools/build_pages.py --push      # 빌드 + gh-pages 강제 푸시
+
+토큰은 다음 순서로 찾는다. **저장소 안에는 절대 두지 않는다 — 공개 저장소다.**
+  1) --push 뒤에 직접 준 값
+  2) 환경변수 GITHUB_TOKEN
+  3) ~/.config/ten/token  (권한 600)
 """
 import os
 import shutil
@@ -82,14 +87,31 @@ def push(token):
     print("push 완료 → https://sepi-toolbox.github.io/ten/")
 
 
+TOKEN_FILE = os.path.expanduser("~/.config/ten/token")
+
+
+def find_token(argv, i):
+    """--push 뒤 인자 → GITHUB_TOKEN → ~/.config/ten/token 순으로 찾는다."""
+    if i + 1 < len(argv) and not argv[i + 1].startswith("-"):
+        return argv[i + 1]
+    if os.environ.get("GITHUB_TOKEN"):
+        return os.environ["GITHUB_TOKEN"]
+    if os.path.exists(TOKEN_FILE):
+        return open(TOKEN_FILE, encoding="utf-8").read().strip()
+    return None
+
+
 def main():
     build()
     if "--push" in sys.argv:
-        i = sys.argv.index("--push")
-        if i + 1 >= len(sys.argv):
-            print("사용법: build_pages.py --push <GITHUB_TOKEN>")
+        tok = find_token(sys.argv, sys.argv.index("--push"))
+        if not tok:
+            print("토큰을 찾지 못했습니다. 아래 중 하나를 쓰세요:")
+            print("  build_pages.py --push <TOKEN>")
+            print("  GITHUB_TOKEN=<TOKEN> build_pages.py --push")
+            print(f"  echo -n <TOKEN> > {TOKEN_FILE} && chmod 600 {TOKEN_FILE}")
             sys.exit(1)
-        push(sys.argv[i + 1])
+        push(tok)
 
 
 if __name__ == "__main__":
