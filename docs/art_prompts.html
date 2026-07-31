@@ -38,7 +38,12 @@ pre{font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.65;col
 <div class="note" style="border-left-color:#B87400"><b>DALL·E의 한계 두 가지.</b> 투명 배경과 정확한 픽셀 좌표는 못 맞춥니다. 그래서 프레임 프롬프트는 <b>일러스트 창을 단색 빈 사각형</b>으로, <b>글자 들어갈 띠는 빈 판</b>으로 그리게 했습니다. 받으면 제가 창 부분을 잘라내 투명하게 만들고 비율을 실제 카드(5:7)에 맞춰 보정합니다. 코스트 동그라미는 <b>순수 마젠타 배경(#FF00FF)</b>으로 받아서 제가 키잉해 투명화합니다. 띠 위치가 % 단위로 정확히 안 나와도 괜찮습니다 — 순서와 대략의 비율만 맞으면 제가 맞춥니다.</div>
 <h2><span>01 — 프레임 · 한 장으로</span>7속성 × 4타입 = 28칸 (권장)</h2>
 <p>지난번처럼 한 이미지에 전부 담는 방식입니다. <b>열이 속성, 행이 카드 타입</b>입니다. 한 장에서 뽑으면 28칸의 톤이 저절로 맞습니다. 이걸 먼저 돌려보고, 특정 칸만 이상하면 아래 03번 개별 프롬프트로 그 칸만 다시 뽑으면 됩니다.</p>
-<div class="pbox" style="--c:#141821"><div class="phead"><span class="pname">프레임 28칸 시트</span><span class="pfile">frames-sheet.png</span><button class="copy">복사</button></div><pre>A single image laid out as a 7-column by 4-row grid of 28 fantasy trading-card FRAMES. Every cell is one complete empty card frame, portrait, exact 5:7 aspect ratio, with a black gutter between cells. Border and panel structure only — no artwork, no text.
+<div class="pbox" style="--c:#141821"><div class="phead"><span class="pname">프레임 28칸 시트</span><span class="pfile">frames-sheet.png</span><button class="copy">복사</button></div><pre>A single image laid out as a 7-column by 4-row grid of 28 fantasy trading-card FRAMES. Border and panel structure only — no artwork, no text.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
+  This applies to EVERY ONE of the 28 cards. The grid cells may end up square, but the card drawn inside each cell must stay a tall 5:7 portrait rectangle with black padding around it. A squashed or square card is wrong.
 
 Columns are the seven elements (same element down each column):
   Column 1 — fire: symbol is a flame, palette ember orange and scorched crimson, heat haze, drifting sparks, accent #C1462E
@@ -50,10 +55,12 @@ Columns are the seven elements (same element down each column):
   Column 7 — light: symbol is a radiant sun, palette pale gold and warm ivory, godrays, floating dust in sunbeams, accent #B8912A
 
 Rows are the four card types (same type across each row):
-  Row 1 — 크리처 (cr): a heraldic shield badge set into the top border. This is a CREATURE frame — it must carry attack and health. STAT BAND: two empty circular sockets, one at the far left and one at the far right, each about 18% of the card&#x27;s width across. They are empty recessed seats — no numbers, no symbols inside. The strip between them is plain.
-  Row 2 — 스펠 (sp): a starburst / arcane spark badge set into the top border. This is a SPELL frame — it prints no stats at all. STAT BAND: completely plain. No sockets, no ornament — spells print no stats.
-  Row 3 — 인챈트 (en): a faceted crystal badge set into the top border. This is an ENCHANT frame — it carries a single charge counter. STAT BAND: ONE empty circular socket at the far right only, about 18% of the card&#x27;s width across, an empty recessed seat with nothing inside. The rest of the strip is plain.
+  Row 1 — 크리처 (cr): a heraldic shield badge set into the top border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health. STAT BAND: two empty circular sockets, one at the far left and one at the far right, each about 18% of the card&#x27;s width across. They are empty recessed seats — no numbers, no symbols inside. The strip between them is plain.
+  Row 2 — 스펠 (sp): a starburst / arcane spark badge set into the top border. This is a SPELL frame — it HAS a cost strip but prints no stats at all. STAT BAND: completely plain. No sockets, no ornament — spells print no stats.
+  Row 3 — 인챈트 (en): a faceted crystal badge set into the top border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter. STAT BAND: ONE empty circular socket at the far right only, about 18% of the card&#x27;s width across, an empty recessed seat with nothing inside. The rest of the strip is plain.
   Row 4 — 지형 (ld): a rune-carved keystone badge set into the top border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead. STAT BAND: completely plain. No sockets.
+
+COST STRIP: rows 1, 2 and 3 (creature, spell, enchant) ALL have the empty cost strip. Only row 4 (terrain) omits it — terrain cards cost nothing.
 
 All 28 frames share one identical layout, measured from the top as a percentage of card height:
   - outer border: 3.1% of the card&#x27;s width on all four sides
@@ -63,7 +70,234 @@ All 28 frames share one identical layout, measured from the top as a percentage 
   - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
   - STAT BAND: 81.0% down to 97.8%
 
-Only two things change between cells: the element colour and corner symbol (by column), and the type badge and stat band (by row). Everything else is identical.
+Only two things change between cells: the element colour and corner symbol (by column), and the type badge, cost strip and stat band (by row). Everything else is identical.
+
+Rules for every band:
+  - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
+  - The illustration window is a flat empty rectangle in one neutral dark colour. Absolutely nothing inside it; it gets replaced by artwork.
+  - The name plate, cost strip, rules panel and stat sockets are empty seats, not filled elements. Leave them clean and readable.
+  - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
+
+Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
+<div class="note" style="border-left-color:#B03A3F"><b>지난 시트가 정사각형으로 나온 이유.</b> 7열 × 4행에 5:7 카드를 담으려면 캔버스 비율이 <b>1.25</b>여야 하는데 DALL·E가 만들 수 있는 가로 캔버스는 <b>1.75</b>였습니다. 그래서 카드를 칸에 맞춰 40% 눌러버린 겁니다. 이번엔 <b>카드를 칸에 꽉 채우지 말고 검은 여백을 두고 앉히라</b>고 못 박았습니다 — 이러면 캔버스 비율과 상관없이 5:7이 유지됩니다. 그래도 또 눌려 나오면 아래 <b>속성별 2×2 시트</b>를 쓰세요. 세로 캔버스와 비율이 거의 맞아 눌릴 이유가 없습니다.</div>
+<h2><span>01-B — 프레임 · 속성별</span>2×2 = 4칸씩 7장 (안전한 대안)</h2>
+<p>28칸 시트가 계속 눌려 나오면 이쪽을 쓰세요. 한 장에 한 속성의 4타입만 담습니다. 칸 비율(0.714)이 세로 캔버스(0.667)와 거의 같아 눌릴 압력이 없습니다.</p>
+<div class="pbox" style="--c:#C1462E"><div class="phead"><span class="pname">불 4타입</span><span class="pfile">frames-fire.png</span><button class="copy">복사</button></div><pre>A single PORTRAIT image laid out as a 2-column by 2-row grid of 4 fantasy trading-card FRAMES, all of the same element. Border and panel structure only — no artwork, no text.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
+  This applies to all four cards.
+
+Element for all four: fire. Its symbol is a flame, in a round badge in the top-left corner of the border. Palette ember orange and scorched crimson, heat haze, drifting sparks, accent colour #C1462E.
+
+The four cells, reading left to right then top to bottom:
+  1. 크리처 (cr) — a heraldic shield badge set into the top border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health. STAT BAND: two empty circular sockets, one at the far left and one at the far right, each about 18% of the card&#x27;s width across. They are empty recessed seats — no numbers, no symbols inside. The strip between them is plain.
+  2. 스펠 (sp) — a starburst / arcane spark badge set into the top border. This is a SPELL frame — it HAS a cost strip but prints no stats at all. STAT BAND: completely plain. No sockets, no ornament — spells print no stats.
+  3. 인챈트 (en) — a faceted crystal badge set into the top border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter. STAT BAND: ONE empty circular socket at the far right only, about 18% of the card&#x27;s width across, an empty recessed seat with nothing inside. The rest of the strip is plain.
+  4. 지형 (ld) — a rune-carved keystone badge set into the top border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead. STAT BAND: completely plain. No sockets.
+
+Cells 1, 2 and 3 ALL have the empty cost strip. Only cell 4 (terrain) omits it.
+
+All four share one identical layout, measured from the top as a percentage of card height:
+  - outer border: 3.1% of the card&#x27;s width on all four sides
+  - NAME PLATE: 2.2% down to 14.0% — a blank plate for the card name
+  - COST STRIP: 14.0% down to 23.6% — a blank recessed strip, left-aligned, wide enough for six small circular gems in a row. Draw NO gems here, only the empty seat they will sit in.
+  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
+  - STAT BAND: 81.0% down to 97.8%
+
+Rules for every band:
+  - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
+  - The illustration window is a flat empty rectangle in one neutral dark colour. Absolutely nothing inside it; it gets replaced by artwork.
+  - The name plate, cost strip, rules panel and stat sockets are empty seats, not filled elements. Leave them clean and readable.
+  - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
+
+Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
+<div class="pbox" style="--c:#2A6FB5"><div class="phead"><span class="pname">물 4타입</span><span class="pfile">frames-water.png</span><button class="copy">복사</button></div><pre>A single PORTRAIT image laid out as a 2-column by 2-row grid of 4 fantasy trading-card FRAMES, all of the same element. Border and panel structure only — no artwork, no text.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
+  This applies to all four cards.
+
+Element for all four: water. Its symbol is a water droplet, in a round badge in the top-left corner of the border. Palette deep teal and abyssal blue, refracted light, drifting bubbles, accent colour #2A6FB5.
+
+The four cells, reading left to right then top to bottom:
+  1. 크리처 (cr) — a heraldic shield badge set into the top border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health. STAT BAND: two empty circular sockets, one at the far left and one at the far right, each about 18% of the card&#x27;s width across. They are empty recessed seats — no numbers, no symbols inside. The strip between them is plain.
+  2. 스펠 (sp) — a starburst / arcane spark badge set into the top border. This is a SPELL frame — it HAS a cost strip but prints no stats at all. STAT BAND: completely plain. No sockets, no ornament — spells print no stats.
+  3. 인챈트 (en) — a faceted crystal badge set into the top border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter. STAT BAND: ONE empty circular socket at the far right only, about 18% of the card&#x27;s width across, an empty recessed seat with nothing inside. The rest of the strip is plain.
+  4. 지형 (ld) — a rune-carved keystone badge set into the top border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead. STAT BAND: completely plain. No sockets.
+
+Cells 1, 2 and 3 ALL have the empty cost strip. Only cell 4 (terrain) omits it.
+
+All four share one identical layout, measured from the top as a percentage of card height:
+  - outer border: 3.1% of the card&#x27;s width on all four sides
+  - NAME PLATE: 2.2% down to 14.0% — a blank plate for the card name
+  - COST STRIP: 14.0% down to 23.6% — a blank recessed strip, left-aligned, wide enough for six small circular gems in a row. Draw NO gems here, only the empty seat they will sit in.
+  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
+  - STAT BAND: 81.0% down to 97.8%
+
+Rules for every band:
+  - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
+  - The illustration window is a flat empty rectangle in one neutral dark colour. Absolutely nothing inside it; it gets replaced by artwork.
+  - The name plate, cost strip, rules panel and stat sockets are empty seats, not filled elements. Leave them clean and readable.
+  - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
+
+Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
+<div class="pbox" style="--c:#3F8B3A"><div class="phead"><span class="pname">자연 4타입</span><span class="pfile">frames-nature.png</span><button class="copy">복사</button></div><pre>A single PORTRAIT image laid out as a 2-column by 2-row grid of 4 fantasy trading-card FRAMES, all of the same element. Border and panel structure only — no artwork, no text.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
+  This applies to all four cards.
+
+Element for all four: nature. Its symbol is a leaf, in a round badge in the top-left corner of the border. Palette moss green and amber sunlight, pollen motes, tangled growth, accent colour #3F8B3A.
+
+The four cells, reading left to right then top to bottom:
+  1. 크리처 (cr) — a heraldic shield badge set into the top border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health. STAT BAND: two empty circular sockets, one at the far left and one at the far right, each about 18% of the card&#x27;s width across. They are empty recessed seats — no numbers, no symbols inside. The strip between them is plain.
+  2. 스펠 (sp) — a starburst / arcane spark badge set into the top border. This is a SPELL frame — it HAS a cost strip but prints no stats at all. STAT BAND: completely plain. No sockets, no ornament — spells print no stats.
+  3. 인챈트 (en) — a faceted crystal badge set into the top border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter. STAT BAND: ONE empty circular socket at the far right only, about 18% of the card&#x27;s width across, an empty recessed seat with nothing inside. The rest of the strip is plain.
+  4. 지형 (ld) — a rune-carved keystone badge set into the top border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead. STAT BAND: completely plain. No sockets.
+
+Cells 1, 2 and 3 ALL have the empty cost strip. Only cell 4 (terrain) omits it.
+
+All four share one identical layout, measured from the top as a percentage of card height:
+  - outer border: 3.1% of the card&#x27;s width on all four sides
+  - NAME PLATE: 2.2% down to 14.0% — a blank plate for the card name
+  - COST STRIP: 14.0% down to 23.6% — a blank recessed strip, left-aligned, wide enough for six small circular gems in a row. Draw NO gems here, only the empty seat they will sit in.
+  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
+  - STAT BAND: 81.0% down to 97.8%
+
+Rules for every band:
+  - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
+  - The illustration window is a flat empty rectangle in one neutral dark colour. Absolutely nothing inside it; it gets replaced by artwork.
+  - The name plate, cost strip, rules panel and stat sockets are empty seats, not filled elements. Leave them clean and readable.
+  - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
+
+Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
+<div class="pbox" style="--c:#6B7686"><div class="phead"><span class="pname">강철 4타입</span><span class="pfile">frames-steel.png</span><button class="copy">복사</button></div><pre>A single PORTRAIT image laid out as a 2-column by 2-row grid of 4 fantasy trading-card FRAMES, all of the same element. Border and panel structure only — no artwork, no text.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
+  This applies to all four cards.
+
+Element for all four: steel. Its symbol is an anvil with a crossed hammer, in a round badge in the top-left corner of the border. Palette gunmetal grey and cold blue steel, forge sparks, oiled plate, accent colour #6B7686.
+
+The four cells, reading left to right then top to bottom:
+  1. 크리처 (cr) — a heraldic shield badge set into the top border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health. STAT BAND: two empty circular sockets, one at the far left and one at the far right, each about 18% of the card&#x27;s width across. They are empty recessed seats — no numbers, no symbols inside. The strip between them is plain.
+  2. 스펠 (sp) — a starburst / arcane spark badge set into the top border. This is a SPELL frame — it HAS a cost strip but prints no stats at all. STAT BAND: completely plain. No sockets, no ornament — spells print no stats.
+  3. 인챈트 (en) — a faceted crystal badge set into the top border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter. STAT BAND: ONE empty circular socket at the far right only, about 18% of the card&#x27;s width across, an empty recessed seat with nothing inside. The rest of the strip is plain.
+  4. 지형 (ld) — a rune-carved keystone badge set into the top border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead. STAT BAND: completely plain. No sockets.
+
+Cells 1, 2 and 3 ALL have the empty cost strip. Only cell 4 (terrain) omits it.
+
+All four share one identical layout, measured from the top as a percentage of card height:
+  - outer border: 3.1% of the card&#x27;s width on all four sides
+  - NAME PLATE: 2.2% down to 14.0% — a blank plate for the card name
+  - COST STRIP: 14.0% down to 23.6% — a blank recessed strip, left-aligned, wide enough for six small circular gems in a row. Draw NO gems here, only the empty seat they will sit in.
+  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
+  - STAT BAND: 81.0% down to 97.8%
+
+Rules for every band:
+  - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
+  - The illustration window is a flat empty rectangle in one neutral dark colour. Absolutely nothing inside it; it gets replaced by artwork.
+  - The name plate, cost strip, rules panel and stat sockets are empty seats, not filled elements. Leave them clean and readable.
+  - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
+
+Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
+<div class="pbox" style="--c:#8A6A33"><div class="phead"><span class="pname">대지 4타입</span><span class="pfile">frames-earth.png</span><button class="copy">복사</button></div><pre>A single PORTRAIT image laid out as a 2-column by 2-row grid of 4 fantasy trading-card FRAMES, all of the same element. Border and panel structure only — no artwork, no text.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
+  This applies to all four cards.
+
+Element for all four: earth. Its symbol is a mountain peak over layered strata, in a round badge in the top-left corner of the border. Palette ochre and weathered sandstone, dust in the air, cracked ground, accent colour #8A6A33.
+
+The four cells, reading left to right then top to bottom:
+  1. 크리처 (cr) — a heraldic shield badge set into the top border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health. STAT BAND: two empty circular sockets, one at the far left and one at the far right, each about 18% of the card&#x27;s width across. They are empty recessed seats — no numbers, no symbols inside. The strip between them is plain.
+  2. 스펠 (sp) — a starburst / arcane spark badge set into the top border. This is a SPELL frame — it HAS a cost strip but prints no stats at all. STAT BAND: completely plain. No sockets, no ornament — spells print no stats.
+  3. 인챈트 (en) — a faceted crystal badge set into the top border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter. STAT BAND: ONE empty circular socket at the far right only, about 18% of the card&#x27;s width across, an empty recessed seat with nothing inside. The rest of the strip is plain.
+  4. 지형 (ld) — a rune-carved keystone badge set into the top border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead. STAT BAND: completely plain. No sockets.
+
+Cells 1, 2 and 3 ALL have the empty cost strip. Only cell 4 (terrain) omits it.
+
+All four share one identical layout, measured from the top as a percentage of card height:
+  - outer border: 3.1% of the card&#x27;s width on all four sides
+  - NAME PLATE: 2.2% down to 14.0% — a blank plate for the card name
+  - COST STRIP: 14.0% down to 23.6% — a blank recessed strip, left-aligned, wide enough for six small circular gems in a row. Draw NO gems here, only the empty seat they will sit in.
+  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
+  - STAT BAND: 81.0% down to 97.8%
+
+Rules for every band:
+  - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
+  - The illustration window is a flat empty rectangle in one neutral dark colour. Absolutely nothing inside it; it gets replaced by artwork.
+  - The name plate, cost strip, rules panel and stat sockets are empty seats, not filled elements. Leave them clean and readable.
+  - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
+
+Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
+<div class="pbox" style="--c:#5B3E86"><div class="phead"><span class="pname">어둠 4타입</span><span class="pfile">frames-dark.png</span><button class="copy">복사</button></div><pre>A single PORTRAIT image laid out as a 2-column by 2-row grid of 4 fantasy trading-card FRAMES, all of the same element. Border and panel structure only — no artwork, no text.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
+  This applies to all four cards.
+
+Element for all four: darkness. Its symbol is a crescent moon, in a round badge in the top-left corner of the border. Palette violet shadow and dried blood, guttering candlelight, creeping mist, accent colour #5B3E86.
+
+The four cells, reading left to right then top to bottom:
+  1. 크리처 (cr) — a heraldic shield badge set into the top border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health. STAT BAND: two empty circular sockets, one at the far left and one at the far right, each about 18% of the card&#x27;s width across. They are empty recessed seats — no numbers, no symbols inside. The strip between them is plain.
+  2. 스펠 (sp) — a starburst / arcane spark badge set into the top border. This is a SPELL frame — it HAS a cost strip but prints no stats at all. STAT BAND: completely plain. No sockets, no ornament — spells print no stats.
+  3. 인챈트 (en) — a faceted crystal badge set into the top border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter. STAT BAND: ONE empty circular socket at the far right only, about 18% of the card&#x27;s width across, an empty recessed seat with nothing inside. The rest of the strip is plain.
+  4. 지형 (ld) — a rune-carved keystone badge set into the top border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead. STAT BAND: completely plain. No sockets.
+
+Cells 1, 2 and 3 ALL have the empty cost strip. Only cell 4 (terrain) omits it.
+
+All four share one identical layout, measured from the top as a percentage of card height:
+  - outer border: 3.1% of the card&#x27;s width on all four sides
+  - NAME PLATE: 2.2% down to 14.0% — a blank plate for the card name
+  - COST STRIP: 14.0% down to 23.6% — a blank recessed strip, left-aligned, wide enough for six small circular gems in a row. Draw NO gems here, only the empty seat they will sit in.
+  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
+  - STAT BAND: 81.0% down to 97.8%
+
+Rules for every band:
+  - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
+  - The illustration window is a flat empty rectangle in one neutral dark colour. Absolutely nothing inside it; it gets replaced by artwork.
+  - The name plate, cost strip, rules panel and stat sockets are empty seats, not filled elements. Leave them clean and readable.
+  - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
+
+Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
+<div class="pbox" style="--c:#B8912A"><div class="phead"><span class="pname">빛 4타입</span><span class="pfile">frames-light.png</span><button class="copy">복사</button></div><pre>A single PORTRAIT image laid out as a 2-column by 2-row grid of 4 fantasy trading-card FRAMES, all of the same element. Border and panel structure only — no artwork, no text.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
+  This applies to all four cards.
+
+Element for all four: light. Its symbol is a radiant sun, in a round badge in the top-left corner of the border. Palette pale gold and warm ivory, godrays, floating dust in sunbeams, accent colour #B8912A.
+
+The four cells, reading left to right then top to bottom:
+  1. 크리처 (cr) — a heraldic shield badge set into the top border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health. STAT BAND: two empty circular sockets, one at the far left and one at the far right, each about 18% of the card&#x27;s width across. They are empty recessed seats — no numbers, no symbols inside. The strip between them is plain.
+  2. 스펠 (sp) — a starburst / arcane spark badge set into the top border. This is a SPELL frame — it HAS a cost strip but prints no stats at all. STAT BAND: completely plain. No sockets, no ornament — spells print no stats.
+  3. 인챈트 (en) — a faceted crystal badge set into the top border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter. STAT BAND: ONE empty circular socket at the far right only, about 18% of the card&#x27;s width across, an empty recessed seat with nothing inside. The rest of the strip is plain.
+  4. 지형 (ld) — a rune-carved keystone badge set into the top border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead. STAT BAND: completely plain. No sockets.
+
+Cells 1, 2 and 3 ALL have the empty cost strip. Only cell 4 (terrain) omits it.
+
+All four share one identical layout, measured from the top as a percentage of card height:
+  - outer border: 3.1% of the card&#x27;s width on all four sides
+  - NAME PLATE: 2.2% down to 14.0% — a blank plate for the card name
+  - COST STRIP: 14.0% down to 23.6% — a blank recessed strip, left-aligned, wide enough for six small circular gems in a row. Draw NO gems here, only the empty seat they will sit in.
+  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
+  - STAT BAND: 81.0% down to 97.8%
 
 Rules for every band:
   - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
@@ -91,10 +325,14 @@ The eight icons, in order:
 Put every icon on a solid flat pure magenta background (#FF00FF) so the background can be keyed out. No gradients in the background, no shadows cast onto the background, no text, no numbers, no labels, no border.</pre></div>
 <h2><span>03 — 프레임 · 개별</span>특정 칸만 다시 뽑을 때 (28장)</h2>
 <p>속성색·상징과 타입별 하단 띠만 다르고 나머지 구조는 전부 같습니다.</p>
-<div class="pbox" style="--c:#C1462E"><div class="phead"><span class="pname">불 · 크리처</span><span class="pfile">frame-fire-cr.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere. Portrait card, exact 5:7 aspect ratio.
+<div class="pbox" style="--c:#C1462E"><div class="phead"><span class="pname">불 · 크리처</span><span class="pfile">frame-fire-cr.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
 Element: fire. Its symbol is a flame, set in a round badge in the top-left corner of the border. Palette ember orange and scorched crimson, heat haze, drifting sparks, accent colour #C1462E.
-Card type: a heraldic shield badge set into the top border. This is a CREATURE frame — it must carry attack and health.
+Card type: a heraldic shield badge set into the top border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card&#x27;s height:
   - outer border: 3.1% of the card&#x27;s width on all four sides
@@ -111,10 +349,14 @@ Rules for every band:
   - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
 
 Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
-<div class="pbox" style="--c:#C1462E"><div class="phead"><span class="pname">불 · 스펠</span><span class="pfile">frame-fire-sp.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere. Portrait card, exact 5:7 aspect ratio.
+<div class="pbox" style="--c:#C1462E"><div class="phead"><span class="pname">불 · 스펠</span><span class="pfile">frame-fire-sp.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
 Element: fire. Its symbol is a flame, set in a round badge in the top-left corner of the border. Palette ember orange and scorched crimson, heat haze, drifting sparks, accent colour #C1462E.
-Card type: a starburst / arcane spark badge set into the top border. This is a SPELL frame — it prints no stats at all.
+Card type: a starburst / arcane spark badge set into the top border. This is a SPELL frame — it HAS a cost strip but prints no stats at all.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card&#x27;s height:
   - outer border: 3.1% of the card&#x27;s width on all four sides
@@ -131,10 +373,14 @@ Rules for every band:
   - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
 
 Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
-<div class="pbox" style="--c:#C1462E"><div class="phead"><span class="pname">불 · 인챈트</span><span class="pfile">frame-fire-en.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere. Portrait card, exact 5:7 aspect ratio.
+<div class="pbox" style="--c:#C1462E"><div class="phead"><span class="pname">불 · 인챈트</span><span class="pfile">frame-fire-en.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
 Element: fire. Its symbol is a flame, set in a round badge in the top-left corner of the border. Palette ember orange and scorched crimson, heat haze, drifting sparks, accent colour #C1462E.
-Card type: a faceted crystal badge set into the top border. This is an ENCHANT frame — it carries a single charge counter.
+Card type: a faceted crystal badge set into the top border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card&#x27;s height:
   - outer border: 3.1% of the card&#x27;s width on all four sides
@@ -151,7 +397,11 @@ Rules for every band:
   - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
 
 Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
-<div class="pbox" style="--c:#C1462E"><div class="phead"><span class="pname">불 · 지형</span><span class="pfile">frame-fire-ld.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere. Portrait card, exact 5:7 aspect ratio.
+<div class="pbox" style="--c:#C1462E"><div class="phead"><span class="pname">불 · 지형</span><span class="pfile">frame-fire-ld.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
 Element: fire. Its symbol is a flame, set in a round badge in the top-left corner of the border. Palette ember orange and scorched crimson, heat haze, drifting sparks, accent colour #C1462E.
 Card type: a rune-carved keystone badge set into the top border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead.
@@ -170,10 +420,14 @@ Rules for every band:
   - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
 
 Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
-<div class="pbox" style="--c:#2A6FB5"><div class="phead"><span class="pname">물 · 크리처</span><span class="pfile">frame-water-cr.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere. Portrait card, exact 5:7 aspect ratio.
+<div class="pbox" style="--c:#2A6FB5"><div class="phead"><span class="pname">물 · 크리처</span><span class="pfile">frame-water-cr.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
 Element: water. Its symbol is a water droplet, set in a round badge in the top-left corner of the border. Palette deep teal and abyssal blue, refracted light, drifting bubbles, accent colour #2A6FB5.
-Card type: a heraldic shield badge set into the top border. This is a CREATURE frame — it must carry attack and health.
+Card type: a heraldic shield badge set into the top border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card&#x27;s height:
   - outer border: 3.1% of the card&#x27;s width on all four sides
@@ -190,10 +444,14 @@ Rules for every band:
   - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
 
 Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
-<div class="pbox" style="--c:#2A6FB5"><div class="phead"><span class="pname">물 · 스펠</span><span class="pfile">frame-water-sp.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere. Portrait card, exact 5:7 aspect ratio.
+<div class="pbox" style="--c:#2A6FB5"><div class="phead"><span class="pname">물 · 스펠</span><span class="pfile">frame-water-sp.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
 Element: water. Its symbol is a water droplet, set in a round badge in the top-left corner of the border. Palette deep teal and abyssal blue, refracted light, drifting bubbles, accent colour #2A6FB5.
-Card type: a starburst / arcane spark badge set into the top border. This is a SPELL frame — it prints no stats at all.
+Card type: a starburst / arcane spark badge set into the top border. This is a SPELL frame — it HAS a cost strip but prints no stats at all.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card&#x27;s height:
   - outer border: 3.1% of the card&#x27;s width on all four sides
@@ -210,10 +468,14 @@ Rules for every band:
   - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
 
 Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
-<div class="pbox" style="--c:#2A6FB5"><div class="phead"><span class="pname">물 · 인챈트</span><span class="pfile">frame-water-en.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere. Portrait card, exact 5:7 aspect ratio.
+<div class="pbox" style="--c:#2A6FB5"><div class="phead"><span class="pname">물 · 인챈트</span><span class="pfile">frame-water-en.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
 Element: water. Its symbol is a water droplet, set in a round badge in the top-left corner of the border. Palette deep teal and abyssal blue, refracted light, drifting bubbles, accent colour #2A6FB5.
-Card type: a faceted crystal badge set into the top border. This is an ENCHANT frame — it carries a single charge counter.
+Card type: a faceted crystal badge set into the top border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card&#x27;s height:
   - outer border: 3.1% of the card&#x27;s width on all four sides
@@ -230,7 +492,11 @@ Rules for every band:
   - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
 
 Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
-<div class="pbox" style="--c:#2A6FB5"><div class="phead"><span class="pname">물 · 지형</span><span class="pfile">frame-water-ld.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere. Portrait card, exact 5:7 aspect ratio.
+<div class="pbox" style="--c:#2A6FB5"><div class="phead"><span class="pname">물 · 지형</span><span class="pfile">frame-water-ld.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
 Element: water. Its symbol is a water droplet, set in a round badge in the top-left corner of the border. Palette deep teal and abyssal blue, refracted light, drifting bubbles, accent colour #2A6FB5.
 Card type: a rune-carved keystone badge set into the top border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead.
@@ -249,10 +515,14 @@ Rules for every band:
   - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
 
 Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
-<div class="pbox" style="--c:#3F8B3A"><div class="phead"><span class="pname">자연 · 크리처</span><span class="pfile">frame-nature-cr.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere. Portrait card, exact 5:7 aspect ratio.
+<div class="pbox" style="--c:#3F8B3A"><div class="phead"><span class="pname">자연 · 크리처</span><span class="pfile">frame-nature-cr.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
 Element: nature. Its symbol is a leaf, set in a round badge in the top-left corner of the border. Palette moss green and amber sunlight, pollen motes, tangled growth, accent colour #3F8B3A.
-Card type: a heraldic shield badge set into the top border. This is a CREATURE frame — it must carry attack and health.
+Card type: a heraldic shield badge set into the top border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card&#x27;s height:
   - outer border: 3.1% of the card&#x27;s width on all four sides
@@ -269,10 +539,14 @@ Rules for every band:
   - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
 
 Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
-<div class="pbox" style="--c:#3F8B3A"><div class="phead"><span class="pname">자연 · 스펠</span><span class="pfile">frame-nature-sp.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere. Portrait card, exact 5:7 aspect ratio.
+<div class="pbox" style="--c:#3F8B3A"><div class="phead"><span class="pname">자연 · 스펠</span><span class="pfile">frame-nature-sp.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
 Element: nature. Its symbol is a leaf, set in a round badge in the top-left corner of the border. Palette moss green and amber sunlight, pollen motes, tangled growth, accent colour #3F8B3A.
-Card type: a starburst / arcane spark badge set into the top border. This is a SPELL frame — it prints no stats at all.
+Card type: a starburst / arcane spark badge set into the top border. This is a SPELL frame — it HAS a cost strip but prints no stats at all.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card&#x27;s height:
   - outer border: 3.1% of the card&#x27;s width on all four sides
@@ -289,10 +563,14 @@ Rules for every band:
   - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
 
 Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
-<div class="pbox" style="--c:#3F8B3A"><div class="phead"><span class="pname">자연 · 인챈트</span><span class="pfile">frame-nature-en.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere. Portrait card, exact 5:7 aspect ratio.
+<div class="pbox" style="--c:#3F8B3A"><div class="phead"><span class="pname">자연 · 인챈트</span><span class="pfile">frame-nature-en.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
 Element: nature. Its symbol is a leaf, set in a round badge in the top-left corner of the border. Palette moss green and amber sunlight, pollen motes, tangled growth, accent colour #3F8B3A.
-Card type: a faceted crystal badge set into the top border. This is an ENCHANT frame — it carries a single charge counter.
+Card type: a faceted crystal badge set into the top border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card&#x27;s height:
   - outer border: 3.1% of the card&#x27;s width on all four sides
@@ -309,7 +587,11 @@ Rules for every band:
   - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
 
 Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
-<div class="pbox" style="--c:#3F8B3A"><div class="phead"><span class="pname">자연 · 지형</span><span class="pfile">frame-nature-ld.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere. Portrait card, exact 5:7 aspect ratio.
+<div class="pbox" style="--c:#3F8B3A"><div class="phead"><span class="pname">자연 · 지형</span><span class="pfile">frame-nature-ld.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
 Element: nature. Its symbol is a leaf, set in a round badge in the top-left corner of the border. Palette moss green and amber sunlight, pollen motes, tangled growth, accent colour #3F8B3A.
 Card type: a rune-carved keystone badge set into the top border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead.
@@ -328,10 +610,14 @@ Rules for every band:
   - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
 
 Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
-<div class="pbox" style="--c:#6B7686"><div class="phead"><span class="pname">강철 · 크리처</span><span class="pfile">frame-steel-cr.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere. Portrait card, exact 5:7 aspect ratio.
+<div class="pbox" style="--c:#6B7686"><div class="phead"><span class="pname">강철 · 크리처</span><span class="pfile">frame-steel-cr.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
 Element: steel. Its symbol is an anvil with a crossed hammer, set in a round badge in the top-left corner of the border. Palette gunmetal grey and cold blue steel, forge sparks, oiled plate, accent colour #6B7686.
-Card type: a heraldic shield badge set into the top border. This is a CREATURE frame — it must carry attack and health.
+Card type: a heraldic shield badge set into the top border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card&#x27;s height:
   - outer border: 3.1% of the card&#x27;s width on all four sides
@@ -348,10 +634,14 @@ Rules for every band:
   - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
 
 Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
-<div class="pbox" style="--c:#6B7686"><div class="phead"><span class="pname">강철 · 스펠</span><span class="pfile">frame-steel-sp.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere. Portrait card, exact 5:7 aspect ratio.
+<div class="pbox" style="--c:#6B7686"><div class="phead"><span class="pname">강철 · 스펠</span><span class="pfile">frame-steel-sp.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
 Element: steel. Its symbol is an anvil with a crossed hammer, set in a round badge in the top-left corner of the border. Palette gunmetal grey and cold blue steel, forge sparks, oiled plate, accent colour #6B7686.
-Card type: a starburst / arcane spark badge set into the top border. This is a SPELL frame — it prints no stats at all.
+Card type: a starburst / arcane spark badge set into the top border. This is a SPELL frame — it HAS a cost strip but prints no stats at all.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card&#x27;s height:
   - outer border: 3.1% of the card&#x27;s width on all four sides
@@ -368,10 +658,14 @@ Rules for every band:
   - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
 
 Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
-<div class="pbox" style="--c:#6B7686"><div class="phead"><span class="pname">강철 · 인챈트</span><span class="pfile">frame-steel-en.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere. Portrait card, exact 5:7 aspect ratio.
+<div class="pbox" style="--c:#6B7686"><div class="phead"><span class="pname">강철 · 인챈트</span><span class="pfile">frame-steel-en.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
 Element: steel. Its symbol is an anvil with a crossed hammer, set in a round badge in the top-left corner of the border. Palette gunmetal grey and cold blue steel, forge sparks, oiled plate, accent colour #6B7686.
-Card type: a faceted crystal badge set into the top border. This is an ENCHANT frame — it carries a single charge counter.
+Card type: a faceted crystal badge set into the top border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card&#x27;s height:
   - outer border: 3.1% of the card&#x27;s width on all four sides
@@ -388,7 +682,11 @@ Rules for every band:
   - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
 
 Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
-<div class="pbox" style="--c:#6B7686"><div class="phead"><span class="pname">강철 · 지형</span><span class="pfile">frame-steel-ld.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere. Portrait card, exact 5:7 aspect ratio.
+<div class="pbox" style="--c:#6B7686"><div class="phead"><span class="pname">강철 · 지형</span><span class="pfile">frame-steel-ld.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
 Element: steel. Its symbol is an anvil with a crossed hammer, set in a round badge in the top-left corner of the border. Palette gunmetal grey and cold blue steel, forge sparks, oiled plate, accent colour #6B7686.
 Card type: a rune-carved keystone badge set into the top border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead.
@@ -407,10 +705,14 @@ Rules for every band:
   - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
 
 Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
-<div class="pbox" style="--c:#8A6A33"><div class="phead"><span class="pname">대지 · 크리처</span><span class="pfile">frame-earth-cr.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere. Portrait card, exact 5:7 aspect ratio.
+<div class="pbox" style="--c:#8A6A33"><div class="phead"><span class="pname">대지 · 크리처</span><span class="pfile">frame-earth-cr.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
 Element: earth. Its symbol is a mountain peak over layered strata, set in a round badge in the top-left corner of the border. Palette ochre and weathered sandstone, dust in the air, cracked ground, accent colour #8A6A33.
-Card type: a heraldic shield badge set into the top border. This is a CREATURE frame — it must carry attack and health.
+Card type: a heraldic shield badge set into the top border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card&#x27;s height:
   - outer border: 3.1% of the card&#x27;s width on all four sides
@@ -427,10 +729,14 @@ Rules for every band:
   - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
 
 Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
-<div class="pbox" style="--c:#8A6A33"><div class="phead"><span class="pname">대지 · 스펠</span><span class="pfile">frame-earth-sp.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere. Portrait card, exact 5:7 aspect ratio.
+<div class="pbox" style="--c:#8A6A33"><div class="phead"><span class="pname">대지 · 스펠</span><span class="pfile">frame-earth-sp.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
 Element: earth. Its symbol is a mountain peak over layered strata, set in a round badge in the top-left corner of the border. Palette ochre and weathered sandstone, dust in the air, cracked ground, accent colour #8A6A33.
-Card type: a starburst / arcane spark badge set into the top border. This is a SPELL frame — it prints no stats at all.
+Card type: a starburst / arcane spark badge set into the top border. This is a SPELL frame — it HAS a cost strip but prints no stats at all.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card&#x27;s height:
   - outer border: 3.1% of the card&#x27;s width on all four sides
@@ -447,10 +753,14 @@ Rules for every band:
   - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
 
 Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
-<div class="pbox" style="--c:#8A6A33"><div class="phead"><span class="pname">대지 · 인챈트</span><span class="pfile">frame-earth-en.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere. Portrait card, exact 5:7 aspect ratio.
+<div class="pbox" style="--c:#8A6A33"><div class="phead"><span class="pname">대지 · 인챈트</span><span class="pfile">frame-earth-en.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
 Element: earth. Its symbol is a mountain peak over layered strata, set in a round badge in the top-left corner of the border. Palette ochre and weathered sandstone, dust in the air, cracked ground, accent colour #8A6A33.
-Card type: a faceted crystal badge set into the top border. This is an ENCHANT frame — it carries a single charge counter.
+Card type: a faceted crystal badge set into the top border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card&#x27;s height:
   - outer border: 3.1% of the card&#x27;s width on all four sides
@@ -467,7 +777,11 @@ Rules for every band:
   - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
 
 Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
-<div class="pbox" style="--c:#8A6A33"><div class="phead"><span class="pname">대지 · 지형</span><span class="pfile">frame-earth-ld.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere. Portrait card, exact 5:7 aspect ratio.
+<div class="pbox" style="--c:#8A6A33"><div class="phead"><span class="pname">대지 · 지형</span><span class="pfile">frame-earth-ld.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
 Element: earth. Its symbol is a mountain peak over layered strata, set in a round badge in the top-left corner of the border. Palette ochre and weathered sandstone, dust in the air, cracked ground, accent colour #8A6A33.
 Card type: a rune-carved keystone badge set into the top border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead.
@@ -486,10 +800,14 @@ Rules for every band:
   - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
 
 Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
-<div class="pbox" style="--c:#5B3E86"><div class="phead"><span class="pname">어둠 · 크리처</span><span class="pfile">frame-dark-cr.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere. Portrait card, exact 5:7 aspect ratio.
+<div class="pbox" style="--c:#5B3E86"><div class="phead"><span class="pname">어둠 · 크리처</span><span class="pfile">frame-dark-cr.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
 Element: darkness. Its symbol is a crescent moon, set in a round badge in the top-left corner of the border. Palette violet shadow and dried blood, guttering candlelight, creeping mist, accent colour #5B3E86.
-Card type: a heraldic shield badge set into the top border. This is a CREATURE frame — it must carry attack and health.
+Card type: a heraldic shield badge set into the top border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card&#x27;s height:
   - outer border: 3.1% of the card&#x27;s width on all four sides
@@ -506,10 +824,14 @@ Rules for every band:
   - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
 
 Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
-<div class="pbox" style="--c:#5B3E86"><div class="phead"><span class="pname">어둠 · 스펠</span><span class="pfile">frame-dark-sp.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere. Portrait card, exact 5:7 aspect ratio.
+<div class="pbox" style="--c:#5B3E86"><div class="phead"><span class="pname">어둠 · 스펠</span><span class="pfile">frame-dark-sp.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
 Element: darkness. Its symbol is a crescent moon, set in a round badge in the top-left corner of the border. Palette violet shadow and dried blood, guttering candlelight, creeping mist, accent colour #5B3E86.
-Card type: a starburst / arcane spark badge set into the top border. This is a SPELL frame — it prints no stats at all.
+Card type: a starburst / arcane spark badge set into the top border. This is a SPELL frame — it HAS a cost strip but prints no stats at all.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card&#x27;s height:
   - outer border: 3.1% of the card&#x27;s width on all four sides
@@ -526,10 +848,14 @@ Rules for every band:
   - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
 
 Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
-<div class="pbox" style="--c:#5B3E86"><div class="phead"><span class="pname">어둠 · 인챈트</span><span class="pfile">frame-dark-en.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere. Portrait card, exact 5:7 aspect ratio.
+<div class="pbox" style="--c:#5B3E86"><div class="phead"><span class="pname">어둠 · 인챈트</span><span class="pfile">frame-dark-en.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
 Element: darkness. Its symbol is a crescent moon, set in a round badge in the top-left corner of the border. Palette violet shadow and dried blood, guttering candlelight, creeping mist, accent colour #5B3E86.
-Card type: a faceted crystal badge set into the top border. This is an ENCHANT frame — it carries a single charge counter.
+Card type: a faceted crystal badge set into the top border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card&#x27;s height:
   - outer border: 3.1% of the card&#x27;s width on all four sides
@@ -546,7 +872,11 @@ Rules for every band:
   - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
 
 Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
-<div class="pbox" style="--c:#5B3E86"><div class="phead"><span class="pname">어둠 · 지형</span><span class="pfile">frame-dark-ld.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere. Portrait card, exact 5:7 aspect ratio.
+<div class="pbox" style="--c:#5B3E86"><div class="phead"><span class="pname">어둠 · 지형</span><span class="pfile">frame-dark-ld.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
 Element: darkness. Its symbol is a crescent moon, set in a round badge in the top-left corner of the border. Palette violet shadow and dried blood, guttering candlelight, creeping mist, accent colour #5B3E86.
 Card type: a rune-carved keystone badge set into the top border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead.
@@ -565,10 +895,14 @@ Rules for every band:
   - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
 
 Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
-<div class="pbox" style="--c:#B8912A"><div class="phead"><span class="pname">빛 · 크리처</span><span class="pfile">frame-light-cr.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere. Portrait card, exact 5:7 aspect ratio.
+<div class="pbox" style="--c:#B8912A"><div class="phead"><span class="pname">빛 · 크리처</span><span class="pfile">frame-light-cr.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
 Element: light. Its symbol is a radiant sun, set in a round badge in the top-left corner of the border. Palette pale gold and warm ivory, godrays, floating dust in sunbeams, accent colour #B8912A.
-Card type: a heraldic shield badge set into the top border. This is a CREATURE frame — it must carry attack and health.
+Card type: a heraldic shield badge set into the top border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card&#x27;s height:
   - outer border: 3.1% of the card&#x27;s width on all four sides
@@ -585,10 +919,14 @@ Rules for every band:
   - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
 
 Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
-<div class="pbox" style="--c:#B8912A"><div class="phead"><span class="pname">빛 · 스펠</span><span class="pfile">frame-light-sp.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere. Portrait card, exact 5:7 aspect ratio.
+<div class="pbox" style="--c:#B8912A"><div class="phead"><span class="pname">빛 · 스펠</span><span class="pfile">frame-light-sp.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
 Element: light. Its symbol is a radiant sun, set in a round badge in the top-left corner of the border. Palette pale gold and warm ivory, godrays, floating dust in sunbeams, accent colour #B8912A.
-Card type: a starburst / arcane spark badge set into the top border. This is a SPELL frame — it prints no stats at all.
+Card type: a starburst / arcane spark badge set into the top border. This is a SPELL frame — it HAS a cost strip but prints no stats at all.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card&#x27;s height:
   - outer border: 3.1% of the card&#x27;s width on all four sides
@@ -605,10 +943,14 @@ Rules for every band:
   - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
 
 Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
-<div class="pbox" style="--c:#B8912A"><div class="phead"><span class="pname">빛 · 인챈트</span><span class="pfile">frame-light-en.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere. Portrait card, exact 5:7 aspect ratio.
+<div class="pbox" style="--c:#B8912A"><div class="phead"><span class="pname">빛 · 인챈트</span><span class="pfile">frame-light-en.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
 Element: light. Its symbol is a radiant sun, set in a round badge in the top-left corner of the border. Palette pale gold and warm ivory, godrays, floating dust in sunbeams, accent colour #B8912A.
-Card type: a faceted crystal badge set into the top border. This is an ENCHANT frame — it carries a single charge counter.
+Card type: a faceted crystal badge set into the top border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card&#x27;s height:
   - outer border: 3.1% of the card&#x27;s width on all four sides
@@ -625,7 +967,11 @@ Rules for every band:
   - All ornament lives in the outer border, the corner pieces and the thin dividers between bands: engraved metal, carved stone, worn leather.
 
 Flat straight-on view, no perspective, no drop shadow, no background outside the card, crisp edges, symmetrical left to right. No text, no letters, no numbers, no watermark.</pre></div>
-<div class="pbox" style="--c:#B8912A"><div class="phead"><span class="pname">빛 · 지형</span><span class="pfile">frame-light-ld.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere. Portrait card, exact 5:7 aspect ratio.
+<div class="pbox" style="--c:#B8912A"><div class="phead"><span class="pname">빛 · 지형</span><span class="pfile">frame-light-ld.png</span><button class="copy">복사</button></div><pre>A single fantasy trading-card FRAME — border and panel structure only, no artwork, no text anywhere.
+
+CARD SHAPE — read this first and do not compromise it:
+  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
+  Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
 Element: light. Its symbol is a radiant sun, set in a round badge in the top-left corner of the border. Palette pale gold and warm ivory, godrays, floating dust in sunbeams, accent colour #B8912A.
 Card type: a rune-carved keystone badge set into the top border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead.

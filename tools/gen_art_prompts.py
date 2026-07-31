@@ -81,9 +81,9 @@ TYPESPEC = {
            "STAT BAND: completely plain. No sockets."),
 }
 TYPENOTE = {
-    "cr": "This is a CREATURE frame — it must carry attack and health.",
-    "sp": "This is a SPELL frame — it prints no stats at all.",
-    "en": "This is an ENCHANT frame — it carries a single charge counter.",
+    "cr": "This is a CREATURE frame — it HAS a cost strip and must carry attack and health.",
+    "sp": "This is a SPELL frame — it HAS a cost strip but prints no stats at all.",
+    "en": "This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter.",
     "ld": "This is a TERRAIN frame — terrain cards cost nothing and print no stats. "
           "OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead.",
 }
@@ -280,6 +280,16 @@ def card_prompt(nm, el, kind, tag=None):
             f"{STYLE}. Square 1:1 composition, subject centred with headroom.")
 
 
+SHAPE = (
+    "CARD SHAPE — read this first and do not compromise it:\n"
+    "  The card is a PORTRAIT rectangle, clearly TALLER than it is wide. "
+    "Its height is exactly 1.4 times its width (5 wide : 7 tall). "
+    "It must NOT be square and must NOT be landscape.\n"
+    "  Draw the card floating on a plain flat black background with empty black margin on "
+    "every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists "
+    "so the card can keep its 5:7 shape whatever the canvas shape is."
+)
+
 FRAME_RULES = (
     "Rules for every band:\n"
     "  - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints "
@@ -308,7 +318,7 @@ def frame_prompt(el, k):
         bands.append(f"  - {nm}: {desc}")
     return (
         f"A single fantasy trading-card FRAME — border and panel structure only, no artwork, "
-        f"no text anywhere. Portrait card, exact 5:7 aspect ratio.\n\n"
+        f"no text anywhere.\n\n{SHAPE}\n\n"
         f"Element: {EL_EN[el]}. Its symbol is {ELSYM[el]}, set in a round badge in the top-left "
         f"corner of the border. Palette {ELMOOD[el]}, accent colour {ELHEX[el]}.\n"
         f"Card type: {badge}. {TYPENOTE[k]}\n\n"
@@ -329,15 +339,40 @@ def frame_sheet_prompt():
     bands = "\n".join(f"  - {nm}: {desc}" for nm, desc in BANDS)
     return (
         f"A single image laid out as a 7-column by 4-row grid of 28 fantasy trading-card FRAMES. "
-        f"Every cell is one complete empty card frame, portrait, exact 5:7 aspect ratio, with a "
-        f"black gutter between cells. Border and panel structure only — no artwork, no text.\n\n"
+        f"Border and panel structure only — no artwork, no text.\n\n"
+        f"{SHAPE}\n"
+        f"  This applies to EVERY ONE of the 28 cards. The grid cells may end up square, but the "
+        f"card drawn inside each cell must stay a tall 5:7 portrait rectangle with black padding "
+        f"around it. A squashed or square card is wrong.\n\n"
         f"Columns are the seven elements (same element down each column):\n{elline}\n\n"
         f"Rows are the four card types (same type across each row):\n{rows}\n\n"
+        f"COST STRIP: rows 1, 2 and 3 (creature, spell, enchant) ALL have the empty cost strip. "
+        f"Only row 4 (terrain) omits it — terrain cards cost nothing.\n\n"
         f"All 28 frames share one identical layout, measured from the top as a percentage of "
         f"card height:\n{bands}\n\n"
         f"Only two things change between cells: the element colour and corner symbol (by column), "
-        f"and the type badge and stat band (by row). Everything else is identical.\n\n"
+        f"and the type badge, cost strip and stat band (by row). Everything else is identical.\n\n"
         + FRAME_RULES
+    )
+
+
+def frame_element_sheet_prompt(el):
+    """속성 하나의 4타입을 2×2로. 칸 비율이 세로 캔버스와 가까워 안전한 대안."""
+    rows = "\n".join(
+        f"  {i+1}. {TYPEKO[k]} ({k}) — {TYPESPEC[k][0]}. {TYPENOTE[k]} {TYPESPEC[k][1]}"
+        for i, k in enumerate(["cr", "sp", "en", "ld"]))
+    bands = "\n".join(f"  - {nm}: {desc}" for nm, desc in BANDS)
+    return (
+        f"A single PORTRAIT image laid out as a 2-column by 2-row grid of 4 fantasy "
+        f"trading-card FRAMES, all of the same element. Border and panel structure only — "
+        f"no artwork, no text.\n\n{SHAPE}\n"
+        f"  This applies to all four cards.\n\n"
+        f"Element for all four: {EL_EN[el]}. Its symbol is {ELSYM[el]}, in a round badge in the "
+        f"top-left corner of the border. Palette {ELMOOD[el]}, accent colour {ELHEX[el]}.\n\n"
+        f"The four cells, reading left to right then top to bottom:\n{rows}\n\n"
+        f"Cells 1, 2 and 3 ALL have the empty cost strip. Only cell 4 (terrain) omits it.\n\n"
+        f"All four share one identical layout, measured from the top as a percentage of card "
+        f"height:\n{bands}\n\n" + FRAME_RULES
     )
 
 
@@ -485,6 +520,19 @@ def build_html(cards, frames, sheets, frame_sheet, cost):
          '한 장에서 뽑으면 28칸의 톤이 저절로 맞습니다. 이걸 먼저 돌려보고, 특정 칸만 이상하면 '
          '아래 03번 개별 프롬프트로 그 칸만 다시 뽑으면 됩니다.</p>',
          box("프레임 28칸 시트", "frames-sheet.png", frame_sheet, "#141821"),
+         '<div class="note" style="border-left-color:#B03A3F"><b>지난 시트가 정사각형으로 나온 이유.</b> '
+         '7열 × 4행에 5:7 카드를 담으려면 캔버스 비율이 <b>1.25</b>여야 하는데 DALL·E가 만들 수 있는 '
+         '가로 캔버스는 <b>1.75</b>였습니다. 그래서 카드를 칸에 맞춰 40% 눌러버린 겁니다. '
+         '이번엔 <b>카드를 칸에 꽉 채우지 말고 검은 여백을 두고 앉히라</b>고 못 박았습니다 — '
+         '이러면 캔버스 비율과 상관없이 5:7이 유지됩니다. 그래도 또 눌려 나오면 아래 '
+         '<b>속성별 2×2 시트</b>를 쓰세요. 세로 캔버스와 비율이 거의 맞아 눌릴 이유가 없습니다.</div>',
+         '<h2><span>01-B — 프레임 · 속성별</span>2×2 = 4칸씩 7장 (안전한 대안)</h2>',
+         '<p>28칸 시트가 계속 눌려 나오면 이쪽을 쓰세요. 한 장에 한 속성의 4타입만 담습니다. '
+         '칸 비율(0.714)이 세로 캔버스(0.667)와 거의 같아 눌릴 압력이 없습니다.</p>']
+    for el in G.DECKS:
+        B.append(box(f"{G.KO[el]} 4타입", f"frames-{el}.png",
+                     frame_element_sheet_prompt(el), ELHEX[el]))
+    B += [
          '<h2><span>02 — 코스트 모듈</span>프레임에 굽지 말고 따로 붙인다</h2>',
          '<p>코스트는 1~6개로 개수가 변하고 유색·무색 조합도 카드마다 다릅니다. 프레임에 그려 넣으면 '
          '절대 안 맞습니다. <b>동그라미 8종(속성 7 + 무색 1)을 따로 리소스로 뽑아</b> 프레임의 코스트 '
