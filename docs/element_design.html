@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light only">
+<title>TEN — 속성 설계</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@700;900&family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDEFF2;--paper-2:#E3E6EB;--ink:#141821;--ink-soft:#4A5364;--ink-faint:#8A94A6;--rule:#C6CCD6;
+  --fire:#C1462E;--water:#2A6FB5;--nature:#3F8B3A;--steel:#6B7686;--earth:#8A6A33;--dark:#5B3E86;--light:#B8912A;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:'Noto Sans KR',sans-serif;
+  -webkit-font-smoothing:antialiased;padding:20px 16px 60px;line-height:1.7}
+.wrap{max-width:1020px;margin:0 auto}
+h1{font-family:'Gothic A1';font-weight:900;font-size:clamp(26px,4vw,40px);letter-spacing:-.03em;line-height:1.1}
+.lede{font-size:15px;color:var(--ink-soft);font-weight:300;max-width:66ch;margin:10px 0 6px}
+.meta{font-family:'JetBrains Mono';font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint)}
+h2{font-family:'Gothic A1';font-weight:900;font-size:clamp(19px,2.6vw,25px);letter-spacing:-.02em;
+  margin:44px 0 6px;padding-top:20px;border-top:2px solid var(--ink)}
+h2 .n{font-family:'JetBrains Mono';font-size:11px;font-weight:500;color:var(--ink-faint);letter-spacing:.16em;display:block;margin-bottom:6px}
+p{font-size:14px;color:var(--ink-soft);font-weight:300;max-width:70ch}
+p b,li b,td b{color:var(--ink);font-weight:700}
+ul{margin:8px 0 8px 18px}li{font-size:14px;color:var(--ink-soft);font-weight:300;margin:4px 0}
+.note{font-family:'JetBrains Mono';font-size:11.5px;color:var(--ink-faint);line-height:1.65;margin-top:10px}
+table{border-collapse:collapse;width:100%;font-size:13px;margin:12px 0}
+th{text-align:left;font-family:'JetBrains Mono';font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-faint);padding:0 10px 8px 0;border-bottom:1.5px solid var(--ink);white-space:nowrap}
+td{padding:8px 10px 8px 0;border-bottom:1px solid var(--rule);color:var(--ink-soft);vertical-align:top}
+td:first-child{color:var(--ink);font-weight:700;white-space:nowrap}
+.mono{font-family:'JetBrains Mono';font-variant-numeric:tabular-nums}
+.tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.ok{color:var(--nature);font-weight:700}
+
+/* 속성 블록 */
+.el{border:1px solid var(--rule);border-top:5px solid var(--c);border-radius:8px;padding:16px 18px;margin:18px 0;background:var(--paper-2);--c:var(--ink)}
+.el.fire{--c:var(--fire)}.el.water{--c:var(--water)}.el.nature{--c:var(--nature)}
+.el.steel{--c:var(--steel)}.el.earth{--c:var(--earth)}.el.dark{--c:var(--dark)}.el.light{--c:var(--light)}
+.el .top{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.el h3{font-family:'Gothic A1';font-weight:900;font-size:23px;color:var(--c);letter-spacing:-.02em}
+.el .lever{font-family:'JetBrains Mono';font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--c);border:1px solid var(--c);padding:2px 7px;border-radius:3px;font-weight:700}
+.main{background:var(--paper);border-left:4px solid var(--c);padding:10px 14px;margin:12px 0;border-radius:0 5px 5px 0}
+.main .k{font-family:'JetBrains Mono';font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--c);font-weight:700}
+.main .t{font-family:'Gothic A1';font-weight:900;font-size:16px;margin:2px 0 4px}
+.main p{font-size:13.5px;margin:0}
+.subs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+@media(max-width:600px){.subs{grid-template-columns:1fr}}
+.sub{background:var(--paper);border:1px solid var(--rule);border-radius:5px;padding:10px 13px}
+.sub .k{font-family:'JetBrains Mono';font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);font-weight:700}
+.sub .t{font-family:'Gothic A1';font-weight:700;font-size:14px;margin:2px 0 4px}
+.sub p{font-size:12.5px;line-height:1.6;margin:0}
+.sub .arch{font-family:'JetBrains Mono';font-size:10px;color:var(--c);margin-top:7px;font-weight:700}
+.ex{font-family:'JetBrains Mono';font-size:11.5px;color:var(--ink-soft);margin-top:12px;
+  border-top:1px dashed var(--rule);padding-top:9px;line-height:1.8}
+.ex b{color:var(--ink)}
+.opp{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0;font-family:'JetBrains Mono';font-size:13px}
+.opp .p{border:1.5px solid var(--rule);border-radius:20px;padding:5px 14px;font-weight:700}
+.formula{font-family:'JetBrains Mono';font-size:13px;font-weight:500;background:var(--ink);color:var(--paper);
+  padding:12px 16px;border-radius:4px;display:inline-block;margin:8px 0;line-height:1.9}
+.formula em{color:#5fd3c4;font-style:normal}
+.q{background:var(--paper-2);border:1px solid var(--rule);border-radius:6px;padding:14px 16px;margin:12px 0}
+.q h4{font-family:'Gothic A1';font-weight:700;font-size:14px;margin-bottom:4px}
+.q p{font-size:13px;margin:0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="meta">TEN · ELEMENT DESIGN · 2026.07</div>
+<h1>속성 설계 — 7속성 × 메인+서브2</h1>
+<p class="lede">속성은 &ldquo;색깔&rdquo;이 아니라 <b>자원 레버</b>다. 각 속성은 이 게임의 서로 다른 자원 하나를 쥐고, 그것을 무엇과 바꾸느냐로 정체성을 만든다. 메인 테마가 <b>지불 방식</b>을 정하고, 서브테마 2개가 <b>그 지불로 무엇을 사는지</b>를 정한다.</p>
+
+<h2><span class="n">00 — 설계 원리</span>속성 하나 = 자원 하나</h2>
+<p>TEN에는 건드릴 수 있는 자원이 정확히 일곱 개 있다. 속성을 여기에 1:1로 붙이면 겹치지 않고, 덱을 짤 때 &ldquo;무엇을 팔아 무엇을 살까&rdquo;가 곧 속성 선택이 된다.</p>
+<div class="tbl-scroll">
+<table>
+<tr><th>속성</th><th>쥐는 자원</th><th>메인 테마 (지불 방식)</th><th>한 줄 정체성</th></tr>
+<tr><td style="color:var(--fire)">불</td><td>시간 (크리처 수명)</td><td>연소 — 수명을 팔아 스탯을 산다</td><td>지금 강하고 곧 사라진다</td></tr>
+<tr><td style="color:var(--water)">물</td><td>카드 (덱·손패)</td><td>환류 — 되돌려 다시 쓴다</td><td>영구 해답 대신 시간을 산다</td></tr>
+<tr><td style="color:var(--nature)">자연</td><td>턴 (미래)</td><td>성장 — 현재를 팔아 미래를 산다</td><td>지금 안 죽이면 못 죽인다</td></tr>
+<tr><td style="color:var(--steel)">강철</td><td>피해량</td><td>경화 — 받는 피해를 깎는다</td><td>제거 티어를 어긋나게 한다</td></tr>
+<tr><td style="color:var(--earth)">대지</td><td>슬롯 (위치)</td><td>진형 — 배치 순서를 자원화</td><td>어디에 두느냐가 곧 방어</td></tr>
+<tr><td style="color:var(--dark)">어둠</td><td>플레이어 HP</td><td>대가 — 내 피를 팔아 즉발을 산다</td><td>빨리 못 이기면 자멸</td></tr>
+<tr><td style="color:var(--light)">빛</td><td>플레이어 HP</td><td>가호 — 피를 벌고 지킨다</td><td>어둠의 정확한 역</td></tr>
+</table>
+</div>
+<p class="note">어둠과 빛만 같은 자원(HP)을 공유한다 — 방향이 정반대라서 그 자체로 대척 쌍이 된다.</p>
+
+<h2><span class="n">01 — 일곱 속성</span></h2>
+
+<div class="el dark">
+  <div class="top"><h3>어둠</h3><span class="lever">Lever · 플레이어 HP</span></div>
+  <div class="main"><div class="k">Main Theme</div><div class="t">대가 — 내 HP를 지불해 즉발 이득을 산다</div>
+    <p>HP 60은 승리 조건이자 <b>소비 가능한 자원</b>이다. 어둠은 그 둘을 같은 것으로 취급한다. 지불한 만큼 예산을 초과하는 카드를 받는다.</p></div>
+  <div class="subs">
+    <div class="sub"><div class="k">Sub 1</div><div class="t">피를 팔아 머릿수를 산다</div>
+      <p>HP를 지불하고 잡몹을 대량 소환. 공격 <b>횟수</b>를 폭증시켜 수호 벽을 갈아버린다.</p>
+      <div class="arch">→ 군세 (Wide)</div></div>
+    <div class="sub"><div class="k">Sub 2</div><div class="t">피를 팔아 요격한다</div>
+      <p>HP를 지불하고 적 크리처를 제거. 마나를 쓰지 않고 개입하므로 전개와 제거를 <b>같은 턴에</b> 해낸다.</p>
+      <div class="arch">→ 제거 / 템포</div></div>
+  </div>
+  <div class="ex"><b>대표 카드</b> · 피의광신도 2코 <b>4/3</b> (소환 시 내 HP 6) — 소모 11 / 예산 11 <span class="ok">적정</span><br>
+    흑기사 3코 관통 <b>4/3</b> (소환 시 내 HP 6) — 소모 15 / 예산 15 <span class="ok">적정</span></div>
+</div>
+
+<div class="el light">
+  <div class="top"><h3>빛</h3><span class="lever">Lever · 플레이어 HP</span></div>
+  <div class="main"><div class="k">Main Theme</div><div class="t">가호 — HP를 벌고, 죽음을 미룬다</div>
+    <p>어둠이 HP를 태워 예산을 얻는다면, 빛은 <b>예산을 태워 HP를 얻는다.</b> 스탯이 항상 한 단계 낮은 대신 시계를 뒤로 돌린다.</p></div>
+  <div class="subs">
+    <div class="sub"><div class="k">Sub 1</div><div class="t">플레이어 회복 — 시계를 늦춘다</div>
+      <p>6마나 구간까지 도달할 턴을 벌어준다. 수호가 &ldquo;시간을 사는&rdquo; 카드라면 빛은 <b>직접 시간을 만든다.</b></p>
+      <div class="arch">→ 방벽 (Bulwark)</div></div>
+    <div class="sub"><div class="k">Sub 2</div><div class="t">크리처 보호 — 제거를 무효화</div>
+      <p>피해 1회 무효·부활. 정예의 고코스트 크리처를 제거 스펠로부터 지킨다.</p>
+      <div class="arch">→ 정예 (Tall)</div></div>
+  </div>
+  <div class="ex"><b>대표 카드</b> · 치유사 3코 <b>2/4</b> (소환 시 내 HP 8 회복) — 소모 8 / 예산 8 <span class="ok">적정</span><br>
+    성기사 5코 비행수호 <b>3/5</b> (소환 시 내 HP 8 회복) — 소모 22 / 예산 22 <span class="ok">적정</span></div>
+</div>
+
+<div class="el fire">
+  <div class="top"><h3>불</h3><span class="lever">Lever · 크리처 수명</span></div>
+  <div class="main"><div class="k">Main Theme</div><div class="t">연소 — 수명을 팔아 스탯을 산다</div>
+    <p>불 크리처는 <b>N턴 뒤 스스로 소멸</b>한다. 대신 같은 코스트의 1.5~2배 스탯을 받는다. 보드가 단조 증가하는 이 게임에서 &ldquo;사라지는 크리처&rdquo;는 명확한 대가다.</p></div>
+  <div class="subs">
+    <div class="sub"><div class="k">Sub 1</div><div class="t">소멸하며 폭발한다</div>
+      <p>수명이 다할 때 광역 피해. 군세를 정리하는 지연신관 — 상대는 <b>타이머를 보며</b> 전개해야 한다.</p>
+      <div class="arch">→ 정예 · 광역 대응</div></div>
+    <div class="sub"><div class="k">Sub 2</div><div class="t">태워서 즉발로 바꾼다</div>
+      <p>내 크리처를 즉시 소멸시켜 그 ATK만큼 피해로 전환. 남은 수명을 <b>현금화</b>하는 피니시.</p>
+      <div class="arch">→ 버스트 / 리치</div></div>
+  </div>
+  <div class="ex"><b>대표 카드</b> · 화염정령 3코 <b>6/6</b> (3턴 후 소멸, 예산 ×1.5) — 소모 18 / 예산 18 <span class="ok">적정</span><br>
+    잿불새 2코 비행 <b>2/4</b> (3턴 후 소멸) — 소모 12 / 예산 12 <span class="ok">적정</span></div>
+</div>
+
+<div class="el water">
+  <div class="top"><h3>물</h3><span class="lever">Lever · 카드 (덱·손패)</span></div>
+  <div class="main"><div class="k">Main Theme</div><div class="t">환류 — 보드를 손으로 되돌려 다시 쓴다</div>
+    <p>물은 <b>제거하지 않는다.</b> 손으로 돌려보내 다시 마나를 내게 만든다. 영구 해답이 아니라 템포를 사는 방식이며, 덱 소진=패배 규칙과 맞물려 &ldquo;얼마나 오래 끌 수 있나&rdquo;가 긴장이 된다.</p></div>
+  <div class="subs">
+    <div class="sub"><div class="k">Sub 1</div><div class="t">되돌려 재활용한다</div>
+      <p>내 크리처를 회수해 소환 효과를 다시 쓴다. 어둠·빛의 &ldquo;소환 시&rdquo; 카드와 결합하면 엔진이 된다.</p>
+      <div class="arch">→ 콤보 / 밸류</div></div>
+    <div class="sub"><div class="k">Sub 2</div><div class="t">되돌려 시간을 뺏는다</div>
+      <p>상대 크리처를 바운스. 6코 위협도 되돌리지만 <b>영구히 없애지는 못한다</b> — 그 사이 이겨야 한다.</p>
+      <div class="arch">→ 템포 / 비상</div></div>
+  </div>
+  <div class="ex"><b>대표 카드</b> · 조수술사 3코 <b>3/4</b> (내 크리처 1개체 회수) — 소모 10 / 예산 10 <span class="ok">적정</span><br>
+    해류지기 4코 비행 <b>3/4</b> (상대 2코 이하 바운스) — 소모 16 / 예산 16 <span class="ok">적정</span></div>
+</div>
+
+<div class="el nature">
+  <div class="top"><h3>자연</h3><span class="lever">Lever · 턴 (미래)</span></div>
+  <div class="main"><div class="k">Main Theme</div><div class="t">성장 — 현재 스탯을 팔아 미래를 산다</div>
+    <p>턴마다 +1/+1. 나올 때는 예산보다 약하고, 방치되면 예산을 넘어선다. 상대에게 <b>&ldquo;지금 제거를 쓸 것인가&rdquo;</b>라는 질문을 강제하는 속성.</p></div>
+  <div class="subs">
+    <div class="sub"><div class="k">Sub 1</div><div class="t">증식 — 머릿수를 늘린다</div>
+      <p>같은 이름 개체를 추가해 스택을 쌓는다. 스택은 슬롯을 아끼고 공격 횟수를 번다 — 다만 광역에 통째로 노출된다.</p>
+      <div class="arch">→ 군세 (Wide)</div></div>
+    <div class="sub"><div class="k">Sub 2</div><div class="t">가속 — 성장을 앞당긴다</div>
+      <p>성장 속도를 올리거나 즉시 여러 턴분을 부여. 자연의 약점인 &ldquo;느림&rdquo;을 자체 해결한다.</p>
+      <div class="arch">→ 램프 / 후반</div></div>
+  </div>
+  <div class="ex"><b>대표 카드</b> · 묘목 2코 <b>0/4</b> (턴마다 +1/+1) — 소모 4 / 예산 8, 여유 4가 성장 선지불<br>
+    고목 4코 <b>2/8</b> (턴마다 +1/+1) — 소모 12 / 예산 18, 여유 6 = 2턴분</div>
+</div>
+
+<div class="el steel">
+  <div class="top"><h3>강철</h3><span class="lever">Lever · 피해량</span></div>
+  <div class="main"><div class="k">Main Theme</div><div class="t">경화 — 받는 피해를 N 깎는다</div>
+    <p>스펠 티어는 &ldquo;자기 코스트 +1 등급까지 정확히 처치&rdquo;로 설계돼 있다. 경화는 그 <b>계산을 어긋나게</b> 만든다. 피해 감소 1은 상대의 제거 한 장을 통째로 헛돌게 할 수 있다.</p></div>
+  <div class="subs">
+    <div class="sub"><div class="k">Sub 1</div><div class="t">다중 수호 — 흡수 횟수를 번다</div>
+      <p>초과 피해가 소멸하므로 방어는 HP가 아니라 <b>개체 수</b>다. 저코스트 수호를 겹쳐 공격 횟수를 먹는다.</p>
+      <div class="arch">→ 방벽 (Bulwark)</div></div>
+    <div class="sub"><div class="k">Sub 2</div><div class="t">장비 — 영구 강화를 얹는다</div>
+      <p>ATK·HP를 영구히 올려 한 개체를 위협으로 키운다. 광역에 강하고 슬롯 효율이 높다.</p>
+      <div class="arch">→ 정예 (Tall)</div></div>
+  </div>
+  <div class="ex"><b>대표 카드</b> · 중장병 4코 수호 <b>2/6</b> (피해 감소 1) — 소모 16 / 예산 16 <span class="ok">적정</span><br>
+    철벽 6코 수호 <b>4/9</b> (피해 감소 1) — 소모 26 / 예산 30 <span class="ok">여유</span></div>
+</div>
+
+<div class="el earth">
+  <div class="top"><h3>대지</h3><span class="lever">Lever · 슬롯 (위치)</span></div>
+  <div class="main"><div class="k">Main Theme</div><div class="t">진형 — 배치 순서를 자원으로 쓴다</div>
+    <p>&ldquo;왼쪽 슬롯부터 자동으로 맞는다&rdquo;는 규칙 때문에 <b>위치는 이미 자원</b>인데 아무도 쓰지 않고 있다. 대지는 이 축을 독점한다 — 어디에 두느냐, 어떻게 재배치하느냐.</p></div>
+  <div class="subs">
+    <div class="sub"><div class="k">Sub 1</div><div class="t">전열 — 앞자리를 강화한다</div>
+      <p>왼쪽 N칸에 있는 크리처를 강화. 방어 순서가 곧 강화 순서가 되어 <b>벽이 스스로 두꺼워진다.</b></p>
+      <div class="arch">→ 방벽 (Bulwark)</div></div>
+    <div class="sub"><div class="k">Sub 2</div><div class="t">공성 — 벽을 밀어낸다</div>
+      <p><b>관통</b>의 본거지. 초과 피해를 다음 개체로 이월시켜 수호 스택을 뚫는다. 슬롯 봉쇄·재배치도 여기.</p>
+      <div class="arch">→ 관통 / 군세 지원</div></div>
+  </div>
+  <div class="ex"><b>대표 카드</b> · 성문지기 4코 수호 <b>2/8</b> (왼쪽 3칸이면 HP+2) — 소모 20 / 예산 20 <span class="ok">적정</span><br>
+    공성귀 6코 관통 <b>8/8</b> — 소모 32 / 예산 32 <span class="ok">적정</span></div>
+</div>
+
+<h2><span class="n">02 — 대척 구조</span>3쌍 + 중립 1</h2>
+<p>7은 홀수라 완전 대칭이 안 된다. 3쌍을 대척으로 묶고, <b>대지를 중립축</b>으로 둔다 — 슬롯은 모든 속성이 공유하는 자원이므로 대지는 어느 덱에도 섞인다.</p>
+<div class="opp"><span class="p" style="color:var(--fire);border-color:var(--fire)">불 · 즉발/소멸</span> ↔ <span class="p" style="color:var(--water);border-color:var(--water)">물 · 지속/환류</span></div>
+<div class="opp"><span class="p" style="color:var(--nature);border-color:var(--nature)">자연 · 시간이 내 편</span> ↔ <span class="p" style="color:var(--steel);border-color:var(--steel)">강철 · 지금 굳힌다</span></div>
+<div class="opp"><span class="p" style="color:var(--dark);border-color:var(--dark)">어둠 · HP 지불</span> ↔ <span class="p" style="color:var(--light);border-color:var(--light)">빛 · HP 회복</span></div>
+<div class="opp"><span class="p" style="color:var(--earth);border-color:var(--earth)">대지 · 슬롯/위치</span> — 중립 (모든 덱의 3~4번째 색)</div>
+
+<h2><span class="n">03 — 아키타입 대응</span>속성 × 4축</h2>
+<p>메타 문서의 아키타입 4축과 속성을 교차하면, 어느 조합이 실제 덱이 되는지 보인다. 각 축은 최소 2속성이 지원한다.</p>
+<div class="tbl-scroll">
+<table>
+<tr><th>아키타입</th><th>주 속성</th><th>보조</th><th>대표 전략</th></tr>
+<tr><td>군세 (Wide)</td><td style="color:var(--dark)">어둠</td><td style="color:var(--nature)">자연 · <span style="color:var(--earth)">대지</span></td><td>HP를 팔아 머릿수 → 증식으로 유지 → 관통으로 벽 관통</td></tr>
+<tr><td>정예 (Tall)</td><td style="color:var(--steel)">강철</td><td style="color:var(--fire)">불 · <span style="color:var(--light)">빛</span></td><td>장비로 키우고 → 연소 광역으로 정리 → 보호로 제거 무효</td></tr>
+<tr><td>방벽 (Bulwark)</td><td style="color:var(--light)">빛</td><td style="color:var(--steel)">강철 · <span style="color:var(--earth)">대지</span></td><td>회복으로 시간 → 다중 수호 → 전열 강화</td></tr>
+<tr><td>비상 (Skies)</td><td style="color:var(--water)">물</td><td style="color:var(--fire)">불 · <span style="color:var(--dark)">어둠</span></td><td>바운스로 템포 → 연소 비행으로 페이스 → HP 지불 가속</td></tr>
+</table>
+</div>
+<p class="note">비상 축이 메타 문서에서 1승 2패로 약했는데, <b>물의 바운스</b>가 붙으면서 방벽·정예 양쪽에 시간을 벌 수단이 생긴다. 속성 도입이 그 구멍을 자연스럽게 메운다.</p>
+
+<h2><span class="n">04 — 태그 × 속성 편중</span></h2>
+<p>수호·비행·관통은 속성과 <b>직교</b>한다(어느 속성에도 붙을 수 있다). 다만 편중을 두어 정체성을 만든다.</p>
+<div class="tbl-scroll">
+<table>
+<tr><th>태그</th><th>주력 속성</th><th>부분 보유</th><th>없음</th></tr>
+<tr><td>수호</td><td style="color:var(--steel)">강철</td><td style="color:var(--earth)">대지 · <span style="color:var(--light)">빛</span></td><td>불 · 어둠</td></tr>
+<tr><td>비행</td><td style="color:var(--water)">물</td><td style="color:var(--fire)">불 · <span style="color:var(--dark)">어둠</span></td><td>강철 · 대지</td></tr>
+<tr><td>관통</td><td style="color:var(--earth)">대지</td><td style="color:var(--steel)">강철 · <span style="color:var(--dark)">어둠</span></td><td>물 · 빛</td></tr>
+<tr><td>비행수호</td><td style="color:var(--light)">빛</td><td>—</td><td>그 외 전부 (2~3% 상한)</td></tr>
+</table>
+</div>
+<p class="note">불·어둠에 수호가 없는 것이 중요하다 — 두 속성은 &ldquo;버티기&rdquo;를 살 수 없으므로 구조적으로 공격적일 수밖에 없다. 반대로 강철·빛은 비행이 없어 페이스를 밀지 못한다.</p>
+
+<h2><span class="n">05 — 신규 가격 규칙</span>속성 메커니즘의 예산 환산</h2>
+<div class="tbl-scroll">
+<table>
+<tr><th>메커니즘</th><th>속성</th><th>예산 환산</th><th>근거</th></tr>
+<tr><td>플레이어 HP 2 지불</td><td style="color:var(--dark)">어둠</td><td class="mono">예산 +1</td><td>HP 60 / 10~13턴 → 1 HP ≈ 0.5 예산</td></tr>
+<tr><td>플레이어 HP 2 회복</td><td style="color:var(--light)">빛</td><td class="mono">예산 −1</td><td>어둠의 정확한 역</td></tr>
+<tr><td>유한 수명 3턴</td><td style="color:var(--fire)">불</td><td class="mono">예산 ×1.5</td><td>평균 생존 6턴 대비 절반</td></tr>
+<tr><td>유한 수명 1턴</td><td style="color:var(--fire)">불</td><td class="mono">예산 ×2.0</td><td>공격 1회만 하고 소멸</td></tr>
+<tr><td>피해 감소 1</td><td style="color:var(--steel)">강철</td><td class="mono">예산 −4</td><td>평균 4회 피격 가정 → HP 4와 등가</td></tr>
+<tr><td>성장 +1/+1 (턴당)</td><td style="color:var(--nature)">자연</td><td class="mono">−3 / 턴분</td><td>기본 스탯에서 선지불</td></tr>
+<tr><td>바운스 (손으로 회수)</td><td style="color:var(--water)">물</td><td class="mono">제거 티어 ×0.6</td><td>영구 해답이 아님</td></tr>
+<tr><td>관통</td><td style="color:var(--earth)">대지</td><td class="mono">3A + H</td><td>일반(2A+H)과 비행(4A+H) 사이</td></tr>
+</table>
+</div>
+<div class="formula">검산 완료 — 대표 크리처 <em>14종</em> 전원 예산 이내</div>
+
+<h2><span class="n">06 — 결정이 필요한 것</span></h2>
+<div class="q"><h4>Q1. 덱 구성 규칙 — 몇 속성까지 섞나?</h4>
+<p>단색 전용? 2속성? 무제한? <b>2속성 + 대지 소량</b>을 권한다 — 메인 속성이 정체성을, 두 번째가 부족한 축을 메우고, 중립 대지가 슬롯 문제를 푼다. 무제한이면 속성이 곧 색깔로만 남고 상성이 사라진다.</p></div>
+<div class="q"><h4>Q2. 속성이 카드 데이터의 어느 층인가?</h4>
+<p><b>태그(수호·비행·관통)와 별개 컬럼</b>으로 두는 걸 권한다. 태그는 전투 규칙, 속성은 덱 구성 규칙이라 층이 다르다. 프레임 색은 속성으로, 테두리 형태는 태그로 표현하면 카드에서 둘 다 읽힌다.</p></div>
+<div class="q"><h4>Q3. 기존 20종의 속성 배정</h4>
+<p>지금 카드들은 속성이 없다. 아트 기준으로 자동 배정하면 — 파수병·방벽병·석벽·기사 → 강철, 전투매·그리핀·와이번 → 물/불, 창병·장군·파괴자 → 대지, 성화 → 빛 또는 어둠. 재배정할지, 아니면 기존 20종을 <b>무속성 기본 세트</b>로 남길지.</p></div>
+<div class="q"><h4>Q4. 불의 &ldquo;소멸&rdquo;과 덱 소진 패배 규칙</h4>
+<p>불은 카드를 빨리 소모한다. 덱 소진 = 즉시 패배이므로 불 덱은 자연히 <b>공격 제한시간</b>을 갖는다 — 이 긴장을 의도한 것으로 둘지, 아니면 불에 덱 회복 수단을 줄지.</p></div>
+
+</div>
+</body>
+</html>
