@@ -19,8 +19,8 @@ ROOT = os.path.dirname(HERE)
 DATA = os.path.join(ROOT, "data")
 PROTO = os.path.join(ROOT, "prototype", "index.html")
 
-WIDTH = 300      # 보드 슬롯·손패는 작으므로 축소
-QUALITY = 78
+WIDTH = 200      # 보드 슬롯 47px · 손패 86px · 확대 260px — 200이면 충분하고 파일이 가볍다
+QUALITY = 68
 
 
 def load_rows():
@@ -61,7 +61,7 @@ def main():
 
     html = open(PROTO, encoding="utf-8").read()
     html = inject_costs(html, load_rows())
-    block = "/* ART_START */\nconst ART = " + json.dumps(art, ensure_ascii=False) + ";\n/* ART_END */"
+    block = "/* ART_START */\nconst ART = " + json.dumps(art, ensure_ascii=False, indent=0) + ";\n/* ART_END */"
     if "/* ART_START */" in html:
         html = re.sub(r"/\* ART_START \*/.*?/\* ART_END \*/", lambda m: block, html, count=1, flags=re.S)
     else:
