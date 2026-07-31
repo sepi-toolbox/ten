@@ -50,23 +50,23 @@ input[type=file]{display:none}
 .add:hover{border-color:var(--gold);color:var(--gold)}
 
 /* ---------- 카드 (갤러리와 동일 렌더) ---------- */
-.card{--fc:var(--ink);position:relative;background:var(--paper);border:4px solid var(--fc);border-radius:12px;
+.card{--fc:var(--ink);aspect-ratio:5/7;position:relative;background:var(--paper);border:4px solid var(--fc);border-radius:12px;
   overflow:hidden;display:flex;flex-direction:column;box-shadow:0 3px 9px rgba(20,24,33,.13);cursor:pointer;transition:.14s}
 .card:hover{transform:translateY(-3px);box-shadow:0 8px 18px rgba(20,24,33,.2)}
 .card.guard{--fc:var(--teal)} .card.fly{--fc:var(--amber)} .card.flyguard{--fc:var(--amber)}
 .card.normal{--fc:var(--ink)} .card.sp{--fc:var(--crimson)} .card.en{--fc:var(--violet)}
-.chead{display:flex;align-items:center;gap:6px;padding:5px 8px 3px}
+.chead{flex:none;height:40px;box-sizing:border-box;display:flex;align-items:center;gap:6px;padding:5px 8px 3px}
 .cost{flex:none;width:26px;height:26px;border-radius:50%;background:var(--indigo);color:#fff;
   font-family:'JetBrains Mono';font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.25)}
 .nm{font-family:'Cinzel',serif;font-weight:900;font-size:13.5px;letter-spacing:-.01em;line-height:1.1;flex:1}
-.art{position:relative;margin:0;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,color-mix(in srgb,var(--fc) 16%,var(--paper)),color-mix(in srgb,var(--fc) 5%,var(--paper)));border-top:3px solid color-mix(in srgb,var(--fc) 60%,transparent);border-bottom:3px solid color-mix(in srgb,var(--fc) 60%,transparent)}
+.art{position:relative;margin:0;flex:none;height:47%;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,color-mix(in srgb,var(--fc) 16%,var(--paper)),color-mix(in srgb,var(--fc) 5%,var(--paper)));border-top:3px solid color-mix(in srgb,var(--fc) 60%,transparent);border-bottom:3px solid color-mix(in srgb,var(--fc) 60%,transparent)}
 .art svg{width:60%;height:60%;color:var(--fc)}
 .flyguard .art::after{content:'';position:absolute;inset:0;border-radius:7px;box-shadow:inset 0 0 0 3px color-mix(in srgb,var(--teal) 45%,transparent)}
-.tagrow{display:flex;gap:4px;padding:4px 8px 2px}
+.tagrow{flex:none;height:22px;box-sizing:border-box;overflow:hidden;display:flex;gap:4px;padding:4px 8px 2px;flex-wrap:nowrap}
 .chip{font-family:'JetBrains Mono';font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--fc);color:var(--fc);padding:2px 5px;border-radius:3px}
-.eff{font-size:9.5px;line-height:1.38;color:var(--ink-soft);padding:3px 9px 2px;flex:none;min-height:25px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.eff{flex:none;height:42px;box-sizing:border-box;font-size:9.5px;line-height:1.38;color:var(--ink-soft);padding:3px 9px 2px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .eff b{color:var(--ink);font-weight:700}
-.meter{display:flex;gap:2px;padding:0 9px 7px}
+.meter{flex:none;height:20px;box-sizing:border-box;overflow:hidden;display:flex;gap:2px;padding:0 9px}
 .meter i{width:8px;height:12px;border:1.5px solid var(--violet);border-radius:2px;background:color-mix(in srgb,var(--violet) 22%,transparent)}
 .stnums{display:flex;justify-content:space-between;align-items:center;padding:6px 9px 9px;margin-top:auto}
 .st{display:flex;align-items:center;gap:3px;font-family:'JetBrains Mono';font-weight:700;font-size:15px}
@@ -74,7 +74,7 @@ input[type=file]{display:none}
 .st.atk .ic{background:var(--crimson)} .st.hp .ic{background:var(--teal)}
 .st.charge .ic{background:var(--violet)} .st.charge{color:var(--violet)}
 .st.atk{color:var(--crimson)} .st.hp{color:var(--teal)}
-.spfoot{padding:6px 9px 10px;margin-top:auto;display:flex;justify-content:flex-end}
+.spfoot{flex:none;height:38px;box-sizing:border-box;margin-top:auto;padding:5px 9px;display:flex;align-items:center;justify-content:flex-end}
 .big{font-family:'JetBrains Mono';font-weight:700;font-size:18px;color:var(--fc)}
 .big small{font-size:8.5px;color:var(--ink-faint);font-weight:500}
 .vbadge{position:absolute;top:7px;right:7px;font-family:'JetBrains Mono';font-size:8.5px;font-weight:700;padding:2px 5px;border-radius:3px}
