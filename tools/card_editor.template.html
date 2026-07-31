@@ -123,14 +123,17 @@ input[type=file]{display:none}
 .chip{border-color:var(--el)!important;color:var(--el)!important}
 .card .art svg{color:var(--el)}
 
-/* ---- 코스트 동그라미 (유색=속성색 채움 / 무색=빈 원) ---- */
-.cost{width:auto!important;height:auto!important;border-radius:0!important;background:none!important;
-  box-shadow:none!important;display:flex!important;align-items:center;gap:2px;flex-wrap:wrap;max-width:74px}
-.pip{width:13px;height:13px;border-radius:50%;flex:none;box-sizing:border-box}
-.pip.c{background:var(--el);border:1.5px solid color-mix(in srgb,var(--el) 65%,#000);
+
+/* ---- 코스트 줄 (이름 아래 별도 영역) ---- */
+.chead{flex-direction:column;align-items:stretch!important;gap:3px!important;padding:6px 9px 4px!important}
+.ctitle{display:flex;align-items:center;gap:6px}
+.cost{display:flex!important;align-items:center;justify-content:flex-start!important;gap:3px;flex-wrap:wrap;
+  width:auto!important;height:auto!important;background:none!important;border-radius:0!important;box-shadow:none!important;
+  padding:1px 0 0!important;border-top:1px solid color-mix(in srgb,var(--el) 22%,transparent);margin-top:1px}
+.pip{width:12px;height:12px;border-radius:50%;flex:none;box-sizing:border-box}
+.pip.c{background:var(--el);border:1.5px solid color-mix(in srgb,var(--el) 62%,#000);
   box-shadow:inset 0 1px 1px rgba(255,255,255,.45)}
-.pip.g{background:var(--paper);border:1.5px solid var(--ink-faint);
-  box-shadow:inset 0 1px 1px rgba(0,0,0,.10)}
+.pip.g{background:var(--paper);border:1.5px solid var(--ink-faint);box-shadow:inset 0 1px 1px rgba(0,0,0,.10)}
 </style>
 </head>
 <body>
@@ -228,7 +231,7 @@ function cardHTML(c,k){
   const vd=verdict(c,k);
   const el=EL[c.element]||EL.steel;
   return `<div class="card ${cls}" style="--el:${el.c}"><div class="vbadge ${vd.v}">${VKO[vd.v]}</div>
-    <div class="chead"><div class="cost">${costPips(c)}</div><div class="tico">${TI[c.k]}</div><div class="nm">${c.name||'—'}</div></div>
+    <div class="chead"><div class="ctitle"><div class="tico">${TI[c.k]}</div><div class="nm">${c.name||'—'}</div></div><div class="cost">${costPips(c)}</div></div>
     <div class="art">${artBlock(c)}</div>
     <div class="tagrow"><span class="chip">${chip}</span></div>
     <div class="eff">${eff}</div>${foot}</div>`;

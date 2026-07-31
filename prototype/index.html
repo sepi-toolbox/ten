@@ -66,12 +66,12 @@ body::before{
 .bar .cnt{font-family:'Cinzel',serif;font-size:10px;color:var(--gold);letter-spacing:.08em;opacity:.85}
 
 /* ---- board ---- */
-.board{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;margin-bottom:14px;padding:9px;
+.board{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin-bottom:14px;padding:9px;
   background:linear-gradient(180deg,rgba(0,0,0,.32),rgba(0,0,0,.14));
   border:1px solid var(--rule);border-radius:8px;
   box-shadow:inset 0 0 30px rgba(0,0,0,.6)}
 .slot{
-  aspect-ratio:5/7;border:1px solid #4a371f;border-radius:5px;
+  aspect-ratio:47/70;border:1px solid #4a371f;border-radius:5px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   position:relative;background:linear-gradient(180deg,#1e150d,#150e08);
   cursor:default;transition:.16s;padding:2px;overflow:hidden;font-family:'Gowun Batang',serif;
@@ -325,6 +325,85 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
 .hc.lnd{width:74px;height:auto;border-radius:6px;border-left-width:4px}
 .hc .lpip{display:flex;gap:3px;margin:5px 0}
 .hc .lpip i{width:13px;height:13px;border-radius:50%;border:1px solid rgba(0,0,0,.45)}
+
+/* ---- 통합 카드 ---- */
+.tcard{--el:#8894A6;position:relative;display:flex;flex-direction:column;overflow:hidden;
+  background:linear-gradient(180deg,var(--parch),var(--parch-2));color:var(--ink);
+  border:3px solid var(--el);border-radius:7px;box-shadow:0 2px 6px rgba(0,0,0,.5)}
+.thead{padding:3px 5px 2px;border-bottom:1px solid color-mix(in srgb,var(--el) 30%,transparent)}
+.tname{font-family:'Gowun Batang',serif;font-weight:700;line-height:1.1;color:var(--ink)}
+.tcost{display:flex;gap:2px;flex-wrap:wrap;margin-top:2px}
+.cp{border-radius:50%;flex:none;box-sizing:border-box}
+.cp.c{border:1px solid rgba(0,0,0,.45)}
+.cp.g{background:transparent;border:1.5px solid rgba(90,67,38,.8)}
+.tart{background-size:cover;background-position:center;background-color:#1a120a;
+  border-top:2px solid color-mix(in srgb,var(--el) 55%,transparent);
+  border-bottom:2px solid color-mix(in srgb,var(--el) 55%,transparent)}
+.tbody{flex:1;min-height:0}
+.teff{color:var(--ink-soft);overflow:hidden}
+.teff b{color:var(--ink);font-weight:700}
+.tstat{display:flex;justify-content:space-between;align-items:center}
+.tb{display:flex;align-items:center;justify-content:center;border-radius:50%;
+  font-family:'Cinzel',serif;font-weight:700;border:1.5px solid;box-shadow:0 1px 3px rgba(0,0,0,.5)}
+.tb.a{background:#3a1512;border-color:#e0796e;color:#ffd9d2}
+.tb.h{background:#0d2b25;border-color:#4fc4a6;color:#d6fff2}
+.tb.ch{background:#241436;border-color:#b79ae8;color:#eadcff;margin-left:auto}
+.tb.h.dmg{background:#6b1410;border-color:#ff9a88;color:#fff;box-shadow:0 0 7px rgba(255,90,74,.65)}
+.tb.a.dmg{background:#4a3a10;border-color:#e0b25e;color:#fff3d0}
+.tb.buf{background:#1d4a12;border-color:#8ce06a;color:#e8ffdc}
+.tstk{position:absolute;top:2px;right:3px;z-index:3;font-family:'Cinzel',serif;font-weight:700;font-size:9px;
+  color:#f2d488;background:rgba(8,5,3,.85);border:1px solid #7c5a30;border-radius:3px;padding:0 3px}
+.tpips{position:absolute;right:3px;display:flex;flex-direction:column;gap:1px;align-items:flex-end;z-index:3}
+.tpips i{font-family:'Cinzel',serif;font-style:normal;font-size:8px;font-weight:700;
+  background:rgba(13,43,37,.92);border:1px solid #4fc4a6;color:#d6fff2;border-radius:3px;padding:0 3px}
+.tpips i.dmg{background:rgba(107,20,16,.92);border-color:#ff7a66;color:#fff}
+
+/* 크기 변형 */
+.tcard.sm{width:100%;height:100%;border-width:2px;border-radius:5px}
+.tcard.sm .tname{font-size:8.5px;text-align:center}
+.tcard.sm .thead{padding:2px 3px 1px}
+.tcard.sm .tcost{justify-content:center;gap:1.5px;margin-top:1px}
+.tcard.sm .cp{width:5px;height:5px}
+.tcard.sm .tart{flex:1;min-height:0}
+.tcard.sm .tbody{display:none}
+.tcard.sm .tstat{position:absolute;left:0;right:0;bottom:0;padding:2px 3px;z-index:2}
+.tcard.sm .tb{width:17px;height:17px;font-size:10px}
+.tcard.sm .tpips{bottom:21px}
+.tcard.sm .tart{flex:1;min-height:0;border-bottom:none}
+
+.tcard.md{width:86px}
+.tcard.md .tname{font-size:11px}
+.tcard.md .cp{width:8px;height:8px}
+.tcard.md .tart{height:52px}
+.tcard.md .teff{font-size:8px;line-height:1.35;padding:3px 5px;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+.tcard.md .tstat{padding:2px 4px 4px}
+.tcard.md .tb{width:17px;height:17px;font-size:10px}
+
+.tcard.lg{width:min(72vw,260px);border-width:4px;border-radius:11px}
+.tcard.lg .thead{padding:8px 11px 5px}
+.tcard.lg .tname{font-size:19px}
+.tcard.lg .cp{width:14px;height:14px}
+.tcard.lg .tcost{gap:3px;margin-top:5px}
+.tcard.lg .tart{aspect-ratio:1/1}
+.tcard.lg .teff{font-size:12.5px;line-height:1.55;padding:9px 12px 4px}
+.tcard.lg .tstat{padding:5px 12px 11px}
+.tcard.lg .tb{width:32px;height:32px;font-size:17px}
+.tcard.lg .tpips{bottom:52px;right:10px}
+
+/* 손패 래퍼 */
+.hcw{flex:none;cursor:pointer;transition:.15s}
+.hcw:hover{transform:translateY(-4px)}
+.hcw.sel .tcard{border-color:var(--gold-bright);box-shadow:0 8px 18px rgba(0,0,0,.55),0 0 16px rgba(242,212,136,.7)}
+.hcw.no{opacity:.42;cursor:not-allowed;filter:grayscale(.4)}
+.hcw.no:hover{transform:none}
+.slot.occ{padding:0;background:transparent;border:none!important;box-shadow:none!important}
+
+.tcard.md.land .landart{height:52px;background:
+  radial-gradient(circle at 50% 40%, color-mix(in srgb,var(--el) 55%,transparent), transparent 70%), #16100a}
+.tcard.md.land .landart::after{content:'';position:absolute;inset:0}
+.tcard.md.land{border-style:dashed}
+.tcard.md .tart{position:relative}
 </style>
 </head>
 <body>
@@ -831,6 +910,42 @@ async function castSelectedAoe(){
   cleanup('ai');render();
 }
 
+
+/* ============ 통합 카드 컴포넌트 ============ */
+function tcardHTML(name,opt){
+  opt=opt||{};
+  const c=POOL[name]; if(!c) return '';
+  const el=CE[name]||'steel', ec=(EL[el]||EL.steel).c;
+  const cc=Math.min(+c.cc||1,c.c);
+  const pips=`<i class="cp c" style="background:${ec}"></i>`.repeat(cc)+'<i class="cp g"></i>'.repeat(c.c-cc);
+  const cls=c.k==='cr'?((c.g&&c.f)?'flyguard':c.g?'guard':c.f?'fly':'normal'):c.k;
+  let eff='';
+  if(c.k==='cr'){
+    if(c.g&&c.f) eff='<b>비행·수호</b> — 공중·지상 모두 막는다.';
+    else if(c.g) eff='<b>수호</b> — 대신 왼쪽부터 피해를 받는다.';
+    else if(c.f) eff='<b>비행</b> — 비행 없는 수호를 무시.';
+  } else eff=c.d||'';
+  const art=ART[name]?`<div class="tart" style="background-image:url(${ART[name]})"></div>`:'<div class="tart"></div>';
+  const u=opt.unit;
+  let foot='';
+  if(c.k==='cr'){
+    const atk=u?u.a:c.a, hp=(u&&u.insts[0])?Math.max(0,u.insts[0].hp):c.h;
+    const ac=u&&atk!==c.a?(atk>c.a?'buf':'dmg'):'', hc=u&&hp!==c.h?(hp>c.h?'buf':'dmg'):'';
+    foot=`<div class="tstat"><span class="tb a ${ac}">${atk}</span><span class="tb h ${hc}">${hp}</span></div>`;
+  } else if(c.k==='en'){
+    foot=`<div class="tstat"><span></span><span class="tb ch">${u?u.charge:c.ch}</span></div>`;
+  }
+  const stk=(u&&u.insts&&u.insts.length>1)?`<div class="tstk">×${u.insts.length}</div>`:'';
+  const pip2=(u&&u.insts&&u.insts.length>1)
+    ? `<div class="tpips">${u.insts.slice(1).map(x=>`<i class="${x.hp<c.h?'dmg':''}">${Math.max(0,x.hp)}</i>`).join('')}</div>` : '';
+  return `<div class="tcard ${cls} ${opt.size||'md'}" style="--el:${ec}">
+    ${stk}
+    <div class="thead"><div class="tname">${name}</div><div class="tcost">${pips}</div></div>
+    ${art}${pip2}
+    <div class="tbody"><div class="teff">${eff}</div></div>${foot}
+  </div>`;
+}
+
 /* ============ 렌더 ============ */
 function slotHTML(u,side,i){
   if(!u)return `<div class="slot idx" data-i="${i+1}" data-side="${side}" data-idx="${i}"></div>`;
@@ -839,24 +954,7 @@ function slotHTML(u,side,i){
   else if(u.g&&u.f)cls+=' flyguard';
   else if(u.g)cls+=' guard';
   else if(u.f)cls+=' fly';
-  const bg=ART[u.name]?`<div class="cart" style="background-image:url(${ART[u.name]})"></div>`:'';
-  let inner;
-  if(u.kind==='en'){
-    inner=`${bg}<div class="cname">${u.name}</div>
-      <div class="ov"><span class="bch">${u.charge}</span></div>`;
-  }else{
-    const base=POOL[u.name];
-    const front=u.insts[0]?Math.max(0,u.insts[0].hp):0;
-    const hpCls=front<base.h?'dmg':(front>base.h?'buf':'');
-    const atkCls=u.a>base.a?'buf':(u.a<base.a?'dmg':'');
-    const rest=u.insts.slice(1);
-    inner=`${bg}
-      ${u.insts.length>1?`<div class="stk">×${u.insts.length}</div>`:''}
-      <div class="cname">${u.name}</div>
-      ${rest.length?`<div class="pips">${rest.map(x=>`<i class="${x.hp<base.h?'dmg':''}">${Math.max(0,x.hp)}</i>`).join('')}</div>`:''}
-      <div class="ov"><span class="ba ${atkCls}">${u.a}</span><span class="bh ${hpCls}">${front}</span></div>`;
-  }
-  return `<div class="${cls}" data-i="${i+1}" data-side="${side}" data-idx="${i}">${inner}</div>`;
+  return `<div class="${cls}" data-i="${i+1}" data-side="${side}" data-idx="${i}">${tcardHTML(u.name,{size:'sm',unit:u})}</div>`;
 }
 function render(){
   const mine=S.active==='me'&&!S.over&&!S.busy;
@@ -953,28 +1051,20 @@ function render(){
     if(isLand(n)){
       const L=LANDS[n], c1=(EL[L.els[0]]||EL.steel).c;
       const no=(!mine||S.me.landPlayed)?' no':'';
-      return `<div class="hc lnd${no}" data-h="${i}" style="border-left-color:${c1}">
-        <div class="n">${n}</div>
-        <div class="lpip">${L.els.map(e=>`<i style="background:${(EL[e]||EL.steel).c}"></i>`).join('')}</div>
-        <div class="t">지형${L.dual?' · 대기':''}</div></div>`;
+      const pips=L.els.map(e=>`<i class="cp c" style="background:${(EL[e]||EL.steel).c}"></i>`).join('');
+      return `<div class="hcw${no}" data-h="${i}"><div class="tcard md land" style="--el:${c1}">
+        <div class="thead"><div class="tname">${n}</div><div class="tcost">${pips}</div></div>
+        <div class="tart landart"></div>
+        <div class="tbody"><div class="teff">${L.dual?'두 속성 중 <b>택1</b>. 놓은 턴에는 쓸 수 없다.':'<b>지형</b> — 자원 1을 생성한다.'}</div></div>
+      </div></div>`;
     }
     const c=POOL[n]; if(!c)return '';
-    let cls='hc';
-    if(c.k==='cr')cls+=c.g?' g':(c.f?' f':'');
-    if(c.k==='sp')cls+=' sp'; if(c.k==='en')cls+=' en';
+    let cls='hcw';
     if(!mine||!canPay('me',n))cls+=' no';
     if(S.sel===i)cls+=' sel';
-    const el=CE[n]||'steel', cc=Math.min(+c.cc||1,c.c);
-    const cpc=`<i class="cp c" style="background:${(EL[el]||EL.steel).c}"></i>`;
-    const pips=cpc.repeat(cc)+'<i class="cp g"></i>'.repeat(c.c-cc);
-    const body=c.k==='cr'
-      ? `<div class="s">${c.a}/${c.h}</div><div class="t">${[c.g?'수호':'',c.f?'비행':''].filter(Boolean).join('·')||'크리처'}</div>`
-      : `<div class="d">${c.d}</div><div class="t">${c.k==='sp'?'스펠':'인챈트'}</div>`;
-    const ha=ART[n]?`<div class="hart" style="background-image:url(${ART[n]})"></div>`:'';
-    return `<div class="${cls}" data-h="${i}" style="border-left-color:${elc(n)}">
-      <div class="cpips">${pips}</div><div class="n">${n}</div>${ha}${body}</div>`;
+    return `<div class="${cls}" data-h="${i}">${tcardHTML(n,{size:'md'})}</div>`;
   }).join('');
-  document.querySelectorAll('.hc').forEach(el=>{el.onclick=()=>selectCard(+el.dataset.h);});
+  document.querySelectorAll('.hc,.hcw').forEach(el=>{el.onclick=()=>selectCard(+el.dataset.h);});
   // hint
   const hint=document.getElementById('hint');
   const cancel=document.getElementById('cancel');
@@ -1005,35 +1095,8 @@ document.getElementById('again').onclick=newGame;
 
 /* ============ 롱프레스 카드 확대 ============ */
 function zoomHTML(name,u){
-  const c=POOL[name]; if(!c)return '';
-  const cls = c.k==='cr' ? ((c.g&&c.f)?'flyguard':c.g?'guard':c.f?'fly':'') : c.k;
-  const chip = c.k==='cr'?'크리처':(c.k==='sp'?'스펠':'인챈트');
-  let eff='';
-  if(c.k==='cr'){
-    if(c.g&&c.f) eff='<b>비행·수호</b> — 공중·지상 양쪽을 모두 막는다.';
-    else if(c.g) eff='<b>수호</b> — 플레이어 대신 왼쪽 슬롯부터 피해를 받는다.';
-    else if(c.f) eff='<b>비행</b> — 비행 없는 수호를 무시하고 공격한다.';
-  } else eff=c.d||'';
-  const art=ART[name]?`style="background-image:url(${ART[name]})"`:'';
-  let stats='';
-  if(c.k==='cr'){
-    const atk=u?u.a:c.a, hp=u&&u.insts[0]?Math.max(0,u.insts[0].hp):c.h;
-    const ab=atk!==c.a?`<span class="zbase">(기본 ${c.a})</span>`:'';
-    const hb=hp!==c.h?`<span class="zbase">(기본 ${c.h})</span>`:'';
-    const stk=(u&&u.insts.length>1)?`<span class="zbase">×${u.insts.length} · ${u.insts.map(x=>Math.max(0,x.hp)).join(' / ')}</span>`:'';
-    stats=`<div class="zstats"><div class="zs atk"><span class="ic"></span>${atk}${ab}</div>
-      ${stk}<div class="zs hp"><span class="ic"></span>${hp}${hb}</div></div>`;
-  }else if(c.k==='en'){
-    const ch=u?u.charge:c.ch;
-    const cb=(u&&ch!==c.ch)?`<span class="zbase">(기본 ${c.ch})</span>`:'';
-    stats=`<div class="zstats"><div class="zs ch"><span class="ic"></span>${ch}${cb}</div></div>`;
-  }
-  return `<div class="zcard ${cls}" style="--zc:${elc(name)}">
-    <div class="zhead"><div class="zcost">${c.c}</div><div class="ztico">${TI[c.k]}</div><div class="zname">${name}</div></div>
-    <div class="zart" ${art}></div>
-    <div class="zchip">${(EL[CE[name]]||EL.steel).ko}</div>
-    <div class="zeff">${eff}</div>${stats}
-  </div><div class="zhint">아무 곳이나 눌러 닫기</div>`;
+  if(!POOL[name])return '';
+  return tcardHTML(name,{size:'lg',unit:u})+'<div class="zhint">아무 곳이나 눌러 닫기</div>';
 }
 let lpT=null, lpFired=false;
 function showZoom(name,u){
