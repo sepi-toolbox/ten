@@ -68,43 +68,33 @@ body::before{
   box-shadow:0 0 8px rgba(77,111,212,.7),inset 0 1px 2px rgba(255,255,255,.4)}
 .bar .cnt{font-family:'Cinzel',serif;font-size:10px;color:var(--gold);letter-spacing:.08em;opacity:.85}
 
-/* ---- 지형존 (land zone) ---- */
+/* ---- 지형존 (land zone) ----
+   내려놓은 지형을 **카드 그대로** 보여준다. 보드 슬롯과 같은 규격(5:7)이고,
+   그 위에 자원 토큰과 상태 뱃지만 얹는다. */
 .lzwrap{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-.lz{display:grid;grid-template-columns:repeat(5,minmax(0,64px));gap:6px;padding:8px 9px;
+.lz{display:grid;grid-template-columns:repeat(5,minmax(0,64px));gap:5px;padding:9px;
   background:linear-gradient(180deg,rgba(0,0,0,.34),rgba(0,0,0,.12));
   border:1px solid var(--rule);border-radius:8px;box-shadow:inset 0 0 26px rgba(0,0,0,.6)}
-.lz .lt{position:relative;border-radius:5px;padding:16px 3px 4px;min-height:52px;
-  border:1px solid #4a371f;background:linear-gradient(180deg,#1e150d,#150e08);
-  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
-  box-shadow:inset 0 1px 3px rgba(0,0,0,.6);transition:.18s}
-.lz .lt.has{border-color:var(--lc);border-left-width:3px;
-  background:linear-gradient(180deg,color-mix(in srgb,var(--lc) 22%,#150e08),#150e08)}
-.lz .lt.ent{border-style:dashed;opacity:.72}
-.lz .lt.used{filter:grayscale(.4);opacity:.8}
-.lz .lt.empty{border-style:dashed;border-color:#3a2c19;opacity:.4}
-.lz .lt.empty::after{content:'+';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+.lslot{position:relative;aspect-ratio:5/7;container-type:inline-size;
+  border-radius:5px;transition:.18s}
+.lslot.empty{border:1px dashed #3a2c19;background:linear-gradient(180deg,#1e150d,#150e08);
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.6);opacity:.45}
+.lslot.empty::after{content:'+';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
   font-family:'Cinzel',serif;font-size:15px;color:#6b5430}
-/* 자원 토큰 — 지형 위에 올라간다 */
-.lz .tok{position:absolute;top:4px;left:50%;transform:translateX(-50%);
-  width:17px;height:17px;border-radius:50%;border:1px solid rgba(255,255,255,.55);
+.lslot.used .tcard{filter:grayscale(.45) brightness(.72)}
+.lslot.ent .tcard{opacity:.82}
+/* 자원 토큰 — 카드 아트 위에 올라간다 */
+.lz .tok{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);z-index:4;
+  width:26cqw;height:26cqw;border-radius:50%;border:1px solid rgba(255,255,255,.5);
   transition:transform .2s cubic-bezier(.3,.9,.4,1),opacity .2s}
-.lz .tok.img{background-size:100% 100%;background-repeat:no-repeat;border:none;
-  width:20px;height:20px;top:3px}
-.lz .tok.img::after{display:none}
-.lz .tok::after{content:'';position:absolute;inset:2px 3px auto 3px;height:5px;border-radius:50%;
-  background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,0))}
-.lz .tok.ent{background:#2a2013!important;border-style:dashed;border-color:#6b5430;box-shadow:none!important}
-.lz .tok.ent::after{display:none}
-.lz .tok.gone{background:transparent!important;border:1px dashed #5a4526;box-shadow:none!important;
-  transform:translateX(-50%) scale(.7);opacity:.55}
-.lz .tok.gone::after{display:none}
-.lz .lnm{font-family:'Gowun Batang',serif;font-size:8.5px;line-height:1.15;text-align:center;
-  color:var(--gold);opacity:.9;word-break:keep-all}
-.lz .lt.used .lnm{opacity:.68}
-.lz .lt.ent::after{content:'대기';position:absolute;top:3px;right:4px;font-family:'Cinzel',serif;
-  font-size:7px;letter-spacing:.1em;color:var(--gold);opacity:.75}
-.lz .lt.used::after{content:'소모';position:absolute;top:3px;right:4px;font-family:'Cinzel',serif;
-  font-size:7px;letter-spacing:.1em;color:var(--rule);opacity:.85}
+.lz .tok.img{background-size:100% 100%;background-repeat:no-repeat;border:none}
+.lz .tok.ent{background:#2a2013;border-style:dashed;border-color:#6b5430}
+.lz .tok.gone{background:transparent;border:1px dashed rgba(200,170,110,.75);
+  transform:translate(-50%,-50%) scale(.72);opacity:.7}
+.ltag{position:absolute;top:47%;right:4%;z-index:5;font-family:'Cinzel',serif;
+  font-size:8.5cqw;letter-spacing:.08em;line-height:1.5;padding:0 4%;border-radius:2px;
+  background:rgba(8,5,3,.9);border:1px solid #6b5430;color:var(--gold)}
+.lslot.used .ltag{color:var(--rule);border-color:var(--rule)}
 .lzinfo{font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.06em;line-height:1.5}
 .lzinfo b{display:block;font-size:17px;color:var(--gold-bright)}
 .lzinfo s{display:block;font-size:9px;opacity:.6;text-decoration:none;letter-spacing:.14em}
@@ -519,7 +509,7 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
 .slot.occ{padding:0;background:transparent;border:none!important;box-shadow:none!important}
 
 .tcard.land{border-style:dashed}
-.tcard.land .landart{height:100%;background:
+.tcard.land .landart{background:
   radial-gradient(circle at 50% 40%, color-mix(in srgb,var(--el) 55%,transparent), transparent 70%), #16100a}
 </style>
 </head>
@@ -696,12 +686,26 @@ function freeLands(p){ return S[p].lands.filter(l=>!l.used&&!l.entering); }
 function manaLeft(p){ return freeLands(p).length; }
 function colorLeft(p,el){ return freeLands(p).filter(l=>l.els.includes(el)).length; }
 
-/* 지형존 — 지형 타일 위에 자원 토큰이 올라간다. 쓰면 토큰이 버려진다(빈 소켓). */
+/* 지형 카드 — 손패·지형존·확대가 모두 이 함수를 쓴다 (다른 카드와 같은 규격) */
+function landCardHTML(name,size){
+  const L=LANDS[name]; if(!L) return '';
+  const c1=(EL[L.els[0]]||EL.steel).c;
+  const pips=L.els.map(e=>`<i class="cp c" style="background:${(EL[e]||EL.steel).c}"></i>`).join('');
+  const txt=L.dual?'두 속성 중 <b>택1</b>. 놓은 턴에는 쓸 수 없다.':'<b>지형</b> — 자원 1을 생성한다.';
+  return `<div class="tcard ${size||'md'} land" style="--el:${c1}">
+    <div class="thead"><div class="tname">${name}</div><div class="tcost">${pips}</div></div>
+    <div class="tart landart"></div>
+    <div class="tbody"><div class="teff">${txt}</div></div>
+    <div class="tstat"></div>
+  </div>`;
+}
+
+/* 지형존 — 내려놓은 지형 카드를 그대로 보여주고, 그 위에 자원 토큰을 얹는다. */
 function lzHTML(p){
   const L=S[p].lands; let h='';
   for(let i=0;i<MANACAP;i++){
     const l=L[i];
-    if(!l){ h+='<div class="lt empty"></div>'; continue; }
+    if(!l){ h+='<div class="lslot empty"></div>'; continue; }
     const c1=(EL[l.els[0]]||EL.steel).c;
     const c2=l.els[1]?(EL[l.els[1]]||EL.steel).c:null;
     const fill=c2?`linear-gradient(135deg,${c1} 0 50%,${c2} 50% 100%)`:c1;
@@ -709,11 +713,12 @@ function lzHTML(p){
     const tip=l.entering?'배치한 턴에는 쓸 수 없다':(l.used?'이번 턴 사용함':'사용 가능');
     const o=ORBS[l.els[0]];
     const tok=st==='rdy'
-      ? (o?`<i class="tok img" style="background-image:url(${o});filter:drop-shadow(0 0 5px ${c1})"></i>`
+      ? (o?`<i class="tok img" style="background-image:url(${o});filter:drop-shadow(0 0 6px ${c1})"></i>`
           :`<i class="tok" style="background:${fill};box-shadow:0 0 9px ${c1}"></i>`)
       : `<i class="tok ${st==='ent'?'ent':'gone'}"></i>`;
-    h+=`<div class="lt has ${st}" style="--lc:${c1}" title="${l.name} · ${tip}">`
-      +`${tok}<span class="lnm">${l.name}</span></div>`;
+    const tag=st==='ent'?'대기':(st==='used'?'소모':'');
+    h+=`<div class="lslot ${st}" title="${l.name} · ${tip}">${landCardHTML(l.name,'sm')}`
+      +`${tok}${tag?`<span class="ltag">${tag}</span>`:''}</div>`;
   }
   return h;
 }
@@ -1425,15 +1430,8 @@ function render(){
   // hand
   document.getElementById('hand').innerHTML=S.me.hand.map((n,i)=>{
     if(isLand(n)){
-      const L=LANDS[n], c1=(EL[L.els[0]]||EL.steel).c;
       const no=(!mine||S.me.landPlayed)?' no':'';
-      const pips=L.els.map(e=>`<i class="cp c" style="background:${(EL[e]||EL.steel).c}"></i>`).join('');
-      return `<div class="hcw${no}" data-h="${i}"><div class="tcard md land" style="--el:${c1}">
-        <div class="thead"><div class="tname">${n}</div><div class="tcost">${pips}</div></div>
-        <div class="tart landart"></div>
-        <div class="tbody"><div class="teff">${L.dual?'두 속성 중 <b>택1</b>. 놓은 턴에는 쓸 수 없다.':'<b>지형</b> — 자원 1을 생성한다.'}</div></div>
-        <div class="tstat"></div>
-      </div></div>`;
+      return `<div class="hcw${no}" data-h="${i}">${landCardHTML(n,'md')}</div>`;
     }
     const c=POOL[n]; if(!c)return '';
     let cls='hcw';
@@ -1495,15 +1493,7 @@ function glossaryFor(name,u){
 function zoomHTML(name,u){
   if(POOL[name]) return `<div class="zwrap">${tcardHTML(name,{size:'lg',unit:u})}${glossaryFor(name,u)}</div>`
     +'<div class="zhint">아무 곳이나 눌러 닫기</div>';
-  if(LANDS[name]){                               /* 지형 카드 */
-    const L=LANDS[name], c1=(EL[L.els[0]]||EL.steel).c;
-    const pips=L.els.map(e=>`<i class="cp c" style="background:${(EL[e]||EL.steel).c}"></i>`).join('');
-    return `<div class="tcard lg land" style="--el:${c1}">
-      <div class="thead"><div class="tname">${name}</div><div class="tcost">${pips}</div></div>
-      <div class="tart landart"></div>
-      <div class="tbody"><div class="teff">${L.dual?'두 속성 중 <b>택1</b>. 놓은 턴에는 쓸 수 없다.':'<b>지형</b> — 자원 1을 생성한다.'}</div></div>
-      <div class="tstat"></div></div><div class="zhint">아무 곳이나 눌러 닫기</div>`;
-  }
+  if(LANDS[name]) return landCardHTML(name,'lg')+'<div class="zhint">아무 곳이나 눌러 닫기</div>';
   if(u&&u.token){                                /* 소환된 토큰 */
     return `<div class="zwrap"><div class="tcard lg" style="--el:#8894A6">
       <div class="thead"><div class="tname">${name}</div><div class="tcost"></div></div>
