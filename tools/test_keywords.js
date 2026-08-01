@@ -36,10 +36,20 @@ const R=await p.evaluate(async()=>{
   ok('밀물', S.ai.board[0]===null&&S.ai.board[1]!==null&&S.ai.hand.includes('돌덩이'),
      `돌덩이 ${c0}코 회수됨=${S.ai.board[0]===null} · 장군 ${c1}코 유지=${S.ai.board[1]!==null}`);
 
-  // 증식 — 턴 종료 시 개체 복제
+  // 증식 — 턴 종료 시 왼쪽 빈 슬롯에 복제 (중첩 아님)
   reset(); put('me','번식체',0);
-  const n0=S.me.board[0].insts.length; endStep('me');
-  ok('증식', S.me.board[0].insts.length===n0+1, `개체 ${n0} → ${S.me.board[0].insts.length}`);
+  endStep('me');
+  const cp=S.me.board[1];
+  const linear=[];
+  for(let t=0;t<3;t++){ endStep('me'); linear.push(S.me.board.filter(x=>x).length); }
+  ok('증식', !!cp&&cp.name==='번식체'&&S.me.board[0].insts.length===1&&!cp.breed&&cp.bred
+      &&linear.join(',')==='3,4,5',
+     `슬롯2에 복제 · 원본 중첩 안 함 · 복제본 재증식 안 함 · 턴별 ${[2].concat(linear).join('→')}종`);
+  // 보드가 꽉 차면 그 턴은 건너뛴다
+  reset(); put('me','번식체',0);
+  for(let k=1;k<SLOTS;k++)put('me','파수병',k);
+  endStep('me');
+  ok('증식 만석', S.me.board.filter(x=>x).length===SLOTS, `보드 ${S.me.board.filter(x=>x).length}/${SLOTS} 유지`);
 
   // 성장 +1/+1 (4회까지)
   reset(); put('me','묘목',0);
