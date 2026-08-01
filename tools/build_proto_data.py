@@ -100,10 +100,13 @@ def main():
         frames = json.load(open(fpath, encoding="utf-8")) if os.path.exists(fpath) else {}
     opath = os.path.join(DATA, "orbs.json")
     orbs = json.load(open(opath, encoding="utf-8")) if os.path.exists(opath) else {}
+    rpath = os.path.join(DATA, "rogue.json")
+    rogue = json.load(open(rpath, encoding="utf-8")) if os.path.exists(rpath) else {}
     poolblock = ("/* POOL_START */\nconst POOL=" + j(pool)
                  + ";\nconst GLOSSARY=" + j(GLOSSARY)
                  + ";\nconst FRAMES=" + j(frames)
-                 + ";\nconst ORBS=" + j(orbs) + ";\n/* POOL_END */")
+                 + ";\nconst ORBS=" + j(orbs)
+                 + ";\nconst ROGUE=" + j(rogue) + ";\n/* POOL_END */")
     if "/* POOL_START */" in html:
         html = re.sub(r"/\* POOL_START \*/.*?/\* POOL_END \*/", lambda m: poolblock,
                       html, count=1, flags=re.S)
@@ -111,7 +114,8 @@ def main():
         html = re.sub(r"const POOL=\{.*?\n\};", lambda m: poolblock, html, count=1, flags=re.S)
 
     open(PROTO, "w", encoding="utf-8").write(html)
-    print(f"injected: POOL {len(pool)}종 · 덱 {len(dk)}개 · 지형 {len(lands)}종 · 프레임 {len(frames)}장 · 오브 {len(orbs)}종")
+    n_over = len(rogue.get("over", {}))
+    print(f"injected: POOL {len(pool)}종 · 덱 {len(dk)}개 · 지형 {len(lands)}종 · 프레임 {len(frames)}장 · 오브 {len(orbs)}종 · 강화 {n_over}종")
 
 
 if __name__ == "__main__":
