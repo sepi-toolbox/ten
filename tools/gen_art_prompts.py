@@ -52,32 +52,49 @@ ELSYM = {
     "light":  "a radiant sun",
 }
 
-# 프레임 기하 — 프로토타입 CSS 실측값 (카드 5:7, 수치는 카드 높이 대비 %)
+# 프레임 기하 (카드 5:7, 수치는 카드 높이 대비 %)
+# 1차 프레임에서 글자가 겹쳤다 → 이름판을 두껍게, 효과문 판을 깊게, 일러스트 창을 줄였다.
 BANDS = [
-    ("outer border", "3.1% of the card's width on all four sides"),
-    ("NAME PLATE", "2.2% down to 14.0% — a blank plate for the card name"),
-    ("COST STRIP", "14.0% down to 23.6% — a blank recessed strip, left-aligned, "
-                   "wide enough for six small circular gems in a row. Draw NO gems here, "
-                   "only the empty seat they will sit in."),
-    ("ILLUSTRATION WINDOW", "23.6% down to 56.8% — flat empty rectangle, one neutral dark colour"),
-    ("RULES PANEL", "56.9% down to 81.0% — a blank parchment panel"),
-    ("STAT BAND", "81.0% down to 97.8%"),
+    ("outer border", "3% of the card's width on all four sides"),
+    ("NAME PLATE", "4% down to 15% of card height — a TALL blank plate, the full width "
+                   "between the side borders. Nothing may sit on top of it."),
+    ("COST STRIP", "15% down to 23% — a blank recessed strip, left-aligned, wide enough for "
+                   "six small circular sockets in a row. Draw the empty sockets only, never gems."),
+    ("ILLUSTRATION WINDOW", "23% down to 55% — flat empty rectangle, one neutral dark colour"),
+    ("RULES PANEL", "55% down to 82% — a DEEP blank parchment panel, tall enough for three "
+                    "lines of text, the full width between the side borders"),
+    ("STAT BAND", "82% down to 97%"),
 ]
+
+# 1차 프레임에서 실제로 글자가 겹쳤던 원인들을 못 박는다
+CLEARANCE = (
+    "KEEP THE PANELS CLEAR — this is the most important rule:\n"
+    "  The element badge goes in the TOP-LEFT CORNER of the outer border. It must NOT sit in "
+    "the middle of the top edge and must NOT overlap, cover or intrude into the name plate. "
+    "In the last attempt the badge was centred on top of the name plate and covered the card "
+    "name — do not repeat that.\n"
+    "  The card type badge goes in the TOP-RIGHT CORNER of the outer border, mirroring it.\n"
+    "  No ornament, scrollwork, rivet, chain or metal band may cross into the name plate, the "
+    "cost strip or the rules panel. Those three panels are flat, empty and readable from edge "
+    "to edge. All decoration lives in the outer border and in the thin dividers BETWEEN bands.\n"
+    "  The name plate and the rules panel must be visibly generous — a person will print two "
+    "or three lines of text into them."
+)
 
 TYPEKO = {"cr": "크리처", "sp": "스펠", "en": "인챈트", "ld": "지형"}
 
 # 타입별로 달라지는 부분 — 하단 띠와 상단 표식
 TYPESPEC = {
-    "cr": ("a heraldic shield badge set into the top border",
+    "cr": ("a heraldic shield badge in the TOP-RIGHT CORNER of the border",
            "STAT BAND: two empty circular sockets, one at the far left and one at the far right, "
            "each about 18% of the card's width across. They are empty recessed seats — "
            "no numbers, no symbols inside. The strip between them is plain."),
-    "sp": ("a starburst / arcane spark badge set into the top border",
+    "sp": ("a starburst / arcane spark badge in the TOP-RIGHT CORNER of the border",
            "STAT BAND: completely plain. No sockets, no ornament — spells print no stats."),
-    "en": ("a faceted crystal badge set into the top border",
+    "en": ("a faceted crystal badge in the TOP-RIGHT CORNER of the border",
            "STAT BAND: ONE empty circular socket at the far right only, about 18% of the card's "
            "width across, an empty recessed seat with nothing inside. The rest of the strip is plain."),
-    "ld": ("a rune-carved keystone badge set into the top border",
+    "ld": ("a rune-carved keystone badge in the TOP-RIGHT CORNER of the border",
            "STAT BAND: completely plain. No sockets."),
 }
 TYPENOTE = {
@@ -319,11 +336,11 @@ def frame_prompt(el, k):
     return (
         f"A single fantasy trading-card FRAME — border and panel structure only, no artwork, "
         f"no text anywhere.\n\n{SHAPE}\n\n"
-        f"Element: {EL_EN[el]}. Its symbol is {ELSYM[el]}, set in a round badge in the top-left "
-        f"corner of the border. Palette {ELMOOD[el]}, accent colour {ELHEX[el]}.\n"
+        f"Element: {EL_EN[el]}. Its symbol is {ELSYM[el]}, in a round badge in the TOP-LEFT "
+        f"CORNER of the border — not over the name plate. Palette {ELMOOD[el]}, accent colour {ELHEX[el]}.\n"
         f"Card type: {badge}. {TYPENOTE[k]}\n\n"
         f"Divide the card into these horizontal bands, measured from the top as a percentage "
-        f"of the card's height:\n" + "\n".join(bands) + "\n\n" + FRAME_RULES
+        f"of the card's height:\n" + "\n".join(bands) + "\n\n" + CLEARANCE + "\n\n" + FRAME_RULES
     )
 
 
@@ -331,7 +348,7 @@ def frame_sheet_prompt():
     """7속성 × 4타입 = 28칸 한 장. 이게 기본 경로 — 톤이 저절로 맞는다."""
     els = list(G.DECKS.keys())
     elline = "\n".join(
-        f"  Column {i+1} — {EL_EN[e]}: symbol is {ELSYM[e]}, palette {ELMOOD[e]}, accent {ELHEX[e]}"
+        f"  Column {i+1} — {EL_EN[e]}: corner symbol is {ELSYM[e]}, palette {ELMOOD[e]}, accent {ELHEX[e]}"
         for i, e in enumerate(els))
     rows = "\n".join(
         f"  Row {i+1} — {TYPEKO[k]} ({k}): {TYPESPEC[k][0]}. {TYPENOTE[k]} {TYPESPEC[k][1]}"
@@ -352,7 +369,7 @@ def frame_sheet_prompt():
         f"card height:\n{bands}\n\n"
         f"Only two things change between cells: the element colour and corner symbol (by column), "
         f"and the type badge, cost strip and stat band (by row). Everything else is identical.\n\n"
-        + FRAME_RULES
+        + CLEARANCE + "\n\n" + FRAME_RULES
     )
 
 
@@ -368,11 +385,11 @@ def frame_element_sheet_prompt(el):
         f"no artwork, no text.\n\n{SHAPE}\n"
         f"  This applies to all four cards.\n\n"
         f"Element for all four: {EL_EN[el]}. Its symbol is {ELSYM[el]}, in a round badge in the "
-        f"top-left corner of the border. Palette {ELMOOD[el]}, accent colour {ELHEX[el]}.\n\n"
+        f"TOP-LEFT CORNER of the border — not over the name plate. Palette {ELMOOD[el]}, accent colour {ELHEX[el]}.\n\n"
         f"The four cells, reading left to right then top to bottom:\n{rows}\n\n"
         f"Cells 1, 2 and 3 ALL have the empty cost strip. Only cell 4 (terrain) omits it.\n\n"
         f"All four share one identical layout, measured from the top as a percentage of card "
-        f"height:\n{bands}\n\n" + FRAME_RULES
+        f"height:\n{bands}\n\n" + CLEARANCE + "\n\n" + FRAME_RULES
     )
 
 
@@ -504,7 +521,13 @@ def build_html(cards, frames, sheets, frame_sheet, cost):
          '<li>시트: <code>sheet-&lt;속성&gt;.png</code> — 제가 20칸으로 잘라 씁니다</li>'
          '<li>개별: <code>art-&lt;속성&gt;-&lt;번호&gt;.png</code> (예: <code>art-dark-08.png</code>)</li></ul>'
          '번호는 아래 05번 목록의 번호와 같습니다. 시트로 주시면 개별 파일은 필요 없습니다.</div>',
-         '<div class="note" style="border-left-color:#B03A3F"><b>지난 시트에서 실제로 어긋났던 것.</b> '
+         '<div class="note" style="border-left-color:#B03A3F"><b>2차 프레임에서 글자가 겹친 원인.</b> '
+         '속성 뱃지가 <b>위쪽 한가운데, 이름판 위에</b> 얹혀서 카드 이름을 덮었고, '
+         '효과문 판이 얕아 두 줄밖에 안 들어갔으며, 일러스트 창이 카드의 44~62%를 먹어 글자 자리를 뺏었습니다.<br>'
+         '→ 뱃지를 <b>속성=왼쪽 위 모서리 · 타입=오른쪽 위 모서리</b>로 옮기고, '
+         '이름판을 4~15%로 두껍게, 효과문 판을 55~82%로 깊게, 일러스트 창을 23~55%로 줄였습니다. '
+         '세 판에는 <b>장식이 넘어오지 못하도록</b> 따로 못 박았습니다.</div>',
+         '<div class="note" style="border-left-color:#B03A3F"><b>1차 시트에서 어긋났던 것.</b> '
          '속성이 <b>강철·대지 대신 neutral·arcane</b>으로 바뀌어 나왔고, 이름판·코스트 자리·능력치 소켓이 '
          '통째로 빠졌으며 세 타입이 작은 뱃지 하나만 빼고 같았습니다. 그래서 이번 프롬프트는 '
          '<b>속성 7종의 상징을 하나씩 못 박고</b>, 타입별로 하단 띠를 다르게 지정했습니다. '

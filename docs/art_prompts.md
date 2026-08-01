@@ -13,31 +13,37 @@ CARD SHAPE — read this first and do not compromise it:
   This applies to EVERY ONE of the 28 cards. The grid cells may end up square, but the card drawn inside each cell must stay a tall 5:7 portrait rectangle with black padding around it. A squashed or square card is wrong.
 
 Columns are the seven elements (same element down each column):
-  Column 1 — fire: symbol is a flame, palette ember orange and scorched crimson, heat haze, drifting sparks, accent #C1462E
-  Column 2 — water: symbol is a water droplet, palette deep teal and abyssal blue, refracted light, drifting bubbles, accent #2A6FB5
-  Column 3 — nature: symbol is a leaf, palette moss green and amber sunlight, pollen motes, tangled growth, accent #3F8B3A
-  Column 4 — steel: symbol is an anvil with a crossed hammer, palette gunmetal grey and cold blue steel, forge sparks, oiled plate, accent #6B7686
-  Column 5 — earth: symbol is a mountain peak over layered strata, palette ochre and weathered sandstone, dust in the air, cracked ground, accent #8A6A33
-  Column 6 — darkness: symbol is a crescent moon, palette violet shadow and dried blood, guttering candlelight, creeping mist, accent #5B3E86
-  Column 7 — light: symbol is a radiant sun, palette pale gold and warm ivory, godrays, floating dust in sunbeams, accent #B8912A
+  Column 1 — fire: corner symbol is a flame, palette ember orange and scorched crimson, heat haze, drifting sparks, accent #C1462E
+  Column 2 — water: corner symbol is a water droplet, palette deep teal and abyssal blue, refracted light, drifting bubbles, accent #2A6FB5
+  Column 3 — nature: corner symbol is a leaf, palette moss green and amber sunlight, pollen motes, tangled growth, accent #3F8B3A
+  Column 4 — steel: corner symbol is an anvil with a crossed hammer, palette gunmetal grey and cold blue steel, forge sparks, oiled plate, accent #6B7686
+  Column 5 — earth: corner symbol is a mountain peak over layered strata, palette ochre and weathered sandstone, dust in the air, cracked ground, accent #8A6A33
+  Column 6 — darkness: corner symbol is a crescent moon, palette violet shadow and dried blood, guttering candlelight, creeping mist, accent #5B3E86
+  Column 7 — light: corner symbol is a radiant sun, palette pale gold and warm ivory, godrays, floating dust in sunbeams, accent #B8912A
 
 Rows are the four card types (same type across each row):
-  Row 1 — 크리처 (cr): a heraldic shield badge set into the top border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health. STAT BAND: two empty circular sockets, one at the far left and one at the far right, each about 18% of the card's width across. They are empty recessed seats — no numbers, no symbols inside. The strip between them is plain.
-  Row 2 — 스펠 (sp): a starburst / arcane spark badge set into the top border. This is a SPELL frame — it HAS a cost strip but prints no stats at all. STAT BAND: completely plain. No sockets, no ornament — spells print no stats.
-  Row 3 — 인챈트 (en): a faceted crystal badge set into the top border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter. STAT BAND: ONE empty circular socket at the far right only, about 18% of the card's width across, an empty recessed seat with nothing inside. The rest of the strip is plain.
-  Row 4 — 지형 (ld): a rune-carved keystone badge set into the top border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead. STAT BAND: completely plain. No sockets.
+  Row 1 — 크리처 (cr): a heraldic shield badge in the TOP-RIGHT CORNER of the border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health. STAT BAND: two empty circular sockets, one at the far left and one at the far right, each about 18% of the card's width across. They are empty recessed seats — no numbers, no symbols inside. The strip between them is plain.
+  Row 2 — 스펠 (sp): a starburst / arcane spark badge in the TOP-RIGHT CORNER of the border. This is a SPELL frame — it HAS a cost strip but prints no stats at all. STAT BAND: completely plain. No sockets, no ornament — spells print no stats.
+  Row 3 — 인챈트 (en): a faceted crystal badge in the TOP-RIGHT CORNER of the border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter. STAT BAND: ONE empty circular socket at the far right only, about 18% of the card's width across, an empty recessed seat with nothing inside. The rest of the strip is plain.
+  Row 4 — 지형 (ld): a rune-carved keystone badge in the TOP-RIGHT CORNER of the border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead. STAT BAND: completely plain. No sockets.
 
 COST STRIP: rows 1, 2 and 3 (creature, spell, enchant) ALL have the empty cost strip. Only row 4 (terrain) omits it — terrain cards cost nothing.
 
 All 28 frames share one identical layout, measured from the top as a percentage of card height:
-  - outer border: 3.1% of the card's width on all four sides
-  - NAME PLATE: 2.2% down to 14.0% — a blank plate for the card name
-  - COST STRIP: 14.0% down to 23.6% — a blank recessed strip, left-aligned, wide enough for six small circular gems in a row. Draw NO gems here, only the empty seat they will sit in.
-  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
-  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
-  - STAT BAND: 81.0% down to 97.8%
+  - outer border: 3% of the card's width on all four sides
+  - NAME PLATE: 4% down to 15% of card height — a TALL blank plate, the full width between the side borders. Nothing may sit on top of it.
+  - COST STRIP: 15% down to 23% — a blank recessed strip, left-aligned, wide enough for six small circular sockets in a row. Draw the empty sockets only, never gems.
+  - ILLUSTRATION WINDOW: 23% down to 55% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 55% down to 82% — a DEEP blank parchment panel, tall enough for three lines of text, the full width between the side borders
+  - STAT BAND: 82% down to 97%
 
 Only two things change between cells: the element colour and corner symbol (by column), and the type badge, cost strip and stat band (by row). Everything else is identical.
+
+KEEP THE PANELS CLEAR — this is the most important rule:
+  The element badge goes in the TOP-LEFT CORNER of the outer border. It must NOT sit in the middle of the top edge and must NOT overlap, cover or intrude into the name plate. In the last attempt the badge was centred on top of the name plate and covered the card name — do not repeat that.
+  The card type badge goes in the TOP-RIGHT CORNER of the outer border, mirroring it.
+  No ornament, scrollwork, rivet, chain or metal band may cross into the name plate, the cost strip or the rules panel. Those three panels are flat, empty and readable from edge to edge. All decoration lives in the outer border and in the thin dividers BETWEEN bands.
+  The name plate and the rules panel must be visibly generous — a person will print two or three lines of text into them.
 
 Rules for every band:
   - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
@@ -78,16 +84,22 @@ CARD SHAPE — read this first and do not compromise it:
   The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
   Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
-Element: fire. Its symbol is a flame, set in a round badge in the top-left corner of the border. Palette ember orange and scorched crimson, heat haze, drifting sparks, accent colour #C1462E.
-Card type: a heraldic shield badge set into the top border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health.
+Element: fire. Its symbol is a flame, in a round badge in the TOP-LEFT CORNER of the border — not over the name plate. Palette ember orange and scorched crimson, heat haze, drifting sparks, accent colour #C1462E.
+Card type: a heraldic shield badge in the TOP-RIGHT CORNER of the border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card's height:
-  - outer border: 3.1% of the card's width on all four sides
-  - NAME PLATE: 2.2% down to 14.0% — a blank plate for the card name
-  - COST STRIP: 14.0% down to 23.6% — a blank recessed strip, left-aligned, wide enough for six small circular gems in a row. Draw NO gems here, only the empty seat they will sit in.
-  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
-  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
-  - STAT BAND: 81.0% down to 97.8% — two empty circular sockets, one at the far left and one at the far right, each about 18% of the card's width across. They are empty recessed seats — no numbers, no symbols inside. The strip between them is plain.
+  - outer border: 3% of the card's width on all four sides
+  - NAME PLATE: 4% down to 15% of card height — a TALL blank plate, the full width between the side borders. Nothing may sit on top of it.
+  - COST STRIP: 15% down to 23% — a blank recessed strip, left-aligned, wide enough for six small circular sockets in a row. Draw the empty sockets only, never gems.
+  - ILLUSTRATION WINDOW: 23% down to 55% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 55% down to 82% — a DEEP blank parchment panel, tall enough for three lines of text, the full width between the side borders
+  - STAT BAND: 82% down to 97% — two empty circular sockets, one at the far left and one at the far right, each about 18% of the card's width across. They are empty recessed seats — no numbers, no symbols inside. The strip between them is plain.
+
+KEEP THE PANELS CLEAR — this is the most important rule:
+  The element badge goes in the TOP-LEFT CORNER of the outer border. It must NOT sit in the middle of the top edge and must NOT overlap, cover or intrude into the name plate. In the last attempt the badge was centred on top of the name plate and covered the card name — do not repeat that.
+  The card type badge goes in the TOP-RIGHT CORNER of the outer border, mirroring it.
+  No ornament, scrollwork, rivet, chain or metal band may cross into the name plate, the cost strip or the rules panel. Those three panels are flat, empty and readable from edge to edge. All decoration lives in the outer border and in the thin dividers BETWEEN bands.
+  The name plate and the rules panel must be visibly generous — a person will print two or three lines of text into them.
 
 Rules for every band:
   - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
@@ -106,16 +118,22 @@ CARD SHAPE — read this first and do not compromise it:
   The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
   Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
-Element: fire. Its symbol is a flame, set in a round badge in the top-left corner of the border. Palette ember orange and scorched crimson, heat haze, drifting sparks, accent colour #C1462E.
-Card type: a starburst / arcane spark badge set into the top border. This is a SPELL frame — it HAS a cost strip but prints no stats at all.
+Element: fire. Its symbol is a flame, in a round badge in the TOP-LEFT CORNER of the border — not over the name plate. Palette ember orange and scorched crimson, heat haze, drifting sparks, accent colour #C1462E.
+Card type: a starburst / arcane spark badge in the TOP-RIGHT CORNER of the border. This is a SPELL frame — it HAS a cost strip but prints no stats at all.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card's height:
-  - outer border: 3.1% of the card's width on all four sides
-  - NAME PLATE: 2.2% down to 14.0% — a blank plate for the card name
-  - COST STRIP: 14.0% down to 23.6% — a blank recessed strip, left-aligned, wide enough for six small circular gems in a row. Draw NO gems here, only the empty seat they will sit in.
-  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
-  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
-  - STAT BAND: 81.0% down to 97.8% — completely plain. No sockets, no ornament — spells print no stats.
+  - outer border: 3% of the card's width on all four sides
+  - NAME PLATE: 4% down to 15% of card height — a TALL blank plate, the full width between the side borders. Nothing may sit on top of it.
+  - COST STRIP: 15% down to 23% — a blank recessed strip, left-aligned, wide enough for six small circular sockets in a row. Draw the empty sockets only, never gems.
+  - ILLUSTRATION WINDOW: 23% down to 55% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 55% down to 82% — a DEEP blank parchment panel, tall enough for three lines of text, the full width between the side borders
+  - STAT BAND: 82% down to 97% — completely plain. No sockets, no ornament — spells print no stats.
+
+KEEP THE PANELS CLEAR — this is the most important rule:
+  The element badge goes in the TOP-LEFT CORNER of the outer border. It must NOT sit in the middle of the top edge and must NOT overlap, cover or intrude into the name plate. In the last attempt the badge was centred on top of the name plate and covered the card name — do not repeat that.
+  The card type badge goes in the TOP-RIGHT CORNER of the outer border, mirroring it.
+  No ornament, scrollwork, rivet, chain or metal band may cross into the name plate, the cost strip or the rules panel. Those three panels are flat, empty and readable from edge to edge. All decoration lives in the outer border and in the thin dividers BETWEEN bands.
+  The name plate and the rules panel must be visibly generous — a person will print two or three lines of text into them.
 
 Rules for every band:
   - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
@@ -134,16 +152,22 @@ CARD SHAPE — read this first and do not compromise it:
   The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
   Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
-Element: fire. Its symbol is a flame, set in a round badge in the top-left corner of the border. Palette ember orange and scorched crimson, heat haze, drifting sparks, accent colour #C1462E.
-Card type: a faceted crystal badge set into the top border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter.
+Element: fire. Its symbol is a flame, in a round badge in the TOP-LEFT CORNER of the border — not over the name plate. Palette ember orange and scorched crimson, heat haze, drifting sparks, accent colour #C1462E.
+Card type: a faceted crystal badge in the TOP-RIGHT CORNER of the border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card's height:
-  - outer border: 3.1% of the card's width on all four sides
-  - NAME PLATE: 2.2% down to 14.0% — a blank plate for the card name
-  - COST STRIP: 14.0% down to 23.6% — a blank recessed strip, left-aligned, wide enough for six small circular gems in a row. Draw NO gems here, only the empty seat they will sit in.
-  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
-  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
-  - STAT BAND: 81.0% down to 97.8% — ONE empty circular socket at the far right only, about 18% of the card's width across, an empty recessed seat with nothing inside. The rest of the strip is plain.
+  - outer border: 3% of the card's width on all four sides
+  - NAME PLATE: 4% down to 15% of card height — a TALL blank plate, the full width between the side borders. Nothing may sit on top of it.
+  - COST STRIP: 15% down to 23% — a blank recessed strip, left-aligned, wide enough for six small circular sockets in a row. Draw the empty sockets only, never gems.
+  - ILLUSTRATION WINDOW: 23% down to 55% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 55% down to 82% — a DEEP blank parchment panel, tall enough for three lines of text, the full width between the side borders
+  - STAT BAND: 82% down to 97% — ONE empty circular socket at the far right only, about 18% of the card's width across, an empty recessed seat with nothing inside. The rest of the strip is plain.
+
+KEEP THE PANELS CLEAR — this is the most important rule:
+  The element badge goes in the TOP-LEFT CORNER of the outer border. It must NOT sit in the middle of the top edge and must NOT overlap, cover or intrude into the name plate. In the last attempt the badge was centred on top of the name plate and covered the card name — do not repeat that.
+  The card type badge goes in the TOP-RIGHT CORNER of the outer border, mirroring it.
+  No ornament, scrollwork, rivet, chain or metal band may cross into the name plate, the cost strip or the rules panel. Those three panels are flat, empty and readable from edge to edge. All decoration lives in the outer border and in the thin dividers BETWEEN bands.
+  The name plate and the rules panel must be visibly generous — a person will print two or three lines of text into them.
 
 Rules for every band:
   - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
@@ -162,15 +186,21 @@ CARD SHAPE — read this first and do not compromise it:
   The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
   Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
-Element: fire. Its symbol is a flame, set in a round badge in the top-left corner of the border. Palette ember orange and scorched crimson, heat haze, drifting sparks, accent colour #C1462E.
-Card type: a rune-carved keystone badge set into the top border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead.
+Element: fire. Its symbol is a flame, in a round badge in the TOP-LEFT CORNER of the border — not over the name plate. Palette ember orange and scorched crimson, heat haze, drifting sparks, accent colour #C1462E.
+Card type: a rune-carved keystone badge in the TOP-RIGHT CORNER of the border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card's height:
-  - outer border: 3.1% of the card's width on all four sides
+  - outer border: 3% of the card's width on all four sides
   - NAME PLATE: 2.2% down to 23.6% — a blank plate for the card name (no cost strip on terrain)
-  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
-  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
-  - STAT BAND: 81.0% down to 97.8% — completely plain. No sockets.
+  - ILLUSTRATION WINDOW: 23% down to 55% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 55% down to 82% — a DEEP blank parchment panel, tall enough for three lines of text, the full width between the side borders
+  - STAT BAND: 82% down to 97% — completely plain. No sockets.
+
+KEEP THE PANELS CLEAR — this is the most important rule:
+  The element badge goes in the TOP-LEFT CORNER of the outer border. It must NOT sit in the middle of the top edge and must NOT overlap, cover or intrude into the name plate. In the last attempt the badge was centred on top of the name plate and covered the card name — do not repeat that.
+  The card type badge goes in the TOP-RIGHT CORNER of the outer border, mirroring it.
+  No ornament, scrollwork, rivet, chain or metal band may cross into the name plate, the cost strip or the rules panel. Those three panels are flat, empty and readable from edge to edge. All decoration lives in the outer border and in the thin dividers BETWEEN bands.
+  The name plate and the rules panel must be visibly generous — a person will print two or three lines of text into them.
 
 Rules for every band:
   - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
@@ -189,16 +219,22 @@ CARD SHAPE — read this first and do not compromise it:
   The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
   Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
-Element: water. Its symbol is a water droplet, set in a round badge in the top-left corner of the border. Palette deep teal and abyssal blue, refracted light, drifting bubbles, accent colour #2A6FB5.
-Card type: a heraldic shield badge set into the top border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health.
+Element: water. Its symbol is a water droplet, in a round badge in the TOP-LEFT CORNER of the border — not over the name plate. Palette deep teal and abyssal blue, refracted light, drifting bubbles, accent colour #2A6FB5.
+Card type: a heraldic shield badge in the TOP-RIGHT CORNER of the border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card's height:
-  - outer border: 3.1% of the card's width on all four sides
-  - NAME PLATE: 2.2% down to 14.0% — a blank plate for the card name
-  - COST STRIP: 14.0% down to 23.6% — a blank recessed strip, left-aligned, wide enough for six small circular gems in a row. Draw NO gems here, only the empty seat they will sit in.
-  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
-  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
-  - STAT BAND: 81.0% down to 97.8% — two empty circular sockets, one at the far left and one at the far right, each about 18% of the card's width across. They are empty recessed seats — no numbers, no symbols inside. The strip between them is plain.
+  - outer border: 3% of the card's width on all four sides
+  - NAME PLATE: 4% down to 15% of card height — a TALL blank plate, the full width between the side borders. Nothing may sit on top of it.
+  - COST STRIP: 15% down to 23% — a blank recessed strip, left-aligned, wide enough for six small circular sockets in a row. Draw the empty sockets only, never gems.
+  - ILLUSTRATION WINDOW: 23% down to 55% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 55% down to 82% — a DEEP blank parchment panel, tall enough for three lines of text, the full width between the side borders
+  - STAT BAND: 82% down to 97% — two empty circular sockets, one at the far left and one at the far right, each about 18% of the card's width across. They are empty recessed seats — no numbers, no symbols inside. The strip between them is plain.
+
+KEEP THE PANELS CLEAR — this is the most important rule:
+  The element badge goes in the TOP-LEFT CORNER of the outer border. It must NOT sit in the middle of the top edge and must NOT overlap, cover or intrude into the name plate. In the last attempt the badge was centred on top of the name plate and covered the card name — do not repeat that.
+  The card type badge goes in the TOP-RIGHT CORNER of the outer border, mirroring it.
+  No ornament, scrollwork, rivet, chain or metal band may cross into the name plate, the cost strip or the rules panel. Those three panels are flat, empty and readable from edge to edge. All decoration lives in the outer border and in the thin dividers BETWEEN bands.
+  The name plate and the rules panel must be visibly generous — a person will print two or three lines of text into them.
 
 Rules for every band:
   - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
@@ -217,16 +253,22 @@ CARD SHAPE — read this first and do not compromise it:
   The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
   Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
-Element: water. Its symbol is a water droplet, set in a round badge in the top-left corner of the border. Palette deep teal and abyssal blue, refracted light, drifting bubbles, accent colour #2A6FB5.
-Card type: a starburst / arcane spark badge set into the top border. This is a SPELL frame — it HAS a cost strip but prints no stats at all.
+Element: water. Its symbol is a water droplet, in a round badge in the TOP-LEFT CORNER of the border — not over the name plate. Palette deep teal and abyssal blue, refracted light, drifting bubbles, accent colour #2A6FB5.
+Card type: a starburst / arcane spark badge in the TOP-RIGHT CORNER of the border. This is a SPELL frame — it HAS a cost strip but prints no stats at all.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card's height:
-  - outer border: 3.1% of the card's width on all four sides
-  - NAME PLATE: 2.2% down to 14.0% — a blank plate for the card name
-  - COST STRIP: 14.0% down to 23.6% — a blank recessed strip, left-aligned, wide enough for six small circular gems in a row. Draw NO gems here, only the empty seat they will sit in.
-  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
-  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
-  - STAT BAND: 81.0% down to 97.8% — completely plain. No sockets, no ornament — spells print no stats.
+  - outer border: 3% of the card's width on all four sides
+  - NAME PLATE: 4% down to 15% of card height — a TALL blank plate, the full width between the side borders. Nothing may sit on top of it.
+  - COST STRIP: 15% down to 23% — a blank recessed strip, left-aligned, wide enough for six small circular sockets in a row. Draw the empty sockets only, never gems.
+  - ILLUSTRATION WINDOW: 23% down to 55% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 55% down to 82% — a DEEP blank parchment panel, tall enough for three lines of text, the full width between the side borders
+  - STAT BAND: 82% down to 97% — completely plain. No sockets, no ornament — spells print no stats.
+
+KEEP THE PANELS CLEAR — this is the most important rule:
+  The element badge goes in the TOP-LEFT CORNER of the outer border. It must NOT sit in the middle of the top edge and must NOT overlap, cover or intrude into the name plate. In the last attempt the badge was centred on top of the name plate and covered the card name — do not repeat that.
+  The card type badge goes in the TOP-RIGHT CORNER of the outer border, mirroring it.
+  No ornament, scrollwork, rivet, chain or metal band may cross into the name plate, the cost strip or the rules panel. Those three panels are flat, empty and readable from edge to edge. All decoration lives in the outer border and in the thin dividers BETWEEN bands.
+  The name plate and the rules panel must be visibly generous — a person will print two or three lines of text into them.
 
 Rules for every band:
   - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
@@ -245,16 +287,22 @@ CARD SHAPE — read this first and do not compromise it:
   The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
   Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
-Element: water. Its symbol is a water droplet, set in a round badge in the top-left corner of the border. Palette deep teal and abyssal blue, refracted light, drifting bubbles, accent colour #2A6FB5.
-Card type: a faceted crystal badge set into the top border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter.
+Element: water. Its symbol is a water droplet, in a round badge in the TOP-LEFT CORNER of the border — not over the name plate. Palette deep teal and abyssal blue, refracted light, drifting bubbles, accent colour #2A6FB5.
+Card type: a faceted crystal badge in the TOP-RIGHT CORNER of the border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card's height:
-  - outer border: 3.1% of the card's width on all four sides
-  - NAME PLATE: 2.2% down to 14.0% — a blank plate for the card name
-  - COST STRIP: 14.0% down to 23.6% — a blank recessed strip, left-aligned, wide enough for six small circular gems in a row. Draw NO gems here, only the empty seat they will sit in.
-  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
-  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
-  - STAT BAND: 81.0% down to 97.8% — ONE empty circular socket at the far right only, about 18% of the card's width across, an empty recessed seat with nothing inside. The rest of the strip is plain.
+  - outer border: 3% of the card's width on all four sides
+  - NAME PLATE: 4% down to 15% of card height — a TALL blank plate, the full width between the side borders. Nothing may sit on top of it.
+  - COST STRIP: 15% down to 23% — a blank recessed strip, left-aligned, wide enough for six small circular sockets in a row. Draw the empty sockets only, never gems.
+  - ILLUSTRATION WINDOW: 23% down to 55% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 55% down to 82% — a DEEP blank parchment panel, tall enough for three lines of text, the full width between the side borders
+  - STAT BAND: 82% down to 97% — ONE empty circular socket at the far right only, about 18% of the card's width across, an empty recessed seat with nothing inside. The rest of the strip is plain.
+
+KEEP THE PANELS CLEAR — this is the most important rule:
+  The element badge goes in the TOP-LEFT CORNER of the outer border. It must NOT sit in the middle of the top edge and must NOT overlap, cover or intrude into the name plate. In the last attempt the badge was centred on top of the name plate and covered the card name — do not repeat that.
+  The card type badge goes in the TOP-RIGHT CORNER of the outer border, mirroring it.
+  No ornament, scrollwork, rivet, chain or metal band may cross into the name plate, the cost strip or the rules panel. Those three panels are flat, empty and readable from edge to edge. All decoration lives in the outer border and in the thin dividers BETWEEN bands.
+  The name plate and the rules panel must be visibly generous — a person will print two or three lines of text into them.
 
 Rules for every band:
   - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
@@ -273,15 +321,21 @@ CARD SHAPE — read this first and do not compromise it:
   The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
   Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
-Element: water. Its symbol is a water droplet, set in a round badge in the top-left corner of the border. Palette deep teal and abyssal blue, refracted light, drifting bubbles, accent colour #2A6FB5.
-Card type: a rune-carved keystone badge set into the top border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead.
+Element: water. Its symbol is a water droplet, in a round badge in the TOP-LEFT CORNER of the border — not over the name plate. Palette deep teal and abyssal blue, refracted light, drifting bubbles, accent colour #2A6FB5.
+Card type: a rune-carved keystone badge in the TOP-RIGHT CORNER of the border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card's height:
-  - outer border: 3.1% of the card's width on all four sides
+  - outer border: 3% of the card's width on all four sides
   - NAME PLATE: 2.2% down to 23.6% — a blank plate for the card name (no cost strip on terrain)
-  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
-  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
-  - STAT BAND: 81.0% down to 97.8% — completely plain. No sockets.
+  - ILLUSTRATION WINDOW: 23% down to 55% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 55% down to 82% — a DEEP blank parchment panel, tall enough for three lines of text, the full width between the side borders
+  - STAT BAND: 82% down to 97% — completely plain. No sockets.
+
+KEEP THE PANELS CLEAR — this is the most important rule:
+  The element badge goes in the TOP-LEFT CORNER of the outer border. It must NOT sit in the middle of the top edge and must NOT overlap, cover or intrude into the name plate. In the last attempt the badge was centred on top of the name plate and covered the card name — do not repeat that.
+  The card type badge goes in the TOP-RIGHT CORNER of the outer border, mirroring it.
+  No ornament, scrollwork, rivet, chain or metal band may cross into the name plate, the cost strip or the rules panel. Those three panels are flat, empty and readable from edge to edge. All decoration lives in the outer border and in the thin dividers BETWEEN bands.
+  The name plate and the rules panel must be visibly generous — a person will print two or three lines of text into them.
 
 Rules for every band:
   - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
@@ -300,16 +354,22 @@ CARD SHAPE — read this first and do not compromise it:
   The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
   Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
-Element: nature. Its symbol is a leaf, set in a round badge in the top-left corner of the border. Palette moss green and amber sunlight, pollen motes, tangled growth, accent colour #3F8B3A.
-Card type: a heraldic shield badge set into the top border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health.
+Element: nature. Its symbol is a leaf, in a round badge in the TOP-LEFT CORNER of the border — not over the name plate. Palette moss green and amber sunlight, pollen motes, tangled growth, accent colour #3F8B3A.
+Card type: a heraldic shield badge in the TOP-RIGHT CORNER of the border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card's height:
-  - outer border: 3.1% of the card's width on all four sides
-  - NAME PLATE: 2.2% down to 14.0% — a blank plate for the card name
-  - COST STRIP: 14.0% down to 23.6% — a blank recessed strip, left-aligned, wide enough for six small circular gems in a row. Draw NO gems here, only the empty seat they will sit in.
-  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
-  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
-  - STAT BAND: 81.0% down to 97.8% — two empty circular sockets, one at the far left and one at the far right, each about 18% of the card's width across. They are empty recessed seats — no numbers, no symbols inside. The strip between them is plain.
+  - outer border: 3% of the card's width on all four sides
+  - NAME PLATE: 4% down to 15% of card height — a TALL blank plate, the full width between the side borders. Nothing may sit on top of it.
+  - COST STRIP: 15% down to 23% — a blank recessed strip, left-aligned, wide enough for six small circular sockets in a row. Draw the empty sockets only, never gems.
+  - ILLUSTRATION WINDOW: 23% down to 55% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 55% down to 82% — a DEEP blank parchment panel, tall enough for three lines of text, the full width between the side borders
+  - STAT BAND: 82% down to 97% — two empty circular sockets, one at the far left and one at the far right, each about 18% of the card's width across. They are empty recessed seats — no numbers, no symbols inside. The strip between them is plain.
+
+KEEP THE PANELS CLEAR — this is the most important rule:
+  The element badge goes in the TOP-LEFT CORNER of the outer border. It must NOT sit in the middle of the top edge and must NOT overlap, cover or intrude into the name plate. In the last attempt the badge was centred on top of the name plate and covered the card name — do not repeat that.
+  The card type badge goes in the TOP-RIGHT CORNER of the outer border, mirroring it.
+  No ornament, scrollwork, rivet, chain or metal band may cross into the name plate, the cost strip or the rules panel. Those three panels are flat, empty and readable from edge to edge. All decoration lives in the outer border and in the thin dividers BETWEEN bands.
+  The name plate and the rules panel must be visibly generous — a person will print two or three lines of text into them.
 
 Rules for every band:
   - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
@@ -328,16 +388,22 @@ CARD SHAPE — read this first and do not compromise it:
   The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
   Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
-Element: nature. Its symbol is a leaf, set in a round badge in the top-left corner of the border. Palette moss green and amber sunlight, pollen motes, tangled growth, accent colour #3F8B3A.
-Card type: a starburst / arcane spark badge set into the top border. This is a SPELL frame — it HAS a cost strip but prints no stats at all.
+Element: nature. Its symbol is a leaf, in a round badge in the TOP-LEFT CORNER of the border — not over the name plate. Palette moss green and amber sunlight, pollen motes, tangled growth, accent colour #3F8B3A.
+Card type: a starburst / arcane spark badge in the TOP-RIGHT CORNER of the border. This is a SPELL frame — it HAS a cost strip but prints no stats at all.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card's height:
-  - outer border: 3.1% of the card's width on all four sides
-  - NAME PLATE: 2.2% down to 14.0% — a blank plate for the card name
-  - COST STRIP: 14.0% down to 23.6% — a blank recessed strip, left-aligned, wide enough for six small circular gems in a row. Draw NO gems here, only the empty seat they will sit in.
-  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
-  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
-  - STAT BAND: 81.0% down to 97.8% — completely plain. No sockets, no ornament — spells print no stats.
+  - outer border: 3% of the card's width on all four sides
+  - NAME PLATE: 4% down to 15% of card height — a TALL blank plate, the full width between the side borders. Nothing may sit on top of it.
+  - COST STRIP: 15% down to 23% — a blank recessed strip, left-aligned, wide enough for six small circular sockets in a row. Draw the empty sockets only, never gems.
+  - ILLUSTRATION WINDOW: 23% down to 55% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 55% down to 82% — a DEEP blank parchment panel, tall enough for three lines of text, the full width between the side borders
+  - STAT BAND: 82% down to 97% — completely plain. No sockets, no ornament — spells print no stats.
+
+KEEP THE PANELS CLEAR — this is the most important rule:
+  The element badge goes in the TOP-LEFT CORNER of the outer border. It must NOT sit in the middle of the top edge and must NOT overlap, cover or intrude into the name plate. In the last attempt the badge was centred on top of the name plate and covered the card name — do not repeat that.
+  The card type badge goes in the TOP-RIGHT CORNER of the outer border, mirroring it.
+  No ornament, scrollwork, rivet, chain or metal band may cross into the name plate, the cost strip or the rules panel. Those three panels are flat, empty and readable from edge to edge. All decoration lives in the outer border and in the thin dividers BETWEEN bands.
+  The name plate and the rules panel must be visibly generous — a person will print two or three lines of text into them.
 
 Rules for every band:
   - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
@@ -356,16 +422,22 @@ CARD SHAPE — read this first and do not compromise it:
   The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
   Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
-Element: nature. Its symbol is a leaf, set in a round badge in the top-left corner of the border. Palette moss green and amber sunlight, pollen motes, tangled growth, accent colour #3F8B3A.
-Card type: a faceted crystal badge set into the top border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter.
+Element: nature. Its symbol is a leaf, in a round badge in the TOP-LEFT CORNER of the border — not over the name plate. Palette moss green and amber sunlight, pollen motes, tangled growth, accent colour #3F8B3A.
+Card type: a faceted crystal badge in the TOP-RIGHT CORNER of the border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card's height:
-  - outer border: 3.1% of the card's width on all four sides
-  - NAME PLATE: 2.2% down to 14.0% — a blank plate for the card name
-  - COST STRIP: 14.0% down to 23.6% — a blank recessed strip, left-aligned, wide enough for six small circular gems in a row. Draw NO gems here, only the empty seat they will sit in.
-  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
-  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
-  - STAT BAND: 81.0% down to 97.8% — ONE empty circular socket at the far right only, about 18% of the card's width across, an empty recessed seat with nothing inside. The rest of the strip is plain.
+  - outer border: 3% of the card's width on all four sides
+  - NAME PLATE: 4% down to 15% of card height — a TALL blank plate, the full width between the side borders. Nothing may sit on top of it.
+  - COST STRIP: 15% down to 23% — a blank recessed strip, left-aligned, wide enough for six small circular sockets in a row. Draw the empty sockets only, never gems.
+  - ILLUSTRATION WINDOW: 23% down to 55% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 55% down to 82% — a DEEP blank parchment panel, tall enough for three lines of text, the full width between the side borders
+  - STAT BAND: 82% down to 97% — ONE empty circular socket at the far right only, about 18% of the card's width across, an empty recessed seat with nothing inside. The rest of the strip is plain.
+
+KEEP THE PANELS CLEAR — this is the most important rule:
+  The element badge goes in the TOP-LEFT CORNER of the outer border. It must NOT sit in the middle of the top edge and must NOT overlap, cover or intrude into the name plate. In the last attempt the badge was centred on top of the name plate and covered the card name — do not repeat that.
+  The card type badge goes in the TOP-RIGHT CORNER of the outer border, mirroring it.
+  No ornament, scrollwork, rivet, chain or metal band may cross into the name plate, the cost strip or the rules panel. Those three panels are flat, empty and readable from edge to edge. All decoration lives in the outer border and in the thin dividers BETWEEN bands.
+  The name plate and the rules panel must be visibly generous — a person will print two or three lines of text into them.
 
 Rules for every band:
   - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
@@ -384,15 +456,21 @@ CARD SHAPE — read this first and do not compromise it:
   The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
   Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
-Element: nature. Its symbol is a leaf, set in a round badge in the top-left corner of the border. Palette moss green and amber sunlight, pollen motes, tangled growth, accent colour #3F8B3A.
-Card type: a rune-carved keystone badge set into the top border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead.
+Element: nature. Its symbol is a leaf, in a round badge in the TOP-LEFT CORNER of the border — not over the name plate. Palette moss green and amber sunlight, pollen motes, tangled growth, accent colour #3F8B3A.
+Card type: a rune-carved keystone badge in the TOP-RIGHT CORNER of the border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card's height:
-  - outer border: 3.1% of the card's width on all four sides
+  - outer border: 3% of the card's width on all four sides
   - NAME PLATE: 2.2% down to 23.6% — a blank plate for the card name (no cost strip on terrain)
-  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
-  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
-  - STAT BAND: 81.0% down to 97.8% — completely plain. No sockets.
+  - ILLUSTRATION WINDOW: 23% down to 55% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 55% down to 82% — a DEEP blank parchment panel, tall enough for three lines of text, the full width between the side borders
+  - STAT BAND: 82% down to 97% — completely plain. No sockets.
+
+KEEP THE PANELS CLEAR — this is the most important rule:
+  The element badge goes in the TOP-LEFT CORNER of the outer border. It must NOT sit in the middle of the top edge and must NOT overlap, cover or intrude into the name plate. In the last attempt the badge was centred on top of the name plate and covered the card name — do not repeat that.
+  The card type badge goes in the TOP-RIGHT CORNER of the outer border, mirroring it.
+  No ornament, scrollwork, rivet, chain or metal band may cross into the name plate, the cost strip or the rules panel. Those three panels are flat, empty and readable from edge to edge. All decoration lives in the outer border and in the thin dividers BETWEEN bands.
+  The name plate and the rules panel must be visibly generous — a person will print two or three lines of text into them.
 
 Rules for every band:
   - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
@@ -411,16 +489,22 @@ CARD SHAPE — read this first and do not compromise it:
   The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
   Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
-Element: steel. Its symbol is an anvil with a crossed hammer, set in a round badge in the top-left corner of the border. Palette gunmetal grey and cold blue steel, forge sparks, oiled plate, accent colour #6B7686.
-Card type: a heraldic shield badge set into the top border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health.
+Element: steel. Its symbol is an anvil with a crossed hammer, in a round badge in the TOP-LEFT CORNER of the border — not over the name plate. Palette gunmetal grey and cold blue steel, forge sparks, oiled plate, accent colour #6B7686.
+Card type: a heraldic shield badge in the TOP-RIGHT CORNER of the border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card's height:
-  - outer border: 3.1% of the card's width on all four sides
-  - NAME PLATE: 2.2% down to 14.0% — a blank plate for the card name
-  - COST STRIP: 14.0% down to 23.6% — a blank recessed strip, left-aligned, wide enough for six small circular gems in a row. Draw NO gems here, only the empty seat they will sit in.
-  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
-  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
-  - STAT BAND: 81.0% down to 97.8% — two empty circular sockets, one at the far left and one at the far right, each about 18% of the card's width across. They are empty recessed seats — no numbers, no symbols inside. The strip between them is plain.
+  - outer border: 3% of the card's width on all four sides
+  - NAME PLATE: 4% down to 15% of card height — a TALL blank plate, the full width between the side borders. Nothing may sit on top of it.
+  - COST STRIP: 15% down to 23% — a blank recessed strip, left-aligned, wide enough for six small circular sockets in a row. Draw the empty sockets only, never gems.
+  - ILLUSTRATION WINDOW: 23% down to 55% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 55% down to 82% — a DEEP blank parchment panel, tall enough for three lines of text, the full width between the side borders
+  - STAT BAND: 82% down to 97% — two empty circular sockets, one at the far left and one at the far right, each about 18% of the card's width across. They are empty recessed seats — no numbers, no symbols inside. The strip between them is plain.
+
+KEEP THE PANELS CLEAR — this is the most important rule:
+  The element badge goes in the TOP-LEFT CORNER of the outer border. It must NOT sit in the middle of the top edge and must NOT overlap, cover or intrude into the name plate. In the last attempt the badge was centred on top of the name plate and covered the card name — do not repeat that.
+  The card type badge goes in the TOP-RIGHT CORNER of the outer border, mirroring it.
+  No ornament, scrollwork, rivet, chain or metal band may cross into the name plate, the cost strip or the rules panel. Those three panels are flat, empty and readable from edge to edge. All decoration lives in the outer border and in the thin dividers BETWEEN bands.
+  The name plate and the rules panel must be visibly generous — a person will print two or three lines of text into them.
 
 Rules for every band:
   - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
@@ -439,16 +523,22 @@ CARD SHAPE — read this first and do not compromise it:
   The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
   Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
-Element: steel. Its symbol is an anvil with a crossed hammer, set in a round badge in the top-left corner of the border. Palette gunmetal grey and cold blue steel, forge sparks, oiled plate, accent colour #6B7686.
-Card type: a starburst / arcane spark badge set into the top border. This is a SPELL frame — it HAS a cost strip but prints no stats at all.
+Element: steel. Its symbol is an anvil with a crossed hammer, in a round badge in the TOP-LEFT CORNER of the border — not over the name plate. Palette gunmetal grey and cold blue steel, forge sparks, oiled plate, accent colour #6B7686.
+Card type: a starburst / arcane spark badge in the TOP-RIGHT CORNER of the border. This is a SPELL frame — it HAS a cost strip but prints no stats at all.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card's height:
-  - outer border: 3.1% of the card's width on all four sides
-  - NAME PLATE: 2.2% down to 14.0% — a blank plate for the card name
-  - COST STRIP: 14.0% down to 23.6% — a blank recessed strip, left-aligned, wide enough for six small circular gems in a row. Draw NO gems here, only the empty seat they will sit in.
-  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
-  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
-  - STAT BAND: 81.0% down to 97.8% — completely plain. No sockets, no ornament — spells print no stats.
+  - outer border: 3% of the card's width on all four sides
+  - NAME PLATE: 4% down to 15% of card height — a TALL blank plate, the full width between the side borders. Nothing may sit on top of it.
+  - COST STRIP: 15% down to 23% — a blank recessed strip, left-aligned, wide enough for six small circular sockets in a row. Draw the empty sockets only, never gems.
+  - ILLUSTRATION WINDOW: 23% down to 55% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 55% down to 82% — a DEEP blank parchment panel, tall enough for three lines of text, the full width between the side borders
+  - STAT BAND: 82% down to 97% — completely plain. No sockets, no ornament — spells print no stats.
+
+KEEP THE PANELS CLEAR — this is the most important rule:
+  The element badge goes in the TOP-LEFT CORNER of the outer border. It must NOT sit in the middle of the top edge and must NOT overlap, cover or intrude into the name plate. In the last attempt the badge was centred on top of the name plate and covered the card name — do not repeat that.
+  The card type badge goes in the TOP-RIGHT CORNER of the outer border, mirroring it.
+  No ornament, scrollwork, rivet, chain or metal band may cross into the name plate, the cost strip or the rules panel. Those three panels are flat, empty and readable from edge to edge. All decoration lives in the outer border and in the thin dividers BETWEEN bands.
+  The name plate and the rules panel must be visibly generous — a person will print two or three lines of text into them.
 
 Rules for every band:
   - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
@@ -467,16 +557,22 @@ CARD SHAPE — read this first and do not compromise it:
   The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
   Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
-Element: steel. Its symbol is an anvil with a crossed hammer, set in a round badge in the top-left corner of the border. Palette gunmetal grey and cold blue steel, forge sparks, oiled plate, accent colour #6B7686.
-Card type: a faceted crystal badge set into the top border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter.
+Element: steel. Its symbol is an anvil with a crossed hammer, in a round badge in the TOP-LEFT CORNER of the border — not over the name plate. Palette gunmetal grey and cold blue steel, forge sparks, oiled plate, accent colour #6B7686.
+Card type: a faceted crystal badge in the TOP-RIGHT CORNER of the border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card's height:
-  - outer border: 3.1% of the card's width on all four sides
-  - NAME PLATE: 2.2% down to 14.0% — a blank plate for the card name
-  - COST STRIP: 14.0% down to 23.6% — a blank recessed strip, left-aligned, wide enough for six small circular gems in a row. Draw NO gems here, only the empty seat they will sit in.
-  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
-  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
-  - STAT BAND: 81.0% down to 97.8% — ONE empty circular socket at the far right only, about 18% of the card's width across, an empty recessed seat with nothing inside. The rest of the strip is plain.
+  - outer border: 3% of the card's width on all four sides
+  - NAME PLATE: 4% down to 15% of card height — a TALL blank plate, the full width between the side borders. Nothing may sit on top of it.
+  - COST STRIP: 15% down to 23% — a blank recessed strip, left-aligned, wide enough for six small circular sockets in a row. Draw the empty sockets only, never gems.
+  - ILLUSTRATION WINDOW: 23% down to 55% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 55% down to 82% — a DEEP blank parchment panel, tall enough for three lines of text, the full width between the side borders
+  - STAT BAND: 82% down to 97% — ONE empty circular socket at the far right only, about 18% of the card's width across, an empty recessed seat with nothing inside. The rest of the strip is plain.
+
+KEEP THE PANELS CLEAR — this is the most important rule:
+  The element badge goes in the TOP-LEFT CORNER of the outer border. It must NOT sit in the middle of the top edge and must NOT overlap, cover or intrude into the name plate. In the last attempt the badge was centred on top of the name plate and covered the card name — do not repeat that.
+  The card type badge goes in the TOP-RIGHT CORNER of the outer border, mirroring it.
+  No ornament, scrollwork, rivet, chain or metal band may cross into the name plate, the cost strip or the rules panel. Those three panels are flat, empty and readable from edge to edge. All decoration lives in the outer border and in the thin dividers BETWEEN bands.
+  The name plate and the rules panel must be visibly generous — a person will print two or three lines of text into them.
 
 Rules for every band:
   - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
@@ -495,15 +591,21 @@ CARD SHAPE — read this first and do not compromise it:
   The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
   Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
-Element: steel. Its symbol is an anvil with a crossed hammer, set in a round badge in the top-left corner of the border. Palette gunmetal grey and cold blue steel, forge sparks, oiled plate, accent colour #6B7686.
-Card type: a rune-carved keystone badge set into the top border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead.
+Element: steel. Its symbol is an anvil with a crossed hammer, in a round badge in the TOP-LEFT CORNER of the border — not over the name plate. Palette gunmetal grey and cold blue steel, forge sparks, oiled plate, accent colour #6B7686.
+Card type: a rune-carved keystone badge in the TOP-RIGHT CORNER of the border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card's height:
-  - outer border: 3.1% of the card's width on all four sides
+  - outer border: 3% of the card's width on all four sides
   - NAME PLATE: 2.2% down to 23.6% — a blank plate for the card name (no cost strip on terrain)
-  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
-  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
-  - STAT BAND: 81.0% down to 97.8% — completely plain. No sockets.
+  - ILLUSTRATION WINDOW: 23% down to 55% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 55% down to 82% — a DEEP blank parchment panel, tall enough for three lines of text, the full width between the side borders
+  - STAT BAND: 82% down to 97% — completely plain. No sockets.
+
+KEEP THE PANELS CLEAR — this is the most important rule:
+  The element badge goes in the TOP-LEFT CORNER of the outer border. It must NOT sit in the middle of the top edge and must NOT overlap, cover or intrude into the name plate. In the last attempt the badge was centred on top of the name plate and covered the card name — do not repeat that.
+  The card type badge goes in the TOP-RIGHT CORNER of the outer border, mirroring it.
+  No ornament, scrollwork, rivet, chain or metal band may cross into the name plate, the cost strip or the rules panel. Those three panels are flat, empty and readable from edge to edge. All decoration lives in the outer border and in the thin dividers BETWEEN bands.
+  The name plate and the rules panel must be visibly generous — a person will print two or three lines of text into them.
 
 Rules for every band:
   - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
@@ -522,16 +624,22 @@ CARD SHAPE — read this first and do not compromise it:
   The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
   Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
-Element: earth. Its symbol is a mountain peak over layered strata, set in a round badge in the top-left corner of the border. Palette ochre and weathered sandstone, dust in the air, cracked ground, accent colour #8A6A33.
-Card type: a heraldic shield badge set into the top border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health.
+Element: earth. Its symbol is a mountain peak over layered strata, in a round badge in the TOP-LEFT CORNER of the border — not over the name plate. Palette ochre and weathered sandstone, dust in the air, cracked ground, accent colour #8A6A33.
+Card type: a heraldic shield badge in the TOP-RIGHT CORNER of the border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card's height:
-  - outer border: 3.1% of the card's width on all four sides
-  - NAME PLATE: 2.2% down to 14.0% — a blank plate for the card name
-  - COST STRIP: 14.0% down to 23.6% — a blank recessed strip, left-aligned, wide enough for six small circular gems in a row. Draw NO gems here, only the empty seat they will sit in.
-  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
-  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
-  - STAT BAND: 81.0% down to 97.8% — two empty circular sockets, one at the far left and one at the far right, each about 18% of the card's width across. They are empty recessed seats — no numbers, no symbols inside. The strip between them is plain.
+  - outer border: 3% of the card's width on all four sides
+  - NAME PLATE: 4% down to 15% of card height — a TALL blank plate, the full width between the side borders. Nothing may sit on top of it.
+  - COST STRIP: 15% down to 23% — a blank recessed strip, left-aligned, wide enough for six small circular sockets in a row. Draw the empty sockets only, never gems.
+  - ILLUSTRATION WINDOW: 23% down to 55% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 55% down to 82% — a DEEP blank parchment panel, tall enough for three lines of text, the full width between the side borders
+  - STAT BAND: 82% down to 97% — two empty circular sockets, one at the far left and one at the far right, each about 18% of the card's width across. They are empty recessed seats — no numbers, no symbols inside. The strip between them is plain.
+
+KEEP THE PANELS CLEAR — this is the most important rule:
+  The element badge goes in the TOP-LEFT CORNER of the outer border. It must NOT sit in the middle of the top edge and must NOT overlap, cover or intrude into the name plate. In the last attempt the badge was centred on top of the name plate and covered the card name — do not repeat that.
+  The card type badge goes in the TOP-RIGHT CORNER of the outer border, mirroring it.
+  No ornament, scrollwork, rivet, chain or metal band may cross into the name plate, the cost strip or the rules panel. Those three panels are flat, empty and readable from edge to edge. All decoration lives in the outer border and in the thin dividers BETWEEN bands.
+  The name plate and the rules panel must be visibly generous — a person will print two or three lines of text into them.
 
 Rules for every band:
   - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
@@ -550,16 +658,22 @@ CARD SHAPE — read this first and do not compromise it:
   The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
   Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
-Element: earth. Its symbol is a mountain peak over layered strata, set in a round badge in the top-left corner of the border. Palette ochre and weathered sandstone, dust in the air, cracked ground, accent colour #8A6A33.
-Card type: a starburst / arcane spark badge set into the top border. This is a SPELL frame — it HAS a cost strip but prints no stats at all.
+Element: earth. Its symbol is a mountain peak over layered strata, in a round badge in the TOP-LEFT CORNER of the border — not over the name plate. Palette ochre and weathered sandstone, dust in the air, cracked ground, accent colour #8A6A33.
+Card type: a starburst / arcane spark badge in the TOP-RIGHT CORNER of the border. This is a SPELL frame — it HAS a cost strip but prints no stats at all.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card's height:
-  - outer border: 3.1% of the card's width on all four sides
-  - NAME PLATE: 2.2% down to 14.0% — a blank plate for the card name
-  - COST STRIP: 14.0% down to 23.6% — a blank recessed strip, left-aligned, wide enough for six small circular gems in a row. Draw NO gems here, only the empty seat they will sit in.
-  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
-  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
-  - STAT BAND: 81.0% down to 97.8% — completely plain. No sockets, no ornament — spells print no stats.
+  - outer border: 3% of the card's width on all four sides
+  - NAME PLATE: 4% down to 15% of card height — a TALL blank plate, the full width between the side borders. Nothing may sit on top of it.
+  - COST STRIP: 15% down to 23% — a blank recessed strip, left-aligned, wide enough for six small circular sockets in a row. Draw the empty sockets only, never gems.
+  - ILLUSTRATION WINDOW: 23% down to 55% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 55% down to 82% — a DEEP blank parchment panel, tall enough for three lines of text, the full width between the side borders
+  - STAT BAND: 82% down to 97% — completely plain. No sockets, no ornament — spells print no stats.
+
+KEEP THE PANELS CLEAR — this is the most important rule:
+  The element badge goes in the TOP-LEFT CORNER of the outer border. It must NOT sit in the middle of the top edge and must NOT overlap, cover or intrude into the name plate. In the last attempt the badge was centred on top of the name plate and covered the card name — do not repeat that.
+  The card type badge goes in the TOP-RIGHT CORNER of the outer border, mirroring it.
+  No ornament, scrollwork, rivet, chain or metal band may cross into the name plate, the cost strip or the rules panel. Those three panels are flat, empty and readable from edge to edge. All decoration lives in the outer border and in the thin dividers BETWEEN bands.
+  The name plate and the rules panel must be visibly generous — a person will print two or three lines of text into them.
 
 Rules for every band:
   - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
@@ -578,16 +692,22 @@ CARD SHAPE — read this first and do not compromise it:
   The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
   Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
-Element: earth. Its symbol is a mountain peak over layered strata, set in a round badge in the top-left corner of the border. Palette ochre and weathered sandstone, dust in the air, cracked ground, accent colour #8A6A33.
-Card type: a faceted crystal badge set into the top border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter.
+Element: earth. Its symbol is a mountain peak over layered strata, in a round badge in the TOP-LEFT CORNER of the border — not over the name plate. Palette ochre and weathered sandstone, dust in the air, cracked ground, accent colour #8A6A33.
+Card type: a faceted crystal badge in the TOP-RIGHT CORNER of the border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card's height:
-  - outer border: 3.1% of the card's width on all four sides
-  - NAME PLATE: 2.2% down to 14.0% — a blank plate for the card name
-  - COST STRIP: 14.0% down to 23.6% — a blank recessed strip, left-aligned, wide enough for six small circular gems in a row. Draw NO gems here, only the empty seat they will sit in.
-  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
-  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
-  - STAT BAND: 81.0% down to 97.8% — ONE empty circular socket at the far right only, about 18% of the card's width across, an empty recessed seat with nothing inside. The rest of the strip is plain.
+  - outer border: 3% of the card's width on all four sides
+  - NAME PLATE: 4% down to 15% of card height — a TALL blank plate, the full width between the side borders. Nothing may sit on top of it.
+  - COST STRIP: 15% down to 23% — a blank recessed strip, left-aligned, wide enough for six small circular sockets in a row. Draw the empty sockets only, never gems.
+  - ILLUSTRATION WINDOW: 23% down to 55% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 55% down to 82% — a DEEP blank parchment panel, tall enough for three lines of text, the full width between the side borders
+  - STAT BAND: 82% down to 97% — ONE empty circular socket at the far right only, about 18% of the card's width across, an empty recessed seat with nothing inside. The rest of the strip is plain.
+
+KEEP THE PANELS CLEAR — this is the most important rule:
+  The element badge goes in the TOP-LEFT CORNER of the outer border. It must NOT sit in the middle of the top edge and must NOT overlap, cover or intrude into the name plate. In the last attempt the badge was centred on top of the name plate and covered the card name — do not repeat that.
+  The card type badge goes in the TOP-RIGHT CORNER of the outer border, mirroring it.
+  No ornament, scrollwork, rivet, chain or metal band may cross into the name plate, the cost strip or the rules panel. Those three panels are flat, empty and readable from edge to edge. All decoration lives in the outer border and in the thin dividers BETWEEN bands.
+  The name plate and the rules panel must be visibly generous — a person will print two or three lines of text into them.
 
 Rules for every band:
   - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
@@ -606,15 +726,21 @@ CARD SHAPE — read this first and do not compromise it:
   The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
   Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
-Element: earth. Its symbol is a mountain peak over layered strata, set in a round badge in the top-left corner of the border. Palette ochre and weathered sandstone, dust in the air, cracked ground, accent colour #8A6A33.
-Card type: a rune-carved keystone badge set into the top border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead.
+Element: earth. Its symbol is a mountain peak over layered strata, in a round badge in the TOP-LEFT CORNER of the border — not over the name plate. Palette ochre and weathered sandstone, dust in the air, cracked ground, accent colour #8A6A33.
+Card type: a rune-carved keystone badge in the TOP-RIGHT CORNER of the border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card's height:
-  - outer border: 3.1% of the card's width on all four sides
+  - outer border: 3% of the card's width on all four sides
   - NAME PLATE: 2.2% down to 23.6% — a blank plate for the card name (no cost strip on terrain)
-  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
-  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
-  - STAT BAND: 81.0% down to 97.8% — completely plain. No sockets.
+  - ILLUSTRATION WINDOW: 23% down to 55% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 55% down to 82% — a DEEP blank parchment panel, tall enough for three lines of text, the full width between the side borders
+  - STAT BAND: 82% down to 97% — completely plain. No sockets.
+
+KEEP THE PANELS CLEAR — this is the most important rule:
+  The element badge goes in the TOP-LEFT CORNER of the outer border. It must NOT sit in the middle of the top edge and must NOT overlap, cover or intrude into the name plate. In the last attempt the badge was centred on top of the name plate and covered the card name — do not repeat that.
+  The card type badge goes in the TOP-RIGHT CORNER of the outer border, mirroring it.
+  No ornament, scrollwork, rivet, chain or metal band may cross into the name plate, the cost strip or the rules panel. Those three panels are flat, empty and readable from edge to edge. All decoration lives in the outer border and in the thin dividers BETWEEN bands.
+  The name plate and the rules panel must be visibly generous — a person will print two or three lines of text into them.
 
 Rules for every band:
   - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
@@ -633,16 +759,22 @@ CARD SHAPE — read this first and do not compromise it:
   The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
   Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
-Element: darkness. Its symbol is a crescent moon, set in a round badge in the top-left corner of the border. Palette violet shadow and dried blood, guttering candlelight, creeping mist, accent colour #5B3E86.
-Card type: a heraldic shield badge set into the top border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health.
+Element: darkness. Its symbol is a crescent moon, in a round badge in the TOP-LEFT CORNER of the border — not over the name plate. Palette violet shadow and dried blood, guttering candlelight, creeping mist, accent colour #5B3E86.
+Card type: a heraldic shield badge in the TOP-RIGHT CORNER of the border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card's height:
-  - outer border: 3.1% of the card's width on all four sides
-  - NAME PLATE: 2.2% down to 14.0% — a blank plate for the card name
-  - COST STRIP: 14.0% down to 23.6% — a blank recessed strip, left-aligned, wide enough for six small circular gems in a row. Draw NO gems here, only the empty seat they will sit in.
-  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
-  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
-  - STAT BAND: 81.0% down to 97.8% — two empty circular sockets, one at the far left and one at the far right, each about 18% of the card's width across. They are empty recessed seats — no numbers, no symbols inside. The strip between them is plain.
+  - outer border: 3% of the card's width on all four sides
+  - NAME PLATE: 4% down to 15% of card height — a TALL blank plate, the full width between the side borders. Nothing may sit on top of it.
+  - COST STRIP: 15% down to 23% — a blank recessed strip, left-aligned, wide enough for six small circular sockets in a row. Draw the empty sockets only, never gems.
+  - ILLUSTRATION WINDOW: 23% down to 55% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 55% down to 82% — a DEEP blank parchment panel, tall enough for three lines of text, the full width between the side borders
+  - STAT BAND: 82% down to 97% — two empty circular sockets, one at the far left and one at the far right, each about 18% of the card's width across. They are empty recessed seats — no numbers, no symbols inside. The strip between them is plain.
+
+KEEP THE PANELS CLEAR — this is the most important rule:
+  The element badge goes in the TOP-LEFT CORNER of the outer border. It must NOT sit in the middle of the top edge and must NOT overlap, cover or intrude into the name plate. In the last attempt the badge was centred on top of the name plate and covered the card name — do not repeat that.
+  The card type badge goes in the TOP-RIGHT CORNER of the outer border, mirroring it.
+  No ornament, scrollwork, rivet, chain or metal band may cross into the name plate, the cost strip or the rules panel. Those three panels are flat, empty and readable from edge to edge. All decoration lives in the outer border and in the thin dividers BETWEEN bands.
+  The name plate and the rules panel must be visibly generous — a person will print two or three lines of text into them.
 
 Rules for every band:
   - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
@@ -661,16 +793,22 @@ CARD SHAPE — read this first and do not compromise it:
   The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
   Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
-Element: darkness. Its symbol is a crescent moon, set in a round badge in the top-left corner of the border. Palette violet shadow and dried blood, guttering candlelight, creeping mist, accent colour #5B3E86.
-Card type: a starburst / arcane spark badge set into the top border. This is a SPELL frame — it HAS a cost strip but prints no stats at all.
+Element: darkness. Its symbol is a crescent moon, in a round badge in the TOP-LEFT CORNER of the border — not over the name plate. Palette violet shadow and dried blood, guttering candlelight, creeping mist, accent colour #5B3E86.
+Card type: a starburst / arcane spark badge in the TOP-RIGHT CORNER of the border. This is a SPELL frame — it HAS a cost strip but prints no stats at all.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card's height:
-  - outer border: 3.1% of the card's width on all four sides
-  - NAME PLATE: 2.2% down to 14.0% — a blank plate for the card name
-  - COST STRIP: 14.0% down to 23.6% — a blank recessed strip, left-aligned, wide enough for six small circular gems in a row. Draw NO gems here, only the empty seat they will sit in.
-  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
-  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
-  - STAT BAND: 81.0% down to 97.8% — completely plain. No sockets, no ornament — spells print no stats.
+  - outer border: 3% of the card's width on all four sides
+  - NAME PLATE: 4% down to 15% of card height — a TALL blank plate, the full width between the side borders. Nothing may sit on top of it.
+  - COST STRIP: 15% down to 23% — a blank recessed strip, left-aligned, wide enough for six small circular sockets in a row. Draw the empty sockets only, never gems.
+  - ILLUSTRATION WINDOW: 23% down to 55% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 55% down to 82% — a DEEP blank parchment panel, tall enough for three lines of text, the full width between the side borders
+  - STAT BAND: 82% down to 97% — completely plain. No sockets, no ornament — spells print no stats.
+
+KEEP THE PANELS CLEAR — this is the most important rule:
+  The element badge goes in the TOP-LEFT CORNER of the outer border. It must NOT sit in the middle of the top edge and must NOT overlap, cover or intrude into the name plate. In the last attempt the badge was centred on top of the name plate and covered the card name — do not repeat that.
+  The card type badge goes in the TOP-RIGHT CORNER of the outer border, mirroring it.
+  No ornament, scrollwork, rivet, chain or metal band may cross into the name plate, the cost strip or the rules panel. Those three panels are flat, empty and readable from edge to edge. All decoration lives in the outer border and in the thin dividers BETWEEN bands.
+  The name plate and the rules panel must be visibly generous — a person will print two or three lines of text into them.
 
 Rules for every band:
   - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
@@ -689,16 +827,22 @@ CARD SHAPE — read this first and do not compromise it:
   The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
   Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
-Element: darkness. Its symbol is a crescent moon, set in a round badge in the top-left corner of the border. Palette violet shadow and dried blood, guttering candlelight, creeping mist, accent colour #5B3E86.
-Card type: a faceted crystal badge set into the top border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter.
+Element: darkness. Its symbol is a crescent moon, in a round badge in the TOP-LEFT CORNER of the border — not over the name plate. Palette violet shadow and dried blood, guttering candlelight, creeping mist, accent colour #5B3E86.
+Card type: a faceted crystal badge in the TOP-RIGHT CORNER of the border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card's height:
-  - outer border: 3.1% of the card's width on all four sides
-  - NAME PLATE: 2.2% down to 14.0% — a blank plate for the card name
-  - COST STRIP: 14.0% down to 23.6% — a blank recessed strip, left-aligned, wide enough for six small circular gems in a row. Draw NO gems here, only the empty seat they will sit in.
-  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
-  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
-  - STAT BAND: 81.0% down to 97.8% — ONE empty circular socket at the far right only, about 18% of the card's width across, an empty recessed seat with nothing inside. The rest of the strip is plain.
+  - outer border: 3% of the card's width on all four sides
+  - NAME PLATE: 4% down to 15% of card height — a TALL blank plate, the full width between the side borders. Nothing may sit on top of it.
+  - COST STRIP: 15% down to 23% — a blank recessed strip, left-aligned, wide enough for six small circular sockets in a row. Draw the empty sockets only, never gems.
+  - ILLUSTRATION WINDOW: 23% down to 55% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 55% down to 82% — a DEEP blank parchment panel, tall enough for three lines of text, the full width between the side borders
+  - STAT BAND: 82% down to 97% — ONE empty circular socket at the far right only, about 18% of the card's width across, an empty recessed seat with nothing inside. The rest of the strip is plain.
+
+KEEP THE PANELS CLEAR — this is the most important rule:
+  The element badge goes in the TOP-LEFT CORNER of the outer border. It must NOT sit in the middle of the top edge and must NOT overlap, cover or intrude into the name plate. In the last attempt the badge was centred on top of the name plate and covered the card name — do not repeat that.
+  The card type badge goes in the TOP-RIGHT CORNER of the outer border, mirroring it.
+  No ornament, scrollwork, rivet, chain or metal band may cross into the name plate, the cost strip or the rules panel. Those three panels are flat, empty and readable from edge to edge. All decoration lives in the outer border and in the thin dividers BETWEEN bands.
+  The name plate and the rules panel must be visibly generous — a person will print two or three lines of text into them.
 
 Rules for every band:
   - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
@@ -717,15 +861,21 @@ CARD SHAPE — read this first and do not compromise it:
   The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
   Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
-Element: darkness. Its symbol is a crescent moon, set in a round badge in the top-left corner of the border. Palette violet shadow and dried blood, guttering candlelight, creeping mist, accent colour #5B3E86.
-Card type: a rune-carved keystone badge set into the top border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead.
+Element: darkness. Its symbol is a crescent moon, in a round badge in the TOP-LEFT CORNER of the border — not over the name plate. Palette violet shadow and dried blood, guttering candlelight, creeping mist, accent colour #5B3E86.
+Card type: a rune-carved keystone badge in the TOP-RIGHT CORNER of the border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card's height:
-  - outer border: 3.1% of the card's width on all four sides
+  - outer border: 3% of the card's width on all four sides
   - NAME PLATE: 2.2% down to 23.6% — a blank plate for the card name (no cost strip on terrain)
-  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
-  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
-  - STAT BAND: 81.0% down to 97.8% — completely plain. No sockets.
+  - ILLUSTRATION WINDOW: 23% down to 55% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 55% down to 82% — a DEEP blank parchment panel, tall enough for three lines of text, the full width between the side borders
+  - STAT BAND: 82% down to 97% — completely plain. No sockets.
+
+KEEP THE PANELS CLEAR — this is the most important rule:
+  The element badge goes in the TOP-LEFT CORNER of the outer border. It must NOT sit in the middle of the top edge and must NOT overlap, cover or intrude into the name plate. In the last attempt the badge was centred on top of the name plate and covered the card name — do not repeat that.
+  The card type badge goes in the TOP-RIGHT CORNER of the outer border, mirroring it.
+  No ornament, scrollwork, rivet, chain or metal band may cross into the name plate, the cost strip or the rules panel. Those three panels are flat, empty and readable from edge to edge. All decoration lives in the outer border and in the thin dividers BETWEEN bands.
+  The name plate and the rules panel must be visibly generous — a person will print two or three lines of text into them.
 
 Rules for every band:
   - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
@@ -744,16 +894,22 @@ CARD SHAPE — read this first and do not compromise it:
   The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
   Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
-Element: light. Its symbol is a radiant sun, set in a round badge in the top-left corner of the border. Palette pale gold and warm ivory, godrays, floating dust in sunbeams, accent colour #B8912A.
-Card type: a heraldic shield badge set into the top border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health.
+Element: light. Its symbol is a radiant sun, in a round badge in the TOP-LEFT CORNER of the border — not over the name plate. Palette pale gold and warm ivory, godrays, floating dust in sunbeams, accent colour #B8912A.
+Card type: a heraldic shield badge in the TOP-RIGHT CORNER of the border. This is a CREATURE frame — it HAS a cost strip and must carry attack and health.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card's height:
-  - outer border: 3.1% of the card's width on all four sides
-  - NAME PLATE: 2.2% down to 14.0% — a blank plate for the card name
-  - COST STRIP: 14.0% down to 23.6% — a blank recessed strip, left-aligned, wide enough for six small circular gems in a row. Draw NO gems here, only the empty seat they will sit in.
-  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
-  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
-  - STAT BAND: 81.0% down to 97.8% — two empty circular sockets, one at the far left and one at the far right, each about 18% of the card's width across. They are empty recessed seats — no numbers, no symbols inside. The strip between them is plain.
+  - outer border: 3% of the card's width on all four sides
+  - NAME PLATE: 4% down to 15% of card height — a TALL blank plate, the full width between the side borders. Nothing may sit on top of it.
+  - COST STRIP: 15% down to 23% — a blank recessed strip, left-aligned, wide enough for six small circular sockets in a row. Draw the empty sockets only, never gems.
+  - ILLUSTRATION WINDOW: 23% down to 55% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 55% down to 82% — a DEEP blank parchment panel, tall enough for three lines of text, the full width between the side borders
+  - STAT BAND: 82% down to 97% — two empty circular sockets, one at the far left and one at the far right, each about 18% of the card's width across. They are empty recessed seats — no numbers, no symbols inside. The strip between them is plain.
+
+KEEP THE PANELS CLEAR — this is the most important rule:
+  The element badge goes in the TOP-LEFT CORNER of the outer border. It must NOT sit in the middle of the top edge and must NOT overlap, cover or intrude into the name plate. In the last attempt the badge was centred on top of the name plate and covered the card name — do not repeat that.
+  The card type badge goes in the TOP-RIGHT CORNER of the outer border, mirroring it.
+  No ornament, scrollwork, rivet, chain or metal band may cross into the name plate, the cost strip or the rules panel. Those three panels are flat, empty and readable from edge to edge. All decoration lives in the outer border and in the thin dividers BETWEEN bands.
+  The name plate and the rules panel must be visibly generous — a person will print two or three lines of text into them.
 
 Rules for every band:
   - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
@@ -772,16 +928,22 @@ CARD SHAPE — read this first and do not compromise it:
   The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
   Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
-Element: light. Its symbol is a radiant sun, set in a round badge in the top-left corner of the border. Palette pale gold and warm ivory, godrays, floating dust in sunbeams, accent colour #B8912A.
-Card type: a starburst / arcane spark badge set into the top border. This is a SPELL frame — it HAS a cost strip but prints no stats at all.
+Element: light. Its symbol is a radiant sun, in a round badge in the TOP-LEFT CORNER of the border — not over the name plate. Palette pale gold and warm ivory, godrays, floating dust in sunbeams, accent colour #B8912A.
+Card type: a starburst / arcane spark badge in the TOP-RIGHT CORNER of the border. This is a SPELL frame — it HAS a cost strip but prints no stats at all.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card's height:
-  - outer border: 3.1% of the card's width on all four sides
-  - NAME PLATE: 2.2% down to 14.0% — a blank plate for the card name
-  - COST STRIP: 14.0% down to 23.6% — a blank recessed strip, left-aligned, wide enough for six small circular gems in a row. Draw NO gems here, only the empty seat they will sit in.
-  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
-  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
-  - STAT BAND: 81.0% down to 97.8% — completely plain. No sockets, no ornament — spells print no stats.
+  - outer border: 3% of the card's width on all four sides
+  - NAME PLATE: 4% down to 15% of card height — a TALL blank plate, the full width between the side borders. Nothing may sit on top of it.
+  - COST STRIP: 15% down to 23% — a blank recessed strip, left-aligned, wide enough for six small circular sockets in a row. Draw the empty sockets only, never gems.
+  - ILLUSTRATION WINDOW: 23% down to 55% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 55% down to 82% — a DEEP blank parchment panel, tall enough for three lines of text, the full width between the side borders
+  - STAT BAND: 82% down to 97% — completely plain. No sockets, no ornament — spells print no stats.
+
+KEEP THE PANELS CLEAR — this is the most important rule:
+  The element badge goes in the TOP-LEFT CORNER of the outer border. It must NOT sit in the middle of the top edge and must NOT overlap, cover or intrude into the name plate. In the last attempt the badge was centred on top of the name plate and covered the card name — do not repeat that.
+  The card type badge goes in the TOP-RIGHT CORNER of the outer border, mirroring it.
+  No ornament, scrollwork, rivet, chain or metal band may cross into the name plate, the cost strip or the rules panel. Those three panels are flat, empty and readable from edge to edge. All decoration lives in the outer border and in the thin dividers BETWEEN bands.
+  The name plate and the rules panel must be visibly generous — a person will print two or three lines of text into them.
 
 Rules for every band:
   - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
@@ -800,16 +962,22 @@ CARD SHAPE — read this first and do not compromise it:
   The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
   Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
-Element: light. Its symbol is a radiant sun, set in a round badge in the top-left corner of the border. Palette pale gold and warm ivory, godrays, floating dust in sunbeams, accent colour #B8912A.
-Card type: a faceted crystal badge set into the top border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter.
+Element: light. Its symbol is a radiant sun, in a round badge in the TOP-LEFT CORNER of the border — not over the name plate. Palette pale gold and warm ivory, godrays, floating dust in sunbeams, accent colour #B8912A.
+Card type: a faceted crystal badge in the TOP-RIGHT CORNER of the border. This is an ENCHANT frame — it HAS a cost strip and carries a single charge counter.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card's height:
-  - outer border: 3.1% of the card's width on all four sides
-  - NAME PLATE: 2.2% down to 14.0% — a blank plate for the card name
-  - COST STRIP: 14.0% down to 23.6% — a blank recessed strip, left-aligned, wide enough for six small circular gems in a row. Draw NO gems here, only the empty seat they will sit in.
-  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
-  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
-  - STAT BAND: 81.0% down to 97.8% — ONE empty circular socket at the far right only, about 18% of the card's width across, an empty recessed seat with nothing inside. The rest of the strip is plain.
+  - outer border: 3% of the card's width on all four sides
+  - NAME PLATE: 4% down to 15% of card height — a TALL blank plate, the full width between the side borders. Nothing may sit on top of it.
+  - COST STRIP: 15% down to 23% — a blank recessed strip, left-aligned, wide enough for six small circular sockets in a row. Draw the empty sockets only, never gems.
+  - ILLUSTRATION WINDOW: 23% down to 55% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 55% down to 82% — a DEEP blank parchment panel, tall enough for three lines of text, the full width between the side borders
+  - STAT BAND: 82% down to 97% — ONE empty circular socket at the far right only, about 18% of the card's width across, an empty recessed seat with nothing inside. The rest of the strip is plain.
+
+KEEP THE PANELS CLEAR — this is the most important rule:
+  The element badge goes in the TOP-LEFT CORNER of the outer border. It must NOT sit in the middle of the top edge and must NOT overlap, cover or intrude into the name plate. In the last attempt the badge was centred on top of the name plate and covered the card name — do not repeat that.
+  The card type badge goes in the TOP-RIGHT CORNER of the outer border, mirroring it.
+  No ornament, scrollwork, rivet, chain or metal band may cross into the name plate, the cost strip or the rules panel. Those three panels are flat, empty and readable from edge to edge. All decoration lives in the outer border and in the thin dividers BETWEEN bands.
+  The name plate and the rules panel must be visibly generous — a person will print two or three lines of text into them.
 
 Rules for every band:
   - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.
@@ -828,15 +996,21 @@ CARD SHAPE — read this first and do not compromise it:
   The card is a PORTRAIT rectangle, clearly TALLER than it is wide. Its height is exactly 1.4 times its width (5 wide : 7 tall). It must NOT be square and must NOT be landscape.
   Draw the card floating on a plain flat black background with empty black margin on every side. Do NOT stretch or crop the card to fill the canvas — the black margin exists so the card can keep its 5:7 shape whatever the canvas shape is.
 
-Element: light. Its symbol is a radiant sun, set in a round badge in the top-left corner of the border. Palette pale gold and warm ivory, godrays, floating dust in sunbeams, accent colour #B8912A.
-Card type: a rune-carved keystone badge set into the top border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead.
+Element: light. Its symbol is a radiant sun, in a round badge in the TOP-LEFT CORNER of the border — not over the name plate. Palette pale gold and warm ivory, godrays, floating dust in sunbeams, accent colour #B8912A.
+Card type: a rune-carved keystone badge in the TOP-RIGHT CORNER of the border. This is a TERRAIN frame — terrain cards cost nothing and print no stats. OMIT the cost strip entirely: the name plate runs from 2.2% down to 23.6% instead.
 
 Divide the card into these horizontal bands, measured from the top as a percentage of the card's height:
-  - outer border: 3.1% of the card's width on all four sides
+  - outer border: 3% of the card's width on all four sides
   - NAME PLATE: 2.2% down to 23.6% — a blank plate for the card name (no cost strip on terrain)
-  - ILLUSTRATION WINDOW: 23.6% down to 56.8% — flat empty rectangle, one neutral dark colour
-  - RULES PANEL: 56.9% down to 81.0% — a blank parchment panel
-  - STAT BAND: 81.0% down to 97.8% — completely plain. No sockets.
+  - ILLUSTRATION WINDOW: 23% down to 55% — flat empty rectangle, one neutral dark colour
+  - RULES PANEL: 55% down to 82% — a DEEP blank parchment panel, tall enough for three lines of text, the full width between the side borders
+  - STAT BAND: 82% down to 97% — completely plain. No sockets.
+
+KEEP THE PANELS CLEAR — this is the most important rule:
+  The element badge goes in the TOP-LEFT CORNER of the outer border. It must NOT sit in the middle of the top edge and must NOT overlap, cover or intrude into the name plate. In the last attempt the badge was centred on top of the name plate and covered the card name — do not repeat that.
+  The card type badge goes in the TOP-RIGHT CORNER of the outer border, mirroring it.
+  No ornament, scrollwork, rivet, chain or metal band may cross into the name plate, the cost strip or the rules panel. Those three panels are flat, empty and readable from edge to edge. All decoration lives in the outer border and in the thin dividers BETWEEN bands.
+  The name plate and the rules panel must be visibly generous — a person will print two or three lines of text into them.
 
 Rules for every band:
   - Draw NO text, letters or numbers anywhere. Every panel is blank — the game prints text into it later.

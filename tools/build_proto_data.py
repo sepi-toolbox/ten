@@ -19,6 +19,8 @@ ROOT = os.path.dirname(HERE)
 DATA = os.path.join(ROOT, "data")
 PROTO = os.path.join(ROOT, "prototype", "index.html")
 
+USE_FRAMES = False        # True로 바꾸면 assets/frames 의 생성 프레임을 쓴다
+
 
 def j(o):
     return json.dumps(o, ensure_ascii=False, separators=(",", ":"))
@@ -90,8 +92,12 @@ def main():
                   html, count=1, flags=re.S)
 
     # ── POOL 교체 ──────────────────────────────────────────────
-    fpath = os.path.join(DATA, "frames.json")
-    frames = json.load(open(fpath, encoding="utf-8")) if os.path.exists(fpath) else {}
+    # 생성 프레임 사용 여부. False면 카드는 기존 CSS 벡터 카드로 그려진다.
+    # (2026-07: 생성 프레임이 이름판을 뱃지로 덮고 효과문 판이 얕아 글자가 겹쳐 되돌림)
+    frames = {}
+    if USE_FRAMES:
+        fpath = os.path.join(DATA, "frames.json")
+        frames = json.load(open(fpath, encoding="utf-8")) if os.path.exists(fpath) else {}
     opath = os.path.join(DATA, "orbs.json")
     orbs = json.load(open(opath, encoding="utf-8")) if os.path.exists(opath) else {}
     poolblock = ("/* POOL_START */\nconst POOL=" + j(pool)
