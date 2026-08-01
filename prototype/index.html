@@ -242,13 +242,41 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
 .bar.struck{animation:shake .34s cubic-bezier(.36,.07,.19,.97);border-color:var(--crimson)}
 .bar .pop{top:-6px;left:64px;font-size:20px}
 .trace{
-  position:fixed;height:2.5px;background:linear-gradient(90deg,transparent,var(--gold-bright));
-  transform-origin:0 50%;z-index:50;pointer-events:none;
-  animation:trace .34s cubic-bezier(.4,0,.2,1) both;border-radius:2px;box-shadow:0 0 6px rgba(242,212,136,.6);
+  --nc:#f2d488;                      /* 네온 색 */
+  position:fixed;height:3px;transform-origin:0 50%;z-index:50;pointer-events:none;border-radius:3px;
+  background:linear-gradient(90deg,transparent 0%,color-mix(in srgb,var(--nc) 35%,transparent) 30%,var(--nc) 78%,#fff 100%);
+  box-shadow:0 0 4px var(--nc),0 0 12px var(--nc),0 0 26px color-mix(in srgb,var(--nc) 70%,transparent),
+             0 0 48px color-mix(in srgb,var(--nc) 45%,transparent);
+  filter:saturate(1.4);
+  animation:trace .3s cubic-bezier(.3,0,.15,1) both, tracepulse .34s ease-out .3s both;
 }
-.trace.f{background:linear-gradient(90deg,transparent,var(--amber));box-shadow:0 0 6px rgba(217,154,43,.6)}
-.trace.g{background:linear-gradient(90deg,transparent,var(--emerald));box-shadow:0 0 6px rgba(47,157,132,.6)}
-@keyframes trace{0%{opacity:0;clip-path:inset(0 100% 0 0)}30%{opacity:1}100%{opacity:.95;clip-path:inset(0 0 0 0)}}
+.trace::after{                        /* 선 끝의 충격 지점 */
+  content:'';position:absolute;right:-4px;top:50%;width:11px;height:11px;margin-top:-5.5px;
+  border-radius:50%;background:#fff;
+  box-shadow:0 0 8px var(--nc),0 0 20px var(--nc),0 0 40px color-mix(in srgb,var(--nc) 80%,transparent);
+  animation:tracehit .32s ease-out .26s both}
+.trace.f{--nc:#ffbe4d}
+.trace.g{--nc:#4fe0bc}
+@keyframes trace{0%{opacity:0;clip-path:inset(0 100% 0 0)}25%{opacity:1}100%{opacity:1;clip-path:inset(0 0 0 0)}}
+@keyframes tracepulse{0%{filter:saturate(1.4) brightness(1.7)}100%{filter:saturate(1.4) brightness(1)}}
+@keyframes tracehit{0%{opacity:0;transform:scale(.2)}45%{opacity:1;transform:scale(1.5)}100%{opacity:.85;transform:scale(1)}}
+.turnban{
+  position:fixed;left:0;right:0;top:38%;z-index:56;pointer-events:none;text-align:center;
+  animation:turnban 1.15s cubic-bezier(.2,.8,.3,1) both}
+.turnban .tb1{display:inline-block;padding:10px 34px;border-radius:6px;
+  background:linear-gradient(180deg,rgba(20,13,7,.94),rgba(10,6,3,.94));
+  border:1px solid var(--c);box-shadow:0 0 24px color-mix(in srgb,var(--c) 55%,transparent),
+    inset 0 0 30px rgba(0,0,0,.7)}
+.turnban .tn{font-family:'Cinzel',serif;font-size:11px;letter-spacing:.3em;color:var(--c);opacity:.85}
+.turnban .tt{font-family:'Cinzel Decorative','Cinzel',serif;font-weight:900;font-size:32px;
+  letter-spacing:.04em;color:var(--c);text-shadow:0 0 22px color-mix(in srgb,var(--c) 70%,transparent),0 2px 0 #000;
+  line-height:1.15}
+.turnban.me{--c:var(--emerald-bright,#5fe0bc)}
+.turnban.ai{--c:#e0796e}
+.turnban .bar{height:2px;margin:8px auto 0;width:70%;border-radius:2px;
+  background:linear-gradient(90deg,transparent,var(--c),transparent);box-shadow:0 0 10px var(--c)}
+@keyframes turnban{0%{opacity:0;transform:translateY(-14px) scale(.94)}
+  18%{opacity:1;transform:none}75%{opacity:1;transform:none}100%{opacity:0;transform:translateY(8px) scale(1.02)}}
 .phase{
   position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:55;
   font-family:'Cinzel Decorative','Cinzel',serif;font-weight:900;font-size:38px;letter-spacing:.03em;
@@ -360,6 +388,34 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
 .zs.hp .ic{background:var(--emerald)} .zs.hp{color:#0d6d5c}
 .zs.ch .ic{background:var(--violet)} .zs.ch{color:#5a3ea8;margin-left:auto}
 .zbase{font-family:'Cinzel',serif;font-size:11px;color:var(--ink-faint);font-weight:400}
+.mull{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;
+  background:rgba(8,5,3,.9);backdrop-filter:blur(4px);padding:18px}
+.mull.on{display:flex;animation:zfade .18s ease both}
+.mbox{width:min(96vw,760px);max-height:92vh;overflow-y:auto;text-align:center;
+  border:1px solid var(--gold);border-radius:10px;padding:18px 16px 20px;
+  background:linear-gradient(180deg,#1a120a,#100b06);box-shadow:0 20px 60px rgba(0,0,0,.7)}
+.mbox h2{font-family:'Cinzel Decorative','Cinzel',serif;font-weight:900;font-size:22px;
+  color:var(--gold-bright);letter-spacing:.04em;text-shadow:0 0 18px rgba(201,162,75,.5)}
+.mbox .msub{font-family:'Gowun Batang',serif;font-size:12.5px;color:var(--gold);opacity:.85;margin-top:6px;line-height:1.7}
+.mbox .msub b{color:#fff}
+.mstat{display:inline-flex;gap:8px;margin:10px 0 4px;font-family:'Cinzel',serif;font-size:11px;letter-spacing:.1em}
+.mstat span{padding:3px 10px;border:1px solid var(--rule);border-radius:4px;color:var(--gold)}
+.mstat span.warn{border-color:#e0796e;color:#ffb0a4}
+.mstat span.good{border-color:var(--emerald);color:#7fe6c8}
+.mhand{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin:14px 0 6px}
+.mcard{position:relative;cursor:pointer;transition:.15s;border-radius:7px}
+.mcard:hover{transform:translateY(-4px)}
+.mcard.pick{transform:translateY(-6px)}
+.mcard.pick::after{content:'되돌림';position:absolute;inset:0;z-index:5;border-radius:7px;
+  background:rgba(8,5,3,.72);border:2px solid var(--gold-bright);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Cinzel',serif;font-size:10px;letter-spacing:.1em;color:var(--gold-bright)}
+.mbtns{display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.mbtns button{font-family:'Cinzel',serif;font-weight:700;font-size:13px;letter-spacing:.08em;
+  padding:10px 22px;border-radius:5px;cursor:pointer;border:1px solid var(--gold);
+  background:linear-gradient(180deg,#3a2a12,#241809);color:var(--gold-bright)}
+.mbtns button.go{background:linear-gradient(180deg,var(--gold),#8a6a24);color:#1a1206;border-color:var(--gold-bright)}
+.mbtns button:disabled{opacity:.4;cursor:not-allowed}
 .zhint{position:fixed;bottom:26px;left:0;right:0;text-align:center;font-family:'Cinzel',serif;
   font-size:11px;letter-spacing:.14em;color:var(--gold);opacity:.85}
 
@@ -574,6 +630,7 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
 </div>
 
 <div class="zoom" id="zoom"></div>
+<div class="mull" id="mull"></div>
 
 <div class="over" id="over">
   <h2 id="overT"></h2>
@@ -661,12 +718,82 @@ function newGame(){
   ['me','ai'].forEach(p=>{
     S[p]={hp:MAXHP,deck:buildDeck(),hand:[],board:Array(SLOTS).fill(null),lands:[],landPlayed:false};
   });
-  for(let i=0;i<HANDSTART;i++){draw('me');draw('ai');}
+  dealHand('me'); dealHand('ai'); aiMulligan();
+  S.mull={n:0,back:[]};
   document.getElementById('log').innerHTML='';
   document.getElementById('over').classList.remove('on');
-  log(`게임 시작 — ${(EL[DECKEL]||{}).ko} 단색 덱 40장 · 양측 HP 60`,'t');
+  const z=document.getElementById('zoom'); z.classList.remove('on'); z.innerHTML='';
   renderDeckPick();
-  startTurn('me');
+  render();
+  showMull();
+}
+/* ============ 첫 턴 멀리건 (런던 멀리건) ============
+   멀리건할 때마다 7장을 새로 뽑되, 시작할 때 멀리건 횟수만큼 덱 아래로 돌려놓는다.
+   지형 17/40 덱이라 지형 0~1장 손패는 사실상 게임이 안 된다 — 멀리건이 필수 장치다. */
+const MULLMAX=3;
+function landsIn(hand){ return hand.filter(isLand).length; }
+function dealHand(p){
+  const P=S[p];
+  P.deck=P.deck.concat(P.hand); P.hand=[];
+  for(let i=P.deck.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[P.deck[i],P.deck[j]]=[P.deck[j],P.deck[i]];}
+  for(let i=0;i<HANDSTART;i++)P.hand.push(P.deck.pop());
+}
+function aiMulligan(){
+  for(let n=0;n<MULLMAX;n++){
+    const L=landsIn(S.ai.hand);
+    if(L>=2&&L<=5)break;
+    dealHand('ai');
+  }
+  /* 상대도 멀리건한 횟수만큼 되돌려야 하지만, 관찰되지 않는 정보라 지형 과잉분부터 덜어낸다 */
+}
+function mullHTML(){
+  const h=S.me.hand, L=landsIn(h), need=S.mull.n;
+  const cls=L<2?'warn':(L>5?'warn':'good');
+  const picked=S.mull.back.length;
+  const canGo=picked===need;
+  return `<div class="mbox">
+    <h2>시작 손패</h2>
+    <div class="msub">${(EL[DECKEL]||{}).ko} · ${DECKS[DECKEL].name} — 덱 40장 (지형 17)<br>
+      ${need?`멀리건 <b>${need}회</b> — 시작하려면 <b>${need}장</b>을 덱 아래로 되돌린다. 카드를 눌러 고르세요.`
+            :'이 패로 시작하거나, 멀리건해서 7장을 새로 받습니다.'}</div>
+    <div class="mstat">
+      <span class="${cls}">지형 ${L}장</span>
+      <span>주문·크리처 ${h.length-L}장</span>
+      <span>멀리건 ${need}/${MULLMAX}</span>
+    </div>
+    <div class="mhand">${h.map((n,i)=>{
+      const p=S.mull.back.includes(i)?' pick':'';
+      return `<div class="mcard${p}" data-m="${i}">${isLand(n)?landCardHTML(n,'md'):tcardHTML(n,{size:'md'})}</div>`;
+    }).join('')}</div>
+    <div class="mbtns">
+      <button id="mullBtn" ${need>=MULLMAX?'disabled':''}>멀리건 (${MULLMAX-need}회 남음)</button>
+      <button class="go" id="keepBtn" ${canGo?'':'disabled'}>
+        ${need?(canGo?'이 패로 시작':`${need-picked}장 더 고르세요`):'이 패로 시작'}</button>
+    </div>
+  </div>`;
+}
+function showMull(){
+  const m=document.getElementById('mull');
+  m.innerHTML=mullHTML(); m.classList.add('on');
+  m.querySelectorAll('.mcard').forEach(el=>el.onclick=()=>{
+    if(!S.mull.n)return;                       /* 멀리건 안 했으면 고를 필요 없음 */
+    const i=+el.dataset.m, k=S.mull.back.indexOf(i);
+    if(k>=0)S.mull.back.splice(k,1);
+    else if(S.mull.back.length<S.mull.n)S.mull.back.push(i);
+    showMull();
+  });
+  document.getElementById('mullBtn').onclick=()=>{
+    S.mull.n++; S.mull.back=[]; dealHand('me'); showMull();
+  };
+  document.getElementById('keepBtn').onclick=()=>{
+    const P=S.me;
+    S.mull.back.sort((a,b)=>b-a).forEach(i=>{ P.deck.unshift(P.hand[i]); P.hand.splice(i,1); });
+    if(S.mull.n)log(`나 멀리건 ${S.mull.n}회 — ${S.mull.n}장을 덱 아래로`,'t');
+    document.getElementById('mull').classList.remove('on');
+    document.getElementById('mull').innerHTML='';
+    log(`게임 시작 — ${(EL[DECKEL]||{}).ko} 단색 덱 40장 · 양측 HP 60`,'t');
+    startTurn('me');
+  };
 }
 function draw(p){
   const P=S[p];
@@ -798,6 +925,15 @@ function cleanup(p){
 /* ============ 전투 ============ */
 const sleep=ms=>new Promise(r=>setTimeout(r,ms/SPEED));
 let SPEED=1;
+/* 턴 시작 안내 — 양쪽 턴 모두 띄운다 */
+function turnBanner(p){
+  const d=document.createElement('div');
+  d.className='turnban '+p;
+  d.innerHTML=`<div class="tb1"><div class="tn">TURN ${S.turn}</div>`
+    +`<div class="tt">${p==='me'?'내 턴':'상대 턴'}</div><div class="bar"></div></div>`;
+  document.body.appendChild(d);
+  setTimeout(()=>d.remove(),1150/SPEED);
+}
 function phaseCard(text){
   const d=document.createElement('div');
   d.className='phase';d.textContent=text;document.body.appendChild(d);
@@ -911,8 +1047,9 @@ function startTurn(p){
   draw(p);
   if(checkEnd())return;
   log(`— 턴 ${S.turn} · ${p==='me'?'내 턴':'상대 턴'} (지형 ${P.lands.length})`,'t');
+  turnBanner(p);
   render();
-  if(p==='ai')setTimeout(aiTurn,520);
+  if(p==='ai')setTimeout(aiTurn,760/SPEED);
 }
 async function endTurn(){
   if(S.busy)return;
