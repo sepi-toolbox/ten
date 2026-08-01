@@ -63,14 +63,15 @@ const g4=await p.$$eval('.dgh',e=>e.length);
 await p.mouse.move(board.x+100,board.y+30,{steps:6}); await p.mouse.up(); await p.waitForTimeout(300);
 console.log(`   고스트 ${g4}(0이어야) · 손패 ${h1} → ${await idxOf(()=>S.me.hand.length)}`);
 
-console.log('── 5. 스펠: 상대 크리처를 자동 지정');
+console.log('── 5. 대상 스펠: 빈 곳에 떨구면 타게팅 진입 (tg.js 가 본검사)');
 await p.evaluate(()=>{const cr=Object.keys(POOL).filter(n=>POOL[n].k==='cr'&&POOL[n].el==='fire');
   placeCreature('ai',cr[0],4);placeCreature('ai',cr[1],7);render();});
 await stock();
 i=await idxOf(()=>S.me.hand.findIndex(n=>POOL[n]&&POOL[n].k==='sp'&&canPay('me',n)&&!INSTANT.includes(POOL[n].mode)&&POOL[n].mode!=='summon'&&!NEEDS_MINE.includes(POOL[n].mode)));
 if(i>=0){ const nm=await idxOf(j=>S.me.hand[j],i);
   await drag(i, foeb.x+foeb.width/2, foeb.y-30, `  ${nm} (보드 위 여백)`);
-  console.log('   상대 보드:',await idxOf(()=>S.ai.board.map(u=>u?u.name+'/'+(u.insts?u.insts[0].hp:'-'):'·').join(' ')));
+  console.log('   타게팅 진입:',await idxOf(()=>!!TGT));
+  await p.evaluate(()=>cancelTargeting()); await p.waitForTimeout(200);
 } else console.log('   대상 스펠 없음(건너뜀)');
 
 console.log('── 6. 기존 조작 유지');

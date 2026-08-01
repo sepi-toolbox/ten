@@ -529,16 +529,6 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
 .tb.h.dmg{background:#6b1410;border-color:#ff9a88;color:#fff;box-shadow:0 0 7px rgba(255,90,74,.65)}
 .tb.a.dmg{background:#4a3a10;border-color:#e0b25e;color:#fff3d0}
 .tb.buf{background:#1d4a12;border-color:#8ce06a;color:#e8ffdc}
-.tstk{position:absolute;top:calc(var(--cw)*.025);right:calc(var(--cw)*.035);z-index:3;
-  font-family:'Cinzel',serif;font-weight:700;font-size:calc(var(--cw)*.105);
-  color:#f2d488;background:rgba(8,5,3,.85);border:1px solid #7c5a30;
-  border-radius:3px;padding:0 calc(var(--cw)*.035)}
-.tpips{position:absolute;right:calc(var(--cw)*.035);bottom:calc(var(--cw)*.245);
-  display:flex;flex-direction:column;gap:1px;align-items:flex-end;z-index:3}
-.tpips i{font-family:'Cinzel',serif;font-style:normal;font-weight:700;font-size:calc(var(--cw)*.093);
-  background:rgba(13,43,37,.92);border:1px solid #4fc4a6;color:#d6fff2;
-  border-radius:3px;padding:0 calc(var(--cw)*.035)}
-.tpips i.dmg{background:rgba(107,20,16,.92);border-color:#ff7a66;color:#fff}
 
 /* ---- 이미지 프레임 카드 (생성 프레임을 쓰는 경우) ----
    레이아웃은 data/frames.json 의 실측 좌표를 CSS 변수로 받아 절대배치한다.
@@ -589,10 +579,6 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
 /* 인챈트 충전 — 효과문 판 오른쪽 아래 */
 .tcard.fr.ench .fstat{left:auto;right:calc(var(--cw)*.03);top:auto;bottom:calc(var(--cw)*.045);
   height:auto;width:calc(var(--cw)*.2);padding:0;justify-content:center}
-.fstk{right:calc(var(--cw)*.04);top:calc(var(--cw)*.04);z-index:4;
-  font-family:'Cinzel',serif;font-weight:700;font-size:calc(var(--cw)*.1);
-  color:#f2d488;background:rgba(8,5,3,.85);border:1px solid #7c5a30;border-radius:3px;
-  padding:0 calc(var(--cw)*.03)}
 
 /* 크기 — 세 곳 모두 같은 규격, 폭만 다르다 */
 .tcard.sm{--cw:100cqw}                       /* 보드: 슬롯 폭에 맞춘다 */
@@ -787,7 +773,7 @@ const DECKS={"fire":{"name":"연소 러시","core":"수명을 팔아 초반 스�
 let DECKEL='steel';
 let DECKLIST=DECKS[DECKEL].list;
 /* LAND_END */
-const MAXHP=60,SLOTS=10,STACKMAX=5,MANACAP=10,HANDSTART=7;
+const MAXHP=60,SLOTS=10,MANACAP=10,HANDSTART=7;   /* 동명 중첩 규칙 폐기 — 크리처 1종 = 슬롯 1칸 */
 
 if(typeof ROGUE!=='undefined'&&ROGUE.over)Object.assign(POOL,ROGUE.over);  /* 강화 카드도 POOL에 */
 let PDECK=null, EDECK=null;      /* 로그라이크에서 쓸 커스텀 덱 (null이면 DECKLIST) */
@@ -1401,18 +1387,11 @@ function onSummon(p,name,idx){
   }
   const fn=ONSUMMON[name]; if(fn)fn(p,idx);
 }
+/* 크리처는 빈 슬롯에만 놓인다. 같은 이름이라도 겹치지 않는다. */
 function placeCreature(p,name,idx){
   const B=S[p].board;
-  if(B[idx]&&B[idx].kind==='cr'&&B[idx].name===name&&B[idx].insts.length<STACKMAX){
-    B[idx].insts.push(mkInst(baseHp(name,idx),kwHas(POOL[name].kw,'가호')));return true;
-  }
-  if(!B[idx]){B[idx]=mkUnit(name,idx);return true;}
-  return false;
-}
-function findStackable(p,name){
-  const B=S[p].board;
-  for(let i=0;i<SLOTS;i++) if(B[i]&&B[i].kind==='cr'&&B[i].name===name&&B[i].insts.length<STACKMAX) return i;
-  return -1;
+  if(B[idx])return false;
+  B[idx]=mkUnit(name,idx); return true;
 }
 function firstEmpty(p,fromLeft=true){
   const B=S[p].board;
@@ -1760,14 +1739,13 @@ async function aiTurn(){
     const units=playable.filter(x=>x.c.k==='cr'||x.c.k==='en').sort((a,b)=>b.c.c-a.c.c);
     if(!units.length)break;
     const u=units[0];
-    let slot=-1, stacked=false;
+    let slot=-1;
     if(u.c.k==='en'){
       slot=firstEmpty('ai',false);if(slot<0)break;
     }else{
-      slot=findStackable('ai',u.n);
+      slot=-1;
       if(slot<0)slot=u.c.g?firstEmpty('ai',true):firstEmpty('ai',false);
       if(slot<0)break;
-      stacked=!!P.board[slot];
     }
     await reveal('ai',u.n);
     if(u.c.k==='en'){
@@ -1775,7 +1753,7 @@ async function aiTurn(){
       log(`상대 ${u.n} 배치 [슬롯 ${slot+1}] 충전 ${u.c.ch}`,'e');
     }else{
       placeCreature('ai',u.n,slot);
-      log(`상대 ${u.n} 소환 [슬롯 ${slot+1}]${stacked?' (중첩 '+P.board[slot].insts.length+')':''}`,u.c.g?'g':(u.c.f?'f':''));
+      log(`상대 ${u.n} 소환 [슬롯 ${slot+1}]`,u.c.g?'g':(u.c.f?'f':''));
       onSummon('ai',u.n,slot);
     }
     pay('ai',u.n);P.hand.splice(u.i,1);
@@ -1907,10 +1885,9 @@ async function clickSlot(side,idx){
   const n=S.me.hand[S.sel],c=POOL[n];
   if(S.mode==='place'&&side==='me'){
     const B=S.me.board[idx];
-    if(B&&!(B.kind==='cr'&&B.name===n&&B.insts.length<STACKMAX))return;
-    const stacked=!!B;
+    if(B)return;
     placeCreature('me',n,idx);
-    log(`나 ${n} 소환 [슬롯 ${idx+1}]${stacked?' (중첩 '+S.me.board[idx].insts.length+')':''}`,c.g?'g':(c.f?'f':''));
+    log(`나 ${n} 소환 [슬롯 ${idx+1}]`,c.g?'g':(c.f?'f':''));
     onSummon('me',n,idx);
     S.spawn={side:'me',idx};setTimeout(()=>{S.spawn=null;},520/SPEED);
   }else if(S.mode==='ench'&&side==='me'){
@@ -1968,7 +1945,7 @@ async function castSelectedAoe(){
 
 /* ============ 손패 밖으로 끌어 놓으면 발동 ============ */
 /* 슬롯을 고르지 않는다 — 소환·배치는 왼쪽 빈 칸부터 채우고, 스펠은 대상을 알아서 고른다.
-   드롭 지점이 마침 유효한 슬롯이면 그 슬롯을 존중한다(중첩·대상 지정을 남겨 두기 위해). */
+   드롭 지점이 마침 유효한 대상이면 그 대상을 존중한다. */
 function modeOf(n){
   if(isLand(n))return 'land';
   const c=POOL[n]; if(!c)return null;
@@ -1980,14 +1957,9 @@ function modeOf(n){
   return 'target';
 }
 function leftFree(p){ for(let i=0;i<SLOTS;i++) if(!S[p].board[i]) return i; return -1; }
-function leftStack(p,n){
-  for(let i=0;i<SLOTS;i++){ const u=S[p].board[i];
-    if(u&&u.kind==='cr'&&u.name===n&&u.insts.length<STACKMAX) return i; }
-  return -1;
-}
 function slotOkFor(mode,n,side,idx){
   const u=S[side].board[idx];
-  if(mode==='place')  return !u||(u.kind==='cr'&&u.name===n&&u.insts.length<STACKMAX);
+  if(mode==='place')  return !u;
   if(mode==='ench'||mode==='summon') return !u;
   if(mode==='mine')   return !!u&&u.kind==='cr'&&u.insts.length>0;
   if(mode==='target') return !!u&&(POOL[n].mode==='shatter'?u.kind==='en':u.kind==='cr');
@@ -2013,7 +1985,7 @@ function autoFoe(n){                       /* 제거 대상 — 잡을 수 있�
   return kill>=0?kill:best;
 }
 function autoIdx(mode,n){
-  if(mode==='place'){ const f=leftFree('me'); return f>=0?f:leftStack('me',n); }
+  if(mode==='place') return leftFree('me');
   if(mode==='ench'||mode==='summon') return leftFree('me');
   if(mode==='mine')   return autoMine();
   if(mode==='target') return autoFoe(n);
@@ -2041,7 +2013,7 @@ function playFromHand(i,hit){
   if(mode==='instant'){ render(); castSelectedInstant(); return true; }
   const side=mode==='target'?'ai':'me';
   /* 소환·배치는 슬롯을 고르지 않는다 — 어디에 떨궈도 무조건 왼쪽 빈 칸부터.
-     (중첩처럼 자리를 지정해야 하는 경우는 탭 선택 → 슬롯 탭 흐름이 그대로 남아 있다)
+     (자리를 직접 지정하고 싶으면 탭 선택 → 슬롯 탭 흐름이 그대로 남아 있다)
      대상 스펠만은 떨어진 곳이 유효한 대상이면 그 대상을 존중한다. */
   const honor=(mode==='target'||mode==='mine');
   let idx=(honor&&hit&&hit.side===side&&slotOkFor(mode,n,side,hit.idx))?hit.idx:-1;
@@ -2086,13 +2058,12 @@ function frameCardHTML(name,opt,c,el,ec,key){
   }
   const art=ART[name]?`<div class="fart" style="background-image:url(${ART[name]})"></div>`
                      :'<div class="fart"></div>';
-  const stk=(u&&u.insts&&u.insts.length>1)?`<div class="fstk">×${u.insts.length}</div>`:'';
   const cls=c.k==='en'?'ench':'';
   return `<div class="tcard fr ${cls} ${opt.size||'md'}" style="--el:${ec};${frameVars(g)}">
     ${art}<div class="fimg" style="background-image:url(${g.img})"></div>
     <div class="fname${hasCostBand?'':' split'}">${name}${inline}</div>
     ${pips?`<div class="fcost">${pips}</div>`:''}
-    <div class="feff">${eff}</div>${stat}${stk}
+    <div class="feff">${eff}</div>${stat}
   </div>`;
 }
 function tcardHTML(name,opt){
@@ -2101,8 +2072,7 @@ function tcardHTML(name,opt){
   if(!c){                                   /* 토큰 — POOL 에 없다. 없으면 빈 칸으로 그려진다 */
     const t=opt.unit; if(!t||!t.token)return '';
     const hp=t.insts[0]?Math.max(0,t.insts[0].hp):0;
-    const stk0=t.insts.length>1?`<div class="tstk">×${t.insts.length}</div>`:'';
-    return `<div class="tcard normal ${opt.size||'md'}" style="--el:#8894A6">${stk0}
+    return `<div class="tcard normal ${opt.size||'md'}" style="--el:#8894A6">
       <div class="thead"><div class="tname">${name}</div><div class="tcost"></div></div>
       <div class="tart"></div>
       <div class="tbody"><div class="teff"><b>토큰</b></div></div>
@@ -2134,13 +2104,9 @@ function tcardHTML(name,opt){
   } else if(c.k==='en'){
     foot=`<div class="tstat"><span></span><span class="tb ch">${u?u.charge:c.ch}</span></div>`;
   } else foot='<div class="tstat"></div>';   /* 스펠 — 뱃지는 없지만 자리는 차지한다 */
-  const stk=(u&&u.insts&&u.insts.length>1)?`<div class="tstk">×${u.insts.length}</div>`:'';
-  const pip2=(u&&u.insts&&u.insts.length>1)
-    ? `<div class="tpips">${u.insts.slice(1).map(x=>`<i class="${x.hp<c.h?'dmg':''}">${Math.max(0,x.hp)}</i>`).join('')}</div>` : '';
   return `<div class="tcard ${cls} ${opt.size||'md'}" style="--el:${ec}">
-    ${stk}
     <div class="thead"><div class="tname">${name}</div><div class="tcost">${pips}</div></div>
-    ${art}${pip2}
+    ${art}
     <div class="tbody"><div class="teff">${eff}</div></div>${foot}
   </div>`;
 }
@@ -2199,7 +2165,7 @@ function render(){
     document.querySelectorAll('.slot').forEach(el=>{
       const side=el.dataset.side,idx=+el.dataset.idx,u=S[side==='me'?'me':'ai'].board[idx];
       let ok=false;
-      if(S.mode==='place'&&side==='me') ok=!u||(u.kind==='cr'&&u.name===n&&u.insts.length<STACKMAX);
+      if(S.mode==='place'&&side==='me') ok=!u;
       if(S.mode==='ench'&&side==='me') ok=!u;
       if(S.mode==='summon'&&side==='me') ok=!u;
       if(S.mode==='mine'&&side==='me') ok=!!u&&u.kind==='cr';
@@ -2289,7 +2255,7 @@ function render(){
     const n=S.me.hand[S.sel];
     const cm=POOL[n]||{};
     if(isLand(n))hint.textContent=`${n} — 손패 밖에 놓으면 지형 배치`;
-    else if(S.mode==='place')hint.textContent=`${n} — 손패 밖에 놓으면 왼쪽 빈 칸부터 소환 (슬롯을 탭하면 그 자리·중첩)`;
+    else if(S.mode==='place')hint.textContent=`${n} — 손패 밖에 놓으면 왼쪽 빈 칸부터 소환 (슬롯을 탭하면 그 자리)`;
     else if(S.mode==='ench')hint.textContent=`${n} — 손패 밖에 놓으면 왼쪽 빈 슬롯에 배치`;
     else if(S.mode==='summon')hint.textContent=`${n} — 손패 밖에 놓으면 왼쪽 빈 슬롯에 토큰 소환`;
     else if(S.mode==='mine')hint.textContent=`${n} — 강화할 내 크리처를 지정하세요`;
