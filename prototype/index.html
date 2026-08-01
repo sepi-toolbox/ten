@@ -629,6 +629,21 @@ body.dragmode.armed .hand{outline-color:transparent}
 .hcw.no:hover{transform:none}
 .slot.occ{padding:0;background:transparent;border:none!important;box-shadow:none!important}
 
+/* 키워드 상태 뱃지 — 카드 아래쪽에 겹친다 */
+/* 공/체 뱃지와 겹치지 않도록 일러스트 오른쪽에 세로로 쌓는다 */
+.kbs{position:absolute;right:2px;top:27%;z-index:4;display:flex;flex-direction:column;
+  align-items:flex-end;gap:2px;max-width:76%;pointer-events:none}
+.kb{font-style:normal;font-family:'Gothic A1',sans-serif;font-size:6.5px;font-weight:700;
+  line-height:1;padding:2px 3px;border-radius:3px;white-space:nowrap;
+  border:1px solid rgba(0,0,0,.4);background:rgba(16,11,5,.94);color:#f2d488}
+.kb.burn{color:#ffb27a;border-color:#a04a22}
+.kb.grow{color:#9ce29a;border-color:#2f6d2c}
+.kb.hard{color:#cfd8e6;border-color:#5d6a7d}
+.kb.ward{color:#ffe9a8;border-color:#a8862c}
+.kb.drain{color:#e8a4da;border-color:#7d3a6d}
+.kb.echo{color:#8fd4ee;border-color:#2b6d8a}
+.kb.form{color:#e0c08a;border-color:#7a5c2a}
+
 .tcard.land{border-style:dashed}
 .tcard.land .landart{background:
   radial-gradient(circle at 50% 40%, color-mix(in srgb,var(--el) 55%,transparent), transparent 70%), #16100a}
@@ -1291,29 +1306,90 @@ function playLand(p,name){
 }
 
 /* ============ 보드 조작 ============ */
-function mkUnit(name){
-  const c=POOL[name];
-  return {name,kind:'cr',insts:[{hp:c.h}],a:c.a,g:!!c.g,f:!!c.f,p:!!c.p,kw:c.kw||''};
-}
+/* ============ 키워드 엔진 ============ */
+/* 카드의 kw 문자열이 유일한 출처다 — 이 파서가 곧 규칙 구현이다.
+   원본 표는 tools/gen_decks.py 의 KW. 문자열 형식을 바꾸면 여기도 같이 바꿔야 한다. */
 /* 키워드 텍스트에서 숫자 뽑기 — "대가 6 · 비행" → 6 */
 function kwNum(txt,key){
-  const m=(txt||'').match(new RegExp(key+'\\s*(\\d+)'));
+  /* "진형 +4" 처럼 부호가 붙는 표기가 있다 — +를 빼먹으면 조용히 0이 된다 */
+  const m=(txt||'').match(new RegExp(key+'\\s*\\+?(\\d+)'));
   return m?+m[1]:0;
 }
-/* 소환 시 즉시 치르는 대가/축복 (실제 자원이 오가는 키워드만 구현) */
-function onSummon(p,name){
-  const kw=(POOL[name]||{}).kw||'';
-  const cost=kwNum(kw,'대가'), bless=kwNum(kw,'축복');
-  const who=p==='me'?'나':'상대';
+const kwHas=(txt,key)=>(txt||'').includes(key);
+/* "성장 +1/+1 (3회까지)" → {a:1,h:1,left:3} */
+function growSpec(kw){
+  const m=(kw||'').match(/성장\s*\+(\d+)\/\+(\d+)\s*\((\d+)회/);
+  return m?{a:+m[1],h:+m[2],left:+m[3]}:null;
+}
+/* 개체는 최대 체력(mh)을 들고 다닌다 — 가호 부활과 성장/연마 누적에 쓴다 */
+const mkInst=(h,ward)=>({hp:h,mh:h,ward:!!ward});
+/* 진형 — 슬롯 1~3(0-based 0~2)에 있을 때만 체력을 더 받는다 */
+function baseHp(name,idx){
+  const c=POOL[name]||{}, f=kwNum(c.kw,'진형');
+  return (c.h||0)+((f&&idx<3)?f:0);
+}
+function mkUnit(name,idx){
+  const c=POOL[name], kw=c.kw||'', ward=kwHas(kw,'가호');
+  return {name,kind:'cr',insts:[mkInst(baseHp(name,idx),ward)],
+    a:c.a,g:!!c.g,f:!!c.f,p:!!c.p,kw,
+    burn:kwNum(kw,'연소'),  burst:kwNum(kw,'폭산'), hard:kwNum(kw,'경화'),
+    drain:kwNum(kw,'흡혈'), form:(idx<3?kwNum(kw,'진형'):0),
+    echo:kwHas(kw,'환류'),  breed:kwHas(kw,'증식'),
+    hone:kwHas(kw,'연마')?3:0, grow:growSpec(kw), ward};
+}
+/* 모든 피해는 여기를 지난다 — 경화를 한 곳에서만 적용하기 위해서다 */
+function hurt(u,inst,v){ const d=Math.max(0,v-(u.hard||0)); inst.hp-=d; return d; }
+function hurtAll(u,v){ u.insts.forEach(i=>hurt(u,i,v)); return Math.max(0,v-(u.hard||0)); }
+
+/* 소환 시 — 대가·축복·밀물 + 카드별 고유 문구 */
+const ONSUMMON={
+  '조수술사':(p,idx)=>{                       /* 소환 시 내 크리처 1개체를 손으로 회수 */
+    const B=S[p].board; let best=-1,bv=1e9;
+    for(let i=0;i<SLOTS;i++){ if(i===idx)continue; const u=B[i];
+      if(!u||u.kind!=='cr'||u.token||!u.insts.length)continue;
+      const v=u.a*10+u.insts[0].hp; if(v<bv){bv=v;best=i;} }
+    if(best<0){ log('  조수술사 — 회수할 크리처 없음','t'); return; }
+    const u=B[best]; B[best]=null; S[p].hand.push(u.name);
+    log(`  ${p==='me'?'나':'상대'} 조수술사 — ${u.name} 손으로 회수`,'g');
+  },
+  '숲의 여왕':(p)=>{                          /* 소환 시 내 크리처 전체 +1/+1 */
+    let k=0;
+    S[p].board.forEach(u=>{ if(!u||u.kind!=='cr')return;
+      u.a+=1; u.insts.forEach(i=>{i.hp+=1;i.mh+=1;}); k++; });
+    log(`  ${p==='me'?'나':'상대'} 숲의 여왕 — 내 크리처 ${k}종 +1/+1`,'g');
+  },
+  '지진술사':(p)=>{                           /* 소환 시 상대 슬롯 1~3에 각각 2 피해 */
+    const foe=p==='me'?'ai':'me', D=S[foe].board;
+    let k=0;
+    for(let i=0;i<3;i++){ const u=D[i]; if(!u||u.kind!=='cr')continue; hurtAll(u,2); k++; }
+    log(`  ${p==='me'?'나':'상대'} 지진술사 — 상대 앞열 ${k}종에 2 피해`,'a');
+    cleanup(foe);
+  },
+};
+function onSummon(p,name,idx){
+  const kw=(POOL[name]||{}).kw||'', who=p==='me'?'나':'상대';
+  const cost=kwNum(kw,'대가'), bless=kwNum(kw,'축복'), tide=kwNum(kw,'밀물');
   if(cost){ S[p].hp-=cost; log(`  ${who} 대가 ${cost} — HP ${S[p].hp+cost}→${S[p].hp}`,'a'); }
   if(bless){ S[p].hp=Math.min(MAXHP,S[p].hp+bless); log(`  ${who} 축복 ${bless} — HP 회복`,'g'); }
+  if(tide){                                  /* 밀물 N — N코 이하 상대 1개체를 손으로 */
+    const foe=p==='me'?'ai':'me', D=S[foe].board;
+    let best=-1,bv=-1;
+    for(let i=0;i<SLOTS;i++){ const u=D[i];
+      if(!u||u.kind!=='cr'||u.token||!u.insts.length)continue;
+      if(((POOL[u.name]||{}).c||99)>tide)continue;
+      const v=u.a*10+u.insts[0].hp; if(v>bv){bv=v;best=i;} }
+    if(best>=0){ const u=D[best]; D[best]=null; S[foe].hand.push(u.name);
+      log(`  ${who} 밀물 ${tide} — 상대 ${u.name} 손으로`,'g'); }
+    else log(`  ${who} 밀물 ${tide} — ${tide}코 이하 대상 없음`,'t');
+  }
+  const fn=ONSUMMON[name]; if(fn)fn(p,idx);
 }
 function placeCreature(p,name,idx){
   const B=S[p].board;
   if(B[idx]&&B[idx].kind==='cr'&&B[idx].name===name&&B[idx].insts.length<STACKMAX){
-    B[idx].insts.push({hp:POOL[name].h});return true;
+    B[idx].insts.push(mkInst(baseHp(name,idx),kwHas(POOL[name].kw,'가호')));return true;
   }
-  if(!B[idx]){B[idx]=mkUnit(name);return true;}
+  if(!B[idx]){B[idx]=mkUnit(name,idx);return true;}
   return false;
 }
 function findStackable(p,name){
@@ -1327,13 +1403,77 @@ function firstEmpty(p,fromLeft=true){
   else{for(let i=SLOTS-1;i>=0;i--) if(!B[i]) return i;}
   return -1;
 }
+/* 사망 판정은 전부 여기를 지난다 — 가호(파괴 무효)·환류·폭산·불사조가 걸려 있다 */
+let DEATHD=0;                                /* 폭산 연쇄가 무한히 튀지 않게 하는 깊이 제한 */
 function cleanup(p){
-  const B=S[p].board;
+  const B=S[p].board, deaths=[];
   for(let i=0;i<SLOTS;i++){
     const u=B[i];if(!u)continue;
-    if(u.kind==='cr'){u.insts=u.insts.filter(x=>x.hp>0);if(!u.insts.length)B[i]=null;}
-    else if(u.charge<=0)B[i]=null;
+    if(u.kind!=='cr'){ if(u.charge<=0)B[i]=null; continue; }
+    const alive=[]; let died=0;
+    u.insts.forEach(inst=>{
+      if(inst.hp>0){alive.push(inst);return;}
+      if(inst.ward){                          /* 가호 — 첫 파괴 1회를 무효로 하고 최대 체력 복구 */
+        inst.ward=false; inst.hp=inst.mh; alive.push(inst);
+        log(`  ${u.name} 가호 — 파괴 무효 (HP ${inst.mh})`,'g'); return;
+      }
+      died++;
+    });
+    u.insts=alive;
+    if(died)deaths.push({u,i,died});
+    if(!u.insts.length)B[i]=null;
   }
+  deaths.forEach(d=>onDeath(p,d.u,d.i,d.died));
+}
+function onDeath(p,u,idx,cnt){
+  if(u.token)return;
+  const who=p==='me'?'나':'상대', foe=p==='me'?'ai':'me';
+  if(u.echo){                                 /* 환류 — 무덤 대신 손으로 */
+    let back=0;
+    for(let k=0;k<cnt;k++){ if(S[p].hand.length>=10)break; S[p].hand.push(u.name); back++; }
+    log(`  ${who} ${u.name} 환류 — 손으로 ${back}장${back<cnt?' (손이 가득 참)':''}`,'g');
+  }
+  if(u.burst&&DEATHD<4){                      /* 폭산 — 소멸 시 상대 전체 피해 */
+    const v=u.burst*cnt;
+    log(`  ${who} ${u.name} 폭산 ${u.burst} — 상대 전체 ${v} 피해`,'a');
+    S[foe].board.forEach(t=>{ if(t&&t.kind==='cr')hurtAll(t,v); });
+    DEATHD++; cleanup(foe); DEATHD--;
+  }
+  if(u.name==='불사조'){                       /* 소멸 시 1/1 잿불 소환 */
+    for(let k=0;k<cnt;k++){
+      const s=firstEmpty(p); if(s<0)break;
+      S[p].board[s]=mkToken('잿불',1,1);
+      log(`  ${who} 불사조 — 1/1 잿불 소환 [슬롯 ${s+1}]`,'g');
+    }
+  }
+}
+/* 내 턴 종료 시 — 성장·연마·증식이 먼저, 연소 소멸이 마지막 */
+function endStep(p){
+  const B=S[p].board, who=p==='me'?'나':'상대';
+  for(let i=0;i<SLOTS;i++){
+    const u=B[i]; if(!u||u.kind!=='cr')continue;
+    if(u.grow&&u.grow.left>0){
+      u.a+=u.grow.a; u.insts.forEach(x=>{x.hp+=u.grow.h;x.mh+=u.grow.h;}); u.grow.left--;
+      log(`  ${who} ${u.name} 성장 +${u.grow.a}/+${u.grow.h} (남은 ${u.grow.left}회)`,'g');
+    }
+    if(u.hone>0){
+      u.a+=1; u.insts.forEach(x=>{x.hp+=2;x.mh+=2;}); u.hone--;
+      log(`  ${who} ${u.name} 연마 +1/+2 (남은 ${u.hone}회)`,'g');
+    }
+    if(u.breed&&u.insts.length<STACKMAX){
+      u.insts.push(mkInst(baseHp(u.name,i),kwHas(u.kw,'가호')));
+      log(`  ${who} ${u.name} 증식 — 개체 ${u.insts.length}`,'g');
+    }
+  }
+  for(let i=0;i<SLOTS;i++){
+    const u=B[i]; if(!u||u.kind!=='cr'||!u.burn)continue;
+    u.burn--;
+    if(u.burn<=0){                            /* 가호로도 못 막는다 — 스스로 타 없어지는 것 */
+      log(`  ${who} ${u.name} 연소 소멸`,'a');
+      u.insts.forEach(x=>{x.hp=0;x.ward=false;});
+    }
+  }
+  cleanup(p);
 }
 
 /* ============ 전투 ============ */
@@ -1410,13 +1550,13 @@ async function resolveAttacks(p){
         if(!d||d.kind!=='cr'||!d.insts.length){S.fx=null;render();continue;}
         const inst=d.insts[0];
         const before=inst.hp;
-        inst.hp-=u.a;                        // 초과 피해 이월 없음
-        const waste=u.a-before;
-        const dead=inst.hp<=0;
-        S.fx.dmg=u.a; S.fx.struck=true;
+        const dealt=hurt(d,inst,u.a);        // 경화 적용 · 초과 피해 이월 없음
+        const waste=dealt-before;
+        const dead=inst.hp<=0&&!inst.ward;
+        S.fx.dmg=dealt; S.fx.struck=true;
         S.fx.kill=dead?`${d.name} 파괴`:null;
         S.fx.waste=(dead&&waste>0)?`초과 ${waste} 소멸`:null;
-        log(`${me?'나':'상대'} ${label}(${u.a}) → ${d.name} ${before}→${Math.max(0,inst.hp)}`,u.f?'f':'g');
+        log(`${me?'나':'상대'} ${label}(${u.a}${dealt!==u.a?`→${dealt} 경화`:''}) → ${d.name} ${before}→${Math.max(0,inst.hp)}`,u.f?'f':'g');
         if(dead){
           log(`  ${d.name} 1개체 파괴${waste>0?` · 초과 ${waste} 소멸(이월 없음)`:''}`,'a');
           d.insts.shift();
@@ -1427,6 +1567,10 @@ async function resolveAttacks(p){
         S.fx.dmg=u.a; S.fx.struck=true;
         log(`${me?'나':'상대'} ${label}(${u.a}) → 플레이어 · HP ${Math.max(0,S[foe].hp)}`,u.f?'f':'a');
         render();
+      }
+      if(u.drain){                           /* 흡혈 — 공격할 때마다 회복 */
+        S[p].hp=Math.min(MAXHP,S[p].hp+u.drain);
+        log(`  ${me?'나':'상대'} 흡혈 ${u.drain} — HP ${S[p].hp}`,'g'); render();
       }
       await sleep(560);
       if(S.gen!==gen)return;
@@ -1474,7 +1618,9 @@ async function endTurn(){
   const p=S.active;
   await resolveAttacks(p);           // 크리처 공격 먼저
   if(checkEnd()){S.busy=false;return;}
-  await drainEnchants(p);            // 인챈트 발동은 마지막 (잠정)
+  await drainEnchants(p);            // 인챈트 발동
+  if(checkEnd()){S.busy=false;return;}
+  endStep(p); render();              // 성장·연마·증식·연소는 턴 종료 마지막에
   if(checkEnd()){S.busy=false;return;}
   S.busy=false;
   if(p==='me'){S.active='ai';startTurn('ai');}
@@ -1514,7 +1660,7 @@ async function aiTurn(){
     if(aoe&&myInsts>=3){
       await reveal('ai',aoe.n);
       log(`상대 ${aoe.n} 사용 — 내 전체 개체에 ${aoe.c.v} 피해`,'a');
-      S.me.board.forEach(u=>{if(u&&u.kind==='cr')u.insts.forEach(i=>i.hp-=aoe.c.v);});
+      S.me.board.forEach(u=>{if(u&&u.kind==='cr')hurtAll(u,aoe.c.v);});
       pay('ai',aoe.n);P.hand.splice(aoe.i,1);
       S.aoeFx={side:'me',v:aoe.c.v};render();
       phaseCard(aoe.n);
@@ -1537,7 +1683,7 @@ async function aiTurn(){
       const k=kills[0], u=S.me.board[k.j];
       await reveal('ai',k.x.n);
       const before=u.insts[0].hp;
-      u.insts[0].hp-=k.x.c.v;
+      hurt(u,u.insts[0],k.x.c.v);
       log(`상대 ${k.x.n} → 내 ${u.name} ${before}→${Math.max(0,u.insts[0].hp)}`,'a');
       log(`  ${u.name} 1개체 파괴`,'a');
       pay('ai',k.x.n);P.hand.splice(k.x.i,1);
@@ -1607,7 +1753,7 @@ async function aiTurn(){
     }else{
       placeCreature('ai',u.n,slot);
       log(`상대 ${u.n} 소환 [슬롯 ${slot+1}]${stacked?' (중첩 '+P.board[slot].insts.length+')':''}`,u.c.g?'g':(u.c.f?'f':''));
-      onSummon('ai',u.n);
+      onSummon('ai',u.n,slot);
     }
     pay('ai',u.n);P.hand.splice(u.i,1);
     S.spawn={side:'ai',idx:slot};render();
@@ -1649,7 +1795,7 @@ function parseSummon(d){                     /* "2/4 망령 2개체" → {a,h,n}
 function drawCount(v){ return Math.max(1,Math.round(v/1.5)); }
 
 /* 토큰 크리처 — POOL에 없는 임시 개체 */
-function mkToken(nm,a,h){ return {name:nm,kind:'cr',insts:[{hp:h}],a,g:0,f:0,p:0,kw:'토큰',token:true,th:h}; }
+function mkToken(nm,a,h){ return {name:nm,kind:'cr',insts:[mkInst(h)],a,g:0,f:0,p:0,kw:'토큰',token:true,th:h}; }
 
 function resolveInstant(p,name){
   const c=POOL[name], who=p==='me'?'나':'상대';
@@ -1674,7 +1820,7 @@ function resolveOnFoe(p,name,idx){
   }
   if(u.kind!=='cr'||!u.insts.length) return false;
   if(c.mode==='dmg'){
-    const b=u.insts[0].hp; u.insts[0].hp-=c.v;
+    const b=u.insts[0].hp; hurt(u,u.insts[0],c.v);
     log(`${who} ${name} → ${u.name} ${b}→${Math.max(0,u.insts[0].hp)}`,'a');
     if(u.insts[0].hp<=0)log(`  ${u.name} 1개체 파괴`,'a');
   }else if(c.mode==='kill'){
@@ -1693,7 +1839,7 @@ function resolveOnMine(p,name,idx){
   const who=p==='me'?'나':'상대';
   if(c.mode==='buff'){
     const b=parseBuff(c.d);
-    u.a+=b.a; u.insts.forEach(i=>i.hp+=b.h);
+    u.a+=b.a; u.insts.forEach(i=>{i.hp+=b.h;i.mh+=b.h;});
     log(`${who} ${name} → ${u.name} +${b.a}/+${b.h}`,'g');
   }else{
     log(`${who} ${name} → ${u.name} (부여 — 규칙 미구현)`,'t');
@@ -1742,7 +1888,7 @@ async function clickSlot(side,idx){
     const stacked=!!B;
     placeCreature('me',n,idx);
     log(`나 ${n} 소환 [슬롯 ${idx+1}]${stacked?' (중첩 '+S.me.board[idx].insts.length+')':''}`,c.g?'g':(c.f?'f':''));
-    onSummon('me',n);
+    onSummon('me',n,idx);
     S.spawn={side:'me',idx};setTimeout(()=>{S.spawn=null;},520/SPEED);
   }else if(S.mode==='ench'&&side==='me'){
     if(S.me.board[idx])return;
@@ -1787,7 +1933,7 @@ async function castSelectedAoe(){
   if(S.busy)return;
   const n=S.me.hand[S.sel],c=POOL[n];
   log(`나 ${n} 사용 — 상대 전체 개체에 ${c.v} 피해`,'a');
-  S.ai.board.forEach(u=>{if(u&&u.kind==='cr')u.insts.forEach(i=>i.hp-=c.v);});
+  S.ai.board.forEach(u=>{if(u&&u.kind==='cr')hurtAll(u,c.v);});
   pay('me',n);S.me.hand.splice(S.sel,1);S.sel=null;S.mode=null;
   S.busy=true;S.aoeFx={side:'ai',v:c.v};render();
   phaseCard(n);
@@ -1928,7 +2074,17 @@ function frameCardHTML(name,opt,c,el,ec,key){
 }
 function tcardHTML(name,opt){
   opt=opt||{};
-  const c=POOL[name]; if(!c) return '';
+  const c=POOL[name];
+  if(!c){                                   /* 토큰 — POOL 에 없다. 없으면 빈 칸으로 그려진다 */
+    const t=opt.unit; if(!t||!t.token)return '';
+    const hp=t.insts[0]?Math.max(0,t.insts[0].hp):0;
+    const stk0=t.insts.length>1?`<div class="tstk">×${t.insts.length}</div>`:'';
+    return `<div class="tcard normal ${opt.size||'md'}" style="--el:#8894A6">${stk0}
+      <div class="thead"><div class="tname">${name}</div><div class="tcost"></div></div>
+      <div class="tart"></div>
+      <div class="tbody"><div class="teff"><b>토큰</b></div></div>
+      <div class="tstat"><span class="tb a">${t.a}</span><span class="tb h">${hp}</span></div></div>`;
+  }
   {
     const el0=CE[name]||'steel';
     const kind=c.k==='cr'?'cr':(c.k==='sp'?'sp':'en');
@@ -1967,6 +2123,22 @@ function tcardHTML(name,opt){
 }
 
 /* ============ 렌더 ============ */
+/* 살아 있는 키워드 상태를 슬롯 위에 표시한다 (남은 연소 턴·성장 횟수·가호 유무 등) */
+function kwBadges(u){
+  if(!u||u.kind!=='cr')return '';
+  const b=[];
+  if(u.burn)b.push(`<i class="kb burn">연소 ${u.burn}</i>`);
+  if(u.burst)b.push(`<i class="kb burn">폭산 ${u.burst}</i>`);
+  if(u.grow&&u.grow.left)b.push(`<i class="kb grow">성장 ${u.grow.left}</i>`);
+  if(u.hone)b.push(`<i class="kb grow">연마 ${u.hone}</i>`);
+  if(u.breed)b.push('<i class="kb grow">증식</i>');
+  if(u.hard)b.push(`<i class="kb hard">경화 ${u.hard}</i>`);
+  if(u.insts.some(x=>x.ward))b.push('<i class="kb ward">가호</i>');
+  if(u.form)b.push(`<i class="kb form">진형 +${u.form}</i>`);
+  if(u.drain)b.push(`<i class="kb drain">흡혈 ${u.drain}</i>`);
+  if(u.echo)b.push('<i class="kb echo">환류</i>');
+  return b.length?`<div class="kbs">${b.join('')}</div>`:'';
+}
 function slotHTML(u,side,i){
   if(!u)return `<div class="slot idx" data-i="${i+1}" data-side="${side}" data-idx="${i}"></div>`;
   let cls='slot occ idx';
@@ -1975,7 +2147,8 @@ function slotHTML(u,side,i){
   else if(u.g)cls+=' guard';
   else if(u.f)cls+=' fly';
   else if(u.p)cls+=' pierce';
-  return `<div class="${cls}" data-i="${i+1}" data-side="${side}" data-idx="${i}">${tcardHTML(u.name,{size:'sm',unit:u})}</div>`;
+  return `<div class="${cls}" data-i="${i+1}" data-side="${side}" data-idx="${i}">`
+    +`${tcardHTML(u.name,{size:'sm',unit:u})}${kwBadges(u)}</div>`;
 }
 function render(){
   const mine=S.active==='me'&&!S.over&&!S.busy;
