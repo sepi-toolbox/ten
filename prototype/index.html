@@ -75,21 +75,11 @@ body::before{
 .bar .cnt{font-family:'Cinzel',serif;font-size:10px;color:var(--gold);letter-spacing:.08em;opacity:.85}
 
 /* ---- 지형존 (land zone) ----
-   내려놓은 지형을 **카드 그대로** 보여준다. 보드 슬롯과 같은 규격(5:7)이고,
+   크리처 보드와 **완전히 같은 판**을 쓴다(.board + .slot). 내려놓은 지형을 카드 그대로 보여주고,
    그 위에 자원 토큰과 상태 뱃지만 얹는다. */
-.lzwrap{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-.lz{display:grid;grid-template-columns:repeat(5,minmax(0,64px));gap:5px;padding:9px;
-  background:linear-gradient(180deg,rgba(0,0,0,.34),rgba(0,0,0,.12));
-  border:1px solid var(--rule);border-radius:8px;box-shadow:inset 0 0 26px rgba(0,0,0,.6)}
-.lslot{position:relative;aspect-ratio:5/7;container-type:inline-size;
-  border-radius:5px;transition:.18s}
-.lslot.empty{border:1px dashed #3a2c19;background:linear-gradient(180deg,#1e150d,#150e08);
-  box-shadow:inset 0 1px 3px rgba(0,0,0,.6);opacity:.45}
-.lslot.empty::after{content:'+';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-  font-family:'Cinzel',serif;font-size:15px;color:#6b5430}
-.lslot.used .tcard{filter:grayscale(.45) brightness(.72)}
-.lslot.ent .tcard{opacity:.82}
-/* 자원 토큰 — 카드 아트 위에 올라간다 */
+.lz .slot{position:relative}
+.lz .slot.used .tcard{filter:grayscale(.45) brightness(.72)}
+.lz .slot.ent .tcard{opacity:.82}
 .lz .tok{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);z-index:4;
   width:26cqw;height:26cqw;border-radius:50%;border:1px solid rgba(255,255,255,.5);
   transition:transform .2s cubic-bezier(.3,.9,.4,1),opacity .2s}
@@ -100,10 +90,9 @@ body::before{
 .ltag{position:absolute;top:47%;right:4%;z-index:5;font-family:'Cinzel',serif;
   font-size:8.5cqw;letter-spacing:.08em;line-height:1.5;padding:0 4%;border-radius:2px;
   background:rgba(8,5,3,.9);border:1px solid #6b5430;color:var(--gold)}
-.lslot.used .ltag{color:var(--rule);border-color:var(--rule)}
-.lzinfo{font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.06em;line-height:1.5}
-.lzinfo b{display:block;font-size:17px;color:var(--gold-bright)}
-.lzinfo s{display:block;font-size:9px;opacity:.6;text-decoration:none;letter-spacing:.14em}
+.lz .slot.used .ltag{color:var(--rule);border-color:var(--rule)}
+.lzc{font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--gold-bright);
+  letter-spacing:.06em;margin-left:8px}
 
 /* ---- board ---- */
 .board{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin-bottom:14px;padding:9px;
@@ -646,8 +635,8 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
       <div class="mana" id="foeMana"></div>
       <div class="cnt" id="foeCnt">손 0 · 덱 0</div>
     </div>
-    <div class="lbl">상대 지형</div>
-    <div class="lzwrap"><div class="lz" id="foeLz"></div><div class="lzinfo" id="foeLzInfo"></div></div>
+    <div class="lbl">상대 지형 <span class="lzc" id="foeLzInfo"></span></div>
+    <div class="board lz" id="foeLz"></div>
 
     <div class="lbl">상대 보드</div>
     <div class="board" id="foeBoard"></div>
@@ -655,8 +644,8 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
     <div class="lbl">내 보드</div>
     <div class="board" id="myBoard"></div>
 
-    <div class="lbl">내 지형</div>
-    <div class="lzwrap"><div class="lz" id="myLz"></div><div class="lzinfo" id="myLzInfo"></div></div>
+    <div class="lbl">내 지형 <span class="lzc" id="myLzInfo"></span></div>
+    <div class="board lz" id="myLz"></div>
 
     <div class="bar me" id="myBar">
       <div class="who">나</div>
@@ -746,7 +735,7 @@ const DECKS={"fire":{"name":"연소 러시","core":"수명을 팔아 초반 스�
 let DECKEL='steel';
 let DECKLIST=DECKS[DECKEL].list;
 /* LAND_END */
-const MAXHP=60,SLOTS=10,STACKMAX=5,MANACAP=5,HANDSTART=7;
+const MAXHP=60,SLOTS=10,STACKMAX=5,MANACAP=10,HANDSTART=7;
 
 if(typeof ROGUE!=='undefined'&&ROGUE.over)Object.assign(POOL,ROGUE.over);  /* 강화 카드도 POOL에 */
 let PDECK=null, EDECK=null;      /* 로그라이크에서 쓸 커스텀 덱 (null이면 DECKLIST) */
@@ -1236,7 +1225,7 @@ function lzHTML(p){
   const L=S[p].lands; let h='';
   for(let i=0;i<MANACAP;i++){
     const l=L[i];
-    if(!l){ h+='<div class="lslot empty"></div>'; continue; }
+    if(!l){ h+=`<div class="slot idx" data-i="${i+1}"></div>`; continue; }
     const c1=(EL[l.els[0]]||EL.steel).c;
     const c2=l.els[1]?(EL[l.els[1]]||EL.steel).c:null;
     const fill=c2?`linear-gradient(135deg,${c1} 0 50%,${c2} 50% 100%)`:c1;
@@ -1248,8 +1237,8 @@ function lzHTML(p){
           :`<i class="tok" style="background:${fill};box-shadow:0 0 9px ${c1}"></i>`)
       : `<i class="tok ${st==='ent'?'ent':'gone'}"></i>`;
     const tag=st==='ent'?'대기':(st==='used'?'소모':'');
-    h+=`<div class="lslot ${st}" title="${l.name} · ${tip}">${landCardHTML(l.name,'sm')}`
-      +`${tok}${tag?`<span class="ltag">${tag}</span>`:''}</div>`;
+    h+=`<div class="slot occ idx ${st}" data-i="${i+1}" title="${l.name} · ${tip}">`
+      +`${landCardHTML(l.name,'sm')}${tok}${tag?`<span class="ltag">${tag}</span>`:''}</div>`;
   }
   return h;
 }
@@ -1395,7 +1384,10 @@ async function resolveAttacks(p){
 
       /* --- 2) 피해 적용 --- */
       if(tgt>=0){
-        const d=D[tgt], inst=d.insts[0];
+        // sleep(400) 사이에 대상이 사라졌을 수 있다 → 재검증 후 없으면 이번 타격은 흘린다
+        const d=D[tgt];
+        if(!d||d.kind!=='cr'||!d.insts.length){S.fx=null;render();continue;}
+        const inst=d.insts[0];
         const before=inst.hp;
         inst.hp-=u.a;                        // 초과 피해 이월 없음
         const waste=u.a-before;
@@ -1890,8 +1882,8 @@ function render(){
     const el=document.getElementById(p==='me'?'myMana':'foeMana');
     el.innerHTML=`<span class="mtxt">${manaLeft(p)}/${S[p].lands.length}</span>`;
     document.getElementById(p==='me'?'myLz':'foeLz').innerHTML=lzHTML(p);
-    document.getElementById(p==='me'?'myLzInfo':'foeLzInfo').innerHTML=
-      `<b>${manaLeft(p)}</b><s>/ ${S[p].lands.length} 지형</s>`;
+    document.getElementById(p==='me'?'myLzInfo':'foeLzInfo').textContent=
+      `사용 가능 ${manaLeft(p)} / 배치 ${S[p].lands.length} / 상한 ${MANACAP}`;
     document.getElementById(p==='me'?'myCnt':'foeCnt').textContent=`손 ${S[p].hand.length} · 덱 ${S[p].deck.length}`;
   });
   document.getElementById('turnMeta').textContent=`TURN ${S.turn} · ${S.active==='me'?'내 턴':'상대 턴'}`;
