@@ -601,8 +601,29 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
 @supports not (width:1cqw){ .tcard.sm{--cw:84px} }
 
 /* 손패 래퍼 */
-.hcw{flex:none;cursor:pointer;transition:.15s}
+.hcw{flex:none;cursor:grab;transition:.15s;touch-action:pan-x}   /* 세로 제스처는 드래그로 넘긴다 */
 .hcw:hover{transform:translateY(-4px)}
+.hcw.dragging{opacity:.18;transform:none!important;transition:none}
+
+/* 드래그 — 손패 밖으로 끌어내면 발동 */
+.dgh{position:fixed;left:0;top:0;z-index:88;pointer-events:none;will-change:transform;
+  filter:drop-shadow(0 14px 26px rgba(0,0,0,.66))}
+.dgh .tcard{--cw:92px;border-color:var(--gold-bright)}
+.dgh.ok .tcard{box-shadow:0 0 0 2px var(--gold-bright),0 0 22px rgba(242,212,136,.75)}
+body.dragmode .hand{outline:1px dashed rgba(242,212,136,.28);outline-offset:4px;border-radius:8px}
+body.dragmode.armed .hand{outline-color:transparent}
+.dztip{position:fixed;z-index:87;left:50%;transform:translateX(-50%);top:8px;pointer-events:none;
+  font-family:'Gothic A1',sans-serif;font-size:12px;font-weight:700;letter-spacing:.02em;
+  padding:7px 14px;border-radius:20px;border:1px solid var(--gold);
+  background:rgba(20,14,6,.93);color:var(--gold-bright);white-space:nowrap;
+  box-shadow:0 6px 18px rgba(0,0,0,.5)}
+.dztip.ok{border-color:var(--gold-bright);background:rgba(46,34,10,.96)}
+.toast{position:fixed;z-index:95;left:50%;bottom:22px;transform:translateX(-50%);
+  font-family:'Gothic A1',sans-serif;font-size:12.5px;font-weight:700;padding:9px 16px;border-radius:20px;
+  border:1px solid #a2643c;background:rgba(38,18,10,.96);color:#f0c9a4;pointer-events:none;
+  box-shadow:0 6px 18px rgba(0,0,0,.55);animation:tst 1.5s ease forwards}
+@keyframes tst{0%{opacity:0;transform:translate(-50%,10px)}12%{opacity:1;transform:translate(-50%,0)}
+  75%{opacity:1}100%{opacity:0;transform:translate(-50%,-6px)}}
 .hcw.sel .tcard{border-color:var(--gold-bright);box-shadow:0 8px 18px rgba(0,0,0,.55),0 0 16px rgba(242,212,136,.7)}
 .hcw.no{opacity:.42;cursor:not-allowed;filter:grayscale(.4)}
 .hcw.no:hover{transform:none}
@@ -1776,6 +1797,91 @@ async function castSelectedAoe(){
   cleanup('ai');render();
 }
 
+/* ============ 손패 밖으로 끌어 놓으면 발동 ============ */
+/* 슬롯을 고르지 않는다 — 소환·배치는 왼쪽 빈 칸부터 채우고, 스펠은 대상을 알아서 고른다.
+   드롭 지점이 마침 유효한 슬롯이면 그 슬롯을 존중한다(중첩·대상 지정을 남겨 두기 위해). */
+function modeOf(n){
+  if(isLand(n))return 'land';
+  const c=POOL[n]; if(!c)return null;
+  if(c.k==='cr')return 'place';
+  if(c.k==='en')return 'ench';
+  if(c.mode==='summon')return 'summon';
+  if(INSTANT.includes(c.mode))return 'instant';
+  if(NEEDS_MINE.includes(c.mode))return 'mine';
+  return 'target';
+}
+function leftFree(p){ for(let i=0;i<SLOTS;i++) if(!S[p].board[i]) return i; return -1; }
+function leftStack(p,n){
+  for(let i=0;i<SLOTS;i++){ const u=S[p].board[i];
+    if(u&&u.kind==='cr'&&u.name===n&&u.insts.length<STACKMAX) return i; }
+  return -1;
+}
+function slotOkFor(mode,n,side,idx){
+  const u=S[side].board[idx];
+  if(mode==='place')  return !u||(u.kind==='cr'&&u.name===n&&u.insts.length<STACKMAX);
+  if(mode==='ench'||mode==='summon') return !u;
+  if(mode==='mine')   return !!u&&u.kind==='cr'&&u.insts.length>0;
+  if(mode==='target') return !!u&&(POOL[n].mode==='shatter'?u.kind==='en':u.kind==='cr');
+  return false;
+}
+function autoMine(){                       /* 강화 대상 — 제일 값나가는 내 크리처 */
+  let best=-1,bv=-1;
+  for(let i=0;i<SLOTS;i++){ const u=S.me.board[i];
+    if(!u||u.kind!=='cr'||!u.insts.length)continue;
+    const v=u.a*10+u.insts[0].hp; if(v>bv){bv=v;best=i;} }
+  return best;
+}
+function autoFoe(n){                       /* 제거 대상 — 잡을 수 있으면 그중 최고, 없으면 최고 위협 */
+  const c=POOL[n], D=S.ai.board;
+  if(c.mode==='shatter'){ for(let i=0;i<SLOTS;i++) if(D[i]&&D[i].kind==='en') return i; return -1; }
+  let best=-1,bv=-1,kill=-1,kv=-1;
+  for(let i=0;i<SLOTS;i++){ const u=D[i];
+    if(!u||u.kind!=='cr'||!u.insts.length)continue;
+    const v=u.a*10+u.insts[0].hp;
+    if(v>bv){bv=v;best=i;}
+    const lethal=(c.mode==='kill'||c.mode==='bounce'||(c.v||0)>=u.insts[0].hp);
+    if(lethal&&v>kv){kv=v;kill=i;} }
+  return kill>=0?kill:best;
+}
+function autoIdx(mode,n){
+  if(mode==='place'){ const f=leftFree('me'); return f>=0?f:leftStack('me',n); }
+  if(mode==='ench'||mode==='summon') return leftFree('me');
+  if(mode==='mine')   return autoMine();
+  if(mode==='target') return autoFoe(n);
+  return -1;
+}
+const NOSLOT={place:'빈 슬롯이 없다',ench:'인챈트를 놓을 빈 슬롯이 없다',
+  summon:'토큰을 놓을 빈 슬롯이 없다',mine:'강화할 내 크리처가 없다',target:'상대 대상이 없다'};
+function toast(msg){
+  document.querySelectorAll('.toast').forEach(e=>e.remove());
+  const t=document.createElement('div'); t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t); setTimeout(()=>t.remove(),1600);
+}
+/* hit = {side,idx} 드롭 지점의 슬롯(없으면 null) */
+function playFromHand(i,hit){
+  if(S.over||S.busy||S.active!=='me')return false;
+  const n=S.me.hand[i]; if(n===undefined)return false;
+  if(isLand(n)){
+    if(S.me.landPlayed){toast('이번 턴 지형은 이미 놓았다');return false;}
+    playLand('me',n); S.me.hand.splice(i,1); S.sel=null; S.mode=null; render(); return true;
+  }
+  const c=POOL[n]; if(!c)return false;
+  if(!canPay('me',n)){toast('마나가 모자란다');return false;}
+  const mode=modeOf(n);
+  S.sel=i; S.mode=mode;
+  if(mode==='instant'){ render(); castSelectedInstant(); return true; }
+  const side=mode==='target'?'ai':'me';
+  /* 소환·배치는 슬롯을 고르지 않는다 — 어디에 떨궈도 무조건 왼쪽 빈 칸부터.
+     (중첩처럼 자리를 지정해야 하는 경우는 탭 선택 → 슬롯 탭 흐름이 그대로 남아 있다)
+     대상 스펠만은 떨어진 곳이 유효한 대상이면 그 대상을 존중한다. */
+  const honor=(mode==='target'||mode==='mine');
+  let idx=(honor&&hit&&hit.side===side&&slotOkFor(mode,n,side,hit.idx))?hit.idx:-1;
+  if(idx<0)idx=autoIdx(mode,n);
+  if(idx<0){ S.sel=null;S.mode=null;render(); toast(NOSLOT[mode]||'놓을 수 없다'); return false; }
+  clickSlot(side,idx);
+  return true;
+}
+
 
 /* ============ 통합 카드 컴포넌트 ============ */
 /* 프레임 이미지가 있으면 그걸로, 없으면 기존 CSS 카드로 그린다 */
@@ -1979,16 +2085,18 @@ function render(){
   const cancel=document.getElementById('cancel');
   if(S.busy){hint.className='hint';hint.textContent='전투 처리 중…';cancel.disabled=true;}
   else if(!mine){hint.className='hint idle';hint.textContent='상대 턴 진행 중…';cancel.disabled=true;}
-  else if(S.sel===null){hint.className='hint idle';hint.textContent='카드를 선택하세요';cancel.disabled=true;}
+  else if(S.sel===null){hint.className='hint idle';
+    hint.textContent='카드를 손패 밖으로 끌어 놓으면 발동 · 길게 누르면 확대';cancel.disabled=true;}
   else{
     cancel.disabled=false;hint.className='hint';
     const n=S.me.hand[S.sel];
     const cm=POOL[n]||{};
-    if(S.mode==='place')hint.textContent=`${n} — 배치할 슬롯 선택 (동명 슬롯은 중첩)`;
-    else if(S.mode==='ench')hint.textContent=`${n} — 빈 슬롯 선택`;
-    else if(S.mode==='summon')hint.textContent=`${n} — 토큰을 놓을 빈 슬롯 선택`;
-    else if(S.mode==='mine')hint.textContent=`${n} — 내 크리처 선택`;
-    else if(S.mode==='target')hint.textContent=`${n} — 상대 ${cm.mode==='shatter'?'인챈트':'크리처'} 선택`;
+    if(isLand(n))hint.textContent=`${n} — 손패 밖에 놓으면 지형 배치`;
+    else if(S.mode==='place')hint.textContent=`${n} — 손패 밖에 놓으면 왼쪽 빈 칸부터 소환 (슬롯을 탭하면 그 자리·중첩)`;
+    else if(S.mode==='ench')hint.textContent=`${n} — 손패 밖에 놓으면 왼쪽 빈 슬롯에 배치`;
+    else if(S.mode==='summon')hint.textContent=`${n} — 손패 밖에 놓으면 왼쪽 빈 슬롯에 토큰 소환`;
+    else if(S.mode==='mine')hint.textContent=`${n} — 손패 밖에 놓으면 최적 크리처 강화 (슬롯을 찍으면 그 개체)`;
+    else if(S.mode==='target')hint.textContent=`${n} — 손패 밖에 놓으면 상대 ${cm.mode==='shatter'?'인챈트':'크리처'} 자동 지정`;
     else{hint.innerHTML=`${n} — ${SPELL_KO[cm.mode]||''} 즉시 발동 &nbsp;<b style="cursor:pointer;text-decoration:underline" id="fire">[발동]</b>`;
       setTimeout(()=>{const f=document.getElementById('fire');if(f)f.onclick=castSelectedInstant;},0);}
   }
@@ -2070,6 +2178,74 @@ document.addEventListener('pointermove',e=>{
   document.addEventListener(ev,()=>{clearTimeout(lpT);lpT=null;},{passive:true}));
 document.addEventListener('click',e=>{ if(lpFired){e.stopPropagation();e.preventDefault();lpFired=false;} },true);
 document.addEventListener('contextmenu',e=>{ if(e.target.closest('.slot.occ,.hcw,.hc'))e.preventDefault(); });
+
+/* ============ 드래그 앤 드롭 ============ */
+/* 손패는 가로 스크롤이므로 제스처를 나눈다 — 가로 우세 = 스크롤 · 세로(위) = 카드 끌어내기.
+   드롭 판정은 "손패 사각형 밖이면 발동". 슬롯을 정확히 맞출 필요가 없다. */
+let DR=null, dg=null;
+const DZTIP={land:'지형 배치',place:'왼쪽 빈 칸부터 소환',ench:'왼쪽 빈 칸에 배치',
+  summon:'왼쪽 빈 칸에 토큰 소환',instant:'즉시 발동',mine:'내 크리처 강화',target:'상대 대상 지정'};
+function handRect(){ return document.getElementById('hand').getBoundingClientRect(); }
+function inHand(x,y){
+  const r=handRect();
+  return x>=r.left-10&&x<=r.right+10&&y>=r.top-8&&y<=r.bottom+12;
+}
+function dragStart(i,x,y){
+  if(S.over||S.busy||S.active!=='me')return;
+  const n=S.me.hand[i]; if(n===undefined)return;
+  if(isLand(n)){ if(S.me.landPlayed)return; }
+  else if(!POOL[n]||!canPay('me',n))return;
+  const mode=modeOf(n); if(!mode)return;
+  clearTimeout(lpT); lpT=null;
+  /* 모드를 미리 세워 두면 기존 슬롯 하이라이트(.pick)가 그대로 켜진다 */
+  S.sel=i; S.mode=mode==='land'?null:mode; render();
+  const src=document.querySelector(`.hcw[data-h="${i}"]`);
+  if(src)src.classList.add('dragging');
+  const g=document.createElement('div'); g.className='dgh';
+  g.innerHTML=isLand(n)?landCardHTML(n,'md'):tcardHTML(n,{size:'md'});
+  document.body.appendChild(g);
+  const tip=document.createElement('div'); tip.className='dztip';
+  tip.textContent=`${n} — 손패 밖에 놓으면 ${DZTIP[mode]||'발동'}`;
+  document.body.appendChild(tip);
+  document.body.classList.add('dragmode');
+  DR={i,n,mode,g,tip};
+  dragMove(x,y);
+}
+function dragMove(x,y){
+  if(!DR)return;
+  DR.g.style.transform=`translate(${x-46}px,${y-74}px) rotate(-3.5deg) scale(1.05)`;
+  const ok=!inHand(x,y);
+  DR.g.classList.toggle('ok',ok);
+  DR.tip.classList.toggle('ok',ok);
+  document.body.classList.toggle('armed',ok);
+}
+function dragEnd(x,y,cancel){
+  if(!DR)return; const d=DR; DR=null;
+  d.g.remove(); d.tip.remove();
+  document.body.classList.remove('dragmode','armed');
+  document.querySelectorAll('.hcw.dragging').forEach(e=>e.classList.remove('dragging'));
+  if(cancel||inHand(x,y)){ S.sel=null;S.mode=null;render(); return; }
+  const el=document.elementFromPoint(x,y);
+  const slot=el&&el.closest?el.closest('.slot[data-side]'):null;
+  playFromHand(d.i, slot?{side:slot.dataset.side,idx:+slot.dataset.idx}:null);
+}
+document.addEventListener('pointerdown',e=>{
+  if(document.getElementById('zoom').classList.contains('on'))return;
+  const hc=e.target.closest('.hcw'); if(!hc||hc.classList.contains('no'))return;
+  dg={i:+hc.dataset.h,x:e.clientX,y:e.clientY};
+});
+document.addEventListener('pointermove',e=>{
+  if(DR){ e.preventDefault(); dragMove(e.clientX,e.clientY); return; }
+  if(!dg)return;
+  const dx=e.clientX-dg.x, dy=e.clientY-dg.y;
+  if(Math.abs(dx)>14&&Math.abs(dx)>Math.abs(dy)*1.4){ dg=null; return; }   /* 가로 = 손패 스크롤 */
+  if(dy<-14||Math.hypot(dx,dy)>26){ const i=dg.i; dg=null; dragStart(i,e.clientX,e.clientY); }
+},{passive:false});
+document.addEventListener('pointerup',e=>{
+  if(DR){ lpFired=true; dragEnd(e.clientX,e.clientY,false); }   /* 뒤따르는 click 이 카드 선택으로 새지 않게 */
+  dg=null;
+});
+document.addEventListener('pointercancel',()=>{ if(DR)dragEnd(0,0,true); dg=null; });
 
 newGame();
 </script>
