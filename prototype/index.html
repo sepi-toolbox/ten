@@ -137,7 +137,9 @@ body::before{
 .lbl{font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:5px}
 
 /* ---- hand ---- */
-.hand{display:flex;gap:7px;overflow-x:auto;padding:4px 0 10px}
+.hand{display:flex;gap:0;overflow-x:auto;padding:4px 0 10px;justify-content:flex-start}
+.hand>*{margin-left:var(--hgap,7px)}
+.hand>*:first-child{margin-left:0}
 .hc{
   flex:none;width:86px;border:1.5px solid var(--gold);border-radius:6px;
   background:linear-gradient(180deg,var(--parch),var(--parch-2));
@@ -423,18 +425,19 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
 .map{position:relative;padding:14px 10px;overflow-x:auto}
 .map svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
 .mrow{display:flex;justify-content:center;gap:26px;margin:0 0 26px;position:relative;z-index:1}
-.mnode{width:58px;height:58px;border-radius:9px;border:2px solid var(--rule);background:#150e08;
+.mnode{width:72px;height:auto;min-height:62px;padding:5px 3px;border-radius:9px;border:2px solid var(--rule);background:#150e08;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
   cursor:default;transition:.16s;position:relative;opacity:.45}
 .mnode .ic{font-size:19px;line-height:1}
-.mnode .nm{font-family:'Cinzel',serif;font-size:8px;letter-spacing:.06em;color:var(--gold);opacity:.9}
+.mnode .nm{font-family:'Gothic A1','Cinzel',sans-serif;font-size:8.5px;font-weight:700;line-height:1.2;
+  letter-spacing:-.01em;text-align:center;color:var(--gold);opacity:.92;word-break:keep-all}
 .mnode.can{opacity:1;cursor:pointer;border-color:var(--gold-bright);
   box-shadow:0 0 14px rgba(242,212,136,.5);animation:pulse 1.4s ease-in-out infinite}
 .mnode.can:hover{transform:translateY(-3px)}
 .mnode.done{opacity:.85;border-color:var(--emerald);box-shadow:inset 0 0 14px rgba(47,157,132,.35)}
 .mnode.done::after{content:'✓';position:absolute;top:-6px;right:-6px;width:17px;height:17px;border-radius:50%;
   background:var(--emerald);color:#04120e;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
-.mnode.boss{width:70px;height:70px;border-color:#e0796e}
+.mnode.boss{width:84px;min-height:74px;border-color:#e0796e}
 .mnode.boss.can{box-shadow:0 0 20px rgba(224,121,110,.65)}
 .rgcards{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin:14px 0 4px}
 .rgc{position:relative;cursor:pointer;transition:.15s;border-radius:7px}
@@ -582,7 +585,7 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
 
 /* 크기 — 세 곳 모두 같은 규격, 폭만 다르다 */
 .tcard.sm{--cw:100cqw}                       /* 보드: 슬롯 폭에 맞춘다 */
-.tcard.md{--cw:86px}                         /* 손패 */
+.tcard.md{--cw:var(--handcw,86px)}           /* 손패 — 모바일에서 --handcw 로 조절 */
 .tcard.lg{--cw:min(72vw,260px)}              /* 확대 */
 @supports not (width:1cqw){ .tcard.sm{--cw:84px} }
 
@@ -620,6 +623,109 @@ body.dragmode.armed .hand{outline-color:transparent}
 body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
 @keyframes tgtpulse{0%,100%{box-shadow:0 0 0 1px var(--gold-bright)}
   50%{box-shadow:0 0 0 2px var(--gold-bright),0 0 16px rgba(242,212,136,.75)}}
+/* ══════════════════════════════════════════════════════════
+   모바일 세로 UI — 하스스톤/MTGA 배치
+   한 화면 안에서 끝난다: 상대 → 내 판 → (가운데) 조작 → 손패.
+   높이는 dvh 로 잡는다(모바일 브라우저 주소창이 접히면 vh 가 어긋난다).
+   ══════════════════════════════════════════════════════════ */
+@media (max-width:900px){
+  body{padding:0;height:100dvh;overflow:hidden}
+  .wrap{max-width:none;height:100dvh;display:flex;flex-direction:column;gap:0;padding:0}
+
+  /* 머리 — 한 줄로 압축 */
+  .hdr{margin:0;padding:5px 8px 4px;gap:6px;flex:none;align-items:center;border-bottom:1px solid var(--rule)}
+  .hdr h1{font-size:15px;letter-spacing:0}
+  .hdr .meta{font-size:9px;letter-spacing:.1em;order:4;margin-left:auto}
+  .modepick{margin-left:6px;order:2;gap:4px}
+  .modepick button{font-size:9.5px;padding:4px 8px}
+  .sideBtn{padding:4px 9px!important;font-size:12px!important}
+  .deckpick{order:5;flex:1 0 100%;margin:4px 0 0;flex-wrap:nowrap;overflow-x:auto;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .deckpick::-webkit-scrollbar{display:none}
+  .deckpick button{font-size:9px;padding:4px 8px;flex:none}
+
+  /* 판 — 세로로 쌓고, 가운데에 조작 줄을 끼운다 */
+  .main{flex:1;min-height:0;display:flex;flex-direction:column;padding:4px 6px 0;overflow-y:auto}
+  #foeBar{order:1} #lbFoeLz{order:2} #foeLz{order:3}
+  #lbFoeB{order:4} #foeBoard{order:5}
+  .ctl{order:6}
+  #lbMyB{order:7} #myBoard{order:8}
+  #lbMyLz{order:9} #myLz{order:10}
+  #myBar{order:11} #lbHand{order:12} #hand{order:13}
+
+  .bar{flex:none;gap:7px;padding:5px 8px;margin-bottom:2px;border-radius:5px}
+  .bar .who{font-size:10px;min-width:0;max-width:38%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bar .hp{font-size:17px;min-width:26px}
+  .bar .hpbar{height:8px;min-width:40px}
+  .bar .cnt{font-size:8.5px;letter-spacing:.03em;white-space:nowrap}
+  .mana{display:none}                      /* 지형존이 같은 정보를 더 잘 보여준다 */
+
+  /* 남는 세로 여백을 각 구역 위로 고르게 나눈다 — 라벨이 자기 판을 데리고 내려온다.
+     (한 곳에 몰아주면 손패 위에 거대한 빈칸이 생긴다) */
+  .lbl{flex:none;font-size:8px;letter-spacing:.1em;margin:1px 0 2px;display:flex;align-items:center}
+  #lbFoeLz,#lbFoeB,#lbMyB,#lbMyLz{margin-top:auto}
+  .lzc{font-size:8.5px;margin-left:5px;letter-spacing:0}
+  .board{flex:none;gap:2px;padding:3px;margin-bottom:2px;border-radius:5px}
+  .slot{border-radius:3px;padding:1px}
+  .slot.idx::after{font-size:5.5px;top:1px;left:2px}
+  .kb{font-size:5.5px;padding:1px 2px}
+  .kbs{gap:1px;right:1px}
+
+  /* 가운데 조작 줄 — 안내문 + 턴 종료 (하스스톤의 가운데 띠) */
+  .ctl{flex:none;margin:3px 0 4px;gap:5px;flex-wrap:nowrap}
+  .hint{font-size:10.5px;padding:5px 8px;min-height:28px;min-width:0;flex:1;line-height:1.35}
+  .ctl button{font-size:10.5px;padding:7px 10px;flex:none}
+
+  /* 손패 — 넘치면 겹친다(--hgap 은 render 가 계산해 음수로 넣는다) */
+  :root{--handcw:clamp(78px,24vw,112px)}
+  #lbHand{display:none}
+  /* 손패는 화면 바닥에 붙인다 — 남는 세로 여백이 판과 손패 사이로 간다 (하스스톤 배치) */
+  .hand{flex:none;margin-top:auto;padding:6px 0 8px;justify-content:center;overflow:visible}
+  .hcw{transition:transform .12s}
+  .hcw:hover{transform:none}
+  .hcw.sel{transform:translateY(-8px)}
+
+  /* 로그·덱 설명은 아래에서 올라오는 서랍으로 */
+  .side{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:70;max-height:72dvh;overflow-y:auto;
+    border-radius:12px 12px 0 0;border-bottom:none;transform:translateY(101%);
+    transition:transform .22s cubic-bezier(.2,.8,.3,1);box-shadow:0 -10px 30px rgba(0,0,0,.6)}
+  body.sideon .side{transform:none}
+  body.sideon::after{content:'';position:fixed;inset:0;z-index:69;background:rgba(0,0,0,.45)}
+  .log{max-height:44dvh}
+
+  /* 원정 화면 */
+  .mbox{padding:14px 12px;max-height:92dvh}
+  .mbox h2{font-size:18px}
+  .mbox .msub{font-size:11px}
+  .mrow{gap:8px;margin-bottom:18px}
+  .mnode{width:64px;min-height:56px;padding:4px 2px}
+  .mnode.boss{width:74px;min-height:66px}
+  .mnode .ic{font-size:15px}
+  .mnode .nm{font-size:7.5px}
+  .mnode .fs{font-size:6.5px}
+  .map{padding:10px 4px}
+  .foecard{gap:10px;padding:9px}
+  .foecard .fart{width:74px}
+  .foecard .fnm{font-size:17px}
+  .foecard .fdesc{font-size:11.5px}
+  .rgcards{gap:6px}
+  .over h2{font-size:34px}
+  .dztip{font-size:11px;padding:6px 11px}
+}
+/* 아주 좁은 화면(360px 이하) — 카드와 글자를 한 단계 더 줄인다 */
+@media (max-width:380px){
+  :root{--handcw:clamp(72px,23vw,84px)}
+  .hdr h1{font-size:13px}
+  .bar .hp{font-size:15px}
+  .hint{font-size:9.5px}
+}
+/* 가로로 눕힌 휴대폰 — 세로 여유가 없으므로 손패만 줄인다 */
+@media (max-width:900px) and (max-height:560px){
+  :root{--handcw:64px}
+  .hdr{padding:3px 8px}
+  .deckpick{display:none}
+}
+
 /* 지도 노드의 적 표시 */
 .mnode .fs{display:block;font-family:'Gothic A1',sans-serif;font-size:8.5px;font-weight:700;
   color:var(--c);opacity:.9;margin-top:2px;letter-spacing:-.01em;white-space:nowrap}
@@ -685,13 +791,14 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
     <h1>TE<span>N</span> — 플레이 프로토타입</h1>
     <div class="modepick" id="modepick">
       <button id="mBattle" class="on">배틀</button>
-      <button id="mRogue">로그라이크</button>
+      <button id="mRogue">원정</button>
+      <button id="sideBtn" class="sideBtn" title="전투 로그">☰</button>
     </div>
     <div class="deckpick" id="deckpick"></div>
     <div class="meta" id="turnMeta">TURN 1 · 내 턴</div>
   </div>
 
-  <div>
+  <div class="main">
     <div class="bar" id="foeBar">
       <div class="who">상대</div>
       <div class="hp" id="foeHp">60</div>
@@ -699,16 +806,16 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
       <div class="mana" id="foeMana"></div>
       <div class="cnt" id="foeCnt">손 0 · 덱 0</div>
     </div>
-    <div class="lbl">상대 지형 <span class="lzc" id="foeLzInfo"></span></div>
+    <div class="lbl" id="lbFoeLz">상대 지형 <span class="lzc" id="foeLzInfo"></span></div>
     <div class="board lz" id="foeLz"></div>
 
-    <div class="lbl">상대 보드</div>
+    <div class="lbl" id="lbFoeB">상대 보드</div>
     <div class="board" id="foeBoard"></div>
 
-    <div class="lbl">내 보드</div>
+    <div class="lbl" id="lbMyB">내 보드</div>
     <div class="board" id="myBoard"></div>
 
-    <div class="lbl">내 지형 <span class="lzc" id="myLzInfo"></span></div>
+    <div class="lbl" id="lbMyLz">내 지형 <span class="lzc" id="myLzInfo"></span></div>
     <div class="board lz" id="myLz"></div>
 
     <div class="bar me" id="myBar">
@@ -719,7 +826,7 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
       <div class="cnt" id="myCnt">손 0 · 덱 0</div>
     </div>
 
-    <div class="lbl">내 손패</div>
+    <div class="lbl" id="lbHand">내 손패</div>
     <div class="hand" id="hand"></div>
 
     <div class="ctl">
@@ -1034,9 +1141,9 @@ function rgEncounter(nd,f,i){
   const top=deck.slice().sort((a,b)=>{
     const ca=(POOL[a[0]]||{}).c||0, cb=(POOL[b[0]]||{}).c||0; return cb-ca;
   }).slice(0,4);
-  const cr=deck.map(([x])=>x.replace(/^강화 /,'')).filter(x=>(POOL[x]||{}).k==='cr')
-    .sort((a,b)=>POOL[b].c-POOL[a].c);
-  const port=ART[cr[0]]||ART[(top[0]||[''])[0].replace(/^강화 /,'')]||'';
+  const names=deck.map(([x])=>x.replace(/^강화 /,''));
+  const cr=names.filter(x=>(POOL[x]||{}).k==='cr').sort((a,b)=>POOL[b].c-POOL[a].c);
+  const port=ART[cr.find(x=>ART[x])]||ART[names.find(x=>ART[x])]||'';
   rgOpen(rgHead('적 조우')
     + `<div class="foecard" style="--c:${ec}">
         <div class="fart"${port?` style="background-image:url(${port})"`:''}>
@@ -2050,6 +2157,23 @@ async function castSelectedAoe(){
   cleanup('ai');render();
 }
 
+/* 손패가 화면 폭을 넘으면 겹쳐서 한 줄에 담는다 (하스스톤 방식).
+   가로 스크롤로 두면 세로 화면에서 카드가 화면 밖으로 숨어 버린다. */
+function fanHand(){
+  const h=document.getElementById('hand'); if(!h)return;
+  const n=h.children.length;
+  if(n<2){ h.style.setProperty('--hgap','7px'); return; }
+  const cw=h.children[0].getBoundingClientRect().width||86;
+  const avail=h.clientWidth-4;
+  const need=n*cw+(n-1)*7;
+  if(need<=avail){ h.style.setProperty('--hgap','7px'); return; }
+  /* 카드 한 장이 최소 이만큼은 보이게 — 그보다 좁아지면 집을 수가 없다 */
+  const minShow=Math.max(26,cw*0.34);
+  const gap=Math.max(minShow-cw, (avail-cw)/(n-1)-cw);
+  h.style.setProperty('--hgap',gap.toFixed(1)+'px');
+}
+addEventListener('resize',()=>{ fanHand(); if(typeof RG!=='undefined'&&RG.on&&document.getElementById('mapsvg'))rgDrawEdges(rgReach()); });
+
 /* ============ 손패 밖으로 끌어 놓으면 발동 ============ */
 /* 슬롯을 고르지 않는다 — 소환·배치는 왼쪽 빈 칸부터 채우고, 스펠은 대상을 알아서 고른다.
    드롭 지점이 마침 유효한 대상이면 그 대상을 존중한다. */
@@ -2349,14 +2473,19 @@ function render(){
     if(S.sel===i)cls+=' sel';
     return `<div class="${cls}" data-h="${i}">${tcardHTML(n,{size:'md'})}</div>`;
   }).join('');
-  document.querySelectorAll('.hc,.hcw').forEach(el=>{el.onclick=()=>selectCard(+el.dataset.h);});
+  document.querySelectorAll('.hc,.hcw').forEach((el,i)=>{
+    el.onclick=()=>selectCard(+el.dataset.h);
+    el.style.zIndex=String(10+i);            /* 뒤 카드가 앞 카드를 덮는다 */
+  });
+  fanHand();
   // hint
   const hint=document.getElementById('hint');
   const cancel=document.getElementById('cancel');
   if(S.busy){hint.className='hint';hint.textContent='전투 처리 중…';cancel.disabled=true;}
   else if(!mine){hint.className='hint idle';hint.textContent='상대 턴 진행 중…';cancel.disabled=true;}
   else if(S.sel===null){hint.className='hint idle';
-    hint.textContent='카드를 손패 밖으로 끌어 놓으면 발동 · 길게 누르면 확대';cancel.disabled=true;}
+    hint.textContent=innerWidth<=900?'카드를 위로 끌어 놓으면 발동'
+      :'카드를 손패 밖으로 끌어 놓으면 발동 · 길게 누르면 확대';cancel.disabled=true;}
   else{
     cancel.disabled=false;hint.className='hint';
     const n=S.me.hand[S.sel];
@@ -2383,6 +2512,13 @@ document.getElementById('speed').onclick=()=>{
 document.getElementById('restart').onclick=()=>{ if(RG.on)return rgMap(); newGame(); };
 document.getElementById('mBattle').onclick=()=>{ if(!RG.on)return; RG.on=false; PDECK=EDECK=null; EHP=null; RG.foe=null; rgClose(); newGame(); };
 document.getElementById('mRogue').onclick=()=>{ rgPickEl(); };
+/* 모바일 — 로그·덱 설명을 아래에서 올라오는 서랍으로 연다 */
+document.getElementById('sideBtn').onclick=()=>document.body.classList.toggle('sideon');
+document.addEventListener('pointerdown',e=>{
+  if(!document.body.classList.contains('sideon'))return;
+  if(e.target.closest('.side')||e.target.closest('#sideBtn'))return;
+  document.body.classList.remove('sideon');
+},true);
 document.getElementById('again').onclick=()=>{ if(RG.on)return rgMap(); newGame(); };
 
 /* ============ 롱프레스 카드 확대 ============ */
