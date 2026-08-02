@@ -630,6 +630,8 @@ body.dragmode.armed .hand{outline-color:transparent}
   background:rgba(20,14,6,.93);color:var(--gold-bright);white-space:nowrap;
   box-shadow:0 6px 18px rgba(0,0,0,.5)}
 .dztip.ok{border-color:var(--gold-bright);background:rgba(46,34,10,.96)}
+.dztip.bad{border-color:#a2643c;background:rgba(38,18,10,.96);color:#f0c9a4}
+.dgh.bad .tcard{filter:grayscale(.7) brightness(.7)}
 /* 타게팅 — 손패 밖으로 끌어내면 카드가 판 위에 서고 대상 화살표가 손끝을 따라온다 */
 .tgtcard{position:fixed;z-index:86;left:50%;transform:translateX(-50%);pointer-events:none;
   filter:drop-shadow(0 0 18px rgba(242,212,136,.55)) drop-shadow(0 12px 24px rgba(0,0,0,.6));
@@ -2515,7 +2517,12 @@ function render(){
       }
     }
   }
-  // hand
+  /* hand
+     ⚠ 드래그 중에는 손패 DOM 을 갈아엎으면 안 된다.
+     터치에서는 pointerdown 대상에 **암묵적 포인터 캡처**가 걸리는데, 그 노드를 지우면
+     브라우저가 pointercancel 을 쏘고 이후 pointermove 가 끊긴다 → 드래그가 통째로 죽는다.
+     (마우스에는 암묵적 캡처가 없어서 데스크톱 테스트로는 절대 안 잡힌다.) */
+  if(!(typeof DR!=='undefined'&&DR)&&!HANDLOCK){
   document.getElementById('hand').innerHTML=S.me.hand.map((n,i)=>{
     if(isLand(n)){
       const no=(!mine||S.me.landPlayed)?' no':'';
@@ -2529,6 +2536,7 @@ function render(){
   }).join('');
   document.querySelectorAll('.hc,.hcw').forEach(el=>{el.onclick=()=>selectCard(+el.dataset.h);});
   fanHand();
+  }
   // hint
   const hint=document.getElementById('hint');
   const cancel=document.getElementById('cancel');
@@ -2661,7 +2669,7 @@ document.addEventListener('contextmenu',e=>{ if(e.target.closest('.slot.occ,.hcw
 /* ============ 드래그 앤 드롭 ============ */
 /* 손패는 가로 스크롤이므로 제스처를 나눈다 — 가로 우세 = 스크롤 · 세로(위) = 카드 끌어내기.
    드롭 판정은 "손패 사각형 밖이면 발동". 슬롯을 정확히 맞출 필요가 없다. */
-let DR=null, dg=null;
+let DR=null, dg=null, HANDLOCK=false;
 const DZTIP={land:'지형 배치',place:'왼쪽 빈 칸부터 소환',ench:'왼쪽 빈 칸에 배치',
   summon:'왼쪽 빈 칸에 토큰 소환',instant:'즉시 발동',
   mine:'대상 지정으로',target:'대상 지정으로'};
@@ -2670,39 +2678,44 @@ function inHand(x,y){
   const r=handRect();
   return x>=r.left-10&&x<=r.right+10&&y>=r.top-8&&y<=r.bottom+12;
 }
-function dragStart(i,x,y){
+function dragStart(i,x,y,dgid){
   if(S.over||S.busy||S.active!=='me')return;
   const n=S.me.hand[i]; if(n===undefined)return;
-  if(isLand(n)){ if(S.me.landPlayed)return; }
-  else if(!POOL[n]||!canPay('me',n))return;
+  if(!isLand(n)&&!POOL[n])return;
   const mode=modeOf(n); if(!mode)return;
+  const payable=isLand(n)?!S.me.landPlayed:canPay('me',n);
   hideZoom(false); endTargeting();
   clearTimeout(lpT); lpT=null;
-  /* 모드를 미리 세워 두면 기존 슬롯 하이라이트(.pick)가 그대로 켜진다 */
-  S.sel=i; S.mode=mode==='land'?null:mode; render();
+  /* 모드를 미리 세워 두면 기존 슬롯 하이라이트(.pick)가 그대로 켜진다.
+     ⚠ 이때 손패는 건드리지 않는다(HANDLOCK) — 지금 손가락이 잡고 있는 노드다. */
+  S.sel=i; S.mode=mode==='land'?null:mode;
+  HANDLOCK=true; render(); HANDLOCK=false;
   const src=document.querySelector(`.hcw[data-h="${i}"]`);
   if(src)src.classList.add('dragging');
   const g=document.createElement('div'); g.className='dgh';
   g.innerHTML=isLand(n)?landCardHTML(n,'md'):tcardHTML(n,{size:'md'});
   document.body.appendChild(g);
-  const tip=document.createElement('div'); tip.className='dztip';
-  tip.textContent=`${n} — 손패 밖에 놓으면 ${DZTIP[mode]||'발동'}`;
+  const tip=document.createElement('div'); tip.className='dztip'+(payable?'':' bad');
+  tip.textContent=payable?`${n} — 손패 밖에 놓으면 ${DZTIP[mode]||'발동'}`
+    :`${n} — ${isLand(n)?'이번 턴 지형은 이미 놓았다':'마나가 모자란다'}`;
   document.body.appendChild(tip);
   document.body.classList.add('dragmode');
-  DR={i,n,mode,g,tip};
+  DR={i,n,mode,g,tip,payable,pid:dgid};
   dragMove(x,y);
 }
 function dragMove(x,y){
   if(!DR)return;
   DR.g.style.transform=`translate(${x-46}px,${y-74}px) rotate(-3.5deg) scale(1.05)`;
-  const ok=!inHand(x,y);
+  const ok=!inHand(x,y)&&DR.payable;
   DR.g.classList.toggle('ok',ok);
+  DR.g.classList.toggle('bad',!DR.payable);
   DR.tip.classList.toggle('ok',ok);
   document.body.classList.toggle('armed',ok);
 }
 function dragEnd(x,y,cancel){
   if(!DR)return; const d=DR; DR=null;
   d.g.remove(); d.tip.remove();
+  if(d.pid!=null){ try{document.body.releasePointerCapture(d.pid);}catch(_){ } }
   document.body.classList.remove('dragmode','armed');
   document.querySelectorAll('.hcw.dragging').forEach(e=>e.classList.remove('dragging'));
   if(cancel||inHand(x,y)){ S.sel=null;S.mode=null;render(); return; }
@@ -2778,15 +2791,22 @@ document.addEventListener('pointerdown',e=>{
 document.addEventListener('pointermove',e=>{ if(TGT)tgtDraw(e.clientX,e.clientY); },{passive:true});
 document.addEventListener('pointerdown',e=>{
   /* 확대 여부를 보고 막지 않는다 — 손패는 누르는 순간 확대되므로 여기서 막으면 드래그가 죽는다 */
-  const hc=e.target.closest('.hcw'); if(!hc||hc.classList.contains('no'))return;
-  dg={i:+hc.dataset.h,x:e.clientX,y:e.clientY};
+  const hc=e.target.closest('.hcw'); if(!hc)return;
+  /* 낼 수 없는 카드도 끌리게 둔다 — 아무 반응이 없으면 '드래그가 안 된다'로 읽힌다.
+     놓는 순간 playFromHand 가 이유를 알려 준다(마나 부족 / 이번 턴 지형 이미 놓음 …). */
+  dg={i:+hc.dataset.h,x:e.clientX,y:e.clientY,id:e.pointerId};
 });
 document.addEventListener('pointermove',e=>{
   if(DR){ e.preventDefault(); dragMove(e.clientX,e.clientY); return; }
   if(!dg)return;
   const dx=e.clientX-dg.x, dy=e.clientY-dg.y;
   if(Math.abs(dx)>14&&Math.abs(dx)>Math.abs(dy)*1.4){ dg=null; return; }   /* 가로 = 손패 스크롤 */
-  if(dy<-14||Math.hypot(dx,dy)>26){ const i=dg.i; dg=null; dragStart(i,e.clientX,e.clientY); }
+  if(dy<-14||Math.hypot(dx,dy)>26){
+    const i=dg.i, pid=dg.id; dg=null; dragStart(i,e.clientX,e.clientY,pid);
+    /* 손가락을 몸통(body)에 붙들어 둔다 — 중간에 대상 노드가 사라지거나 브라우저가
+       스크롤로 가져가려 해도 pointermove 가 끊기지 않는다. 모바일에서만 나던 끊김의 보루. */
+    if(DR&&pid!=null){ try{document.body.setPointerCapture(pid);}catch(_){ } }
+  }
 },{passive:false});
 document.addEventListener('pointerup',e=>{
   if(DR){ lpFired=true; dragEnd(e.clientX,e.clientY,false); }   /* 뒤따르는 click 이 카드 선택으로 새지 않게 */

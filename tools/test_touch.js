@@ -83,5 +83,48 @@ await p.waitForTimeout(250);
   const placed=await p.evaluate(()=>S.me.board.filter(x=>x).length);
   console.log(`${placed>0?'✅':'❌'} 확대 직후 바로 끌기         소환 ${placed}`);
 }
+// 5) 드래그 도중 손패 DOM 이 살아 있어야 한다 (터치 캡처가 끊기면 드래그가 죽는다)
+await p.evaluate(()=>{hideZoom();lpFired=false;S.sel=null;S.mode=null;
+  S.me.board=Array(SLOTS).fill(null);
+  S.me.lands.forEach(l=>{l.used=false;l.entering=false;});
+  while(S.me.hand.length<7)draw('me');
+  const cr=Object.keys(POOL).filter(n=>POOL[n].k==='cr'&&POOL[n].el==='fire'&&POOL[n].c<=2);
+  S.me.hand[S.me.hand.length-1]=cr[0]; render();
+  window.__cancels=0;
+  document.addEventListener('pointercancel',()=>{window.__cancels++;},true);
+  const h=document.getElementById('hand');
+  window.__node=h.lastElementChild;});
+await p.waitForTimeout(250);
+{
+  const b0=await (await p.$('.hcw:last-child')).boundingBox();
+  const x0=b0.x+b0.width/2, y0=b0.y+b0.height/2;
+  await touch('touchStart',x0,y0);
+  for(let k=1;k<=6;k++){await touch('touchMove',x0,y0-(k*30)); await p.waitForTimeout(20);}
+  const alive=await p.evaluate(()=>window.__node&&window.__node.isConnected);
+  const cancels=await p.evaluate(()=>window.__cancels);
+  await touch('touchMove',board.x+board.width/2,board.y+board.height/2);
+  await p.waitForTimeout(60); await touch('touchEnd',0,0); await p.waitForTimeout(450);
+  const placed=await p.evaluate(()=>S.me.board.filter(x=>x).length);
+  console.log(`${alive&&!cancels&&placed>0?'✅':'❌'} 끄는 동안 손패 노드 생존  연결됨 ${alive} · pointercancel ${cancels} · 소환 ${placed}`);
+}
+// 6) 낼 수 없는 카드도 끌리고, 이유를 알려 준다
+await p.evaluate(()=>{hideZoom();lpFired=false;S.sel=null;S.mode=null;
+  S.me.board=Array(SLOTS).fill(null);
+  S.me.lands.forEach(l=>{l.used=true;});     /* 마나를 전부 소진시킨다 */
+  render();});
+await p.waitForTimeout(250);
+{
+  const b0=await (await p.$('.hcw:last-child')).boundingBox();
+  const x0=b0.x+b0.width/2, y0=b0.y+b0.height/2;
+  await touch('touchStart',x0,y0);
+  for(let k=1;k<=6;k++){await touch('touchMove',x0,y0-(k*28)); await p.waitForTimeout(15);}
+  const dr=await p.evaluate(()=>!!DR);
+  const tip=await p.evaluate(()=>{const t=document.querySelector('.dztip');return t?t.textContent:'없음';});
+  await touch('touchMove',board.x+board.width/2,board.y+board.height/2);
+  await p.waitForTimeout(50); await touch('touchEnd',0,0); await p.waitForTimeout(400);
+  const toast=await p.evaluate(()=>{const t=document.querySelector('.toast');return t?t.textContent:'없음';});
+  const placed=await p.evaluate(()=>S.me.board.filter(x=>x).length);
+  console.log(`${dr&&placed===0&&toast!=='없음'?'✅':'❌'} 못 내는 카드도 끌림       DR ${dr} · 안내 "${tip}" · 놓은 뒤 "${toast}" · 소환 ${placed}`);
+}
 console.log('ERRORS:',errs.slice(0,3));
 await b.close();})();

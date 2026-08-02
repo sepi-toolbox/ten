@@ -146,6 +146,13 @@ python3 tools/build_pages.py --push <GITHUB_TOKEN>
   - ⚠ `hold=true` 에는 **`.zoom.hold{pointer-events:none}` 이 반드시 따라와야 한다.**
     없으면 손 떼는 지점이 오버레이가 되어 `click`이 카드에 닿지 못하고 **탭 선택이 죽는다.**
 - 드래그 `pointerdown` 핸들러에서 **확대 여부로 막지 않는다**. 대신 `dragStart`가 `hideZoom(false)`를 부른다.
+- **드래그 중에는 손패 DOM을 다시 만들지 않는다**(`HANDLOCK`). 터치에서는 `pointerdown` 대상에
+  **암묵적 포인터 캡처**가 걸리는데, 그 노드를 지우면 브라우저가 `pointercancel`을 쏘고
+  이후 `pointermove`가 끊긴다 → 드래그가 통째로 죽는다.
+  **마우스에는 암묵적 캡처가 없어서 데스크톱 테스트로는 절대 안 잡힌다.**
+  보루로 드래그 시작 시 `document.body.setPointerCapture(pointerId)`도 건다(끝나면 release).
+- **낼 수 없는 카드도 끌린다.** 막아 두면 아무 반응이 없어 "드래그가 안 된다"로 읽힌다.
+  끌 때 안내가 붉게 바뀌고(`.dztip.bad`), 놓으면 이유를 토스트로 알려 준다.
 - 확대 카드는 모바일에서 **화면 정중앙 고정** — 용어집 패널(`.zside`)을 `position:fixed`로 빼서
   카드를 밀어 올리지 않게 했다.
 - 손패 카드 폭은 `--handcw`(`clamp(78px,24vw,112px)`) 하나로 조절한다.
