@@ -26,7 +26,7 @@ await p.evaluate(()=>{
   if(cr[0])S.me.hand[S.me.hand.length-1]=cr[0]; render();});
 await p.waitForTimeout(300);
 const board=await (await p.$('#myBoard')).boundingBox();
-const el=await p.$('.hcw:last-child'); const bx=await el.boundingBox();
+const el=await p.$('#hand .hcw:last-child'); const bx=await el.boundingBox();
 const sx=bx.x+bx.width/2, sy=bx.y+bx.height/2;
 
 async function tryDrag(label,holdMs){
@@ -38,7 +38,7 @@ async function tryDrag(label,holdMs){
     S.me.hand[S.me.hand.length-1]=cr[0];      /* 매번 낼 수 있는 크리처를 맨 오른쪽에 */
     render();});
   await p.waitForTimeout(250);
-  const b0=await (await p.$('.hcw:last-child')).boundingBox();
+  const b0=await (await p.$('#hand .hcw:last-child')).boundingBox();
   const x0=b0.x+b0.width/2, y0=b0.y+b0.height/2;
   await touch('touchStart',x0,y0);
   if(holdMs)await p.waitForTimeout(holdMs);
@@ -66,7 +66,7 @@ await p.evaluate(()=>{hideZoom();lpFired=false;S.sel=null;S.mode=null;
   S.me.hand[S.me.hand.length-1]=cr[0]; render();});
 await p.waitForTimeout(250);
 {
-  const b0=await (await p.$('.hcw:last-child')).boundingBox();
+  const b0=await (await p.$('#hand .hcw:last-child')).boundingBox();
   const x0=b0.x+b0.width/2, y0=b0.y+b0.height/2;
   await touch('touchStart',x0,y0); await p.waitForTimeout(600);
   const open1=await p.$eval('#zoom',e=>e.classList.contains('on'));
@@ -74,7 +74,7 @@ await p.waitForTimeout(250);
   const open2=await p.$eval('#zoom',e=>e.classList.contains('on'));
   console.log(`${open1&&!open2?'✅':'❌'} 확대 후 떼면 닫힘          누르는 중 ${open1} · 뗀 뒤 ${open2}`);
   // 곧바로 끌기
-  const b1=await (await p.$('.hcw:last-child')).boundingBox();
+  const b1=await (await p.$('#hand .hcw:last-child')).boundingBox();
   const x1=b1.x+b1.width/2, y1=b1.y+b1.height/2;
   await touch('touchStart',x1,y1);
   for(let k=1;k<=6;k++)await touch('touchMove',x1,y1-(k*30));
@@ -96,7 +96,7 @@ await p.evaluate(()=>{hideZoom();lpFired=false;S.sel=null;S.mode=null;
   window.__node=h.lastElementChild;});
 await p.waitForTimeout(250);
 {
-  const b0=await (await p.$('.hcw:last-child')).boundingBox();
+  const b0=await (await p.$('#hand .hcw:last-child')).boundingBox();
   const x0=b0.x+b0.width/2, y0=b0.y+b0.height/2;
   await touch('touchStart',x0,y0);
   for(let k=1;k<=6;k++){await touch('touchMove',x0,y0-(k*30)); await p.waitForTimeout(20);}
@@ -114,7 +114,7 @@ await p.evaluate(()=>{hideZoom();lpFired=false;S.sel=null;S.mode=null;
   render();});
 await p.waitForTimeout(250);
 {
-  const b0=await (await p.$('.hcw:last-child')).boundingBox();
+  const b0=await (await p.$('#hand .hcw:last-child')).boundingBox();
   const x0=b0.x+b0.width/2, y0=b0.y+b0.height/2;
   await touch('touchStart',x0,y0);
   for(let k=1;k<=6;k++){await touch('touchMove',x0,y0-(k*28)); await p.waitForTimeout(15);}
@@ -135,5 +135,14 @@ console.log(await p.evaluate(()=>{
   return `${bad?'❌':'✅'} 가로 스크롤 없음         .main overflow-x=${cs.overflowX}`
     +` scrollWidth ${m.scrollWidth}/${m.clientWidth}`
     +` · touch-action 카드=${getComputedStyle(h.firstElementChild).touchAction}`;}));
+// 8) 상대 손패가 뒷면으로 보이고, 만질 수 없어야 한다
+console.log(await p.evaluate(()=>{
+  while(S.ai.hand.length<6)draw('ai'); render();
+  const f=document.getElementById('foeHand'), cs=[...f.children];
+  const pe=cs.length?getComputedStyle(cs[0]).pointerEvents:'-';
+  const faceUp=f.textContent.trim().length>0;   /* 앞면이면 카드 이름 글자가 있다 */
+  const okAll=cs.length===S.ai.hand.length&&pe==='none'&&!faceUp;
+  return `${okAll?'✅':'❌'} 상대 손패 뒷면          ${cs.length}장/${S.ai.hand.length}장`
+    +` · pointer-events ${pe} · 글자 노출 ${faceUp}`;}));
 console.log('ERRORS:',errs.slice(0,3));
 await b.close();})();

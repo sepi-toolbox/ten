@@ -17,7 +17,7 @@ async function stock(){ await p.evaluate(()=>{
   if(tsp&&!S.me.hand.includes(tsp))S.me.hand[0]=tsp;
   render();}); await p.waitForTimeout(150); }
 async function dragOut(i,tx,ty){
-  const el=await p.$(`.hcw[data-h="${i}"]`); const bx=await el.boundingBox();
+  const el=await p.$(`#hand .hcw[data-h="${i}"]`); const bx=await el.boundingBox();
   const sx=bx.x+bx.width/2, sy=bx.y+bx.height/2;
   await p.mouse.move(sx,sy); await p.mouse.down();
   await p.mouse.move(sx,sy-30,{steps:4}); await p.mouse.move(tx,ty,{steps:8});

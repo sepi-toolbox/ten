@@ -138,7 +138,7 @@ body::before{
 
 /* ---- hand ---- */
 .hand{display:flex;gap:0;overflow:visible;touch-action:none;padding:22px 0 16px;justify-content:center;align-items:flex-end;
-  --basecw:var(--handcw,86px);--fanmax:5.5}
+  --fanmax:5.5}
 .hand>*{margin-left:var(--hgap,7px)}
 .hand>*:first-child{margin-left:0}
 .hc{
@@ -598,6 +598,25 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
 .tcard.lg{--cw:min(72vw,260px)}              /* 확대 */
 @supports not (width:1cqw){ .tcard.sm{--cw:84px} }
 
+/* 상대 손패 — 뒷면만 보인다. 만질 수 없고 부채꼴은 아래로 편다(상대가 쥔 모양). */
+.hand.foe{--fanmax:4.5;padding:6px 0 14px;align-items:flex-start}
+.hand.foe .hcw{pointer-events:none;cursor:default;transform-origin:50% -18%}
+.cback{width:var(--foecw,58px);aspect-ratio:5/7;border-radius:calc(var(--foecw,58px)*.06);
+  border:1.5px solid var(--bronze);position:relative;overflow:hidden;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(242,212,136,.16), transparent 60%),
+    repeating-linear-gradient(45deg, rgba(0,0,0,.22) 0 5px, transparent 5px 10px),
+    linear-gradient(180deg,#3d2c1b,#1f1509);
+  box-shadow:inset 0 0 0 1px rgba(242,212,136,.16),inset 0 0 18px rgba(0,0,0,.6),
+             0 2px 6px rgba(0,0,0,.55)}
+.cback::before{content:'';position:absolute;left:50%;top:50%;
+  width:42%;height:42%;transform:translate(-50%,-50%) rotate(45deg);
+  border:1.5px solid rgba(242,212,136,.5);border-radius:2px}
+.cback::after{content:'';position:absolute;left:50%;top:50%;
+  width:14%;height:14%;transform:translate(-50%,-50%) rotate(45deg);
+  background:rgba(242,212,136,.55);border-radius:1px;
+  box-shadow:0 0 8px rgba(242,212,136,.5)}
+
 /* 손패 래퍼 */
 /* 손패는 실제로 카드를 쥔 것처럼 부채꼴로 편다.
    회전·들림·확대를 각각 변수로 두고 transform 은 한 줄로만 쓴다 —
@@ -672,7 +691,7 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
   /* 판 — 세로로 쌓고, 가운데에 조작 줄을 끼운다 */
   .main{flex:1;min-height:0;display:flex;flex-direction:column;padding:4px 6px 0;
     overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain}
-  #foeBar{order:1} #lbFoeLz{order:2} #foeLz{order:3}
+  #foeHand{order:0} #foeBar{order:1} #lbFoeLz{order:2} #foeLz{order:3}
   #lbFoeB{order:4} #foeBoard{order:5}
   .ctl{order:6}
   #lbMyB{order:7} #myBoard{order:8}
@@ -703,7 +722,8 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
   .ctl button{font-size:10.5px;padding:7px 10px;flex:none}
 
   /* 손패 — 넘치면 겹친다(--hgap 은 render 가 계산해 음수로 넣는다) */
-  :root{--handcw:clamp(78px,24vw,112px)}
+  :root{--handcw:clamp(78px,24vw,112px);--foecw:clamp(38px,11vw,52px)}
+  .hand.foe{flex:none;padding:4px 0 8px;--fanmax:3.5}
   #lbHand{display:none}
   /* 손패는 화면 바닥에 붙인다 — 남는 세로 여백이 판과 손패 사이로 간다 (하스스톤 배치) */
   .hand{flex:none;margin-top:auto;padding:18px 0 14px;justify-content:center;overflow:visible;--fanmax:4}
@@ -825,6 +845,7 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
   </div>
 
   <div class="main">
+    <div class="hand foe" id="foeHand"></div>
     <div class="bar" id="foeBar">
       <div class="who">상대</div>
       <div class="hp" id="foeHp">60</div>
@@ -2185,8 +2206,8 @@ async function castSelectedAoe(){
 
 /* 손패가 화면 폭을 넘으면 겹쳐서 한 줄에 담는다 (하스스톤 방식).
    가로 스크롤로 두면 세로 화면에서 카드가 화면 밖으로 숨어 버린다. */
-function fanHand(){
-  const h=document.getElementById('hand'); if(!h)return;
+function fanHand(id,invert){
+  const h=document.getElementById(id||'hand'); if(!h)return;
   const cards=[...h.children];
   const n=cards.length;
   if(!n)return;
@@ -2211,9 +2232,11 @@ function fanHand(){
   const arc=n<3?0:Math.min(2.4,14/(dmax*dmax));    /* 가운데가 솟는 정도(최대 14px) */
   cards.forEach((el,i)=>{
     const d=i-mid;
-    el.style.setProperty('--rot',(d*step).toFixed(2)+'deg');
+    /* 상대 손패(invert)는 부채꼴을 뒤집는다 — 상대가 자기 쪽으로 쥔 모양 */
+    el.style.setProperty('--rot',((invert?-d:d)*step).toFixed(2)+'deg');
     /* 양끝을 내리는 게 아니라 가운데를 올린다 — 내리면 손패가 화면 아래로 삐져나간다 */
-    el.style.setProperty('--dy',((d*d-dmax*dmax)*arc).toFixed(1)+'px');
+    const dy=(d*d-dmax*dmax)*arc;
+    el.style.setProperty('--dy',(invert?-dy:dy).toFixed(1)+'px');
     el.style.zIndex=String(10+i);                  /* 오른쪽 카드가 왼쪽을 덮는다 */
   });
   /* 3) 회전시키면 실제 차지하는 폭이 계산보다 커진다(모서리가 튀어나온다).
@@ -2227,11 +2250,18 @@ function fanHand(){
   const span=r-l, room=hb.width-4;
   const k=span>room?Math.max(0.6,room/span):1;
   h.style.transform=k<1?`scale(${k.toFixed(3)})`:'none';
-  h.style.transformOrigin='50% 100%';
+  h.style.transformOrigin=invert?'50% 0':'50% 100%';
+}
+/* 상대 손패 — 매수만 뒷면으로 보여 준다 */
+function renderFoeHand(){
+  const el=document.getElementById('foeHand'); if(!el)return;
+  const n=S.ai?S.ai.hand.length:0;
+  el.innerHTML='<div class="hcw back"><div class="cback"></div></div>'.repeat(n);
+  fanHand('foeHand',true);
 }
 addEventListener('resize',()=>{
   if(typeof DR!=='undefined'&&DR)return;      /* 끄는 중엔 손패를 다시 배치하지 않는다 */
-  fanHand();
+  fanHand(); fanHand('foeHand',true);
   if(typeof RG!=='undefined'&&RG.on&&document.getElementById('mapsvg'))rgDrawEdges(rgReach());
 });
 
@@ -2539,9 +2569,10 @@ function render(){
     if(S.sel===i)cls+=' sel';
     return `<div class="${cls}" data-h="${i}">${tcardHTML(n,{size:'md'})}</div>`;
   }).join('');
-  document.querySelectorAll('.hc,.hcw').forEach(el=>{el.onclick=()=>selectCard(+el.dataset.h);});
+  document.querySelectorAll('#hand .hcw').forEach(el=>{el.onclick=()=>selectCard(+el.dataset.h);});
   fanHand();
   }
+  renderFoeHand();
   // hint
   const hint=document.getElementById('hint');
   const cancel=document.getElementById('cancel');

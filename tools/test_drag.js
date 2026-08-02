@@ -13,7 +13,7 @@ async function stock(){ await p.evaluate(()=>{
   S.me.lands.forEach(l=>{l.used=false;l.sick=false;});
   while(S.me.hand.length<7)draw('me'); render(); }); await p.waitForTimeout(150); }
 async function drag(i,tx,ty,label){
-  const el=await p.$(`.hcw[data-h="${i}"]`); if(!el){console.log(label,'| 카드 없음');return;}
+  const el=await p.$(`#hand .hcw[data-h="${i}"]`); if(!el){console.log(label,'| 카드 없음');return;}
   const bx=await el.boundingBox();
   const sx=bx.x+bx.width/2, sy=bx.y+bx.height/2;
   await p.mouse.move(sx,sy); await p.mouse.down();
@@ -56,7 +56,7 @@ console.log('   손패',h0,'→',await idxOf(()=>S.me.hand.length),'· sel',awai
 
 console.log('── 4. 가로 스와이프는 스크롤(발동 안 됨)');
 const h1=await idxOf(()=>S.me.hand.length);
-const e4=await p.$(`.hcw[data-h="${i}"]`); const b4=await e4.boundingBox();
+const e4=await p.$(`#hand .hcw[data-h="${i}"]`); const b4=await e4.boundingBox();
 await p.mouse.move(b4.x+b4.width/2,b4.y+b4.height/2); await p.mouse.down();
 await p.mouse.move(b4.x+b4.width/2-70,b4.y+b4.height/2+3,{steps:6});
 const g4=await p.$$eval('.dgh',e=>e.length);
@@ -77,10 +77,10 @@ if(i>=0){ const nm=await idxOf(j=>S.me.hand[j],i);
 console.log('── 6. 기존 조작 유지');
 await stock();
 i=await idxOf(()=>S.me.hand.findIndex(n=>POOL[n]&&canPay('me',n)));
-await p.click(`.hcw[data-h="${i}"]`); await p.waitForTimeout(200);
+await p.click(`#hand .hcw[data-h="${i}"]`); await p.waitForTimeout(200);
 console.log('   탭 선택 → sel',await idxOf(()=>S.sel),'mode',await idxOf(()=>S.mode));
 await p.click('#cancel'); await p.waitForTimeout(150);
-const e6=await p.$(`.hcw[data-h="${i}"]`); const b6=await e6.boundingBox();
+const e6=await p.$(`#hand .hcw[data-h="${i}"]`); const b6=await e6.boundingBox();
 await p.mouse.move(b6.x+b6.width/2,b6.y+b6.height/2); await p.mouse.down(); await p.waitForTimeout(650);
 console.log('   롱프레스 확대:',await p.$eval('#zoom',e=>e.classList.contains('on')));
 await p.mouse.up(); await p.evaluate(()=>hideZoom());

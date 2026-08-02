@@ -162,6 +162,10 @@ python3 tools/build_pages.py --push <GITHUB_TOKEN>
 - 드래그 중에는 `resize`에도 `fanHand()`를 돌리지 않는다 — iOS는 주소창이 접힐 때 resize를 쏘는데,
   그때 손패를 다시 배치하면 잡고 있던 카드가 어긋난다.
 - 주소 끝에 **`?dbg=1`** 을 붙이면 포인터 동작(어느 카드를 잡았는지·어디서 끊겼는지)이 전투 로그에 남는다.
+- **상대 손패는 맨 위에 뒷면(`.cback`)으로 보여 준다.** 매수만 드러내며 `pointer-events:none`.
+  같은 `fanHand(id, invert)`를 쓰되 `invert=true`로 부채꼴을 뒤집는다(상대가 쥔 모양).
+  ⚠ 상대 손패도 `.hcw`를 쓰므로 **선택자는 `#hand .hcw`로 한정할 것.**
+  `.hcw:last-child` 같은 전역 선택자는 DOM 순서상 **상대 카드부터** 잡는다(테스트가 통째로 깨졌다).
 - 확대 카드는 모바일에서 **화면 정중앙 고정** — 용어집 패널(`.zside`)을 `position:fixed`로 빼서
   카드를 밀어 올리지 않게 했다.
 - 손패 카드 폭은 `--handcw`(`clamp(78px,24vw,112px)`) 하나로 조절한다.

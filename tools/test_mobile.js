@@ -35,7 +35,7 @@ const SIZES=[[390,844,'iPhone 14'],[360,780,'작은 안드로이드'],[430,932,'
         바닥초과:Math.round(hb.bottom)>innerHeight+2};});
     // 드래그로 소환
     const i=await p.evaluate(()=>S.me.hand.findIndex(n=>POOL[n]&&POOL[n].k==='cr'&&canPay('me',n)));
-    const el=await p.$(`.hcw[data-h="${i}"]`); const bx=await el.boundingBox();
+    const el=await p.$(`#hand .hcw[data-h="${i}"]`); const bx=await el.boundingBox();
     const board=await (await p.$('#myBoard')).boundingBox();
     // 맨 오른쪽 카드는 통째로 드러나 있으므로 가운데를 집는다
     const gx=bx.x+bx.width/2;
@@ -45,7 +45,7 @@ const SIZES=[[390,844,'iPhone 14'],[360,780,'작은 안드로이드'],[430,932,'
     await p.mouse.up(); await p.waitForTimeout(400);
     const played=await p.evaluate(()=>S.me.board.filter(x=>x).length);
     // 길게 눌러 확대
-    const el2=await p.$('.hcw:last-child'); const b2=await el2.boundingBox();
+    const el2=await p.$('#hand .hcw:last-child'); const b2=await el2.boundingBox();
     await p.mouse.move(b2.x+b2.width/2,b2.y+b2.height/2); await p.mouse.down(); await p.waitForTimeout(650);
     const zoom=await p.$eval('#zoom',e=>e.classList.contains('on'));
     await p.mouse.up(); await p.evaluate(()=>{hideZoom();lpFired=false;}); await p.waitForTimeout(200);
