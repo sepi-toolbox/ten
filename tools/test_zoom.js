@@ -31,10 +31,12 @@ for(const [w,h,tag] of [[390,844,'모바일'],[1020,1300,'데스크톱']]){
   const el=await p.$('.hcw:last-child'); const bx=await el.boundingBox();
   const cx=bx.x+bx.width/2, cy=bx.y+bx.height/2;
 
-  // 1) 누르는 즉시 확대 (딜레이 없음)
-  await p.mouse.move(cx,cy); await p.mouse.down(); await p.waitForTimeout(60);
-  const fast=await p.$eval('#zoom',e=>e.classList.contains('on'));
-  ok('누르자마자 확대', fast, '60ms 뒤 열림='+fast);
+  // 1) 손패도 롱프레스(420ms) — 짧게 눌러선 안 뜨고 길게 누르면 뜬다
+  await p.mouse.move(cx,cy); await p.mouse.down(); await p.waitForTimeout(120);
+  const hEarly=await p.$eval('#zoom',e=>e.classList.contains('on'));
+  await p.waitForTimeout(450);
+  const hLate=await p.$eval('#zoom',e=>e.classList.contains('on'));
+  ok('손패 롱프레스 확대', !hEarly&&hLate, `120ms ${hEarly} · 570ms ${hLate}`);
   // 2) 누르는 동안 레이어가 바뀌지 않는다
   const zdur=await p.evaluate(()=>[...document.getElementById('hand').children].map(c=>+c.style.zIndex));
   const zsame=JSON.stringify(zbefore)===JSON.stringify(zdur);
@@ -48,16 +50,17 @@ for(const [w,h,tag] of [[390,844,'모바일'],[1020,1300,'데스크톱']]){
   await p.mouse.up(); await p.waitForTimeout(200);
   await p.evaluate(()=>{hideZoom();lpFired=false;S.sel=null;S.mode=null;render();}); await p.waitForTimeout(250);
   const rm0=await (await p.$(`.hcw:nth-child(${mid+1})`)).boundingBox();
-  await p.mouse.move(rm0.x+10,rm0.y+rm0.height*0.7); await p.mouse.down(); await p.waitForTimeout(250);
+  await p.mouse.move(rm0.x+10,rm0.y+rm0.height*0.7); await p.mouse.down(); await p.waitForTimeout(560);
   const rm1=await (await p.$(`.hcw:nth-child(${mid+1})`)).boundingBox();
   const same=['x','y','width','height'].every(k=>Math.abs(rm0[k]-rm1[k])<0.6);
   ok('눌러도 제자리', same, `${Math.round(rm0.x)},${Math.round(rm0.y)},${Math.round(rm0.width)}`
     +` → ${Math.round(rm1[ 'x'])},${Math.round(rm1.y)},${Math.round(rm1.width)}`);
-  // 4) 떼면 닫힌다
+  // 4) 탭하면 닫힌다
   await p.mouse.up(); await p.waitForTimeout(200);
-  ok('떼면 닫힘', !(await p.$eval('#zoom',e=>e.classList.contains('on'))), '');
+  await p.mouse.click(10,10); await p.waitForTimeout(250);
+  ok('탭하면 닫힘', !(await p.$eval('#zoom',e=>e.classList.contains('on'))), '');
   // 5) 짧게 탭하면 선택으로 넘어간다
-  await p.evaluate(()=>{S.sel=null;S.mode=null;render();}); await p.waitForTimeout(200);
+  await p.evaluate(()=>{hideZoom();lpFired=false;S.sel=null;S.mode=null;render();}); await p.waitForTimeout(200);
   const el2=await p.$('.hcw:last-child'); const b2=await el2.boundingBox();
   await p.mouse.move(b2.x+b2.width/2,b2.y+b2.height/2);
   await p.mouse.down(); await p.waitForTimeout(80); await p.mouse.up(); await p.waitForTimeout(250);
@@ -67,13 +70,13 @@ for(const [w,h,tag] of [[390,844,'모바일'],[1020,1300,'데스크톱']]){
   const before=await p.evaluate(()=>S.me.board.filter(x=>x).length);
   const el3=await p.$('.hcw:last-child'); const b3=await el3.boundingBox();
   const board=await (await p.$('#myBoard')).boundingBox();
-  await p.mouse.move(b3.x+b3.width/2,b3.y+b3.height/2); await p.mouse.down(); await p.waitForTimeout(120);
+  await p.mouse.move(b3.x+b3.width/2,b3.y+b3.height/2); await p.mouse.down(); await p.waitForTimeout(560);
   await p.mouse.move(b3.x+b3.width/2,b3.y-50,{steps:5});
   const gone=await p.$eval('#zoom',e=>!e.classList.contains('on'));
   await p.mouse.move(board.x+board.width/2,board.y+board.height/2,{steps:6});
   await p.mouse.up(); await p.waitForTimeout(450);
   const after=await p.evaluate(()=>S.me.board.filter(x=>x).length);
-  ok('확대 중 끌기 = 소환', gone&&after>before, `확대 접힘 ${gone} · 보드 ${before}→${after}`);
+  ok('확대 뒤 끌기 = 소환', gone&&after>before, `확대 접힘 ${gone} · 보드 ${before}→${after}`);
   // 7) 보드 카드는 여전히 길게 눌러야 (짧게는 안 뜬다)
   const sl=await p.$('#myBoard .slot.occ'); const b4=await sl.boundingBox();
   await p.mouse.move(b4.x+b4.width/2,b4.y+b4.height/2); await p.mouse.down(); await p.waitForTimeout(120);
