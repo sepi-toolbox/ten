@@ -55,10 +55,9 @@ for(const [w,h,tag] of [[390,844,'모바일'],[1020,1300,'데스크톱']]){
   const same=['x','y','width','height'].every(k=>Math.abs(rm0[k]-rm1[k])<0.6);
   ok('눌러도 제자리', same, `${Math.round(rm0.x)},${Math.round(rm0.y)},${Math.round(rm0.width)}`
     +` → ${Math.round(rm1[ 'x'])},${Math.round(rm1.y)},${Math.round(rm1.width)}`);
-  // 4) 탭하면 닫힌다
-  await p.mouse.up(); await p.waitForTimeout(200);
-  await p.mouse.click(10,10); await p.waitForTimeout(250);
-  ok('탭하면 닫힘', !(await p.$eval('#zoom',e=>e.classList.contains('on'))), '');
+  // 4) 손을 떼면 닫힌다 (확대가 화면에 남으면 다음 드래그를 오버레이가 먹는다)
+  await p.mouse.up(); await p.waitForTimeout(250);
+  ok('떼면 닫힘', !(await p.$eval('#zoom',e=>e.classList.contains('on'))), '');
   // 5) 짧게 탭하면 선택으로 넘어간다
   await p.evaluate(()=>{hideZoom();lpFired=false;S.sel=null;S.mode=null;render();}); await p.waitForTimeout(200);
   const el2=await p.$('.hcw:last-child'); const b2=await el2.boundingBox();

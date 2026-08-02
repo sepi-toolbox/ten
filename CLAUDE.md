@@ -140,10 +140,11 @@ python3 tools/build_pages.py --push <GITHUB_TOKEN>
   강조는 **크기를 바꾸지 않는 테두리 광채**(box-shadow)로만 한다. hover·선택·확대 전부 같은 규칙.
   ⚠ 데스크톱 브라우저에서는 `:hover`가 함께 걸려 이 문제가 가려진다. **터치 전용 컨텍스트로 확인할 것**
     (`tools/test_zoom.js`의 '눌러도 제자리' 항목).
-- **확대는 손패·보드 모두 롱프레스(420ms)**, 탭으로 닫는다.
-  (한때 손패만 '누르는 즉시'로 바꿨다가 되돌렸다 — 탭 선택·드래그와 겹쳐 성가셨다.
-  다시 즉시로 하려면 `showZoom(...,hold=true)`. 그때는 **`.zoom.hold{pointer-events:none}`이 반드시 함께**
-  있어야 한다. 없으면 손 떼는 지점이 오버레이가 되어 `click`이 카드에 닿지 못하고 **탭 선택이 죽는다.**)
+- **확대는 손패·보드 모두 롱프레스(420ms)로 열리고, 손을 떼면 닫힌다**(`showZoom(...,hold=true)`).
+  - ⚠ **탭으로 닫는 방식은 쓰지 말 것.** 확대가 화면에 남아 있으면, 다음에 카드를 끌려고 짚은
+    손가락을 오버레이가 먼저 먹는다 → 사용자에게는 **"카드 끌기가 갑자기 안 된다"** 로 나타난다.
+  - ⚠ `hold=true` 에는 **`.zoom.hold{pointer-events:none}` 이 반드시 따라와야 한다.**
+    없으면 손 떼는 지점이 오버레이가 되어 `click`이 카드에 닿지 못하고 **탭 선택이 죽는다.**
 - 드래그 `pointerdown` 핸들러에서 **확대 여부로 막지 않는다**. 대신 `dragStart`가 `hideZoom(false)`를 부른다.
 - 확대 카드는 모바일에서 **화면 정중앙 고정** — 용어집 패널(`.zside`)을 `position:fixed`로 빼서
   카드를 밀어 올리지 않게 했다.
@@ -151,8 +152,10 @@ python3 tools/build_pages.py --push <GITHUB_TOKEN>
 - 로그·덱 설명은 머리의 **☰ 버튼으로 여는 하단 서랍**(`body.sideon`). 마나 pip은 모바일에서 감춘다
   (지형존이 같은 정보를 더 잘 보여준다).
 - 지도 노드는 적 이름이 길어 넘치므로 **높이를 내용에 맞춘다**(`height:auto;min-height`).
-- **검증**: `tools/test_mobile.js` — 390×844 · 360×780 · 430×932 · 820×1180에서
-  세로 스크롤 없음 · 손패가 화면 안 · 드래그 소환 · 롱프레스 확대 · 서랍을 확인한다.
+- **검증**: `tools/test_mobile.js`(4해상도 레이아웃) · `tools/test_zoom.js`(확대 8건) ·
+  **`tools/test_touch.js`(진짜 터치 입력, CDP `Input.dispatchTouchEvent`)**.
+  ⚠ Playwright의 `mouse` API는 `pointerType=mouse`라 `:hover`가 걸린다 —
+  **휴대폰에서만 나는 증상은 `test_touch.js`에서만 잡힌다.** 손패 조작을 고쳤으면 이걸 꼭 돌릴 것.
 
 ## 원정(로그라이크) — 적 명단과 적별 덱 (2026-08 신설)
 
