@@ -126,5 +126,14 @@ await p.waitForTimeout(250);
   const placed=await p.evaluate(()=>S.me.board.filter(x=>x).length);
   console.log(`${dr&&placed===0&&toast!=='없음'?'✅':'❌'} 못 내는 카드도 끌림       DR ${dr} · 안내 "${tip}" · 놓은 뒤 "${toast}" · 소환 ${placed}`);
 }
+// 7) 가로로 스크롤될 여지가 없어야 한다
+//    (.main 이 가로로 스크롤 가능하면 iOS 가 그 팬을 가져가 드래그를 취소한다)
+console.log(await p.evaluate(()=>{
+  const m=document.querySelector('.main'), h=document.getElementById('hand');
+  const cs=getComputedStyle(m);
+  const bad=m.scrollWidth>m.clientWidth+1;
+  return `${bad?'❌':'✅'} 가로 스크롤 없음         .main overflow-x=${cs.overflowX}`
+    +` scrollWidth ${m.scrollWidth}/${m.clientWidth}`
+    +` · touch-action 카드=${getComputedStyle(h.firstElementChild).touchAction}`;}));
 console.log('ERRORS:',errs.slice(0,3));
 await b.close();})();

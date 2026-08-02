@@ -153,6 +153,15 @@ python3 tools/build_pages.py --push <GITHUB_TOKEN>
   보루로 드래그 시작 시 `document.body.setPointerCapture(pointerId)`도 건다(끝나면 release).
 - **낼 수 없는 카드도 끌린다.** 막아 두면 아무 반응이 없어 "드래그가 안 된다"로 읽힌다.
   끌 때 안내가 붉게 바뀌고(`.dztip.bad`), 놓으면 이유를 토스트로 알려 준다.
+- ⚠⚠ **가로 스크롤이 생기면 iOS가 드래그를 통째로 가져간다.** 증상은
+  "끌려고 하면 화면이 오른쪽 끝으로 밀리고 드래그가 취소됨". 원인 두 개가 겹친다.
+  1. `.hcw{touch-action:pan-x}` — "가로 팬은 브라우저가 가져가도 좋다"는 선언이다. **`none`으로 둘 것.**
+     손패는 부채꼴로 화면에 맞추므로 가로 스크롤이 필요 없다.
+  2. `.main{overflow-y:auto}`만 쓰면 **CSS 규칙상 `overflow-x`가 `visible`→`auto`로 계산된다.**
+     부채꼴 카드가 1px만 넘쳐도 가로로 스크롤 가능해진다. **`overflow-x:hidden`을 명시할 것.**
+- 드래그 중에는 `resize`에도 `fanHand()`를 돌리지 않는다 — iOS는 주소창이 접힐 때 resize를 쏘는데,
+  그때 손패를 다시 배치하면 잡고 있던 카드가 어긋난다.
+- 주소 끝에 **`?dbg=1`** 을 붙이면 포인터 동작(어느 카드를 잡았는지·어디서 끊겼는지)이 전투 로그에 남는다.
 - 확대 카드는 모바일에서 **화면 정중앙 고정** — 용어집 패널(`.zside`)을 `position:fixed`로 빼서
   카드를 밀어 올리지 않게 했다.
 - 손패 카드 폭은 `--handcw`(`clamp(78px,24vw,112px)`) 하나로 조절한다.
