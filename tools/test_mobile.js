@@ -14,13 +14,13 @@ const SIZES=[[390,844,'iPhone 14'],[360,780,'작은 안드로이드'],[430,932,'
     await p.evaluate(()=>{SPEED=30;setDeck('fire');}); await p.waitForTimeout(250);
     await p.evaluate(()=>{const k=document.getElementById('keepBtn');k&&k.click();}); await p.waitForTimeout(250);
     await p.evaluate(()=>{
-      while(S.me.lands.length<6){S.me.landPlayed=false;const j=S.me.hand.findIndex(isLand);
-        if(j<0)break;playLand('me',S.me.hand[j]);S.me.hand.splice(j,1);}
+      /* 손패에 지형이 모자랄 수 있으니 직접 채운다 — 마나 부족으로 테스트가 흔들리지 않게 */
+      while(S.me.lands.length<6){S.me.landPlayed=false;playLand('me',BASICLAND.fire);}
       S.me.lands.forEach(l=>{l.used=false;l.entering=false;});
       while(S.me.hand.length<7)draw('me');
       const cr=Object.keys(POOL).filter(n=>POOL[n].k==='cr'&&POOL[n].el==='fire');
       /* 낼 수 있는 크리처 한 장은 손에 보장한다 — 무작위 드로우로 테스트가 흔들리지 않게 */
-      const cheap=cr.filter(n=>POOL[n].c<=2).sort((a,b)=>POOL[a].c-POOL[b].c)[0];
+      const cheap=cr.filter(n=>POOL[n].c<=2&&!POOL[n].g).sort((a,b)=>POOL[a].c-POOL[b].c)[0];
       /* 맨 오른쪽에 둔다 — 부채꼴에서 마지막 카드가 온전히 드러나고 맨 위에 놓인다 */
       if(cheap)S.me.hand[S.me.hand.length-1]=cheap;
       placeCreature('ai',cr[0],0); render();});
@@ -33,8 +33,9 @@ const SIZES=[[390,844,'iPhone 14'],[360,780,'작은 안드로이드'],[430,932,'
         손패밖:cs.length?(cs[0].left<-2||cs[cs.length-1].right>innerWidth+2):false,
         보이는폭:vis, 카드폭:cs.length?Math.round(cs[0].width):0,
         바닥초과:Math.round(hb.bottom)>innerHeight+2};});
-    // 드래그로 소환
-    const i=await p.evaluate(()=>S.me.hand.findIndex(n=>POOL[n]&&POOL[n].k==='cr'&&canPay('me',n)));
+    // 드래그로 소환 — 겹친 손패에서 가운데 카드를 집으면 오른쪽 이웃이 먼저 잡힌다.
+    // 맨 오른쪽(= 앞에서 심어 둔 저코 크리처)만 온전히 드러나 있으므로 그것으로 검사한다.
+    const i=await p.evaluate(()=>S.me.hand.length-1);
     const el=await p.$(`#hand .hcw[data-h="${i}"]`); const bx=await el.boundingBox();
     const board=await (await p.$('#myBoard')).boundingBox();
     // 맨 오른쪽 카드는 통째로 드러나 있으므로 가운데를 집는다

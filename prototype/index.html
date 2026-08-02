@@ -137,8 +137,8 @@ body::before{
 .lbl{font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:5px}
 
 /* ---- hand ---- */
-.hand{display:flex;gap:0;overflow:visible;touch-action:none;padding:22px 0 16px;justify-content:center;align-items:flex-end;
-  --fanmax:5.5}
+.hand{display:flex;gap:0;overflow:visible;touch-action:none;padding:8px 0 12px;
+  justify-content:center;align-items:flex-end}
 .hand>*{margin-left:var(--hgap,7px)}
 .hand>*:first-child{margin-left:0}
 .hc{
@@ -599,8 +599,8 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
 @supports not (width:1cqw){ .tcard.sm{--cw:84px} }
 
 /* 상대 손패 — 뒷면만 보인다. 만질 수 없고 부채꼴은 아래로 편다(상대가 쥔 모양). */
-.hand.foe{--fanmax:4.5;padding:6px 0 14px;align-items:flex-start}
-.hand.foe .hcw{pointer-events:none;cursor:default;transform-origin:50% -18%}
+.hand.foe{padding:8px 0 10px;align-items:flex-start}
+.hand.foe .hcw{pointer-events:none;cursor:default}
 .cback{width:var(--foecw,58px);aspect-ratio:5/7;border-radius:calc(var(--foecw,58px)*.06);
   border:1.5px solid var(--bronze);position:relative;overflow:hidden;
   background:
@@ -623,7 +623,7 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
    여러 규칙에서 transform 을 덮어쓰면 서로 지워 버린다. */
 .hand.measuring .hcw{transition:none!important}
 .hcw{flex:none;cursor:grab;touch-action:none;      /* ⚠ pan-x 로 두면 iOS가 제스처를 가로채 드래그가 취소된다 */
-  transform-origin:50% 118%;                       /* 카드 아래를 쥔 지점이 회전 중심 */
+  transform-origin:50% 100%;
   transform:rotate(var(--rot,0deg)) translateY(var(--dy,0px)) scale(var(--sc,1));
   transition:transform .16s cubic-bezier(.2,.9,.3,1),filter .16s}
 /* ⚠ 손패 카드는 눌러도 **제자리에 그대로 있어야 한다**.
@@ -723,10 +723,10 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
 
   /* 손패 — 넘치면 겹친다(--hgap 은 render 가 계산해 음수로 넣는다) */
   :root{--handcw:clamp(78px,24vw,112px);--foecw:clamp(38px,11vw,52px)}
-  .hand.foe{flex:none;padding:4px 0 8px;--fanmax:3.5}
+  .hand.foe{flex:none;padding:6px 0 6px}
   #lbHand{display:none}
   /* 손패는 화면 바닥에 붙인다 — 남는 세로 여백이 판과 손패 사이로 간다 (하스스톤 배치) */
-  .hand{flex:none;margin-top:auto;padding:18px 0 14px;justify-content:center;overflow:visible;--fanmax:4}
+  .hand{flex:none;margin-top:auto;padding:6px 0 12px;justify-content:center;overflow:visible}
   /* 터치에는 hover 가 없다. 강조는 광채뿐이라 따로 끌 것이 없다. */
 
   /* 로그·덱 설명은 아래에서 올라오는 서랍으로 */
@@ -759,7 +759,6 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
 /* 아주 좁은 화면(360px 이하) — 카드와 글자를 한 단계 더 줄인다 */
 @media (max-width:380px){
   :root{--handcw:clamp(72px,23vw,84px)}
-  .hand{--fanmax:3.2}
   .hdr h1{font-size:13px}
   .bar .hp{font-size:15px}
   .hint{font-size:9.5px}
@@ -2225,22 +2224,14 @@ function fanHand(id,invert){
     gap=Math.max(minShow-base,(avail-base)/(n-1)-base);
   }
   h.style.setProperty('--hgap',gap.toFixed(1)+'px');
-  /* 2) 부채꼴 — 손에 쥔 카드처럼 가운데가 높고 양끝이 낮게, 조금씩 벌어지게 */
-  const mid=(n-1)/2, dmax=Math.max(0.5,mid);
-  const fanmax=parseFloat(getComputedStyle(h).getPropertyValue('--fanmax'))||5.5;
-  const step=n<2?0:Math.min(fanmax,34/(n-1));      /* 카드당 회전각 */
-  const arc=n<3?0:Math.min(2.4,14/(dmax*dmax));    /* 가운데가 솟는 정도(최대 14px) */
+  /* 2) 기울이지 않는다 — 좌우로 곧게 나열하고 겹치기만 한다.
+        (부채꼴로 폈다가 되돌림. 회전이 들어가면 폭 계산·터치 판정이 전부 까다로워진다.) */
   cards.forEach((el,i)=>{
-    const d=i-mid;
-    /* 상대 손패(invert)는 부채꼴을 뒤집는다 — 상대가 자기 쪽으로 쥔 모양 */
-    el.style.setProperty('--rot',((invert?-d:d)*step).toFixed(2)+'deg');
-    /* 양끝을 내리는 게 아니라 가운데를 올린다 — 내리면 손패가 화면 아래로 삐져나간다 */
-    const dy=(d*d-dmax*dmax)*arc;
-    el.style.setProperty('--dy',(invert?-dy:dy).toFixed(1)+'px');
+    el.style.setProperty('--rot','0deg');
+    el.style.setProperty('--dy','0px');
     el.style.zIndex=String(10+i);                  /* 오른쪽 카드가 왼쪽을 덮는다 */
   });
-  /* 3) 회전시키면 실제 차지하는 폭이 계산보다 커진다(모서리가 튀어나온다).
-        재서 넘치면 손패 전체를 줄인다 — 부채꼴 모양은 그대로 두고 손만 멀어지는 셈. */
+  /* 3) 그래도 넘치면 손패 전체를 줄인다(카드가 화면 밖으로 나가는 것보다 낫다). */
   /* ⚠ 전환 애니메이션이 켜져 있으면 아직 회전 전 상태를 재게 된다 — 잠시 꺼 놓고 잰다 */
   h.classList.add('measuring');
   const hb=h.getBoundingClientRect();
@@ -2250,7 +2241,7 @@ function fanHand(id,invert){
   const span=r-l, room=hb.width-4;
   const k=span>room?Math.max(0.6,room/span):1;
   h.style.transform=k<1?`scale(${k.toFixed(3)})`:'none';
-  h.style.transformOrigin=invert?'50% 0':'50% 100%';
+  h.style.transformOrigin=invert?'50% 0':'50% 100%';   /* invert = 상대 손패(위쪽 기준) */
 }
 /* 상대 손패 — 매수만 뒷면으로 보여 준다 */
 function renderFoeHand(){
