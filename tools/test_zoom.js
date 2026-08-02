@@ -24,6 +24,10 @@ for(const [w,h,tag] of [[390,844,'모바일'],[1020,1300,'데스크톱']]){
     placeCreature('me',cr[0]||'불씨정령',0); render();});
   await p.waitForTimeout(300);
   const zbefore=await p.evaluate(()=>[...document.getElementById('hand').children].map(c=>+c.style.zIndex));
+  /* 가운데 카드로 검사한다 — 맨 오른쪽 카드는 원래 맨 위라 겹침이 흐트러져도 드러나지 않는다 */
+  const mid=await p.evaluate(()=>Math.floor(document.getElementById('hand').children.length/2));
+  const midEl=await p.$(`.hcw:nth-child(${mid+1})`);
+  const r0=await midEl.boundingBox();
   const el=await p.$('.hcw:last-child'); const bx=await el.boundingBox();
   const cx=bx.x+bx.width/2, cy=bx.y+bx.height/2;
 
@@ -40,6 +44,15 @@ for(const [w,h,tag] of [[390,844,'모바일'],[1020,1300,'데스크톱']]){
      `${zbefore.join(',')} → ${zdur.join(',')} · 눌린 카드 계산값 ${comp}`);
   // 3) 원본 강조는 유지
   ok('원본 강조', await p.evaluate(()=>!!document.querySelector('.hcw.zoomed')), '.zoomed 부착');
+  // 3-b) 가운데 카드를 눌러도 자리·크기가 그대로여야 한다
+  await p.mouse.up(); await p.waitForTimeout(200);
+  await p.evaluate(()=>{hideZoom();lpFired=false;S.sel=null;S.mode=null;render();}); await p.waitForTimeout(250);
+  const rm0=await (await p.$(`.hcw:nth-child(${mid+1})`)).boundingBox();
+  await p.mouse.move(rm0.x+10,rm0.y+rm0.height*0.7); await p.mouse.down(); await p.waitForTimeout(250);
+  const rm1=await (await p.$(`.hcw:nth-child(${mid+1})`)).boundingBox();
+  const same=['x','y','width','height'].every(k=>Math.abs(rm0[k]-rm1[k])<0.6);
+  ok('눌러도 제자리', same, `${Math.round(rm0.x)},${Math.round(rm0.y)},${Math.round(rm0.width)}`
+    +` → ${Math.round(rm1[ 'x'])},${Math.round(rm1.y)},${Math.round(rm1.width)}`);
   // 4) 떼면 닫힌다
   await p.mouse.up(); await p.waitForTimeout(200);
   ok('떼면 닫힘', !(await p.$eval('#zoom',e=>e.classList.contains('on'))), '');

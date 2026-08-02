@@ -607,12 +607,13 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
   transform-origin:50% 118%;                       /* 카드 아래를 쥔 지점이 회전 중심 */
   transform:rotate(var(--rot,0deg)) translateY(var(--dy,0px)) scale(var(--sc,1));
   transition:transform .16s cubic-bezier(.2,.9,.3,1),filter .16s}
-/* ⚠ 눌렀다고 z-index 를 올리지 않는다 — 부채꼴의 겹침 순서가 흐트러진다.
-   강조는 들림(--dy)과 확대(--sc)로만 한다. */
-.hcw:hover{--dy:-12px;--sc:1.06}
-.hcw.zoomed{--dy:-16px;--sc:1.12}
-.hcw.zoomed .tcard{border-color:var(--gold-bright);
-  box-shadow:0 10px 22px rgba(0,0,0,.6),0 0 20px rgba(242,212,136,.85)}
+/* ⚠ 손패 카드는 눌러도 **제자리에 그대로 있어야 한다**.
+   z-index를 올리는 것은 물론이고 들어올리거나(--dy) 키우는 것(--sc)도 안 된다 —
+   옆 카드에 가려져 있던 부분이 위로 삐져나와 '갑자기 앞으로 튀어나온' 것처럼 보인다.
+   강조는 **크기를 바꾸지 않는 테두리 광채**로만 한다. */
+.hcw:hover,.hcw.zoomed,.hcw.sel{border-radius:7px;
+  box-shadow:0 0 0 2px var(--gold-bright),0 0 18px rgba(242,212,136,.8)}
+.hcw.zoomed,.hcw.sel{box-shadow:0 0 0 2.5px var(--gold-bright),0 0 24px rgba(242,212,136,.95)}
 /* 끌고 있는 원본은 완전히 감춘다 — 반투명으로 두면 밑장이 비쳐 지저분하다 */
 .hcw.dragging{opacity:0;transition:none}
 
@@ -703,7 +704,7 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
   #lbHand{display:none}
   /* 손패는 화면 바닥에 붙인다 — 남는 세로 여백이 판과 손패 사이로 간다 (하스스톤 배치) */
   .hand{flex:none;margin-top:auto;padding:18px 0 14px;justify-content:center;overflow:visible;--fanmax:4}
-  .hcw:hover{--dy:0px;--sc:1}                /* 터치에는 hover 가 없다 — 눌림만 반응 */
+  /* 터치에는 hover 가 없다. 강조는 광채뿐이라 따로 끌 것이 없다. */
 
   /* 로그·덱 설명은 아래에서 올라오는 서랍으로 */
   .side{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:70;max-height:72dvh;overflow-y:auto;
@@ -779,11 +780,10 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
   box-shadow:0 6px 18px rgba(0,0,0,.55);animation:tst 1.5s ease forwards}
 @keyframes tst{0%{opacity:0;transform:translate(-50%,10px)}12%{opacity:1;transform:translate(-50%,0)}
   75%{opacity:1}100%{opacity:0;transform:translate(-50%,-6px)}}
-.hcw.sel{--dy:-14px;--sc:1.08}
-.hcw.sel .tcard{border-color:var(--gold-bright);box-shadow:0 8px 18px rgba(0,0,0,.55),0 0 16px rgba(242,212,136,.7)}
+.hcw.sel .tcard,.hcw.zoomed .tcard{border-color:var(--gold-bright)}
 .hcw.no{cursor:not-allowed}
 .hcw.no .tcard{filter:grayscale(.85) brightness(.52) contrast(.95)}
-.hcw.no:hover{--dy:0px;--sc:1}
+
 .slot.occ{padding:0;background:transparent;border:none!important;box-shadow:none!important}
 
 /* 키워드 상태 뱃지 — 카드 아래쪽에 겹친다 */
