@@ -349,6 +349,7 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
 .zoom{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;
   background:rgba(8,5,3,.82);backdrop-filter:blur(3px);padding:20px}
 .zoom.on{display:flex;animation:zfade .16s ease both}
+.zoom.hold{pointer-events:none}
 .zwrap{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;max-width:100%}
 @media (max-width:900px){
   .zoom{padding:0}
@@ -606,8 +607,10 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
   transform-origin:50% 118%;                       /* 카드 아래를 쥔 지점이 회전 중심 */
   transform:rotate(var(--rot,0deg)) translateY(var(--dy,0px)) scale(var(--sc,1));
   transition:transform .16s cubic-bezier(.2,.9,.3,1),filter .16s}
-.hcw:hover{--dy:-12px;--sc:1.06;--rot:0deg;z-index:60!important}
-.hcw.zoomed{--dy:-16px;--sc:1.12;--rot:0deg;z-index:61!important}
+/* ⚠ 눌렀다고 z-index 를 올리지 않는다 — 부채꼴의 겹침 순서가 흐트러진다.
+   강조는 들림(--dy)과 확대(--sc)로만 한다. */
+.hcw:hover{--dy:-12px;--sc:1.06}
+.hcw.zoomed{--dy:-16px;--sc:1.12}
 .hcw.zoomed .tcard{border-color:var(--gold-bright);
   box-shadow:0 10px 22px rgba(0,0,0,.6),0 0 20px rgba(242,212,136,.85)}
 /* 끌고 있는 원본은 완전히 감춘다 — 반투명으로 두면 밑장이 비쳐 지저분하다 */
@@ -776,7 +779,7 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
   box-shadow:0 6px 18px rgba(0,0,0,.55);animation:tst 1.5s ease forwards}
 @keyframes tst{0%{opacity:0;transform:translate(-50%,10px)}12%{opacity:1;transform:translate(-50%,0)}
   75%{opacity:1}100%{opacity:0;transform:translate(-50%,-6px)}}
-.hcw.sel{--dy:-14px;--sc:1.08;--rot:0deg;z-index:60!important}
+.hcw.sel{--dy:-14px;--sc:1.08}
 .hcw.sel .tcard{border-color:var(--gold-bright);box-shadow:0 8px 18px rgba(0,0,0,.55),0 0 16px rgba(242,212,136,.7)}
 .hcw.no{cursor:not-allowed}
 .hcw.no .tcard{filter:grayscale(.85) brightness(.52) contrast(.95)}
@@ -2602,21 +2605,27 @@ function zoomHTML(name,u){
   }
   return '';
 }
-let lpT=null, lpFired=false, lpSrc=null;
-function showZoom(name,u,src){
+let lpT=null, lpFired=false, lpSrc=null, lpHold=false, lpAt=0;
+/* hold=true → 누르고 있는 동안만 보여 준다(손패). false → 탭으로 닫는다(보드). */
+function showZoom(name,u,src,hold){
   const z=document.getElementById('zoom');
   z.innerHTML=zoomHTML(name,u); z.classList.add('on');
   /* 확대하는 동안 손패의 원본도 살짝 커져서 '이 카드' 임을 알려 준다 */
   if(lpSrc)lpSrc.classList.remove('zoomed');
   lpSrc=src&&src.classList&&src.classList.contains('hcw')?src:null;
   if(lpSrc)lpSrc.classList.add('zoomed');
-  setTimeout(()=>document.addEventListener('pointerdown',hideZoom,{once:true,capture:true}),60);
+  lpHold=!!hold;
+  z.classList.toggle('hold',!!hold);
+  if(!hold)setTimeout(()=>document.addEventListener('pointerdown',hideZoom,{once:true,capture:true}),60);
 }
-function hideZoom(){
+/* swallow===false 면 뒤따르는 click 을 막지 않는다(짧게 눌렀다 뗀 것 = 선택). */
+function hideZoom(swallow){
   const z=document.getElementById('zoom');
   if(lpSrc){ lpSrc.classList.remove('zoomed'); lpSrc=null; }
+  lpHold=false;
   if(!z.classList.contains('on'))return;
-  z.classList.remove('on'); z.innerHTML=''; lpFired=true;   // 닫는 탭이 카드 플레이로 이어지지 않도록
+  z.classList.remove('on','hold'); z.innerHTML='';
+  if(swallow!==false)lpFired=true;      // 닫는 탭이 카드 플레이로 이어지지 않도록
 }
 let lpX=0,lpY=0;
 document.addEventListener('pointerdown',e=>{
@@ -2626,16 +2635,24 @@ document.addEventListener('pointerdown',e=>{
   if(slot){ u=S[slot.dataset.side==='me'?'me':'ai'].board[+slot.dataset.idx]; if(u)name=u.name; }
   else if(hc){ name=S.me.hand[+hc.dataset.h]; }
   if(!name)return;
-  lpFired=false; clearTimeout(lpT); lpX=e.clientX; lpY=e.clientY;
-  const src=hc||null;
-  lpT=setTimeout(()=>showZoom(name,u,src),420);
+  lpFired=false; clearTimeout(lpT); lpT=null; lpX=e.clientX; lpY=e.clientY; lpAt=Date.now();
+  /* 손패 카드는 **누르는 즉시** 확대한다(딜레이 없음). 떼면 닫힌다.
+     보드 카드는 탭이 대상 지정에 쓰이므로 예전처럼 길게 눌러야 한다. */
+  if(hc)showZoom(name,u,hc,true);
+  else lpT=setTimeout(()=>showZoom(name,u,null,false),420);
 });
 /* 손가락이 조금 흔들려도 취소되지 않도록 이동 임계값을 둔다 */
 document.addEventListener('pointermove',e=>{
-  if(lpT&&Math.hypot(e.clientX-lpX,e.clientY-lpY)>12){clearTimeout(lpT);lpT=null;}
+  const far=Math.hypot(e.clientX-lpX,e.clientY-lpY)>12;
+  if(lpT&&far){clearTimeout(lpT);lpT=null;}
+  if(lpHold&&far)hideZoom(false);        /* 끌기 시작 — 확대를 접고 클릭도 막지 않는다 */
 },{passive:true});
 ['pointerup','pointercancel','scroll'].forEach(ev=>
-  document.addEventListener(ev,()=>{clearTimeout(lpT);lpT=null;},{passive:true}));
+  document.addEventListener(ev,()=>{
+    clearTimeout(lpT); lpT=null;
+    /* 짧게 눌렀다 뗀 것은 '선택'으로 흘려보내고, 오래 들여다본 것은 클릭을 막는다 */
+    if(lpHold)hideZoom(Date.now()-lpAt>=260);
+  },{passive:true}));
 document.addEventListener('click',e=>{ if(lpFired){e.stopPropagation();e.preventDefault();lpFired=false;} },true);
 document.addEventListener('contextmenu',e=>{ if(e.target.closest('.slot.occ,.hcw,.hc'))e.preventDefault(); });
 
@@ -2657,7 +2674,7 @@ function dragStart(i,x,y){
   if(isLand(n)){ if(S.me.landPlayed)return; }
   else if(!POOL[n]||!canPay('me',n))return;
   const mode=modeOf(n); if(!mode)return;
-  endTargeting();
+  hideZoom(false); endTargeting();
   clearTimeout(lpT); lpT=null;
   /* 모드를 미리 세워 두면 기존 슬롯 하이라이트(.pick)가 그대로 켜진다 */
   S.sel=i; S.mode=mode==='land'?null:mode; render();
@@ -2758,7 +2775,7 @@ document.addEventListener('pointerdown',e=>{
 },true);
 document.addEventListener('pointermove',e=>{ if(TGT)tgtDraw(e.clientX,e.clientY); },{passive:true});
 document.addEventListener('pointerdown',e=>{
-  if(document.getElementById('zoom').classList.contains('on'))return;
+  /* 확대 여부를 보고 막지 않는다 — 손패는 누르는 순간 확대되므로 여기서 막으면 드래그가 죽는다 */
   const hc=e.target.closest('.hcw'); if(!hc||hc.classList.contains('no'))return;
   dg={i:+hc.dataset.h,x:e.clientX,y:e.clientY};
 });
