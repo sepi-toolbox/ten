@@ -102,11 +102,14 @@ def main():
     orbs = json.load(open(opath, encoding="utf-8")) if os.path.exists(opath) else {}
     rpath = os.path.join(DATA, "rogue.json")
     rogue = json.load(open(rpath, encoding="utf-8")) if os.path.exists(rpath) else {}
+    epath = os.path.join(DATA, "enemies.json")
+    enemies = json.load(open(epath, encoding="utf-8")) if os.path.exists(epath) else {}
     poolblock = ("/* POOL_START */\nconst POOL=" + j(pool)
                  + ";\nconst GLOSSARY=" + j(GLOSSARY)
                  + ";\nconst FRAMES=" + j(frames)
                  + ";\nconst ORBS=" + j(orbs)
-                 + ";\nconst ROGUE=" + j(rogue) + ";\n/* POOL_END */")
+                 + ";\nconst ROGUE=" + j(rogue)
+                 + ";\nconst ENEMY=" + j(enemies) + ";\n/* POOL_END */")
     if "/* POOL_START */" in html:
         html = re.sub(r"/\* POOL_START \*/.*?/\* POOL_END \*/", lambda m: poolblock,
                       html, count=1, flags=re.S)
@@ -115,7 +118,9 @@ def main():
 
     open(PROTO, "w", encoding="utf-8").write(html)
     n_over = len(rogue.get("over", {}))
-    print(f"injected: POOL {len(pool)}종 · 덱 {len(dk)}개 · 지형 {len(lands)}종 · 프레임 {len(frames)}장 · 오브 {len(orbs)}종 · 강화 {n_over}종")
+    n_foe = len(enemies.get("list", []))
+    print(f"injected: POOL {len(pool)}종 · 덱 {len(dk)}개 · 지형 {len(lands)}종 · 프레임 {len(frames)}장 "
+          f"· 오브 {len(orbs)}종 · 강화 {n_over}종 · 적 {n_foe}명")
 
 
 if __name__ == "__main__":
