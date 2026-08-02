@@ -137,7 +137,8 @@ body::before{
 .lbl{font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:5px}
 
 /* ---- hand ---- */
-.hand{display:flex;gap:0;overflow-x:auto;padding:4px 0 10px;justify-content:flex-start}
+.hand{display:flex;gap:0;overflow:visible;padding:22px 0 16px;justify-content:center;align-items:flex-end;
+  --basecw:var(--handcw,86px);--fanmax:5.5}
 .hand>*{margin-left:var(--hgap,7px)}
 .hand>*:first-child{margin-left:0}
 .hc{
@@ -349,6 +350,13 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
   background:rgba(8,5,3,.82);backdrop-filter:blur(3px);padding:20px}
 .zoom.on{display:flex;animation:zfade .16s ease both}
 .zwrap{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;max-width:100%}
+@media (max-width:900px){
+  .zoom{padding:0}
+  .zwrap{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);gap:0}
+  .zside{position:fixed;left:10px;right:10px;bottom:12px;width:auto;max-height:26vh;z-index:2}
+  .tcard.lg{--cw:min(76vw,290px)}
+  .zhint{position:fixed;left:0;right:0;top:14px}
+}
 .zside{width:min(78vw,240px);max-height:62vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
   display:flex;flex-direction:column;gap:8px}
 .zdef{border:1px solid var(--rule);border-left:3px solid var(--gold);border-radius:6px;
@@ -590,9 +598,20 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
 @supports not (width:1cqw){ .tcard.sm{--cw:84px} }
 
 /* 손패 래퍼 */
-.hcw{flex:none;cursor:grab;transition:.15s;touch-action:pan-x}   /* 세로 제스처는 드래그로 넘긴다 */
-.hcw:hover{transform:translateY(-4px)}
-.hcw.dragging{opacity:.18;transform:none!important;transition:none}
+/* 손패는 실제로 카드를 쥔 것처럼 부채꼴로 편다.
+   회전·들림·확대를 각각 변수로 두고 transform 은 한 줄로만 쓴다 —
+   여러 규칙에서 transform 을 덮어쓰면 서로 지워 버린다. */
+.hand.measuring .hcw{transition:none!important}
+.hcw{flex:none;cursor:grab;touch-action:pan-x;
+  transform-origin:50% 118%;                       /* 카드 아래를 쥔 지점이 회전 중심 */
+  transform:rotate(var(--rot,0deg)) translateY(var(--dy,0px)) scale(var(--sc,1));
+  transition:transform .16s cubic-bezier(.2,.9,.3,1),filter .16s}
+.hcw:hover{--dy:-12px;--sc:1.06;--rot:0deg;z-index:60!important}
+.hcw.zoomed{--dy:-16px;--sc:1.12;--rot:0deg;z-index:61!important}
+.hcw.zoomed .tcard{border-color:var(--gold-bright);
+  box-shadow:0 10px 22px rgba(0,0,0,.6),0 0 20px rgba(242,212,136,.85)}
+/* 끌고 있는 원본은 완전히 감춘다 — 반투명으로 두면 밑장이 비쳐 지저분하다 */
+.hcw.dragging{opacity:0;transition:none}
 
 /* 드래그 — 손패 밖으로 끌어내면 발동 */
 .dgh{position:fixed;left:0;top:0;z-index:88;pointer-events:none;will-change:transform;
@@ -680,10 +699,8 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
   :root{--handcw:clamp(78px,24vw,112px)}
   #lbHand{display:none}
   /* 손패는 화면 바닥에 붙인다 — 남는 세로 여백이 판과 손패 사이로 간다 (하스스톤 배치) */
-  .hand{flex:none;margin-top:auto;padding:6px 0 8px;justify-content:center;overflow:visible}
-  .hcw{transition:transform .12s}
-  .hcw:hover{transform:none}
-  .hcw.sel{transform:translateY(-8px)}
+  .hand{flex:none;margin-top:auto;padding:18px 0 14px;justify-content:center;overflow:visible;--fanmax:4}
+  .hcw:hover{--dy:0px;--sc:1}                /* 터치에는 hover 가 없다 — 눌림만 반응 */
 
   /* 로그·덱 설명은 아래에서 올라오는 서랍으로 */
   .side{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:70;max-height:72dvh;overflow-y:auto;
@@ -715,6 +732,7 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
 /* 아주 좁은 화면(360px 이하) — 카드와 글자를 한 단계 더 줄인다 */
 @media (max-width:380px){
   :root{--handcw:clamp(72px,23vw,84px)}
+  .hand{--fanmax:3.2}
   .hdr h1{font-size:13px}
   .bar .hp{font-size:15px}
   .hint{font-size:9.5px}
@@ -758,9 +776,11 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
   box-shadow:0 6px 18px rgba(0,0,0,.55);animation:tst 1.5s ease forwards}
 @keyframes tst{0%{opacity:0;transform:translate(-50%,10px)}12%{opacity:1;transform:translate(-50%,0)}
   75%{opacity:1}100%{opacity:0;transform:translate(-50%,-6px)}}
+.hcw.sel{--dy:-14px;--sc:1.08;--rot:0deg;z-index:60!important}
 .hcw.sel .tcard{border-color:var(--gold-bright);box-shadow:0 8px 18px rgba(0,0,0,.55),0 0 16px rgba(242,212,136,.7)}
-.hcw.no{opacity:.42;cursor:not-allowed;filter:grayscale(.4)}
-.hcw.no:hover{transform:none}
+.hcw.no{cursor:not-allowed}
+.hcw.no .tcard{filter:grayscale(.85) brightness(.52) contrast(.95)}
+.hcw.no:hover{--dy:0px;--sc:1}
 .slot.occ{padding:0;background:transparent;border:none!important;box-shadow:none!important}
 
 /* 키워드 상태 뱃지 — 카드 아래쪽에 겹친다 */
@@ -2161,16 +2181,47 @@ async function castSelectedAoe(){
    가로 스크롤로 두면 세로 화면에서 카드가 화면 밖으로 숨어 버린다. */
 function fanHand(){
   const h=document.getElementById('hand'); if(!h)return;
-  const n=h.children.length;
-  if(n<2){ h.style.setProperty('--hgap','7px'); return; }
-  const cw=h.children[0].getBoundingClientRect().width||86;
+  const cards=[...h.children];
+  const n=cards.length;
+  if(!n)return;
+  /* ⚠ 지난 번에 걸어 둔 축소를 먼저 푼다. 안 풀고 재면 줄어든 폭을 기준으로 또 줄여
+        (겹침 → 축소 → 더 좁은 폭 → 더 축소) 손패가 계속 작아진다. 실제로 그렇게 망가졌다. */
+  h.style.transform='none';
+  /* 1) 가로 — 넘치면 겹친다. 겹치더라도 한 장이 최소 이만큼은 보이게 둔다.
+        offsetWidth 는 조상 transform 의 영향을 받지 않는다 — 반드시 이걸로 잰다. */
+  const base=cards[0].offsetWidth||86;
   const avail=h.clientWidth-4;
-  const need=n*cw+(n-1)*7;
-  if(need<=avail){ h.style.setProperty('--hgap','7px'); return; }
-  /* 카드 한 장이 최소 이만큼은 보이게 — 그보다 좁아지면 집을 수가 없다 */
-  const minShow=Math.max(26,cw*0.34);
-  const gap=Math.max(minShow-cw, (avail-cw)/(n-1)-cw);
+  const need=n*base+(n-1)*7;
+  let gap=7;
+  if(n>1&&need>avail){
+    const minShow=Math.max(26,base*0.34);
+    gap=Math.max(minShow-base,(avail-base)/(n-1)-base);
+  }
   h.style.setProperty('--hgap',gap.toFixed(1)+'px');
+  /* 2) 부채꼴 — 손에 쥔 카드처럼 가운데가 높고 양끝이 낮게, 조금씩 벌어지게 */
+  const mid=(n-1)/2, dmax=Math.max(0.5,mid);
+  const fanmax=parseFloat(getComputedStyle(h).getPropertyValue('--fanmax'))||5.5;
+  const step=n<2?0:Math.min(fanmax,34/(n-1));      /* 카드당 회전각 */
+  const arc=n<3?0:Math.min(2.4,14/(dmax*dmax));    /* 가운데가 솟는 정도(최대 14px) */
+  cards.forEach((el,i)=>{
+    const d=i-mid;
+    el.style.setProperty('--rot',(d*step).toFixed(2)+'deg');
+    /* 양끝을 내리는 게 아니라 가운데를 올린다 — 내리면 손패가 화면 아래로 삐져나간다 */
+    el.style.setProperty('--dy',((d*d-dmax*dmax)*arc).toFixed(1)+'px');
+    el.style.zIndex=String(10+i);                  /* 오른쪽 카드가 왼쪽을 덮는다 */
+  });
+  /* 3) 회전시키면 실제 차지하는 폭이 계산보다 커진다(모서리가 튀어나온다).
+        재서 넘치면 손패 전체를 줄인다 — 부채꼴 모양은 그대로 두고 손만 멀어지는 셈. */
+  /* ⚠ 전환 애니메이션이 켜져 있으면 아직 회전 전 상태를 재게 된다 — 잠시 꺼 놓고 잰다 */
+  h.classList.add('measuring');
+  const hb=h.getBoundingClientRect();
+  let l=Infinity,r=-Infinity;
+  cards.forEach(c=>{const b=c.getBoundingClientRect(); if(b.left<l)l=b.left; if(b.right>r)r=b.right;});
+  h.classList.remove('measuring');
+  const span=r-l, room=hb.width-4;
+  const k=span>room?Math.max(0.6,room/span):1;
+  h.style.transform=k<1?`scale(${k.toFixed(3)})`:'none';
+  h.style.transformOrigin='50% 100%';
 }
 addEventListener('resize',()=>{ fanHand(); if(typeof RG!=='undefined'&&RG.on&&document.getElementById('mapsvg'))rgDrawEdges(rgReach()); });
 
@@ -2473,10 +2524,7 @@ function render(){
     if(S.sel===i)cls+=' sel';
     return `<div class="${cls}" data-h="${i}">${tcardHTML(n,{size:'md'})}</div>`;
   }).join('');
-  document.querySelectorAll('.hc,.hcw').forEach((el,i)=>{
-    el.onclick=()=>selectCard(+el.dataset.h);
-    el.style.zIndex=String(10+i);            /* 뒤 카드가 앞 카드를 덮는다 */
-  });
+  document.querySelectorAll('.hc,.hcw').forEach(el=>{el.onclick=()=>selectCard(+el.dataset.h);});
   fanHand();
   // hint
   const hint=document.getElementById('hint');
@@ -2554,14 +2602,19 @@ function zoomHTML(name,u){
   }
   return '';
 }
-let lpT=null, lpFired=false;
-function showZoom(name,u){
+let lpT=null, lpFired=false, lpSrc=null;
+function showZoom(name,u,src){
   const z=document.getElementById('zoom');
   z.innerHTML=zoomHTML(name,u); z.classList.add('on');
+  /* 확대하는 동안 손패의 원본도 살짝 커져서 '이 카드' 임을 알려 준다 */
+  if(lpSrc)lpSrc.classList.remove('zoomed');
+  lpSrc=src&&src.classList&&src.classList.contains('hcw')?src:null;
+  if(lpSrc)lpSrc.classList.add('zoomed');
   setTimeout(()=>document.addEventListener('pointerdown',hideZoom,{once:true,capture:true}),60);
 }
 function hideZoom(){
   const z=document.getElementById('zoom');
+  if(lpSrc){ lpSrc.classList.remove('zoomed'); lpSrc=null; }
   if(!z.classList.contains('on'))return;
   z.classList.remove('on'); z.innerHTML=''; lpFired=true;   // 닫는 탭이 카드 플레이로 이어지지 않도록
 }
@@ -2574,7 +2627,8 @@ document.addEventListener('pointerdown',e=>{
   else if(hc){ name=S.me.hand[+hc.dataset.h]; }
   if(!name)return;
   lpFired=false; clearTimeout(lpT); lpX=e.clientX; lpY=e.clientY;
-  lpT=setTimeout(()=>showZoom(name,u),420);
+  const src=hc||null;
+  lpT=setTimeout(()=>showZoom(name,u,src),420);
 });
 /* 손가락이 조금 흔들려도 취소되지 않도록 이동 임계값을 둔다 */
 document.addEventListener('pointermove',e=>{

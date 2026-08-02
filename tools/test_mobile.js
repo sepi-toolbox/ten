@@ -19,6 +19,10 @@ const SIZES=[[390,844,'iPhone 14'],[360,780,'작은 안드로이드'],[430,932,'
       S.me.lands.forEach(l=>{l.used=false;l.entering=false;});
       while(S.me.hand.length<7)draw('me');
       const cr=Object.keys(POOL).filter(n=>POOL[n].k==='cr'&&POOL[n].el==='fire');
+      /* 낼 수 있는 크리처 한 장은 손에 보장한다 — 무작위 드로우로 테스트가 흔들리지 않게 */
+      const cheap=cr.filter(n=>POOL[n].c<=2).sort((a,b)=>POOL[a].c-POOL[b].c)[0];
+      /* 맨 오른쪽에 둔다 — 부채꼴에서 마지막 카드가 온전히 드러나고 맨 위에 놓인다 */
+      if(cheap)S.me.hand[S.me.hand.length-1]=cheap;
       placeCreature('ai',cr[0],0); render();});
     await p.waitForTimeout(300);
     const m=await p.evaluate(()=>{
@@ -33,16 +37,16 @@ const SIZES=[[390,844,'iPhone 14'],[360,780,'작은 안드로이드'],[430,932,'
     const i=await p.evaluate(()=>S.me.hand.findIndex(n=>POOL[n]&&POOL[n].k==='cr'&&canPay('me',n)));
     const el=await p.$(`.hcw[data-h="${i}"]`); const bx=await el.boundingBox();
     const board=await (await p.$('#myBoard')).boundingBox();
-    // 겹친 손패에서는 카드의 '보이는 왼쪽 부분'을 집는다 (가운데는 다음 카드가 덮고 있다)
-    const gx=bx.x+14;
-    await p.mouse.move(gx,bx.y+12); await p.mouse.down();
+    // 맨 오른쪽 카드는 통째로 드러나 있으므로 가운데를 집는다
+    const gx=bx.x+bx.width/2;
+    await p.mouse.move(gx,bx.y+bx.height/2); await p.mouse.down();
     await p.mouse.move(gx,bx.y-40,{steps:4});
     await p.mouse.move(board.x+board.width/2,board.y+board.height/2,{steps:6});
     await p.mouse.up(); await p.waitForTimeout(400);
     const played=await p.evaluate(()=>S.me.board.filter(x=>x).length);
     // 길게 눌러 확대
-    const el2=await p.$('.hcw'); const b2=await el2.boundingBox();
-    await p.mouse.move(b2.x+14,b2.y+14); await p.mouse.down(); await p.waitForTimeout(650);
+    const el2=await p.$('.hcw:last-child'); const b2=await el2.boundingBox();
+    await p.mouse.move(b2.x+b2.width/2,b2.y+b2.height/2); await p.mouse.down(); await p.waitForTimeout(650);
     const zoom=await p.$eval('#zoom',e=>e.classList.contains('on'));
     await p.mouse.up(); await p.evaluate(()=>{hideZoom();lpFired=false;}); await p.waitForTimeout(200);
     // 서랍
