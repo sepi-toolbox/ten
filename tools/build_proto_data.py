@@ -37,6 +37,7 @@ GLOSSARY = {
     # ── 불 ──
     "연소":   ["불", "내 턴이 끝날 때마다 자기 자신이 적힌 만큼 피해를 받는다. 스스로 타들어 가는 대신 스탯이 크다."],
     "폭발":   ["불", "이 개체가 소멸할 때 상대 플레이어에게 자기 ATK 만큼 피해를 준다. 보드 상황과 상관없이 반드시 들어간다."],
+    "속공":   ["불", "소환할 때 내 크리처 1개체를 골라 즉시 한 번 공격시킨다. 그 개체는 이번 턴 정규 공격에서는 빠진다."],
     # ── 물 ──
     "환류":   ["물", "소멸할 때 무덤이 아니라 손으로 돌아온다. 단 한 번뿐이고, 돌아오면 이 능력은 사라진다."],
     "밀물":   ["물", "소환할 때 이 카드의 코스트 이하인 상대 크리처 1개체를 골라 손으로 되돌린다. 고를 수 있는 대상이 있으면 반드시 골라야 한다."],
@@ -69,7 +70,14 @@ def main():
     lands = {}
     for r in landrows:
         els = [e for e in (r.get("produces", ""), r.get("produces2", "")) if e]
-        lands[r["name"]] = {"els": els, "dual": int(r.get("tapped") or 0)}
+        e = {"els": els, "dual": int(r.get("tapped") or 0)}
+        # 특수 지형 — 자원을 만들지 않고 다른 일을 한다. `sp` 가 그 종류다.
+        # ⚠ els 가 비면 카드 색·자원 pip 이 없어지므로 `home`(테마 속성)을 따로 실어 준다.
+        if r.get("kind") == "special":
+            e["sp"] = r["name"]
+            e["home"] = r.get("element") or "fire"
+            e["note"] = r.get("note", "")
+        lands[r["name"]] = e
 
     ce = {name: c.get("el", "steel") for name, c in pool.items()}
 

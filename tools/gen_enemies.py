@@ -277,6 +277,29 @@ ROSTER = {
          "빛으로 지운다. 회복과 가호를 동시에 뚫어야 한다."),
     ],
 }
+# ── 손으로 짠 고정 덱 ────────────────────────────────────────
+# 아키타입 점수로 자동 생성하는 대신 **덱을 통째로 지정**한다. 컨셉이 분명한 적에게 쓴다.
+# ⚠ 골격은 그대로 지켜야 한다 — 23장 · 커브 1코3·2코5·3코5·4코4·5코4·6코2 · 동명 2장 상한.
+#    난이도 단계별 강화 카드 치환(apply_over)은 고정 덱에도 그대로 걸린다.
+# ⚠ 지형을 여러 종류 쓸 수 있다. 프로토타입의 rgFight 가 `lands` 를 보고 그대로 깐다.
+FIXED = {
+    "fire_goblin": {
+        "cards": [
+            ("고블린 폭탄병", 2), ("파이어 볼트", 1),                       # 1코 3
+            ("용암 정령", 2), ("도화선", 1), ("불사조의 깃털", 1), ("분신", 1),  # 2코 5
+            ("고블린 지휘관", 2), ("고블린 전차", 1), ("고블린 화염포", 1),
+            ("불꽃광대", 1),                                             # 3코 5
+            ("고블린 방패병", 2), ("와이번", 1), ("불의 군단", 1),            # 4코 4
+            ("용암거인", 1), ("화신", 1), ("불사조", 1), ("겁화", 1),         # 5코 4
+            ("겁화룡", 1), ("소이탄", 1),                                  # 6코 2
+        ],
+        # 고블린 요새는 자원을 안 내므로 그만큼 실질 마나 상한이 내려간다.
+        # 3장이면 10턴까지 기대 1.3장이 깔려 실질 상한 8~9 — 초반 어그로 값으로 감당할 만하다.
+        "lands": [("화산", 14), ("고블린 요새", 3)],
+    },
+}
+
+
 def main():
     pool = json.load(open(os.path.join(DATA, "cards.json"), encoding="utf-8"))["pool"]
     decks = json.load(open(os.path.join(DATA, "decks.json"), encoding="utf-8"))
@@ -288,16 +311,25 @@ def main():
         kinds = [n for n, _ in decks[el]["cards"]]
         land = next(n for n, _ in decks[el]["lands"])
         for (sid, name, tier, arch, art, desc) in rows:
+            eid = f"{el}_{sid}"
+            fx = FIXED.get(eid)
             variants = []
             for band in range(3):
-                picked = build_deck(pool, kinds, arch, band)
+                if fx:
+                    picked = {n: c for n, c in fx["cards"]}
+                else:
+                    picked = build_deck(pool, kinds, arch, band)
                 picked = apply_over(picked, over_pool, tier, band, pool)
                 variants.append(to_list(picked, {**pool, **over_pool}))
-            out.append({
-                "id": f"{el}_{sid}", "el": el, "tier": tier, "name": name,
+            ent = {
+                "id": eid, "el": el, "tier": tier, "name": name,
                 "style": ARCH_KO[arch], "arch": arch, "art": art, "desc": desc,
                 "land": land, "decks": variants,
-            })
+            }
+            if fx:
+                ent["lands"] = [list(x) for x in fx["lands"]]
+                ent["fixed"] = 1
+            out.append(ent)
             n0 = sum(c for _, c in variants[0])
             assert n0 == 23, f"{name} 1단계 {n0}장"
 
