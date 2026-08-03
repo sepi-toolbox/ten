@@ -86,12 +86,15 @@ for(const [w,h,tag] of [[390,844,'모바일'],[1020,1300,'데스크톱']]){
   ok(w<900?'용어는 카드 아래':'용어는 카드 옆', 안겹침&&gl.태그>=2&&gl.마지막바닥<=gl.화면,
      `${gl.카드} 태그 ${gl.태그}개 · 아래 ${gl.아래}px / 옆 ${gl.옆}px · 마지막 상자 ${gl.마지막바닥}/${gl.화면}`);
   await p.evaluate(()=>{hideZoom();lpFired=false;S.sel=null;S.mode=null;render();}); await p.waitForTimeout(200);
-  // 5) 짧게 탭하면 선택으로 넘어간다
+  // 5) 짧게 탭해도 아무 일도 없다 — 카드는 끌어야만 나간다
   await p.evaluate(()=>{hideZoom();lpFired=false;S.sel=null;S.mode=null;render();}); await p.waitForTimeout(200);
+  const bd0=await p.evaluate(()=>S.me.board.filter(x=>x).length);
   const el2=await p.$('#hand .hcw:last-child'); const b2=await el2.boundingBox();
   await p.mouse.move(b2.x+b2.width/2,b2.y+b2.height/2);
   await p.mouse.down(); await p.waitForTimeout(80); await p.mouse.up(); await p.waitForTimeout(250);
-  ok('짧은 탭 = 선택', await p.evaluate(()=>S.sel!==null), 'sel='+await p.evaluate(()=>S.sel));
+  const bd1=await p.evaluate(()=>S.me.board.filter(x=>x).length);
+  ok('짧은 탭 = 무동작', await p.evaluate(()=>S.sel)===null&&bd0===bd1,
+     `sel=${await p.evaluate(()=>S.sel)} · 보드 ${bd0}→${bd1}`);
   await p.evaluate(()=>{S.sel=null;S.mode=null;render();}); await p.waitForTimeout(200);
   // 6) 확대 중에 끌면 드래그로 이어진다
   const before=await p.evaluate(()=>S.me.board.filter(x=>x).length);

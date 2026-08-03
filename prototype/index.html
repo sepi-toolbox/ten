@@ -116,8 +116,27 @@ body.sideon .gear{opacity:0;pointer-events:none}
    크리처 보드와 **완전히 같은 판**을 쓴다(.board + .slot). 내려놓은 지형을 카드 그대로 보여주고,
    그 위에 자원 토큰과 상태 뱃지만 얹는다. */
 .lz .slot{position:relative}
-.lz .slot.used .tcard{filter:grayscale(.45) brightness(.72)}
+/* 지형 카드의 앞·뒷면을 담는 껍데기. 뒤집기 애니메이션은 여기에 건다. */
+.lz .lface{position:relative;width:100%;height:100%}
+.lz .lface .cback{width:100%;height:100%;display:block}
+/* 쓴 지형은 뒤집혀 있다 — 회색으로 어둡게 하던 예전 처리는 필요 없다. */
+.lz .slot.flip .lface{animation:lflip .34s cubic-bezier(.35,.05,.35,1) both}
+@keyframes lflip{0%{transform:rotateY(0) scaleX(1)}
+  50%{transform:rotateY(0) scaleX(.06)}
+  100%{transform:rotateY(0) scaleX(1)}}
 .lz .slot.ent .tcard{opacity:.82}
+/* 지형에서 빠져나와 카드로 흘러 들어가는 자원 알갱이. 색은 실제로 지불한 속성 색(--c). */
+.mspark{position:fixed;z-index:92;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;
+  border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle at 50% 38%,#fff,var(--c) 52%,transparent 72%);
+  box-shadow:0 0 12px var(--c),0 0 28px var(--c);
+  animation-name:mspark;animation-timing-function:cubic-bezier(.4,.02,.25,1);animation-fill-mode:both}
+@keyframes mspark{
+  0%{opacity:0;transform:translate(0,0) scale(.35)}
+  14%{opacity:1;transform:translate(0,0) scale(1.15)}
+  70%{opacity:1}
+  100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.5)}}
+@media (prefers-reduced-motion:reduce){.mspark{display:none}.lz .slot.flip .lface{animation:none}}
 .lz .tok{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);z-index:4;
   width:26cqw;height:26cqw;border-radius:50%;border:1px solid rgba(255,255,255,.5);
   transition:transform .2s cubic-bezier(.3,.9,.4,1),opacity .2s}
@@ -155,7 +174,8 @@ body.sideon .gear{opacity:0;pointer-events:none}
 .board.packed>.slot{position:absolute;bottom:5px;left:0;
   transition:border-color .16s,box-shadow .16s,filter .16s}
 .board>.slot{flex:none;width:var(--cardw,84px)}
-.board.empty::after{content:'여기에 소환';position:absolute;left:50%;top:50%;
+.board.lz.empty::after{content:'지형'}
+.board.empty::after{content:'크리처 & 인챈트';position:absolute;left:50%;top:50%;
   transform:translate(-50%,-50%);font-family:'Cinzel',serif;font-size:10px;letter-spacing:.2em;
   color:var(--gold);opacity:.28;pointer-events:none}
 /* 끼워 넣을 자리 표시 — 드래그 중 손끝 위치에 따라 좌/우/사이가 정해진다 */
@@ -1084,7 +1104,6 @@ body{padding:0;height:100dvh;overflow:hidden;
 
     <div class="ctl">
       <div class="hint idle" id="hint">카드를 선택하세요</div>
-      <button class="ghost" id="cancel" disabled>취소</button>
       <button id="end">턴 종료 →</button>
     </div>
   </div>
@@ -1778,15 +1797,25 @@ function lzHTML(p){
     const c2=l.els[1]?(EL[l.els[1]]||EL.steel).c:null;
     const fill=c2?`linear-gradient(135deg,${c1} 0 50%,${c2} 50% 100%)`:c1;
     const st=l.entering?'ent':(l.used?'used':'rdy');
-    const tip=l.entering?'배치한 턴에는 쓸 수 없다':(l.used?'이번 턴 사용함':'사용 가능');
+    const tip=l.entering?'배치한 턴에는 쓸 수 없다'
+      :(l.used?'이번 턴 사용함 — 다음 내 턴에 앞면으로':'사용 가능');
+    /* data-lz/data-i 는 길게 눌러 확대할 때 쓴다. **뒤집힌 지형도** 이 값으로 원본을 찾는다. */
+    const meta=`data-lz="${p}" data-i="${i}" title="${l.name} · ${tip}"`;
+    /* 쓴 지형은 카드를 **뒤집어** 놓는다. 왼쪽부터 소모되고(freeLands 순서),
+       다음 내 턴 시작에 startTurn 이 used 를 풀어 한꺼번에 앞면으로 돌아온다. */
+    if(l.used){
+      h+=`<div class="slot occ used${l.justUsed?' flip':''}" ${meta}>`
+        +`<div class="lface"><i class="cback"></i></div></div>`;
+      continue;
+    }
     const o=ORBS[l.els[0]];
     const tok=st==='rdy'
       ? (o?`<i class="tok img" style="background-image:url(${o});filter:drop-shadow(0 0 6px ${c1})"></i>`
           :`<i class="tok" style="background:${fill};box-shadow:0 0 9px ${c1}"></i>`)
-      : `<i class="tok ${st==='ent'?'ent':'gone'}"></i>`;
-    const tag=st==='ent'?'대기':(st==='used'?'소모':'');
-    h+=`<div class="slot occ ${st}" title="${l.name} · ${tip}">`
-      +`${landCardHTML(l.name,'sm')}${tok}${tag?`<span class="ltag">${tag}</span>`:''}</div>`;
+      : `<i class="tok ent"></i>`;
+    const tag=st==='ent'?'대기':'';
+    h+=`<div class="slot occ ${st}" ${meta}><div class="lface">`
+      +`${landCardHTML(l.name,'sm')}${tok}${tag?`<span class="ltag">${tag}</span>`:''}</div></div>`;
   }
   return h;
 }
@@ -1804,6 +1833,43 @@ function pay(p,name){
   colored.forEach(l=>l.used=true);
   const rest=freeLands(p).slice(0,c.c-cc);
   rest.forEach(l=>l.used=true);
+  /* freeLands 는 배열 순서 그대로다 → **왼쪽부터** 소모된다. 이번에 쓴 것만 표시해 두고
+     뒤집기 애니메이션(.flip)과 자원 이동 연출이 그것을 본다. */
+  const spent=colored.concat(rest);
+  if(!spent.length)return;
+  spent.forEach(l=>{l.justUsed=true;});
+  manaFlow(p,spent,(EL[el]||EL.steel).c);
+  setTimeout(()=>spent.forEach(l=>{l.justUsed=false;}),Math.round(700/SPEED));
+}
+/* 지형에서 자원이 빠져나와 방금 낸 카드로 빨려 들어가는 연출. 색은 **실제로 지불한 속성** 색.
+   ⚠ 위치는 render 가 끝난 뒤에 재야 한다(지형이 방금 뒤집혀 자리가 바뀌었을 수 있다) →
+     rAF 두 번 미룬다. 목적지는 방금 소환된 슬롯(S.spawn), 없으면 그 편의 판 가운데. */
+function manaFlow(p,spent,color){
+  const idxs=spent.map(l=>S[p].lands.indexOf(l)).filter(i=>i>=0);
+  if(!idxs.length||typeof requestAnimationFrame!=='function')return;
+  const gen=S.gen;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    if(S.gen!==gen)return;
+    const lz=document.getElementById(p==='me'?'myLz':'foeLz');
+    const bd=document.getElementById(p==='me'?'myBoard':'foeBoard');
+    if(!lz||!bd)return;
+    const sp=(S.spawn&&S.spawn.side===p)?slotEl(p,S.spawn.idx):null;
+    const dr=(sp||bd).getBoundingClientRect();
+    const tx=dr.left+dr.width/2, ty=dr.top+dr.height/2;
+    const dur=Math.max(90,Math.round(640/SPEED)), step=Math.max(0,Math.round(70/SPEED));
+    idxs.forEach((i,k)=>{
+      const s=lz.querySelector(`.slot[data-i="${i}"]`); if(!s)return;
+      const r=s.getBoundingClientRect();
+      const x=r.left+r.width/2, y=r.top+r.height*0.38;
+      const d=document.createElement('i');
+      d.className='mspark';
+      d.style.cssText=`--c:${color};--dx:${Math.round(tx-x)}px;--dy:${Math.round(ty-y)}px;`
+        +`left:${Math.round(x)}px;top:${Math.round(y)}px;`
+        +`animation-duration:${dur}ms;animation-delay:${k*step}ms`;
+      document.body.appendChild(d);
+      setTimeout(()=>d.remove(),dur+k*step+120);
+    });
+  }));
 }
 function playLand(p,name){
   if(S[p].landPlayed) return false;
@@ -2008,8 +2074,8 @@ let SPEED=1;
 function turnBanner(p){
   const d=document.createElement('div');
   d.className='turnban '+p;
-  d.innerHTML=`<div class="tb1"><div class="tn">TURN ${S.turn}</div>`
-    +`<div class="tt">${p==='me'?'내 턴':'상대 턴'}</div><div class="bar"></div></div>`;
+  /* 누구 턴인지는 색으로만 알린다(내 턴=에메랄드, 상대=붉은색) — 글자는 턴 수만. */
+  d.innerHTML=`<div class="tb1"><div class="tt">TURN ${S.turn}</div><div class="bar"></div></div>`;
   document.body.appendChild(d);
   setTimeout(()=>d.remove(),1150/SPEED);
 }
@@ -2385,25 +2451,9 @@ function resolveSummon(p,name,idx){
 }
 
 /* ============ 입력 ============ */
-function selectCard(i){
-  if(S.over||S.busy||S.active!=='me')return;
-  const n=S.me.hand[i];
-  if(isLand(n)){                                  /* 지형은 즉시 배치 */
-    if(S.me.landPlayed)return;
-    playLand('me',n); S.me.hand.splice(i,1); S.sel=null; S.mode=null; render(); return;
-  }
-  const c=POOL[n];
-  if(!canPay('me',n))return;
-  if(S.sel===i){S.sel=null;S.mode=null;render();return;}
-  S.sel=i;
-  if(c.k==='cr')S.mode='place';
-  else if(c.k==='en')S.mode='ench';
-  else if(c.mode==='summon')S.mode='summon';
-  else if(INSTANT.includes(c.mode))S.mode='instant';
-  else if(NEEDS_MINE.includes(c.mode))S.mode='mine';
-  else S.mode='target';
-  render();
-}
+/* 손패 카드를 '탭해서 고르는' 흐름은 없앴다 — 카드는 **손패 밖으로 끌어야만** 나간다.
+   (탭은 이제 아무것도 하지 않고, 길게 누르면 확대만 된다.)
+   clickSlot 은 남는다 — 대상 지정(타게팅)이 유효 대상을 확정할 때 이걸 부른다. */
 async function clickSlot(side,idx){
   if(S.over||S.busy||S.active!=='me'||S.sel===null)return;
   const n=S.me.hand[S.sel],c=POOL[n];
@@ -2860,20 +2910,20 @@ function render(){
     if(S.sel===i)cls+=' sel';
     return `<div class="${cls}" data-h="${i}">${tcardHTML(n,{size:'md'})}</div>`;
   }).join('');
-  document.querySelectorAll('#hand .hcw').forEach(el=>{el.onclick=()=>selectCard(+el.dataset.h);});
+  /* 손패 탭에는 아무 동작도 걸지 않는다(끌어야만 발동). 길게 누르기는 전역 핸들러가 처리한다. */
   fanHand();
   }
   renderFoeHand();
   // hint
+  /* 취소 버튼은 없앴다 — 대상 지정 중에는 **빈 곳을 누르면** 취소되고, 그 밖에는 취소할 상태가 없다. */
   const hint=document.getElementById('hint');
-  const cancel=document.getElementById('cancel');
-  if(S.busy){hint.className='hint';hint.textContent='전투 처리 중…';cancel.disabled=true;}
-  else if(!mine){hint.className='hint idle';hint.textContent='상대 턴 진행 중…';cancel.disabled=true;}
+  if(S.busy){hint.className='hint';hint.textContent='전투 처리 중…';}
+  else if(!mine){hint.className='hint idle';hint.textContent='상대 턴 진행 중…';}
   else if(S.sel===null){hint.className='hint idle';
     hint.textContent=innerWidth<=900?'카드를 위로 끌어 놓으면 발동'
-      :'카드를 손패 밖으로 끌어 놓으면 발동 · 길게 누르면 확대';cancel.disabled=true;}
+      :'카드를 손패 밖으로 끌어 놓으면 발동 · 길게 누르면 확대';}
   else{
-    cancel.disabled=false;hint.className='hint';
+    hint.className='hint';
     const n=S.me.hand[S.sel];
     const cm=POOL[n]||{};
     if(isLand(n))hint.textContent=`${n} — 손패 밖에 놓으면 지형 배치`;
@@ -2889,7 +2939,6 @@ function render(){
 }
 
 document.getElementById('end').onclick=()=>{if(S.active==='me'&&!S.over)endTurn();};
-document.getElementById('cancel').onclick=()=>{cancelTargeting();};
 const SPEEDS=[1,2,4,0.5];let si=0;
 document.getElementById('speed').onclick=()=>{
   si=(si+1)%SPEEDS.length;SPEED=SPEEDS[si];
@@ -2904,7 +2953,7 @@ document.getElementById('restart').onclick=()=>{
      시작 → 모드 선택 → 덱 선택 → (배틀: 상대 덱 선택 | 원정: 지도) → 게임
      패배 → 다시 도전하기(덱 선택으로) · 초기 화면(모드 선택으로)
    ⚠ ?dev=1 로 열면 페이지를 건너뛰고 바로 배틀로 들어간다(자동 테스트용). */
-const VERSION='0.9.6', BUILD='2026-08-03';
+const VERSION='0.10.0', BUILD='2026-08-03';
 const DEV=/[?&]dev=1/.test(location.search);
 let PAGE=null, FLOW={mode:'battle', my:null, foe:null};
 function pageOpen(html){
@@ -3130,9 +3179,14 @@ function hideZoom(swallow){
 let lpX=0,lpY=0;
 document.addEventListener('pointerdown',e=>{
   if(document.getElementById('zoom').classList.contains('on'))return;
+  const lzs=e.target.closest('.lz .slot');
   const slot=e.target.closest('.slot.occ'), hc=e.target.closest('.hcw,.hc');
   let name=null,u=null;
-  if(slot){ u=S[slot.dataset.side==='me'?'me':'ai'].board[+slot.dataset.idx]; if(u)name=u.name; }
+  /* ⚠ 지형존을 **먼저** 본다. 지형 슬롯도 `.slot.occ` 라 아래 분기에 먼저 걸리면
+     board[undefined] 를 읽고 조용히 아무것도 안 한다(= 지형 확대가 안 됐던 이유).
+     뒤집힌 지형도 DOM 이 아니라 데이터에서 이름을 찾으므로 그대로 확대된다. */
+  if(lzs&&S[lzs.dataset.lz]){ const l=S[lzs.dataset.lz].lands[+lzs.dataset.i]; if(l)name=l.name; }
+  else if(slot){ u=S[slot.dataset.side==='me'?'me':'ai'].board[+slot.dataset.idx]; if(u)name=u.name; }
   else if(hc){ name=S.me.hand[+hc.dataset.h]; }
   if(!name)return;
   lpFired=false; lpDown=true; clearTimeout(lpT); lpT=null; lpX=e.clientX; lpY=e.clientY; lpAt=Date.now();

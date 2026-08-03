@@ -91,7 +91,7 @@ if(i<0)i=await p.evaluate(()=>S.me.hand.length-1);
 await dragOut(i, board.x+board.width-20, board.y+30);
 console.log('6) 크리처 | 타게팅',await p.evaluate(()=>!!TGT),'· 보드',await p.evaluate(()=>S.me.board.map(u=>u?u.name:'·').join(' ')));
 
-// 7) 취소 버튼으로 타게팅 해제
+// 7) cancelTargeting() 으로 해제 (화면의 취소 버튼은 없앴다 — 빈 곳 탭이 취소다)
 await p.evaluate(()=>{   /* 앞 검사에서 적이 다 죽었을 수 있다 — 대상이 없으면 타게팅에 들어가지 않는다 */
   const cr=Object.keys(POOL).filter(n=>POOL[n].k==='cr'&&POOL[n].el==='fire'&&POOL[n].h>=4&&!POOL[n].over);
   S.ai.board=[]; placeCreature('ai',cr[0]); placeCreature('ai',cr[1]); render();});
@@ -99,8 +99,8 @@ await stock();
 i=await p.evaluate(()=>S.me.hand.length-1);
 if(i>=0){ await dragOut(i, board.x+board.width/2, board.y-60);
   const on=await p.evaluate(()=>!!TGT);
-  await p.click('#cancel'); await p.waitForTimeout(250);
-  console.log('7) 취소 버튼 | 진입',on,'→ 타게팅',await p.evaluate(()=>!!TGT),'· 잔여 SVG',await p.$$eval('#tgtsvg',e=>e.length));
+  await p.evaluate(()=>cancelTargeting()); await p.waitForTimeout(250);
+  console.log('7) 타게팅 해제 | 진입',on,'→ 타게팅',await p.evaluate(()=>!!TGT),'· 잔여 SVG',await p.$$eval('#tgtsvg',e=>e.length));
 } else console.log('7) 대상 스펠 없음');
 console.log('ERRORS:',errs.slice(0,4));
 await b.close();})();
