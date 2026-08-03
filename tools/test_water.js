@@ -111,6 +111,12 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
              '세이렌','얼음 슬라임','오아네스','인어 전사','상어 인간','리자드 마술사','자르젤',
              '리자드 전사','인어 마술사','해마 기병','물의 정령','마인드 플레어','켈피',
              '바다 공룡','스킬라','폭풍의 정령','크라켄','시 서펜트','여왕의 가신'];
+  /* ⚠ 시작 덱은 **커먼만** 싣는다 — 레어·언커먼은 카드 풀에만 둔다(원정 보상으로 얻는다) */
+  const deck=JSON.parse(fs.readFileSync(path.join(ROOT,'data','decks.json'),'utf8')).water;
+  const nonCommon=deck.cards.filter(([n])=>pool[n]&&pool[n].k==='cr'&&pool[n].r);
+  ok('시작 덱 크리처는 커먼만', nonCommon.length===0,
+     nonCommon.length?`섞임: ${nonCommon.map(x=>x[0]).join(', ')}`
+       :`크리처 ${deck.cards.filter(([n])=>pool[n].k==='cr').length}종 전부 커먼`);
   ok('새 물 크리처 27종', NEW.every(n=>pool[n]&&pool[n].el==='water'),
      NEW.filter(n=>!pool[n]).join(',')||`전부 등재 (덱 수록 ${NEW.filter(n=>pool[n].copies>0).length}종)`);
   /* 소환체는 이제 **진짜 카드**다 — 토큰이 아니라서 바운스로 손에 잡힌다 */
@@ -159,6 +165,8 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
     /* 연합 — 판 위 동명 크리처 수만큼 연타 */
     reset(); ['리자드 전사','리자드 전사','리자드 전사'].forEach(n=>put('me',n));
     const f0=S.ai.hp; await resolveAttacks('me'); o.연합=f0-S.ai.hp;
+    reset(); ['리자드 전사','리자드 전사'].forEach(n=>put('me',n));
+    const f2=S.ai.hp; await resolveAttacks('me'); o.연합둘=f2-S.ai.hp;
     reset(); put('me','리자드 전사');
     const f1=S.ai.hp; await resolveAttacks('me'); o.연합혼자=f1-S.ai.hp;
 
@@ -202,8 +210,10 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
   ok('마인드 플레어 = 인쇄값', W.마인드.몸==='2/1'&&W.마인드.최대===2
      &&!W.마인드.면역&&W.마인드.연소===0,
      `7/1(최대 8 · 면역 · 연소 3) → ${W.마인드.몸}(최대 ${W.마인드.최대}) · 효과 전부 사라짐`);
-  ok('연합 = 동명 수만큼 연타', W.연합===27&&W.연합혼자===3,
-     `셋이 서면 3×3×3 = ${W.연합} · 혼자면 ${W.연합혼자}`);
+  /* 연합 — **같은 이름의 아군이 모두 한 번씩 따라 친다.** 따라 친 공격은 다시 연합을 안 부른다.
+     셋: 정규 3 + 따라 6 = 9회 × 3 = 27 · 둘: 2 + 2 = 4회 × 3 = 12 · 혼자면 따라올 몸이 없다. */
+  ok('연합 = 동명이 따라 친다', W.연합===27&&W.연합둘===12&&W.연합혼자===3,
+     `셋 ${W.연합} · 둘 ${W.연합둘} · 혼자 ${W.연합혼자}`);
   ok('시 서펜트 = 싼 것부터', W.서펜트.상대판.join()==='바다 공룡'&&W.서펜트.상대손.join()==='피라냐',
      `상대 판 [${W.서펜트.상대판}] · 손으로 [${W.서펜트.상대손}]`);
   ok('세이렌 = 스펠 무시', W.세이렌.후[0]===W.세이렌.전[0]&&W.세이렌.후[1]===W.세이렌.전[1]-4,
