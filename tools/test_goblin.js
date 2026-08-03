@@ -14,9 +14,16 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
   const gob=en.list.find(e=>e.id==='fire_goblin');
   const n0=gob.decks[0].reduce((s,[,c])=>s+c,0);
   ok('고정 덱 23장', !!gob.fixed&&n0===23, `${gob.name} · ${n0}장 · 지형 ${JSON.stringify(gob.lands)}`);
-  ok('덱이 고블린으로 찬다',
-     gob.decks[0].filter(([n])=>/고블린|와이번|용암 정령|도화선|파이어 볼트/.test(n)).length>=8,
-     gob.decks[0].filter(([n])=>/고블린/.test(n)).map(([n,c])=>`${n}×${c}`).join(' · '));
+  /* ⚠ **기존 불 카드가 한 장이라도 섞이면 실패다.** 한 번 자동 생성 덱에 고블린을 얹었더니
+     용암거인·겁화룡·소이탄 같은 옛 카드가 8장 남아 컨셉 덱이 아니게 됐다. */
+  const GOB=['고블린 폭탄병','파이어 볼트','용암 정령','도화선','불사조의 깃털','고블린 지휘관',
+             '고블린 전차','불꽃광대','고블린 화염포','고블린 방패병','와이번'];
+  const strays=gob.decks[0].map(([n])=>n.replace(/^강화 /,'')).filter(n=>!GOB.includes(n));
+  ok('고블린 카드만으로', strays.length===0,
+     strays.length?`섞인 옛 카드: ${strays.join(', ')}`:`${GOB.length}종 · 4코에서 끝나는 어그로 커브`);
+  const bandOk=[0,1,2].every(b=>gob.decks[b].map(([n])=>n.replace(/^강화 /,''))
+    .every(n=>GOB.includes(n)));
+  ok('난이도 3단계 모두', bandOk, '강화 치환도 고블린 카드 안에서만 일어난다');
 
   const b=await chromium.launch();
   const p=await b.newPage({viewport:{width:430,height:844}});
