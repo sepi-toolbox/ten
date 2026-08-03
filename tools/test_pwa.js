@@ -66,9 +66,25 @@ const FILE='file://'+path.join(ROOT,'index.html');
     return {on:!!TGT, 판위:r?Math.abs((r.top+r.bottom)/2-(b.top+b.height/2))<b.height:false,
       빛나는대상:document.querySelectorAll('#foeBoard .slot.pick').length,
       어두운것:document.querySelectorAll('#myBoard .slot:not(.pick)').length,
-      손패흐림:getComputedStyle(document.getElementById('hand')).filter!=='none'};});
+      /* 화면 전체를 덮는 딤이 떠 있고, 고를 수 있는 슬롯만 그 위로 올라와 있어야 한다.
+         elementFromPoint 로 실제 픽셀을 짚어 본다 — z-index 값만 봐서는 쌓임 맥락에 갇혔는지 모른다.
+         ⚠ 딤은 pointer-events:none 이라 그대로는 elementFromPoint 에 안 잡힌다 — 재는 동안만 켠다. */
+      딤:(()=>{const d=document.getElementById('tgtdim');
+        window.__dimOn=getComputedStyle(d).display!=='none'; d.style.pointerEvents='auto';
+        return window.__dimOn;})(),
+      위로:[...document.querySelectorAll('#foeBoard .slot.pick')].every(s=>{
+        const r=s.getBoundingClientRect();
+        const e=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
+        return !!e&&(s===e||s.contains(e));}),
+      덮임:[...document.querySelectorAll('#myBoard .slot.occ:not(.pick)')].map(s=>{
+        const r=s.getBoundingClientRect();
+        const e=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
+        return e?(e.id||e.className||e.tagName):'null';})};});
+  await p.evaluate(()=>{const d=document.getElementById('tgtdim');d.style.pointerEvents='';});
   ok('판으로 나가 대상 지정', st.on&&st.판위&&st.빛나는대상===2,
-     `카드가 판 위 ${st.판위} · 빛나는 대상 ${st.빛나는대상}종 · 나머지 흐림 ${st.손패흐림}`);
+     `카드가 판 위 ${st.판위} · 빛나는 대상 ${st.빛나는대상}종`);
+  ok('딤이 화면을 덮는다', st.딤&&st.위로&&st.덮임.every(x=>x==='tgtdim'),
+     `딤 ${st.딤} · 대상은 딤 위 ${st.위로} · 나머지 ${JSON.stringify(st.덮임)}`);
   // 빈 곳 탭 → 손으로
   await p.mouse.click(8,Math.round(bd.y-8)); await p.waitForTimeout(350);
   ok('빈 곳 누르면 손으로', !(await p.evaluate(()=>!!TGT))&&await p.evaluate(()=>S.me.hand.length)===hand0,

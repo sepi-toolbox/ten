@@ -1,6 +1,6 @@
 /* 오프라인 캐시 — 프로토타입은 자립형 HTML 한 장이라 그것만 담으면 된다.
    ⚠ 새 판을 올릴 때마다 CACHE 이름을 바꿔야 갱신된다(안 바꾸면 옛 화면이 계속 뜬다). */
-const CACHE = 'ten-v4';
+const CACHE = 'ten-v5';
 const SHELL = ['./', './index.html', './manifest.webmanifest',
                './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
