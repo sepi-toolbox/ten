@@ -2,7 +2,9 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<!-- ⚠ maximum-scale=1 까지 박아야 iOS 사파리가 확대를 진짜로 막는다.
+     user-scalable=no 만 두면 사파리가 접근성을 이유로 무시하고 핀치·더블탭 확대를 허용한다. -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
 <!-- 앱으로 설치(PWA). 홈 화면에서 열면 주소창이 사라져 세로 공간이 더 생긴다. -->
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#120d09">
@@ -20,8 +22,11 @@
 <noscript><style>#nojs{display:block!important}</style></noscript>
 <style>
 :root{
-  /* 손패·상대 손패·크리처 판·지형존이 **같은 규격**을 쓴다. 크기는 이 변수 하나로만 바꾼다. */
+  /* 손패·크리처 판·지형존이 **같은 규격**을 쓴다. 크기는 이 변수 하나로만 바꾼다. */
   --cardw:76px;
+  /* 상대 손패(뒷면)만 예외로 작다. 정보가 없는 카드라 내 손패와 같은 크기로 두면
+     화면 위쪽을 너무 많이 잡아먹는다(실제로 그렇게 만들었다가 되돌렸다). */
+  --foecw:calc(var(--cardw) * .48);
   --bg:#120d09; --leather:#241a12; --leather-2:#2e2116; --wood:#3a2a1a;
   --parch:#ece0c4; --parch-2:#ddceac; --parch-edge:#c9b688;
   --ink:#2a1d10; --ink-soft:#5a4630; --ink-faint:#8a7452;
@@ -339,25 +344,19 @@ body.sideon::after{content:'';position:fixed;inset:0;z-index:155;background:rgba
   background:rgba(8,5,3,.4);animation:fade .22s ease both;
 }
 @keyframes fade{from{opacity:0}to{opacity:1}}
-.rcard{
-  width:154px;background:linear-gradient(180deg,var(--parch),var(--parch-2));
-  border:2.5px solid var(--gold);border-radius:9px;
-  padding:15px 13px;box-shadow:0 18px 44px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.35);
-  animation:flip .48s cubic-bezier(.2,.7,.3,1) both;text-align:left;color:var(--ink);
-}
+/* 상대 카드 공개 = 평소 카드(tcard)를 확대와 같은 `lg` 규격으로 보여 준다.
+   전용 마크업(.rcard)은 없앴다 — 같은 카드가 두 가지 모양으로 보이면 안 된다. */
+.rwrap{display:flex;flex-direction:column;align-items:center;gap:10px;
+  animation:flip .48s cubic-bezier(.2,.7,.3,1) both}
 @keyframes flip{
   0%{opacity:0;transform:rotateY(88deg) scale(.8)}
   60%{opacity:1;transform:rotateY(-8deg) scale(1.06)}
   100%{opacity:1;transform:none}
 }
-.rcard .rl{font-family:'Cinzel',serif;font-size:8.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--crimson);margin-bottom:7px}
-.rcard .rc{font-family:'Cinzel',serif;font-weight:700;font-size:14px;color:#a67d31}
-.rcard .rn{font-family:'Gowun Batang',serif;font-weight:700;font-size:19px;margin:4px 0 6px;letter-spacing:-.01em;color:var(--ink)}
-.rcard .rs{font-family:'Cinzel',serif;font-weight:700;font-size:17px;color:var(--ink)}
-.rcard .rd{font-size:10px;color:var(--ink-soft);line-height:1.5;font-weight:400}
-.rcard .rt{font-family:'Cinzel',serif;font-size:8.5px;letter-spacing:.12em;margin-top:8px;padding-top:6px;border-top:1px solid var(--parch-edge);color:var(--ink-faint)}
-.rcard.g{border-color:var(--emerald)} .rcard.f{border-color:var(--amber)}
-.rcard.sp{border-color:var(--crimson)} .rcard.en{border-color:var(--violet)}
+.rwrap .rl{font-family:'Cinzel',serif;font-size:11px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--gold-bright);padding:5px 14px;border:1px solid var(--gold);border-radius:4px;
+  background:rgba(8,5,3,.8);text-shadow:0 0 10px rgba(242,212,136,.5)}
+.rwrap .tcard{box-shadow:0 18px 44px rgba(0,0,0,.65)}
 
 .slot.spawned{animation:spawn .5s cubic-bezier(.2,.7,.3,1) both;z-index:6}
 @keyframes spawn{
@@ -389,11 +388,19 @@ body.sideon::after{content:'';position:fixed;inset:0;z-index:155;background:rgba
 .slot .stk{top:1px;right:2px;z-index:3;background:rgba(8,5,3,.85);color:#f2d488;border:1px solid #7c5a30}
 .hart{height:44px;border-radius:3px;background-size:cover;background-position:center;margin:3px 0 4px;
   border:1px solid rgba(107,77,31,.6)}
-.rart{height:96px;border-radius:5px;background-size:cover;background-position:center;margin:4px 0 7px;
-  border:1.5px solid rgba(107,77,31,.7)}
 
 /* ---- 롱프레스 카드 확대 ---- */
-.slot,.hc,.hcw{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+/* 게임 화면은 문서가 아니라 조작판이다 — 글자를 끌어 선택하는 일이 없어야 한다.
+   길게 눌러 카드를 확대하려다 텍스트가 파랗게 잡히거나 돋보기가 뜨던 문제.
+   ⚠ `*`로 한 번에 거는 게 맞다. 요소를 하나씩 지정하면 새로 만든 UI에서 또 새는데,
+      실제로 슬롯·손패만 막아 뒀다가 안내문·바·라벨에서 계속 선택이 났다.
+   ⚠ 입력 요소만 예외로 되살린다(선택이 안 되면 편집이 불가능하다). */
+*{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
+  -webkit-tap-highlight-color:transparent}
+input,textarea,[contenteditable]{user-select:text;-webkit-user-select:text}
+/* 화면 확대 차단. `pan-x pan-y` 는 스크롤은 남기고 **핀치·더블탭 확대만** 뺀다.
+   (`manipulation` 은 더블탭만 막고 핀치는 그대로 남으므로 여기선 부족하다) */
+html,body{touch-action:pan-x pan-y}
 /* ── 페이지(팝업이 아니라 화면 전체를 쓰는 단계) ────────── */
 .pg{position:fixed;inset:0;z-index:120;display:none;overflow-y:auto;
   background:radial-gradient(120% 80% at 50% 0%, rgba(201,162,75,.10), transparent 60%),
@@ -721,7 +728,7 @@ body.sideon::after{content:'';position:fixed;inset:0;z-index:155;background:rgba
 /* 상대 손패 — 뒷면만 보인다. 만질 수 없고 부채꼴은 아래로 편다(상대가 쥔 모양). */
 .hand.foe{padding:6px 0 8px;align-items:flex-start}
 .hand.foe .hcw{pointer-events:none;cursor:default}
-.cback{width:var(--cardw,76px);aspect-ratio:5/7;border-radius:calc(var(--cardw,76px)*.06);
+.cback{width:var(--foecw,36px);aspect-ratio:5/7;border-radius:calc(var(--foecw,36px)*.06);
   border:1.5px solid var(--bronze);position:relative;overflow:hidden;
   background:
     radial-gradient(circle at 50% 38%, rgba(242,212,136,.16), transparent 60%),
@@ -861,7 +868,12 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
      커지기 때문에, 주소창이 있는 브라우저처럼 세로가 짧으면 화면 밖으로 밀린다.
      (앱으로 설치하면 주소창이 사라져 dvh 가 커지고 카드도 그만큼 커진다.) */
   :root{--cardw:min(clamp(46px,19vw,86px),8.2dvh)}
-  .hand.foe{flex:none;padding:0 12px 2px;margin-top:calc(var(--cardw) * -0.42)}
+  /* 뒷면은 작으므로 밀어 넣는 양도 --foecw 기준이어야 한다(카드 높이 1.4W 의 30% = 0.42W).
+     ⚠ margin-bottom 을 반드시 0 으로 되돌린다. `.hand.foe` 도 `.hand` 규칙을 함께 받으므로
+        내 손패용 음수 margin-bottom(-0.42×cardw)이 그대로 걸려, 아래에 오는 상대 HP 바를
+        위로 끌어올려 뒷면 카드가 바를 덮어 버렸다. */
+  .hand.foe{flex:none;padding:0 12px 2px;
+    margin-top:calc(var(--foecw) * -0.42);margin-bottom:0}
   #lbHand{display:none}
   /* 손패는 화면 바닥에 붙인다 — 남는 세로 여백이 판과 손패 사이로 간다 (하스스톤 배치) */
   /* 손패는 화면 가장자리에 **70%만** 걸치게 한다 — 카드 높이(1.4W)의 30%를 밖으로 민다.
@@ -2733,21 +2745,13 @@ function render(){
     });
   }
   if(S.reveal){
-    const c=POOL[S.reveal.name];
-    let k=c.k==='sp'?'sp':(c.k==='en'?'en':(c.g?'g':(c.f?'f':'')));
-    const body=c.k==='cr'
-      ? `<div class="rs">${c.a} / ${c.h}</div>`
-      : `<div class="rd">${c.d}</div>`;
-    const tag=c.k==='cr'?([c.g?'수호':'',c.f?'비행':''].filter(Boolean).join(' · ')||'크리처'):(c.k==='sp'?'스펠':'인챈트');
+    /* 상대가 낸 카드는 **평소 카드를 그대로 크게** 보여 준다(확대 UI 와 같은 `lg` 규격).
+       예전에는 .rcard 라는 전용 마크업이었는데, 같은 카드가 다른 모양으로 나와 혼란스러웠다.
+       ⚠ 새 카드 요소를 만들 땐 tcardHTML / landCardHTML 을 쓸 것. 규격은 하나뿐이다. */
+    const nm=S.reveal.name;
+    const card=POOL[nm]?tcardHTML(nm,{size:'lg'}):(LANDS[nm]?landCardHTML(nm,'lg'):'');
     document.body.insertAdjacentHTML('beforeend',
-      `<div class="reveal"><div class="rcard ${k}">
-        <div class="rl">상대가 사용</div>
-        <div class="rc">${c.c} 마나</div>
-        ${ART[S.reveal.name]?`<div class="rart" style="background-image:url(${ART[S.reveal.name]})"></div>`:''}
-        <div class="rn">${S.reveal.name}</div>
-        ${body}
-        <div class="rt">${tag}</div>
-      </div></div>`);
+      `<div class="reveal"><div class="rwrap"><div class="rl">상대가 사용</div>${card}</div></div>`);
   }
   if(S.fx){
     const f=S.fx;
@@ -2833,7 +2837,7 @@ document.getElementById('restart').onclick=()=>{
      시작 → 모드 선택 → 덱 선택 → (배틀: 상대 덱 선택 | 원정: 지도) → 게임
      패배 → 다시 도전하기(덱 선택으로) · 초기 화면(모드 선택으로)
    ⚠ ?dev=1 로 열면 페이지를 건너뛰고 바로 배틀로 들어간다(자동 테스트용). */
-const VERSION='0.9.1', BUILD='2026-08-03';
+const VERSION='0.9.2', BUILD='2026-08-03';
 const DEV=/[?&]dev=1/.test(location.search);
 let PAGE=null, FLOW={mode:'battle', my:null, foe:null};
 function pageOpen(html){
@@ -3238,6 +3242,16 @@ document.addEventListener('pointerdown',e=>{
   else { S.sel=null;S.mode=null;render(); toast('취소 — 카드가 손으로 돌아왔다'); }
 },true);
 document.addEventListener('pointermove',e=>{ if(TGT)tgtDraw(e.clientX,e.clientY); },{passive:true});
+/* 화면 확대 차단 — CSS(touch-action)만으로는 iOS 사파리가 새어 나간다.
+   ⚠ touchend 로 더블탭을 막는 흔한 수법은 쓰지 않는다. 카드 탭 → 슬롯 탭처럼
+      빠른 연타가 정상 조작이라 그 클릭까지 삼켜 버린다. 확대 제스처만 정확히 막는다. */
+['gesturestart','gesturechange','gestureend'].forEach(t=>
+  document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+document.addEventListener('touchmove',e=>{ if(e.touches.length>1)e.preventDefault(); },{passive:false});
+/* 길게 눌렀을 때 뜨는 컨텍스트 메뉴(돋보기·복사)도 막는다 — 카드 확대와 겹친다 */
+document.addEventListener('contextmenu',e=>{
+  if(e.target.closest('input,textarea,[contenteditable]'))return;
+  e.preventDefault();});
 const DBG=/[?&]dbg=1/.test(location.search);   /* 주소 끝에 ?dbg=1 을 붙이면 포인터 동작을 로그로 남긴다 */
 function dbg(m){ if(DBG)log('· '+m,'t'); }
 document.addEventListener('pointerdown',e=>{

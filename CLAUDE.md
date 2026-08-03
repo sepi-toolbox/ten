@@ -217,6 +217,27 @@ python3 tools/build_pages.py --push <GITHUB_TOKEN>
   ⚠ `transform`을 여러 CSS 규칙에서 덮어쓰지 말 것. `--rot/--dy/--sc` 변수로 두고 transform 선언은 한 줄뿐이다.
   ⚠ **겹친 손패에서 가운데 카드를 '가운데'로 집으면 오른쪽 이웃이 잡힌다.**
     테스트는 온전히 드러난 **맨 오른쪽 카드**로 하거나 왼쪽 노출부를 눌러야 한다(실제로 두 번 헛짚었다).
+- **상대 손패는 내 손패보다 작다** — `--foecw: calc(var(--cardw) * .48)`.
+  한 번 `--cardw`로 통일해 같은 크기로 키웠다가 "가리는 게 너무 많다"는 지적을 받고 되돌렸다.
+  뒷면뿐이라 정보가 없는 카드에 화면 위쪽을 내줄 이유가 없다.
+  ⚠ `.hand.foe`는 `.hand` 규칙도 함께 받는다. 내 손패용 `margin-bottom:-0.42×cardw`가 새어 들어와
+  **뒷면 카드가 상대 HP 바를 덮었다** — `.hand.foe`에서 `margin-bottom:0`으로 되돌릴 것.
+  밀어 넣는 양도 `--cardw`가 아니라 `--foecw` 기준이어야 한다.
+- **글자는 전부 선택 불가, 화면 확대는 잠근다.** 게임 화면은 문서가 아니라 조작판이다.
+  길게 눌러 카드를 확대하려다 글자가 파랗게 잡히거나 돋보기가 뜨던 문제.
+  - `*{user-select:none}` — 요소를 하나씩 지정하면 새 UI에서 또 샌다(슬롯·손패만 막아 뒀다가 계속 샜다).
+    `input/textarea/[contenteditable]`만 예외로 되살린다.
+  - 뷰포트 메타에 **`maximum-scale=1`까지** 박는다. `user-scalable=no`만으로는 iOS 사파리가 무시한다.
+  - `html,body{touch-action:pan-x pan-y}` — 스크롤은 남기고 핀치·더블탭 확대만 뺀다.
+    `manipulation`은 더블탭만 막고 핀치는 남으므로 부족하다.
+  - iOS용 `gesturestart/change/end` preventDefault + 두 손가락 `touchmove` 차단, `contextmenu` 차단.
+  - ⚠ `touchend`로 더블탭을 막는 흔한 수법은 **쓰지 않는다.** 카드 탭 → 슬롯 탭처럼 빠른 연타가
+    정상 조작이라 그 클릭까지 삼킨다.
+- **상대가 낸 카드 공개(`S.reveal`)도 평소 카드를 그대로 키운 것**(`tcardHTML(name,{size:'lg'})`).
+  전용 마크업 `.rcard`가 따로 있었는데 같은 카드가 두 모양으로 보여 혼란스러웠다 — 삭제했다.
+  확대 UI와 폭이 정확히 같은지 `test_pwa.js`가 검사한다.
+  ⚠ 이 연출은 `rotateY`로 뒤집히며 들어오므로 **`getBoundingClientRect`로 재면 폭이 0에 가깝게 나온다.**
+  `offsetWidth`로 잴 것.
 - **손패 카드에 `opacity`를 쓰지 않는다.** 겹쳐 있어서 반투명이면 **밑장이 비쳐 보인다**.
   낼 수 없는 카드는 `filter:grayscale+brightness`로 어둡게, 끌고 있는 원본은 `opacity:0`으로 아예 감춘다.
 - 오른쪽 카드가 왼쪽을 덮는다(`z-index=10+i`). **손패 카드는 눌러도 제자리에 그대로 있어야 한다.**

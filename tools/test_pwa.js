@@ -32,9 +32,49 @@ const FILE='file://'+path.join(ROOT,'index.html');
     const me=document.querySelector('#hand .hcw .tcard').getBoundingClientRect();
     const foe=document.querySelector('#foeHand .cback').getBoundingClientRect();
     return {me:[+me.width.toFixed(1),+me.height.toFixed(1)],foe:[+foe.width.toFixed(1),+foe.height.toFixed(1)]};});
-  ok('상대 손패 규격 동일', Math.abs(sz.me[0]-sz.foe[0])<1.5&&Math.abs(sz.me[1]-sz.foe[1])<2,
-     `내 ${sz.me.join('×')} · 상대 ${sz.foe.join('×')}`);
+  /* 상대 손패는 뒷면뿐이라 정보가 없다 — 내 손패와 같은 크기로 두면 화면 위쪽을 너무 먹는다.
+     --foecw = cardw × 0.48 로 되돌렸다(한 번 같은 크기로 키웠다가 '가린다'는 지적을 받음). */
+  const 비율=sz.foe[0]/sz.me[0];
+  ok('상대 손패는 작다', 비율>0.4&&비율<0.58&&Math.abs(sz.foe[1]/sz.foe[0]-1.4)<0.08,
+     `내 ${sz.me.join('×')} · 상대 ${sz.foe.join('×')} (${Math.round(비율*100)}%)`);
   ok('상대 손패는 뒷면', await p.evaluate(()=>document.getElementById('foeHand').textContent.trim()===''), '글자 없음');
+  /* 뒷면 카드가 상대 HP 바를 덮으면 안 된다 — .hand 의 음수 margin-bottom 이 새어 들어와 실제로 덮었다 */
+  ok('상대 바를 안 가린다', await p.evaluate(()=>{
+    const c=document.querySelector('#foeHand .cback').getBoundingClientRect();
+    const b=document.getElementById('foeBar').getBoundingClientRect();
+    return c.bottom<=b.top+1;}), '뒷면 아래에 HP 바');
+
+  // 2-b) 글자 선택·화면 확대 잠금
+  const lock=await p.evaluate(()=>({
+    본문:getComputedStyle(document.body).userSelect,
+    안내:getComputedStyle(document.getElementById('hint')).userSelect,
+    라벨:getComputedStyle(document.getElementById('lbMyB')).userSelect,
+    터치:getComputedStyle(document.body).touchAction,
+    메타:(document.querySelector('meta[name=viewport]')||{}).content||''}));
+  ok('글자 선택 잠금', [lock.본문,lock.안내,lock.라벨].every(v=>v==='none'),
+     `body/안내/라벨 = ${lock.본문}/${lock.안내}/${lock.라벨}`);
+  ok('화면 확대 잠금', /maximum-scale=1/.test(lock.메타)&&/user-scalable=no/.test(lock.메타)
+     &&/pan-x/.test(lock.터치)&&/pan-y/.test(lock.터치)&&!/pinch/.test(lock.터치),
+     `touch-action=${lock.터치} · ${/maximum-scale=1/.test(lock.메타)?'maximum-scale=1':'없음'}`);
+
+  // 2-c) 상대가 낸 카드 공개 = 평소 카드를 크게 (전용 마크업 아님)
+  const rv=await p.evaluate(async()=>{
+    const nm=Object.keys(POOL).find(x=>POOL[x].k==='cr');
+    S.reveal={side:'ai',name:nm}; render();
+    const c=document.querySelector('.reveal .tcard');
+    /* ⚠ getBoundingClientRect 는 안 된다 — 공개 연출은 rotateY 로 뒤집히며 들어와서
+       애니메이션 중에 재면 폭이 0 에 가깝게 나온다. offsetWidth 는 transform 을 안 탄다. */
+    showZoom(nm,null,null,false);
+    const ze=document.querySelector('#zoom .tcard');
+    const zw=ze?ze.offsetWidth:0;
+    hideZoom(); lpFired=false;
+    const old=!!document.querySelector('.reveal .rcard');
+    const w=c?c.offsetWidth:0;
+    S.reveal=null; render();
+    return {있음:!!c, 클래스:c?c.className:'', 폭:w, 확대폭:zw, 옛마크업:old};});
+  ok('공개 카드 = 같은 규격', rv.있음&&/\blg\b/.test(rv.클래스)&&!rv.옛마크업
+     &&Math.abs(rv.폭-rv.확대폭)<2,
+     `.tcard.lg ${rv.폭}px · 확대 UI ${rv.확대폭}px · 전용 .rcard ${rv.옛마크업?'남아있음':'없음'}`);
 
   // 3) 설치 안내가 서랍에 뜬다
   await p.click('#gearBtn'); await p.waitForTimeout(350);
