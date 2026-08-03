@@ -1,5 +1,5 @@
 ﻿element,kind,name,cost,cost_color,cost_generic,tag,atk,hp,copies,rule,budget,spent,verdict
-fire,creature,파이어버그,1,1,0,일반,1,1,1,폭발,3,3,적정
+fire,creature,파이어버그,1,1,0,일반,2,1,1,폭발,2,5,초과+3
 fire,creature,헤레스,1,1,0,일반,2,2,1,연소 1,6,6,적정
 fire,creature,블러드서커,1,1,0,일반,1,1,1,흡혈,3,3,적정
 fire,creature,레드아이스톤,1,1,0,일반,1,1,0,제물 4 · 덱 맨 위 3장을 보고 1장을 손으로,4,3,여유-1

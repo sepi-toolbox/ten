@@ -1,5 +1,5 @@
 id,name,cost,tag,atk,hp,copies,cost_color,cost_generic,element,art,desc,image,rarity,budget_p,verdict,note
-CR001,파이어버그,1,normal,1,1,1,1,0,fire,sword,폭발,,common,3,적정,
+CR001,파이어버그,1,normal,2,1,1,1,0,fire,sword,폭발,,common,2,3,
 CR002,헤레스,1,normal,2,2,1,1,0,fire,sword,연소 1,,common,6,적정,
 CR003,블러드서커,1,normal,1,1,1,1,0,fire,sword,흡혈,,common,3,적정,
 CR004,레드아이스톤,1,normal,1,1,0,1,0,fire,sword,제물 4 · 덱 맨 위 3장을 보고 1장을 손으로,,rare,4,-1,
