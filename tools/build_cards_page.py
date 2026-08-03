@@ -212,7 +212,6 @@ h1{font-family:'Cinzel Decorative','Cinzel',serif;font-weight:900;font-size:26px
   <div class="cbar" id="tagBar"></div>
   <div class="tagdesc" id="tagDesc"></div>
   <div class="cbar" id="rarBar"></div>
-  <div class="cbar" id="prBar"></div>
 
   <div id="list"></div>
 </div>
@@ -342,12 +341,6 @@ function renderBars(){
   document.querySelectorAll('#bandBar .chip').forEach(b=>b.onclick=()=>{F.band=+b.dataset.b;draw();});
   document.querySelectorAll('#rarBar .chip').forEach(b=>b.onclick=()=>{F.r=b.dataset.r;draw();});
   document.querySelectorAll('#tagBar .chip').forEach(b=>b.onclick=()=>{F.t=b.dataset.t;draw();});
-  /* 레전더리 프리즘 강도 — 게임과 같은 값(localStorage 'ten.prism')을 공유한다 */
-  const pv=prismGet();
-  document.getElementById('prBar').innerHTML='<span class="lbl2">프리즘</span>'
-    +[[1,'1단계 · 은은'],[2,'2단계 · 반짝'],[3,'3단계 · 액자']].map(([v,ko])=>
-      `<button class="chip${pv===v?' on':''}" data-p="${v}">${ko}</button>`).join('');
-  document.querySelectorAll('#prBar .chip').forEach(b=>b.onclick=()=>{prismSet(+b.dataset.p);draw();});
   document.getElementById('tabCard').classList.toggle('on',!foe);
   document.getElementById('tabFoe').classList.toggle('on',foe);
 }

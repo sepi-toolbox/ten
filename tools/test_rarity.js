@@ -67,11 +67,16 @@ const RARS=['common','uncommon','rare','legendary'];
       if(침범>over){over=침범;worst=n;}
       if(걸침<sit)sit=걸침;
     }
-    const r={worst, 침범:+over.toFixed(2), 걸침:+sit.toFixed(2), 수:Object.keys(POOL).length};
+    d.innerHTML=tcardHTML(Object.keys(POOL)[0],{size:'md'});
+    const gg=d.querySelector('.rgem').getBoundingClientRect();
+    const cc=d.querySelector('.tcard').getBoundingClientRect();
+    const r={worst, 침범:+over.toFixed(2), 걸침:+sit.toFixed(2), 수:Object.keys(POOL).length,
+      치우침:+((gg.left+gg.right)/2-(cc.left+cc.right)/2).toFixed(2)};
     d.remove(); return r;});
   ok('보석이 글자를 안 가린다', place.침범<=0,
      `${place.수}종 최대 침범 ${place.침범}px${place.worst?' ('+place.worst+')':''}`);
   ok('보석은 경계선에 걸터앉는다', place.걸침>0.5, `경계 아래로 ${place.걸침}px`);
+  ok('보석은 카드 한가운데', Math.abs(place.치우침)<0.5, `카드 중심 대비 ${place.치우침}px`);
 
   // 2-c) 레전더리 프리즘 — 두 겹이 얹히고, 숫자 뱃지는 그 위에 남는다
   const pr=await p.evaluate(()=>{
@@ -91,32 +96,6 @@ const RARS=['common','uncommon','rare','legendary'];
   ok('숫자 뱃지는 프리즘 위', (+pr.뱃지z)>(+pr.색조.z),
      `뱃지 z${pr.뱃지z} > 프리즘 z${pr.색조.z} (ATK 붉은색·HP 청록색이 안 물든다)`);
   ok('색조는 옅게', pr.색조.op<=0.35, `opacity ${pr.색조.op}`);
-
-  /* 2-d) 프리즘 강도 3단계 — 2단계에서 알갱이 층이, 3단계에서 액자가 더 붙는다.
-     ⚠ `.pfx` 자신에 블렌드/변형이 걸리면 자식(액자)까지 한 덩어리로 합성돼 액자가 날아간다.
-     ⚠ 액자는 줄 여백(.055×--cw)보다 얇아야 효과문 첫 글자를 안 가린다. */
-  const lv=await p.evaluate(()=>{
-    const n=Object.keys(POOL).find(x=>POOL[x].r==='legendary');
-    const d=document.createElement('div'); d.style.cssText='position:fixed;left:0;top:0';
-    d.innerHTML=tcardHTML(n,{size:'md'}); document.body.appendChild(d);
-    const c=d.querySelector('.tcard'), f=d.querySelector('.pfx');
-    const cw=c.offsetWidth;
-    const at=(v)=>{ prismSet(v);
-      const s=getComputedStyle(f), a=getComputedStyle(f,'::after'), b=getComputedStyle(f,'::before');
-      return {표시:s.display, 블렌드:s.mixBlendMode, 변형:s.transform,
-              알갱이:b.mixBlendMode+'/'+(b.backgroundImage.match(/radial-gradient/g)||[]).length,
-              액자:a.borderTopWidth, 액자굵기비:+(parseFloat(a.borderTopWidth)/cw).toFixed(3)}; };
-    const r={n, cw, 일:at(1), 이:at(2), 삼:at(3)};
-    prismSet(1); d.remove(); return r;});
-  ok('1단계는 여분 층 없음', lv.일.표시==='none', `.pfx display:${lv.일.표시}`);
-  ok('2단계 알갱이 6개', lv.이.표시==='block'&&lv.이.알갱이==='screen/6'&&lv.이.액자==='0px',
-     `${lv.이.알갱이} · 액자 ${lv.이.액자}`);
-  ok('3단계 액자', parseFloat(lv.삼.액자)>0&&lv.삼.액자굵기비>0.02,
-     `테두리 폭 ${lv.삼.액자} (카드 폭의 ${(lv.삼.액자굵기비*100).toFixed(1)}%)`);
-  ok('액자가 글자를 안 가린다', lv.삼.액자굵기비+0.010<=0.055,
-     `홈+띠 ${(lv.삼.액자굵기비+0.010).toFixed(3)} ≤ 줄 여백 0.055`);
-  ok('.pfx 는 블렌드·변형 없음', lv.삼.블렌드==='normal'&&(lv.삼.변형==='none'||lv.삼.변형==='matrix(1, 0, 0, 1, 0, 0)'),
-     `blend ${lv.삼.블렌드} · transform ${lv.삼.변형}`);
 
   // 3) 보상 가중치가 실제로 분포를 기울인다 (정예가 상위 등급을 더 많이 준다)
   const dist=await p.evaluate(()=>{
