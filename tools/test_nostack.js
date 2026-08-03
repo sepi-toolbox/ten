@@ -41,11 +41,13 @@ const R=await p.evaluate(()=>{
   reset(); placeCreature('me','번식체'); endStep('me');
   ok('증식 유지', S.me.board.length===2&&S.me.board[0].insts.length===1,
      `보드 ${S.me.board.length}칸 · 원본 개체 ${S.me.board[0].insts.length}`);
-  // 8) 토큰 다중 소환도 각각 슬롯
+  /* 8) 소환물도 **각각 한 칸씩** 차지한다.
+     ⚠ 예전에는 토큰(POOL 밖 임시 개체)이었는데, 이제 소환 스펠은 **진짜 카드**를 부른다
+        (그래야 크라켄 같은 바운스로 손에 잡힌다). 그래서 `u.token` 이 아니라 개체 수로 본다. */
   reset(); S.me.board[0]=null;
-  const sp=Object.keys(POOL).find(n=>POOL[n].mode==='summon'&&POOL[n].el==='fire');
+  const sp='불의 군단';
   if(sp){ resolveSummon('me',sp,0);
-    ok('토큰 다중 소환', S.me.board.filter(x=>x&&x.token).length>=1&&S.me.board.every(u=>!u||u.insts.length===1),
+    ok('소환물 다중 소환', S.me.board.filter(Boolean).length>=2&&S.me.board.every(u=>!u||u.insts.length===1),
        `${sp} → 토큰 ${S.me.board.filter(x=>x&&x.token).length}칸`); }
   return out;
 });
