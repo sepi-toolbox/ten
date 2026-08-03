@@ -114,7 +114,8 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
 
   ok('속공 = 즉시 공격', R.rushWait&&R.rushDmg>0&&R.rushSick,
      `대기 → 지정 → ${R.rushDmg} 피해 · 그 개체는 이번 턴 정규 공격 제외`);
-  ok('삼킴 = 정식 파괴 판정', R.mawBoom>0&&R.mawPhoenix.includes('잿불'),
+  /* 불사조는 이제 잿불이 아니라 **알**로 남는다(내 턴 시작에 멀쩡한 몸으로 부화) */
+  ok('삼킴 = 정식 파괴 판정', R.mawBoom>0&&R.mawPhoenix.includes('불사조의 알'),
      `폭탄병을 삼키자 얼굴에 ${R.mawBoom} · 불사조를 삼키자 ${R.mawPhoenix.join()} (죽을 때 효과가 터진다)`);
   ok('전차 = 아군을 삼킨다', R.ate==='불사조', `${R.ate} 을(를) 삼킴`);
   ok('전차 소멸 = 되돌려 놓음', R.boardAfterDeath.includes('불사조'),
