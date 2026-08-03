@@ -40,6 +40,9 @@ for(const el of ['fire','water','nature','steel','earth','dark','light']){
           if(j>=0){resolveOnMine('me',n,j);pay('me',n);done=true;}}
         if(done){P.hand.splice(i,1);n0++;i--;}
       }
+      /* 밀물 대상 지정이 걸려 있으면 턴을 못 넘긴다 — 자동 플레이는 첫 후보를 고른다.
+         (사람이 할 때는 반드시 직접 골라야 한다. 이건 테스트용 대타일 뿐이다.) */
+      if(S.tide)tideBounce('me',S.tide.list[0]);
       render(); return n0;
     });
     turns++;

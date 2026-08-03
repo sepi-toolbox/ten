@@ -2,7 +2,7 @@
    ⚠ 게임(prototype/sw.js)과 **캐시 이름이 달라야** 한다. 같은 이름이면
       한쪽이 activate 될 때 다른 쪽 캐시를 지워 버린다(scope 는 달라도 캐시 저장소는 공유다).
    ⚠ 새 판을 올릴 때마다 CACHE 이름을 바꿔야 갱신된다. */
-const CACHE = 'ten-cards-v7';
+const CACHE = 'ten-cards-v8';
 const SHELL = ['./', './index.html', './manifest.webmanifest',
                './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 

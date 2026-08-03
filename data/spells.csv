@@ -31,7 +31,7 @@ SP029,자갈,1,dmg,2,1,1,0,earth,thrust,크리처 1개체에 2 피해,assets/art
 SP030,관통 사격,2,dmg,4,1,1,1,earth,thrust,크리처 1개체에 4 피해 · 초과분은 같은 슬롯 다음 개체로,assets/art/SP02.png,common,
 SP031,폐허 발굴,3,draw,3,1,1,2,earth,awaken,"내 크리처가 없으면 카드 3장, 있으면 1장",,common,
 SP032,함몰,3,aoe,3,1,1,2,earth,firerain,슬롯 1~3번에 각각 3 피해,assets/art/SP04.png,common,
-SP033,축성,4,buff,9,1,2,2,earth,banner,내 크리처 1개체에 +2/+5 · 진형 +2,,uncommon,
+SP033,축성,4,buff,9,1,2,2,earth,banner,내 크리처 1개체에 +2/+5,,uncommon,
 SP034,산사태,5,aoe,7,1,2,3,earth,firerain,적 전체에 7 피해,assets/art/SP04.png,uncommon,
 SP035,매몰,6,kill,0,1,3,3,earth,exec,크리처 1개체를 파괴한다,assets/art/SP03.png,rare,
 SP036,피의 못,1,dmg,4,1,1,0,dark,thrust,내 HP 8 지불 → 크리처 1개체에 4 피해,,common,

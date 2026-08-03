@@ -231,6 +231,7 @@ Object.keys(DECKS).forEach(el=>{
    ⚠ 합치기 **전에** 기본 목록을 떠 둔다. 게임도 같은 자리에서 Object.assign 한다. */
 const BASE=Object.keys(POOL).slice();
 if(typeof ROGUE!=='undefined'&&ROGUE.over)Object.assign(POOL,ROGUE.over);
+if(typeof GROWN!=='undefined')Object.assign(POOL,GROWN);   /* 성장·진형 상위 몸 — 덱 밖 */
 
 /* ── 원정 적 ── */
 const FOES=(typeof ENEMY!=='undefined'&&ENEMY.list)?ENEMY.list:[];
