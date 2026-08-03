@@ -12,7 +12,7 @@ const SIZES=[[390,844,'iPhone 앱'],[390,745,'iPhone 브라우저'],[360,640,'�
   for(const [w,h,label] of SIZES){
     const p=await b.newPage({viewport:{width:w,height:h},deviceScaleFactor:2,isMobile:true,hasTouch:true});
     const errs=[]; p.on('pageerror',e=>errs.push(e.message));
-    await p.goto(FILE); await p.waitForTimeout(600);
+    await p.goto(FILE+'?dev=1'); await p.waitForTimeout(600);
     await p.click('#keepBtn').catch(()=>{}); await p.waitForTimeout(200);
     await p.evaluate(()=>{SPEED=30;setDeck('fire');}); await p.waitForTimeout(250);
     await p.evaluate(()=>{const k=document.getElementById('keepBtn');k&&k.click();}); await p.waitForTimeout(250);

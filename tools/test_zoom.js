@@ -10,7 +10,7 @@ for(const [w,h,tag] of [[390,844,'모바일'],[1020,1300,'데스크톱']]){
   console.log(`\n── ${tag} ${w}×${h}`);
   const p=await b.newPage({viewport:{width:w,height:h},deviceScaleFactor:2,isMobile:w<800,hasTouch:true});
   const errs=[];p.on('pageerror',e=>errs.push(e.message));
-  await p.goto(FILE);await p.waitForTimeout(600);
+  await p.goto(FILE+'?dev=1');await p.waitForTimeout(600);
   await p.click('#keepBtn').catch(()=>{});await p.waitForTimeout(200);
   await p.evaluate(()=>{SPEED=30;setDeck('fire');});await p.waitForTimeout(250);
   await p.evaluate(()=>{const k=document.getElementById('keepBtn');k&&k.click();});await p.waitForTimeout(250);

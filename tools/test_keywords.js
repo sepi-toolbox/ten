@@ -1,8 +1,10 @@
+const path=require('path');
 const {chromium}=require('/opt/node-tools/node_modules/playwright');
+const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
 (async()=>{const b=await chromium.launch();
 const p=await b.newPage({viewport:{width:1100,height:1200}});
 const errs=[];p.on('pageerror',e=>errs.push('ERR: '+e.message));
-await p.goto('file:///home/claude/ten/prototype/index.html');await p.waitForTimeout(700);
+await p.goto(FILE+'?dev=1');await p.waitForTimeout(700);
 await p.click('#keepBtn').catch(()=>{});await p.waitForTimeout(200);
 await p.evaluate(()=>{SPEED=40;});await p.waitForTimeout(150);
 const R=await p.evaluate(async()=>{

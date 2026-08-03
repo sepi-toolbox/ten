@@ -20,7 +20,7 @@ const FILE='file://'+path.join(ROOT,'index.html');
   const b=await chromium.launch();
   const p=await b.newPage({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});
   const errs=[]; p.on('pageerror',e=>errs.push(e.message));
-  await p.goto(FILE); await p.waitForTimeout(700);
+  await p.goto(FILE+'?dev=1'); await p.waitForTimeout(700);
   await p.click('#keepBtn').catch(()=>{}); await p.waitForTimeout(250);
   await p.evaluate(()=>{SPEED=30;setDeck('fire');}); await p.waitForTimeout(250);
   await p.evaluate(()=>{const k=document.getElementById('keepBtn');k&&k.click();}); await p.waitForTimeout(300);

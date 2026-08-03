@@ -35,12 +35,17 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
   const sr=await (await p.$('#side')).boundingBox();
   await p.mouse.click(sr.x+sr.width/2, sr.y+30); await p.waitForTimeout(250);
   ok('안쪽 탭에 안 닫힘', await p.evaluate(()=>document.body.classList.contains('sideon')), '');
-  // 스크롤
-  const before=await p.evaluate(()=>document.getElementById('side').scrollTop);
-  await p.mouse.move(sr.x+sr.width/2, sr.y+sr.height*0.6);
-  await p.mouse.wheel(0,300); await p.waitForTimeout(300);
-  const after=await p.evaluate(()=>document.getElementById('side').scrollTop);
-  ok('서랍 스크롤', st.스크롤가능&&after>before, `scrollTop ${before} → ${after} (내용 ${st.스크롤가능?'넘침':'짧음'})`);
+  // 스크롤 — 팝업 자체 또는 안쪽 로그 중 넘치는 쪽이 스크롤되면 된다
+  const scroll=async sel=>{
+    const el=await p.$(sel); const r=await el.boundingBox();
+    const b0=await p.evaluate(s=>document.querySelector(s).scrollTop,sel);
+    await p.mouse.move(r.x+r.width/2, r.y+r.height*0.6);
+    await p.mouse.wheel(0,-320); await p.waitForTimeout(250);   /* 로그는 이미 맨 아래라 위로 굴린다 */
+    return [b0, await p.evaluate(s=>document.querySelector(s).scrollTop,sel)];
+  };
+  const [l0,l1]=await scroll('#log');
+  const [s0,s1]=await scroll('#side');
+  ok('팝업 스크롤', l1!==l0||s1!==s0, `로그 ${l0}→${l1} · 팝업 ${s0}→${s1}`);
   // 바깥 탭 → 닫힌다
   await p.mouse.click(10,10); await p.waitForTimeout(300);
   ok('바깥 탭에 닫힘', !(await p.evaluate(()=>document.body.classList.contains('sideon'))), '');

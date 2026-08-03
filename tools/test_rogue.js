@@ -1,10 +1,13 @@
+const path=require('path');
 const {chromium}=require('/opt/node-tools/node_modules/playwright');
+const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
 (async()=>{const b=await chromium.launch();const p=await b.newPage({viewport:{width:1020,height:1400}});
 const errs=[];p.on('pageerror',e=>errs.push('ERR: '+e.message));
-await p.goto('file:///home/claude/ten/prototype/index.html');await p.waitForTimeout(700);
+await p.goto(FILE+'?dev=1');await p.waitForTimeout(700);
 await p.click('#keepBtn').catch(()=>{}); await p.waitForTimeout(150);
-await p.evaluate(()=>{document.body.classList.add('sideon');document.getElementById('mRogue').click();}); await p.waitForTimeout(250);
-await p.click('.elpick button[data-e="nature"]'); await p.waitForTimeout(300);
+/* 원정 진입: 모드 → 덱 선택 페이지 */
+await p.evaluate(()=>{FLOW.mode='rogue';pgDeck();}); await p.waitForTimeout(300);
+await p.click('#page .chsi[data-e="nature"]'); await p.waitForTimeout(500);
 await p.evaluate(()=>{RG.floor=2;RG.at=0;rgShop();}); await p.waitForTimeout(250);
 console.log('상점 재고:',await p.$$eval('#rg .rgc',e=>e.length),'(5여야 함)');
 // 카드 제거 흐름

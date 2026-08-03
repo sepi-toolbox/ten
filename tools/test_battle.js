@@ -1,7 +1,9 @@
+const path=require('path');
 const {chromium}=require('/opt/node-tools/node_modules/playwright');
+const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
 (async()=>{const b=await chromium.launch();const p=await b.newPage({viewport:{width:1000,height:1500}});
 const errs=[];p.on('pageerror',e=>errs.push('ERR: '+e.message));
-await p.goto('file:///home/claude/ten/prototype/index.html');await p.waitForTimeout(600);
+await p.goto(FILE+'?dev=1');await p.waitForTimeout(600);
 await p.evaluate(()=>{SPEED=12;});
 const out=[];
 for(const el of ['fire','water','nature','steel','earth','dark','light']){
