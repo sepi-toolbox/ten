@@ -44,22 +44,34 @@ const RARS=['common','uncommon','rare','legendary'];
     d.remove(); return r;});
   ok('보석이 붙는다', gem.개수===2&&gem.클래스[0]==='legendary'&&gem.클래스[1]==='common',
      `${gem.leg} → ${gem.클래스.join(' / ')}`);
-  ok('보석 크기는 --cw 비례', Math.abs(gem.비율-0.10)<0.01, `카드 폭의 ${(gem.비율*100).toFixed(1)}%`);
+  ok('보석 크기는 --cw 비례', Math.abs(gem.비율-0.075)<0.01, `카드 폭의 ${(gem.비율*100).toFixed(1)}%`);
   ok('등급마다 색이 다르다', gem.색.toLowerCase()!=='#9aa6b4', `레전더리 ${gem.색}`);
 
-  /* 2-b) 보석이 효과문을 가리면 안 된다 — 일러스트 **안쪽**에 머물러야 한다.
-     예전에는 일러스트 아래 경계에 걸쳐 놓아 절반이 본문으로 내려와 첫 줄을 덮었다. */
+  /* 2-b) 보석은 일러스트 아래 경계에 **걸터앉되** 효과문 글자는 건드리지 않는다.
+     ⚠ 여기서는 회전한 상자의 `getBoundingClientRect` 가 오히려 정답이다 —
+        45° 마름모의 바깥 꼭짓점 좌표가 곧 이 상자의 변이다(크기를 잴 때만 offsetWidth).
+     ⚠ 140종 전부를 본다. 한 장만 재면 효과문이 짧은 카드를 골라 통과할 수 있다. */
   const place=await p.evaluate(()=>{
-    const n=Object.keys(POOL).find(x=>POOL[x].k==='cr'&&(POOL[x].kw||'').length>2);
     const d=document.createElement('div'); d.style.cssText='position:fixed;left:0;top:0';
-    d.innerHTML=tcardHTML(n,{size:'md'}); document.body.appendChild(d);
-    const g=d.querySelector('.rgem').getBoundingClientRect();
-    const a=d.querySelector('.tart').getBoundingClientRect();
-    const t=d.querySelector('.teff').getBoundingClientRect();
-    const r={n, 아트밖:+(g.bottom-a.bottom).toFixed(1), 글자침범:+(g.bottom-t.top).toFixed(1)};
+    document.body.appendChild(d);
+    let worst=null, over=0, sit=1e9;
+    for(const n of Object.keys(POOL)){
+      d.innerHTML=tcardHTML(n,{size:'md'});
+      const c=d.querySelector('.tcard'), cw=c.offsetWidth;
+      const g=d.querySelector('.rgem').getBoundingClientRect();
+      const a=d.querySelector('.tart').getBoundingClientRect();
+      const t=d.querySelector('.teff').getBoundingClientRect();
+      const pad=parseFloat(getComputedStyle(d.querySelector('.teff')).paddingTop);
+      const 침범=g.bottom-(t.top+pad);          /* 글자 시작선을 넘었나 */
+      const 걸침=g.bottom-a.bottom;              /* 경계선 아래로 나온 정도 */
+      if(침범>over){over=침범;worst=n;}
+      if(걸침<sit)sit=걸침;
+    }
+    const r={worst, 침범:+over.toFixed(2), 걸침:+sit.toFixed(2), 수:Object.keys(POOL).length};
     d.remove(); return r;});
-  ok('보석이 글자를 안 가린다', place.아트밖<=0.5&&place.글자침범<=0,
-     `${place.n} — 아트 경계 대비 ${place.아트밖}px · 효과문 대비 ${place.글자침범}px`);
+  ok('보석이 글자를 안 가린다', place.침범<=0,
+     `${place.수}종 최대 침범 ${place.침범}px${place.worst?' ('+place.worst+')':''}`);
+  ok('보석은 경계선에 걸터앉는다', place.걸침>0.5, `경계 아래로 ${place.걸침}px`);
 
   // 2-c) 레전더리 프리즘 — 두 겹이 얹히고, 숫자 뱃지는 그 위에 남는다
   const pr=await p.evaluate(()=>{
