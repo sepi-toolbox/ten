@@ -36,8 +36,13 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
     const f0=S.ai.hp; if(S.rush)rushAttack('me',S.rush.list[0]);
     out.rushDmg=f0-S.ai.hp; out.rushSick=S.me.board[0].sick;
 
-    reset(); put('me','화염정령'); put('me','고블린 전차');
-    const ch=S.me.board.find(u=>u&&u.name==='고블린 전차');
+    /* 삼킴은 **정식 파괴 판정**을 지난다 — 폭발·불사조가 그대로 터져야 한다(그게 콤보다) */
+    reset(); put('me','고블린 폭탄병');
+    const face0=S.ai.hp; put('me','고블린 전차');
+    out.mawBoom=face0-S.ai.hp;
+    reset(); put('me','불사조'); put('me','고블린 전차');
+    out.mawPhoenix=S.me.board.filter(Boolean).map(u=>u.name);
+    const ch=S.me.board.find(u=>u&&u.ate);
     out.ate=ch&&ch.ate; out.boardAfterEat=S.me.board.filter(Boolean).map(u=>u.name);
     ch.insts[0].hp=0; cleanup('me');
     out.boardAfterDeath=S.me.board.filter(Boolean).map(u=>u.name);
@@ -68,9 +73,10 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
 
   ok('속공 = 즉시 공격', R.rushWait&&R.rushDmg>0&&R.rushSick,
      `대기 → 지정 → ${R.rushDmg} 피해 · 그 개체는 이번 턴 정규 공격 제외`);
-  ok('전차 = 아군을 삼킨다', R.ate==='화염정령'&&R.boardAfterEat.length===1,
-     `${R.ate} 을(를) 삼킴 → 판에 전차만 남음`);
-  ok('전차 소멸 = 되돌려 놓음', R.boardAfterDeath.join()==='화염정령',
+  ok('삼킴 = 정식 파괴 판정', R.mawBoom>0&&R.mawPhoenix.includes('잿불'),
+     `폭탄병을 삼키자 얼굴에 ${R.mawBoom} · 불사조를 삼키자 ${R.mawPhoenix.join()} (죽을 때 효과가 터진다)`);
+  ok('전차 = 아군을 삼킨다', R.ate==='불사조', `${R.ate} 을(를) 삼킴`);
+  ok('전차 소멸 = 되돌려 놓음', R.boardAfterDeath.includes('불사조'),
      `전차가 죽자 ${R.boardAfterDeath.join()} 복귀`);
   ok('도화선 = 버프 + 연소 부여', R.fuse[1][0]===R.fuse[0][0]+5&&R.fuse[1][1]===R.fuse[0][1]+3,
      `${R.fuse[0][0]}/연소${R.fuse[0][1]} → ${R.fuse[1][0]}/연소${R.fuse[1][1]} (연소는 더해진다)`);
