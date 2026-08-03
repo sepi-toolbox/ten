@@ -175,13 +175,16 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
          `${nDrainG} 공격을 ${wallName} 가호가 흡수 → HP 20 그대로`); }
     else ok('흡혈 = 0 피해면 0 회복', true, '(가호 수호 크리처 없음 — 건너뜀)');
 
-    // 14) 용어집이 키워드를 전부 설명한다 (카드에 찍히는데 설명이 없으면 안 된다)
+    /* 14) 용어집이 **키워드**를 전부 설명한다 (카드에 찍히는데 설명이 없으면 안 된다)
+       ⚠ 키워드는 "연소 3" 처럼 낱말 하나(+숫자) 꼴이다. 그 틀을 벗어난 조각은
+          그 카드만의 고유 효과문("소환 시 …", "내가 스펠을 쓸 때마다 …")이라 용어집에 없는 게 맞다.
+          예전엔 (소환|소멸) 만 예외로 뒀는데, 다른 꼴의 고유 효과가 생기자 바로 어긋났다. */
     const heads=new Set();
     Object.keys(POOL).forEach(n=>{ const c=POOL[n];
       if(c.k!=='cr')return;
       (c.kw||'').split('·').map(x=>x.trim()).filter(x=>x&&x!=='—')
-        .forEach(x=>{ const h=x.split(/[\s+]/)[0]; if(/^[가-힣]+$/.test(h))heads.add(h); }); });
-    const missing=[...heads].filter(h=>!GLOSSARY[h]&&!/^(소환|소멸)$/.test(h));
+        .forEach(x=>{ if(/^[가-힣]+( ?\d+)?$/.test(x))heads.add(x.split(/[\s+]/)[0]); }); });
+    const missing=[...heads].filter(h=>!GLOSSARY[h]);
     ok('용어집이 전부 설명', missing.length===0,
        missing.length?`설명 없음: ${missing.join(', ')}`:`${[...heads].length}종 전부 등재`);
 
