@@ -724,12 +724,15 @@ html,body{touch-action:pan-x pan-y}
   display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3}
 .teff b{color:var(--ink);font-weight:700}
 /* ── 희귀도 보석 ──────────────────────────────────────────
-   일러스트 아래 경계 가운데에 마름모 하나. 카드 테두리는 **속성 색**이므로
+   일러스트 **안쪽** 오른쪽 아래 구석. 카드 테두리는 **속성 색**이므로
    보석은 속성과 겹치지 않는 별도 팔레트를 쓴다(회색·초록·파랑·주황).
-   크기는 --cw 에 비례시켜 어느 규격에서나 같은 비율로 보인다. */
-.rgem{position:absolute;left:50%;bottom:0;z-index:4;pointer-events:none;
-  width:calc(var(--cw)*.115);height:calc(var(--cw)*.115);
-  transform:translate(-50%,50%) rotate(45deg);
+   크기는 --cw 에 비례시켜 어느 규격에서나 같은 비율로 보인다.
+   ⚠ 예전에는 일러스트 아래 **경계 위**에 걸쳐 놓았는데, 절반이 본문으로 내려와
+      효과문 첫 줄을 가렸다. 글자 영역은 절대 침범하지 않는다. */
+.rgem{position:absolute;right:calc(var(--cw)*.045);bottom:calc(var(--cw)*.045);
+  z-index:4;pointer-events:none;
+  width:calc(var(--cw)*.10);height:calc(var(--cw)*.10);
+  transform:rotate(45deg);
   border-radius:calc(var(--cw)*.02);
   background:linear-gradient(135deg,var(--rc2),var(--rc));
   border:calc(var(--cw)*.014) solid rgba(0,0,0,.55);
@@ -742,6 +745,40 @@ html,body{touch-action:pan-x pan-y}
 @keyframes rgemleg{0%,100%{box-shadow:0 0 calc(var(--cw)*.06) var(--rc),inset 0 0 calc(var(--cw)*.03) rgba(255,255,255,.6)}
   50%{box-shadow:0 0 calc(var(--cw)*.15) var(--rc),inset 0 0 calc(var(--cw)*.03) rgba(255,255,255,.9)}}
 @media (prefers-reduced-motion:reduce){.rgem.legendary{animation:none}}
+
+/* ── 레전더리 프리즘(홀로그램) ─────────────────────────────
+   실제 포일 카드처럼 **두 겹**으로 만든다.
+     ::before  넓은 무지개 — `mix-blend-mode:color` 로 **색조만** 얹는다.
+               명도를 건드리지 않으므로 글자 대비가 그대로 남는다.
+     ::after   좁고 밝은 반사光 한 줄 — 카드를 가로질러 천천히 지나간다.
+   ⚠ `color-dodge`·`screen` 은 밝은 양피지 위에서 하얗게 날아가 글자가 안 보인다.
+   ⚠ `hue`·높은 opacity 는 일러스트 색을 통째로 갈아엎는다(용이 초록색이 된다).
+   ⚠ `.tcard{overflow:hidden}` 덕에 두 겹 다 둥근 모서리로 잘린다. */
+.tcard.r-legendary{box-shadow:0 2px 6px rgba(0,0,0,.5),
+  0 0 0 calc(var(--cw)*.012) rgba(255,214,130,.6),0 0 calc(var(--cw)*.14) rgba(255,190,90,.4)}
+/* ⚠ 프리즘은 **숫자 뱃지와 코스트 구슬보다 아래**에 깐다(z-index 3).
+   그 위로 올리면 ATK 붉은색·HP 청록색이 무지개에 물들어 무슨 수치인지 헷갈린다.
+   머리·발치 줄에 z-index 5 를 줘서 확실히 위로 뺀다. */
+.tcard.r-legendary>.thead,.tcard.r-legendary>.tstat{position:relative;z-index:5}
+.tcard.r-legendary::before,.tcard.r-legendary::after{
+  content:'';position:absolute;inset:0;z-index:3;pointer-events:none}
+.tcard.r-legendary::before{
+  background:linear-gradient(115deg,#ff6eb0 0%,#ffd66e 18%,#78ffcd 36%,#73b9ff 54%,#cd7dff 72%,#ff6eb0 100%);
+  background-size:230% 100%;
+  mix-blend-mode:color;opacity:.28;
+  animation:prismhue 9s linear infinite}
+.tcard.r-legendary::after{
+  background:linear-gradient(108deg,transparent 38%,rgba(255,255,255,.72) 47%,
+    rgba(255,255,255,.92) 50%,rgba(255,255,255,.72) 53%,transparent 62%);
+  background-size:320% 100%;
+  mix-blend-mode:overlay;opacity:.85;
+  animation:prismgleam 4.5s cubic-bezier(.5,0,.5,1) infinite}
+@keyframes prismhue{0%{background-position:0% 50%}100%{background-position:230% 50%}}
+@keyframes prismgleam{0%{background-position:170% 50%}
+  70%,100%{background-position:-70% 50%}}
+@media (prefers-reduced-motion:reduce){
+  .tcard.r-legendary::before{animation:none;background-position:40% 50%}
+  .tcard.r-legendary::after{animation:none;opacity:0}}
 
 .tstat{flex:none;height:calc(var(--cw)*.235);box-sizing:border-box;
   display:flex;justify-content:space-between;align-items:center;
@@ -1333,7 +1370,9 @@ function tcardHTML(name,opt){
   const el=CE[name]||c.el||'steel', ec=(EL[el]||EL.steel).c;
   const cc=Math.min(+c.cc||1,c.c);
   const pips=`<i class="cp c" style="background:${ec}"></i>`.repeat(cc)+'<i class="cp g"></i>'.repeat(c.c-cc);
-  const cls=c.k==='cr'?((c.g&&c.f)?'flyguard':c.g?'guard':c.f?'fly':(c.p?'pierce':'normal')):c.k;
+  let cls=c.k==='cr'?((c.g&&c.f)?'flyguard':c.g?'guard':c.f?'fly':(c.p?'pierce':'normal')):c.k;
+  /* 희귀도 클래스는 커먼이 아닐 때만 붙인다(커먼은 기본 모습 그대로) */
+  if(c.r&&c.r!=='common')cls+=' r-'+c.r;
   let eff='';
   if(c.k==='cr'){
     const tag=(c.g&&c.f)?'비행·수호':c.g?'수호':c.f?'비행':(c.p?'관통':'');

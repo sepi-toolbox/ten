@@ -44,8 +44,41 @@ const RARS=['common','uncommon','rare','legendary'];
     d.remove(); return r;});
   ok('보석이 붙는다', gem.개수===2&&gem.클래스[0]==='legendary'&&gem.클래스[1]==='common',
      `${gem.leg} → ${gem.클래스.join(' / ')}`);
-  ok('보석 크기는 --cw 비례', Math.abs(gem.비율-0.115)<0.01, `카드 폭의 ${(gem.비율*100).toFixed(1)}%`);
+  ok('보석 크기는 --cw 비례', Math.abs(gem.비율-0.10)<0.01, `카드 폭의 ${(gem.비율*100).toFixed(1)}%`);
   ok('등급마다 색이 다르다', gem.색.toLowerCase()!=='#9aa6b4', `레전더리 ${gem.색}`);
+
+  /* 2-b) 보석이 효과문을 가리면 안 된다 — 일러스트 **안쪽**에 머물러야 한다.
+     예전에는 일러스트 아래 경계에 걸쳐 놓아 절반이 본문으로 내려와 첫 줄을 덮었다. */
+  const place=await p.evaluate(()=>{
+    const n=Object.keys(POOL).find(x=>POOL[x].k==='cr'&&(POOL[x].kw||'').length>2);
+    const d=document.createElement('div'); d.style.cssText='position:fixed;left:0;top:0';
+    d.innerHTML=tcardHTML(n,{size:'md'}); document.body.appendChild(d);
+    const g=d.querySelector('.rgem').getBoundingClientRect();
+    const a=d.querySelector('.tart').getBoundingClientRect();
+    const t=d.querySelector('.teff').getBoundingClientRect();
+    const r={n, 아트밖:+(g.bottom-a.bottom).toFixed(1), 글자침범:+(g.bottom-t.top).toFixed(1)};
+    d.remove(); return r;});
+  ok('보석이 글자를 안 가린다', place.아트밖<=0.5&&place.글자침범<=0,
+     `${place.n} — 아트 경계 대비 ${place.아트밖}px · 효과문 대비 ${place.글자침범}px`);
+
+  // 2-c) 레전더리 프리즘 — 두 겹이 얹히고, 숫자 뱃지는 그 위에 남는다
+  const pr=await p.evaluate(()=>{
+    const n=Object.keys(POOL).find(x=>POOL[x].r==='legendary');
+    const d=document.createElement('div'); d.style.cssText='position:fixed;left:0;top:0';
+    d.innerHTML=tcardHTML(n,{size:'md'}); document.body.appendChild(d);
+    const c=d.querySelector('.tcard');
+    const be=getComputedStyle(c,'::before'), af=getComputedStyle(c,'::after');
+    const st=getComputedStyle(c.querySelector('.tstat'));
+    const r={n, 색조:{b:be.mixBlendMode,a:be.animationName,z:be.zIndex,op:+be.opacity},
+      반사:{b:af.mixBlendMode,a:af.animationName,z:af.zIndex},
+      뱃지z:st.zIndex};
+    d.remove(); return r;});
+  ok('레전더리 프리즘 두 겹', pr.색조.b==='color'&&pr.색조.a==='prismhue'
+     &&pr.반사.b==='overlay'&&pr.반사.a==='prismgleam',
+     `${pr.n} — 색조 ${pr.색조.b}/${pr.색조.a} · 반사 ${pr.반사.b}/${pr.반사.a}`);
+  ok('숫자 뱃지는 프리즘 위', (+pr.뱃지z)>(+pr.색조.z),
+     `뱃지 z${pr.뱃지z} > 프리즘 z${pr.색조.z} (ATK 붉은색·HP 청록색이 안 물든다)`);
+  ok('색조는 옅게', pr.색조.op<=0.35, `opacity ${pr.색조.op}`);
 
   // 3) 보상 가중치가 실제로 분포를 기울인다 (정예가 상위 등급을 더 많이 준다)
   const dist=await p.evaluate(()=>{
