@@ -20,10 +20,15 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
 
   // 2) 취소 버튼 없음 · 턴 배너는 턴 수만
   ok('취소 버튼 없음', !(await p.$('#cancel')), '');
-  const ban=await p.evaluate(()=>{turnBanner('me');
-    const t=document.querySelector('.turnban').textContent.replace(/\s+/g,' ').trim();
-    document.querySelector('.turnban').remove(); return t;});
-  ok('턴 배너 = 턴 수만', /TURN/.test(ban)&&!/내 턴|상대 턴/.test(ban), `"${ban}"`);
+  /* 가운데 조작 줄의 글자는 **진행된 턴만** 보여 준다(카드 이름·조작 안내를 넣지 않는다).
+     안내는 드래그 팁(.dztip)과 토스트가 맡는다. */
+  const h1=await p.evaluate(()=>{S.turn=4;S.active='me';S.busy=false;render();
+    return document.getElementById('hint').textContent.replace(/\s+/g,' ').trim();});
+  const h2=await p.evaluate(()=>{S.active='ai';render();
+    return document.getElementById('hint').textContent.replace(/\s+/g,' ').trim();});
+  await p.evaluate(()=>{S.active='me';S.turn=1;render();});
+  ok('조작 줄 = 턴 표시만', /^TURN 4/.test(h1)&&/내 턴/.test(h1)&&/상대 턴/.test(h2)
+     &&!/끌어|누르세요|발동/.test(h1+h2), `"${h1}" / "${h2}"`);
 
   // 3) 지형 6장을 깔고 카드 한 장을 끌어 낸다
   await p.evaluate(()=>{SPEED=6; setDeck('fire');}); await p.waitForTimeout(250);
