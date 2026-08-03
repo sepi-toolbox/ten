@@ -137,13 +137,8 @@ body.sideon .gear{opacity:0;pointer-events:none}
   70%{opacity:1}
   100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.5)}}
 @media (prefers-reduced-motion:reduce){.mspark{display:none}.lz .slot.flip .lface{animation:none}}
-.lz .tok{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);z-index:4;
-  width:26cqw;height:26cqw;border-radius:50%;border:1px solid rgba(255,255,255,.5);
-  transition:transform .2s cubic-bezier(.3,.9,.4,1),opacity .2s}
-.lz .tok.img{background-size:100% 100%;background-repeat:no-repeat;border:none}
-.lz .tok.ent{background:#2a2013;border-style:dashed;border-color:#6b5430}
-.lz .tok.gone{background:transparent;border:1px dashed rgba(200,170,110,.75);
-  transform:translate(-50%,-50%) scale(.72);opacity:.7}
+/* 지형 카드 가운데의 동그란 자원 마커(.tok)는 없앴다 —
+   뒤집힘 + 알갱이가 빠져나가는 연출이 같은 정보를 더 잘 보여 준다. */
 .ltag{position:absolute;top:47%;right:4%;z-index:5;font-family:'Cinzel',serif;
   font-size:8.5cqw;letter-spacing:.08em;line-height:1.5;padding:0 4%;border-radius:2px;
   background:rgba(8,5,3,.9);border:1px solid #6b5430;color:var(--gold)}
@@ -1800,29 +1795,25 @@ function lzHTML(p){
   const L=S[p].lands; let h='';
   for(let i=0;i<L.length;i++){
     const l=L[i];
-    const c1=(EL[l.els[0]]||EL.steel).c;
-    const c2=l.els[1]?(EL[l.els[1]]||EL.steel).c:null;
-    const fill=c2?`linear-gradient(135deg,${c1} 0 50%,${c2} 50% 100%)`:c1;
     const st=l.entering?'ent':(l.used?'used':'rdy');
     const tip=l.entering?'배치한 턴에는 쓸 수 없다'
       :(l.used?'이번 턴 사용함 — 다음 내 턴에 앞면으로':'사용 가능');
     /* data-lz/data-i 는 길게 눌러 확대할 때 쓴다. **뒤집힌 지형도** 이 값으로 원본을 찾는다. */
     const meta=`data-lz="${p}" data-i="${i}" title="${l.name} · ${tip}"`;
+    /* 뒤집기 연출은 **양방향** 모두 태운다 — 쓸 때(justUsed)와 돌아올 때(justBack). */
+    const fl=(l.justUsed||l.justBack)?' flip':'';
     /* 쓴 지형은 카드를 **뒤집어** 놓는다. 왼쪽부터 소모되고(freeLands 순서),
        다음 내 턴 시작에 startTurn 이 used 를 풀어 한꺼번에 앞면으로 돌아온다. */
     if(l.used){
-      h+=`<div class="slot occ used${l.justUsed?' flip':''}" ${meta}>`
+      h+=`<div class="slot occ used${fl}" ${meta}>`
         +`<div class="lface"><i class="cback"></i></div></div>`;
       continue;
     }
-    const o=ORBS[l.els[0]];
-    const tok=st==='rdy'
-      ? (o?`<i class="tok img" style="background-image:url(${o});filter:drop-shadow(0 0 6px ${c1})"></i>`
-          :`<i class="tok" style="background:${fill};box-shadow:0 0 9px ${c1}"></i>`)
-      : `<i class="tok ent"></i>`;
+    /* 카드 가운데 있던 동그란 자원 마커(.tok)는 없앴다 —
+       이제 '뒤집힘 + 알갱이가 빠져나가는 연출'이 같은 정보를 더 잘 보여 준다. */
     const tag=st==='ent'?'대기':'';
-    h+=`<div class="slot occ ${st}" ${meta}><div class="lface">`
-      +`${landCardHTML(l.name,'sm')}${tok}${tag?`<span class="ltag">${tag}</span>`:''}</div></div>`;
+    h+=`<div class="slot occ ${st}${fl}" ${meta}><div class="lface">`
+      +`${landCardHTML(l.name,'sm')}${tag?`<span class="ltag">${tag}</span>`:''}</div></div>`;
   }
   return h;
 }
@@ -2202,7 +2193,14 @@ async function drainEnchants(p){
 function startTurn(p){
   const P=S[p];
   P.landPlayed=false;
-  P.lands.forEach(l=>{l.used=false;l.entering=false;});
+  /* 지형이 한꺼번에 앞면으로 돌아온다 — **돌아올 때도 뒤집기 연출**을 태운다.
+     (연출 없이 그냥 바뀌면 '턱' 하고 갈리는 느낌이 난다) */
+  const back=P.lands.filter(l=>l.used||l.entering);
+  P.lands.forEach(l=>{l.used=false;l.entering=false;l.justUsed=false;});
+  if(back.length){
+    back.forEach(l=>{l.justBack=true;});
+    setTimeout(()=>back.forEach(l=>{l.justBack=false;}),Math.round(420/SPEED));
+  }
   draw(p);
   if(checkEnd())return;
   log(`— 턴 ${S.turn} · ${p==='me'?'내 턴':'상대 턴'} (지형 ${P.lands.length})`,'t');
@@ -2949,7 +2947,7 @@ document.getElementById('restart').onclick=()=>{
      시작 → 모드 선택 → 덱 선택 → (배틀: 상대 덱 선택 | 원정: 지도) → 게임
      패배 → 다시 도전하기(덱 선택으로) · 초기 화면(모드 선택으로)
    ⚠ ?dev=1 로 열면 페이지를 건너뛰고 바로 배틀로 들어간다(자동 테스트용). */
-const VERSION='0.10.1', BUILD='2026-08-03';
+const VERSION='0.10.2', BUILD='2026-08-03';
 const DEV=/[?&]dev=1/.test(location.search);
 let PAGE=null, FLOW={mode:'battle', my:null, foe:null};
 function pageOpen(html){

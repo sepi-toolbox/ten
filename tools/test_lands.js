@@ -89,11 +89,22 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
   await p.mouse.up(); await p.evaluate(()=>{hideZoom();lpFired=false;}); await p.waitForTimeout(200);
   ok('앞면 지형도 확대', z2, '');
 
-  // 5) 다음 내 턴이 시작되면 전부 앞면으로
-  await p.evaluate(()=>{S.turn++; startTurn('me');}); await p.waitForTimeout(350);
+  // 5) 가운데 동그란 자원 마커는 없앴다
+  ok('자원 마커 없음', (await p.evaluate(()=>document.querySelectorAll('#myLz .tok').length))===0, '.tok 0개');
+
+  // 6) 다음 내 턴이 시작되면 전부 앞면으로 — **돌아올 때도 뒤집기 연출**을 탄다
+  await p.evaluate(()=>{SPEED=1;S.turn++; startTurn('me');}); await p.waitForTimeout(90);
   const back=await p.evaluate(()=>({뒷면:document.querySelectorAll('#myLz .slot.used').length,
-    used:S.me.lands.filter(l=>l.used).length}));
+    used:S.me.lands.filter(l=>l.used).length,
+    뒤집기:document.querySelectorAll('#myLz .slot.flip').length,
+    애니:[...document.querySelectorAll('#myLz .slot.flip .lface')]
+          .map(e=>getComputedStyle(e).animationName)[0]||'none'}));
   ok('내 턴에 전부 앞면', back.뒷면===0&&back.used===0, `뒤집힌 지형 ${back.뒷면}장`);
+  ok('돌아올 때도 뒤집힌다', back.뒤집기>0&&back.애니==='lflip',
+     `${back.뒤집기}칸에 ${back.애니}`);
+  await p.waitForTimeout(700); await p.evaluate(()=>render()); await p.waitForTimeout(120);
+  ok('연출은 한 번만', (await p.evaluate(()=>document.querySelectorAll('#myLz .slot.flip').length))===0,
+     '다시 그려도 재생 안 됨');
 
   if(errs.length){bad++;console.log('   ERR',errs.slice(0,2));}
   console.log(bad?`❌ ${bad}건 실패`:'✅ 전부 통과');
