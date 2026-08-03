@@ -27,6 +27,14 @@
   /* 상대 손패(뒷면)만 예외로 작다. 정보가 없는 카드라 내 손패와 같은 크기로 두면
      화면 위쪽을 너무 많이 잡아먹는다(실제로 그렇게 만들었다가 되돌렸다). */
   --foecw:calc(var(--cardw) * .48);
+  /* ══ 딤 — 뒤 조작이 막히는 오버레이의 배경은 **전부 이 하나**를 쓴다 ══
+     대상 지정 딤·확대·시작 손패·지도·설정·상대 카드 공개가 모두 같은 값을 공유한다.
+     농도를 바꾸고 싶으면 여기 두 줄만 고칠 것. 개별 규칙에 rgba 를 직접 적지 말 것.
+     ⚠ 화면 전체를 대신 그리는 '페이지'(.pg/.boot/.over)와 커튼(.veil)은 딤이 아니다 —
+        저건 뒤를 흐리게 보여 주는 게 아니라 아예 가려 버리는 것이라 값이 따로다.
+     ⚠ 가리지 않는 로딩(.busy)에는 절대 붙이지 말 것 — 화면은 보이고 입력만 막는 장치다. */
+  --dim:rgba(6,4,2,.66);
+  --dim-blur:3px;
   --bg:#120d09; --leather:#241a12; --leather-2:#2e2116; --wood:#3a2a1a;
   --parch:#ece0c4; --parch-2:#ddceac; --parch-edge:#c9b688;
   --ink:#2a1d10; --ink-soft:#5a4630; --ink-faint:#8a7452;
@@ -238,7 +246,8 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
   opacity:0;visibility:hidden;transition:opacity .16s ease,transform .16s cubic-bezier(.2,.9,.3,1),visibility 0s .16s;
   box-shadow:0 18px 50px rgba(0,0,0,.65),inset 0 1px 0 rgba(242,212,136,.12)}
 body.sideon .side{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1);transition-delay:0s}
-body.sideon::after{content:'';position:fixed;inset:0;z-index:155;background:rgba(0,0,0,.6)}
+body.sideon::after{content:'';position:fixed;inset:0;z-index:155;
+  background:var(--dim);backdrop-filter:blur(var(--dim-blur));-webkit-backdrop-filter:blur(var(--dim-blur))}
 .ver{font-family:'Cinzel',serif;font-size:10px;letter-spacing:.14em;color:var(--gold);opacity:.7;
   text-align:center;margin-top:12px;padding-top:9px;border-top:1px solid var(--rule)}
 .log{font-family:'Gowun Batang',serif;font-size:11px;line-height:1.7;max-height:64vh;overflow-y:auto;color:var(--parch-2)}
@@ -341,7 +350,7 @@ body.sideon::after{content:'';position:fixed;inset:0;z-index:155;background:rgba
 .reveal{
   position:fixed;inset:0;z-index:56;
   display:flex;align-items:center;justify-content:center;pointer-events:none;
-  background:rgba(8,5,3,.4);animation:fade .22s ease both;
+  animation:fade .22s ease both;   /* 배경은 공용 딤(.dim 목록에 포함) */
 }
 @keyframes fade{from{opacity:0}to{opacity:1}}
 /* 상대 카드 공개 = 평소 카드(tcard)를 확대와 같은 `lg` 규격으로 보여 준다.
@@ -401,6 +410,11 @@ input,textarea,[contenteditable]{user-select:text;-webkit-user-select:text}
 /* 화면 확대 차단. `pan-x pan-y` 는 스크롤은 남기고 **핀치·더블탭 확대만** 뺀다.
    (`manipulation` 은 더블탭만 막고 핀치는 그대로 남으므로 여기선 부족하다) */
 html,body{touch-action:pan-x pan-y}
+/* 뒤 조작을 막는 오버레이의 공용 배경. 새 팝업을 만들면 이 클래스를 붙이거나
+   var(--dim)/var(--dim-blur) 를 쓸 것 — 배경색을 새로 적지 않는다. */
+.dim,.tgtdim,.zoom,.mull,.reveal{
+  background:var(--dim);
+  backdrop-filter:blur(var(--dim-blur));-webkit-backdrop-filter:blur(var(--dim-blur))}
 /* ── 페이지(팝업이 아니라 화면 전체를 쓰는 단계) ────────── */
 .pg{position:fixed;inset:0;z-index:120;display:none;overflow-y:auto;
   background:radial-gradient(120% 80% at 50% 0%, rgba(201,162,75,.10), transparent 60%),
@@ -451,8 +465,9 @@ html,body{touch-action:pan-x pan-y}
   color:var(--gold);opacity:.8}
 
 .veil{position:fixed;inset:0;z-index:150;display:none;flex-direction:column;
-  align-items:center;justify-content:center;gap:14px;background:rgba(9,6,3,.9);
-  backdrop-filter:blur(2px)}
+  align-items:center;justify-content:center;gap:14px;
+  /* 커튼은 딤이 아니다 — 전환 중 뒤 화면을 **보여 주면 안 되므로** 더 진하다 */
+  background:rgba(9,6,3,.96);backdrop-filter:blur(6px)}
 .veil.on{display:flex;animation:zfade .14s ease both}
 .spin{width:34px;height:34px;border-radius:50%;border:3px solid rgba(201,162,75,.22);
   border-top-color:var(--gold-bright);animation:vspin .8s linear infinite}
@@ -474,7 +489,7 @@ html,body{touch-action:pan-x pan-y}
 .busy .btag:empty{display:none}
 
 .zoom{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;
-  background:rgba(8,5,3,.82);backdrop-filter:blur(3px);padding:20px}
+  padding:20px}   /* 배경은 공용 딤 */
 .zoom.on{display:flex;animation:zfade .16s ease both}
 .zoom.hold{pointer-events:none}
 .zwrap{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;max-width:100%}
@@ -522,7 +537,7 @@ html,body{touch-action:pan-x pan-y}
 .zs.ch .ic{background:var(--violet)} .zs.ch{color:#5a3ea8;margin-left:auto}
 .zbase{font-family:'Cinzel',serif;font-size:11px;color:var(--ink-faint);font-weight:400}
 .mull{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;
-  background:rgba(8,5,3,.9);backdrop-filter:blur(4px);padding:18px}
+  padding:18px}   /* 배경은 공용 딤 */
 .mull.on{display:flex;animation:zfade .18s ease both}
 .mbox{width:min(96vw,760px);max-height:92vh;overflow-y:auto;text-align:center;
   border:1px solid var(--gold);border-radius:10px;padding:18px 16px 20px;
@@ -787,13 +802,15 @@ body.dragmode.armed .hand{outline-color:transparent}
    ⚠ 이 딤은 반드시 `.wrap` **안**에 둔다 — `.wrap{z-index:1}` 이 쌓임 맥락을 만들기 때문에
       밖에 두면 안쪽의 `.slot.pick` 을 아무리 올려도 딤 위로 못 올라온다.
       (`position:fixed` 라도 조상의 쌓임 맥락에는 그대로 갇힌다.) */
-.tgtdim{position:fixed;inset:0;z-index:40;display:none;pointer-events:none;
-  background:rgba(5,3,2,.66)}
+.tgtdim{position:fixed;inset:0;z-index:40;display:none;pointer-events:none}
 body.tgtmode .tgtdim{display:block;animation:zfade .16s ease both}
 /* 고를 수 있는 슬롯만 딤 위로. 판 전체가 아니라 슬롯 하나씩 올려야 옆칸이 딸려 올라오지 않는다.
    ⚠ `!important` 가 필요하다 — `packRow` 가 겹침 순서를 위해 슬롯마다 z-index 를 **인라인으로**
       박아 넣는다(10+i). 스타일시트 선언은 인라인에 지므로 !important 아니면 무시된다. */
 body.tgtmode .board>.slot.pick{z-index:41 !important}
+/* 가운데 안내 줄도 딤 위로 — "빛나는 대상을 누르세요 / 빈 곳을 누르면 취소"를 못 읽으면
+   딤이 오히려 방해가 된다. 조작 자체는 어차피 capture 단계에서 가로채므로 안전하다. */
+body.tgtmode .ctl{position:relative;z-index:41}
 /* 못 고르는 것에서 색기까지 빼면 무엇이 남았는지 알아보기 어렵다 — 딤만으로 충분하다.
    (예전에는 슬롯마다 filter 를 걸었는데, filter 는 쌓임 맥락을 만들어 딤 계산을 망친다.) */
 @keyframes tgtin{0%{opacity:0;transform:translateX(-50%) scale(.85)}100%{opacity:1;transform:translateX(-50%) scale(1)}}
@@ -2837,7 +2854,7 @@ document.getElementById('restart').onclick=()=>{
      시작 → 모드 선택 → 덱 선택 → (배틀: 상대 덱 선택 | 원정: 지도) → 게임
      패배 → 다시 도전하기(덱 선택으로) · 초기 화면(모드 선택으로)
    ⚠ ?dev=1 로 열면 페이지를 건너뛰고 바로 배틀로 들어간다(자동 테스트용). */
-const VERSION='0.9.2', BUILD='2026-08-03';
+const VERSION='0.9.3', BUILD='2026-08-03';
 const DEV=/[?&]dev=1/.test(location.search);
 let PAGE=null, FLOW={mode:'battle', my:null, foe:null};
 function pageOpen(html){

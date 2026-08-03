@@ -71,6 +71,37 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
   await p.evaluate(()=>{S.busy=false;render();}); await p.waitForTimeout(200);
   ok('처리 끝나면 해제', !(await p.$eval('#busy',e=>e.classList.contains('on'))), '');
   if(errs.length){bad++;console.log('   ERR',errs.slice(0,2));}
+  /* 뒤 조작을 막는 오버레이는 배경이 **전부 같아야** 한다(--dim/--dim-blur 하나에서 나온다).
+     새 팝업을 만들면서 rgba 를 직접 적어 넣으면 여기서 잡힌다. */
+  const dm=await p.evaluate(()=>{
+    document.body.classList.add('tgtmode','sideon');
+    S.reveal={side:'ai',name:Object.keys(POOL)[0]}; render();
+    document.getElementById('zoom').classList.add('on');
+    document.getElementById('mull').classList.add('on');
+    const g=(el,pe)=>{const c=getComputedStyle(el,pe||null);
+      return c.backgroundColor+' / '+(c.backdropFilter||c.webkitBackdropFilter||'none');};
+    const out={
+      타게팅:g(document.getElementById('tgtdim')),
+      확대:g(document.getElementById('zoom')),
+      시작손패:g(document.getElementById('mull')),
+      지도:g(document.getElementById('rg')),
+      공개:g(document.querySelector('.reveal')),
+      설정뒤:g(document.body,'::after')};
+    const 커튼=g(document.querySelector('.veil'));
+    const 로딩=g(document.querySelector('.busy'));
+    document.body.classList.remove('tgtmode','sideon');
+    document.getElementById('zoom').classList.remove('on');
+    document.getElementById('mull').classList.remove('on');
+    S.reveal=null; render();
+    return {out,커튼,로딩};});
+  const vals=Object.values(dm.out), 기준=vals[0];
+  const 다른것=Object.entries(dm.out).filter(([,v])=>v!==기준).map(([k])=>k);
+  ok('딤 규칙 공통', 다른것.length===0&&/blur/.test(기준),
+     `${Object.keys(dm.out).length}종 모두 ${기준}`+(다른것.length?` · 어긋남 ${다른것.join(',')}`:''));
+  /* 커튼(.veil)은 뒤를 아예 가리는 장치라 더 진해야 하고, 안 가리는 로딩(.busy)은 배경이 없어야 한다 */
+  ok('커튼·비가림 로딩은 예외', dm.커튼!==기준&&/rgba\(0, 0, 0, 0\)/.test(dm.로딩),
+     `커튼 ${dm.커튼} · 로딩 ${dm.로딩}`);
+
   console.log(bad?`❌ ${bad}건 실패`:'✅ 전부 통과');
   await b.close(); process.exit(bad?1:0);
 })();
