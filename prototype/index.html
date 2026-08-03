@@ -1613,7 +1613,11 @@ function rgDrawEdges(reach){
 function rgDeckView(){
   const cnt={}; RG.deck.forEach(n=>cnt[n]=(cnt[n]||0)+1);
   const names=Object.keys(cnt).sort((a,b)=>(POOL[a].c-POOL[b].c)||a.localeCompare(b));
-  rgOpen(rgHead('내 덱',`카드 ${RG.deck.length}장 + 지형 ${landsFor(RG.deck.length)}장 = ${RG.deck.length+landsFor(RG.deck.length)}장`)
+  /* ⚠ 판 번호를 여기 같이 찍는다. 옛 캐시가 남아 **지운 카드가 그대로 보이는** 일이 있었는데,
+     화면만 봐서는 '카드가 안 지워졌다' 와 '옛 판을 보고 있다' 를 구분할 수가 없었다.
+     이 줄 하나면 스크린샷만으로 판가름이 난다. */
+  rgOpen(rgHead('내 덱',`카드 ${RG.deck.length}장 + 지형 ${landsFor(RG.deck.length)}장 = ${RG.deck.length+landsFor(RG.deck.length)}장`
+      +` <span style="opacity:.55">· v${VERSION}</span>`)
     +`<div class="rgcards">${names.map(n=>`<div class="rgc ${POOL[n].over?'ovr':''}">
         ${tcardHTML(n,{size:'md'})}<span class="price">×${cnt[n]}</span></div>`).join('')}</div>`
     +`<div class="mbtns"><button class="go" id="rgBack">지도로</button></div>`);
@@ -4756,7 +4760,7 @@ document.getElementById('restart').onclick=()=>{
      시작 → 모드 선택 → 덱 선택 → (배틀: 상대 덱 선택 | 원정: 지도) → 게임
      패배 → 다시 도전하기(덱 선택으로) · 초기 화면(모드 선택으로)
    ⚠ ?dev=1 로 열면 페이지를 건너뛰고 바로 배틀로 들어간다(자동 테스트용). */
-const VERSION='0.27.1', BUILD='2026-08-03';
+const VERSION='0.27.2', BUILD='2026-08-03';
 const DEV=/[?&]dev=1/.test(location.search);
 let PAGE=null, FLOW={mode:'battle', my:null, foe:null};
 function pageOpen(html){
