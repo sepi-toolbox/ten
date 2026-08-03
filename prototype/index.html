@@ -1330,7 +1330,9 @@ function newGame(){
    배틀 모드와 엔진을 공유한다. RG.on 이 켜지면 전투 종료가 rgAfterBattle()로 빠진다.
    플레이어 덱(RG.deck)은 런 동안 계속 쌓이고, 보상·상점·이벤트로 바뀐다.
    ⚠ 카드 풀은 시작할 때 고른 속성 하나로 고정된다(속성이 섞이지 않게). */
-const RG={on:false,el:null,deck:[],gold:0,hp:60,maxhp:60,map:[],floor:-1,at:-1,removes:0,cleared:0};
+/* ⚠ `fighting` — 지금 원정 **전투 중**인가. 전투 중에만 S.me.hp 를 RG.hp 로 흘려보낸다.
+   지도·이벤트 화면에서까지 흘리면, 이벤트가 올려 놓은 HP 를 지난 전투의 낡은 S.me.hp 가 덮어쓴다. */
+const RG={on:false,fighting:false,el:null,deck:[],gold:0,hp:60,maxhp:60,map:[],floor:-1,at:-1,removes:0,cleared:0};
 const RC=(typeof ROGUE!=='undefined'&&ROGUE.config)?ROGUE.config:{};
 const NODEICON={normal:'⚔',elite:'☠',event:'❓',shop:'🛒',boss:'👑'};
 /* ── 적 명단 ──────────────────────────────────────────────
@@ -1442,6 +1444,7 @@ function rgReach(){                     /* 지금 갈 수 있는 노드 */
 
 /* ── 지도 화면 ─────────────────────────────────────────── */
 function rgMap(){
+  RG.fighting=false;              /* 전투를 도중에 접고 나왔어도 깎인 HP 는 그대로 남는다 */
   const reach=rgReach();
   const rows=RG.map.map((row,f)=>{
     const cells=row.map((nd,i)=>{
@@ -1567,6 +1570,7 @@ function rgFight(kind,e,nd){
   PDECK.push([BASICLAND[RG.el], landsFor(RG.deck.length)]);
   RG.foe=e?e.id:null;
   rgClose();
+  RG.fighting=true;
   log(`— ${NODEKO[kind]} 전투 · ${RG.floor+1}층 · ${label} · 적 HP ${hp}`,'a');
   veilRun(`${e?e.name:'적'} 과(와)의 전투 준비 중…`,()=>newGame());
 }
@@ -1736,7 +1740,8 @@ function rgPickEl(){ FLOW.mode='rogue'; pgDeck(); }
 function rgStart(el){
   RG.on=true; RG.el=el;
   RG.gold=RC.startGold; RG.hp=RC.startHp; RG.maxhp=RC.startHp;
-  RG.floor=-1; RG.at=-1; RG.removes=0; RG.cleared=0; RG.shopStock=null; RG.foe=null; EHP=null; FOEUSED=[];
+  RG.floor=-1; RG.at=-1; RG.removes=0; RG.cleared=0; RG.shopStock=null; RG.foe=null;
+  RG.fighting=false; EHP=null; FOEUSED=[];
   RG.deck=[];
   DECKS[el].list.filter(([n])=>!LANDS[n]).forEach(([n,c])=>{for(let i=0;i<c;i++)RG.deck.push(n);});
   RG.map=rgMakeMap();
@@ -2311,7 +2316,7 @@ function checkEnd(){
   if(S.ai.hp<=0||S.me.hp<=0){
     S.over=true;render();
     const win=S.ai.hp<=0&&S.me.hp>0;
-    if(RG.on){ RG.hp=Math.max(0,S.me.hp); return rgAfterBattle(win); }
+    if(RG.on){ RG.hp=Math.max(0,S.me.hp); RG.fighting=false; return rgAfterBattle(win); }
     document.getElementById('overT').textContent=win?'승리':(S.me.hp<=0&&S.ai.hp<=0?'무승부':'패배');
     document.getElementById('overS').textContent=`${S.turn}턴 종료 · 내 HP ${Math.max(0,S.me.hp)} / 상대 HP ${Math.max(0,S.ai.hp)}`;
     document.getElementById('over').classList.add('on');
@@ -2923,6 +2928,12 @@ function boardHTML(p){
   return cards+(p==='me'?'<i class="dropbar" id="dropbar"></i>':'');
 }
 function render(){
+  /* ⚠ 원정에서는 **전투 중 HP 를 실시간으로 RG.hp 에 흘려보낸다.**
+     예전에는 전투가 끝날 때(checkEnd) 한 번만 옮겼는데, 그 바람에
+     "지고 있는 전투를 설정 → 지도로 나갔다가 다시 들어오면 HP 가 만피로 돌아오는" 구멍이 있었다.
+     RG.fighting 이 켜져 있을 때만 흘린다 — 지도·이벤트 화면에서 흘리면
+     이벤트가 올려 놓은 HP 를 지난 전투의 낡은 S.me.hp 가 도로 깎는다. */
+  if(RG.on&&RG.fighting&&S.me)RG.hp=Math.max(0,S.me.hp);
   const mine=S.active==='me'&&!S.over&&!S.busy;
   /* 처리 중에는 화면을 가리지 않고 조작만 막는다(위쪽 얇은 진행 막대) */
   if(S.busy)busyOn(S.active==='me'?'전투 처리 중…':'상대 턴 진행 중…'); else busyOff();
@@ -3072,7 +3083,7 @@ document.getElementById('restart').onclick=()=>{
      시작 → 모드 선택 → 덱 선택 → (배틀: 상대 덱 선택 | 원정: 지도) → 게임
      패배 → 다시 도전하기(덱 선택으로) · 초기 화면(모드 선택으로)
    ⚠ ?dev=1 로 열면 페이지를 건너뛰고 바로 배틀로 들어간다(자동 테스트용). */
-const VERSION='0.12.5', BUILD='2026-08-03';
+const VERSION='0.12.6', BUILD='2026-08-03';
 const DEV=/[?&]dev=1/.test(location.search);
 let PAGE=null, FLOW={mode:'battle', my:null, foe:null};
 function pageOpen(html){
@@ -3147,7 +3158,7 @@ function pgFoe(){
 }
 /* 고른 두 덱으로 배틀 시작 */
 function startBattle(){
-  RG.on=false; EHP=null; RG.foe=null;
+  RG.on=false; RG.fighting=false; EHP=null; RG.foe=null;
   DECKEL=FLOW.my; DECKLIST=DECKS[FLOW.my].list;
   PDECK=DECKS[FLOW.my].list; EDECK=DECKS[FLOW.foe||FLOW.my].list;
   document.getElementById('log').innerHTML='';
