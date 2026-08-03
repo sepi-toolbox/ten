@@ -1114,6 +1114,13 @@ h1{font-family:'Cinzel Decorative','Cinzel',serif;font-weight:900;font-size:26px
   font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:.04em;
   padding:1px 6px;border-radius:10px;border:1px solid var(--bronze);
   background:rgba(8,5,3,.92);color:var(--gold-bright)}
+/* 주력 카드 — 게임의 '적 조우' 화면이 보여 주는 그 넷. 맨 앞에 세우고 표를 단다. */
+.cell.core .tcard{border-color:var(--gold-bright);
+  box-shadow:0 0 0 1px var(--gold-bright),0 4px 16px rgba(242,212,136,.28)}
+.cell.core::before{content:'주력';position:absolute;top:-7px;left:-3px;z-index:6;
+  font-family:'Cinzel',serif;font-size:9.5px;font-weight:700;letter-spacing:.12em;
+  padding:1px 7px;border-radius:10px;border:1px solid var(--gold-bright);
+  background:linear-gradient(180deg,#3a2a12,#241809);color:var(--gold-bright)}
 .cell .cdecks{margin-top:4px;font-family:'Gothic A1',sans-serif;font-size:9px;font-weight:700;
   letter-spacing:.02em;color:var(--gold);opacity:.7;text-align:center;line-height:1.4}
 :root{--cardw:clamp(112px,15vw,150px)}
@@ -1404,9 +1411,20 @@ function foeSection(e){
   const lands=landsFor(n);
   const over=cards.filter(([x])=>(POOL[x]||{}).over).reduce((a,[,k])=>a+k,0);
   const [lo,hi]=bandRange(F.band);
-  const rows=[[e.land,lands]].concat(cards.slice().sort((a,b)=>{
+  /* '주력 카드' 는 게임의 적 조우 화면(rgEnter)과 **같은 정의** — 코스트가 높은 순 4장.
+     정의를 바꾸려면 프로토타입의 rgEnter 와 함께 고칠 것. */
+  const CORE_N=4;
+  const core=cards.slice().sort((a,b)=>{
     const ca=(POOL[a[0]]||{}).c||0, cb=(POOL[b[0]]||{}).c||0;
-    return ca-cb||a[0].localeCompare(b[0]);}));
+    return cb-ca||a[0].localeCompare(b[0]);}).slice(0,CORE_N).map(x=>x[0]);
+  const rest=cards.filter(([x])=>!core.includes(x)).sort((a,b)=>{
+    const ca=(POOL[a[0]]||{}).c||0, cb=(POOL[b[0]]||{}).c||0;
+    return ca-cb||a[0].localeCompare(b[0]);});
+  /* 주력 → 지형 → 나머지(코스트 순) */
+  const rows=cards.filter(([x])=>core.includes(x))
+    .sort((a,b)=>core.indexOf(a[0])-core.indexOf(b[0]))
+    .map(r=>[r[0],r[1],true])
+    .concat([[e.land,lands,false]]).concat(rest.map(r=>[r[0],r[1],false]));
   return `<div class="foe" style="--c:${c}">
     <div class="foehd">
       <span class="nm">${e.name}</span>
@@ -1420,7 +1438,7 @@ function foeSection(e){
       <span>덱 <b>${n+lands}</b>장 · 카드 ${n} + 지형 ${lands}</span>
       ${over?`<span class="ovr">강화 <b>${over}</b>장</span>`:''}
     </div>
-    <div class="cgrid">${rows.map(([x,k])=>cellHTML(x,k)).join('')}</div>
+    <div class="cgrid">${rows.map(([x,k,cr])=>cellHTML(x,k,cr)).join('')}</div>
   </div>`;
 }
 function foeHit(e){
@@ -1436,7 +1454,7 @@ function hit(n){
   const c=POOL[n]||{};
   return (n+' '+(c.kw||'')+' '+(c.d||'')).toLowerCase().includes(F.q);
 }
-function cellHTML(n,copies){
+function cellHTML(n,copies,core){
   const html=LANDS[n]?landCardHTML(n,'md'):tcardHTML(n,{size:'md'});
   /* 덱별로 묶어 보여 주므로 소속 표시는 **두 덱 이상**일 때만 의미가 있다. 아니면 군더더기다. */
   const d=DECKOF[n]||[];
@@ -1444,7 +1462,7 @@ function cellHTML(n,copies){
   const decks=F.mode==='foe'?''
     :(d.length>1?d.map(([e,c])=>`${(EL[e]||{}).ko||e}×${c}`).join(' · ')
       :(d.length?'':'덱 미수록'));
-  return `<div class="cell" data-n="${n}">${copies?`<span class="cnum">×${copies}</span>`:''}`
+  return `<div class="cell${core?' core':''}" data-n="${n}">${copies?`<span class="cnum">×${copies}</span>`:''}`
     +`${html}${decks?`<div class="cdecks">${decks}</div>`:''}</div>`;
 }
 function section(el){

@@ -111,6 +111,20 @@ const PROTO='file://'+path.join(ROOT,'prototype','index.html');
       art:!!t.querySelector('.tart').style.backgroundImage};});
   ok('강화 카드도 제 속성 색', ov&&ov.el.toLowerCase()!=='#8894a6',
      ov?`${ov.n} → ${ov.el}${ov.art?' · 원본 일러스트 차용':''}`:'강화 카드 없음');
+  /* 주력 카드(적 조우 화면의 그 넷)가 맨 앞에 오는가 — 게임의 정의와 대조한다 */
+  await p.click('#kBar .chip[data-k="all"]'); await p.click('#bandBar .chip[data-b="0"]');
+  await p.waitForTimeout(350);
+  const core=await p.evaluate(()=>{const f=document.querySelector('.foe');
+    const cs=[...f.querySelectorAll('.cell')];
+    return {적:f.querySelector('.nm').textContent,
+      앞4:cs.slice(0,4).map(e=>e.dataset.n),
+      표:cs.map((e,i)=>e.classList.contains('core')?i:-1).filter(i=>i>=0)};});
+  const gcore=await g.evaluate(()=>{const e=FOES[0], d=e.decks[0];
+    return d.slice().sort((a,b)=>((POOL[b[0]]||{}).c||0)-((POOL[a[0]]||{}).c||0)
+      ||a[0].localeCompare(b[0])).slice(0,4).map(x=>x[0]);});
+  ok('주력 카드가 맨 앞', core.앞4.join()===gcore.join()&&core.표.join()==='0,1,2,3',
+     `${core.적}: ${core.앞4.join(' · ')} (게임과 일치)`);
+
   await p.click('#tabCard'); await p.waitForTimeout(300);
   ok('카드 탭으로 복귀', (await p.evaluate(()=>document.querySelectorAll('.dsec').length))===7, '');
 
