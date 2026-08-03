@@ -139,6 +139,8 @@ def main():
                 budget_p=bd, verdict="적정" if dv == 0 else str(dv), note=""))
             e = {"c": c, "k": "cr", "cc": cc, "a": a, "h": h, "el": el,
                  "kw": text, "copies": cp}
+            if nm in G.FOEONLY:      # 적 전용 — 뷰어 표시 · 원정 보상 제외
+                e["foe"] = 1
             # 희귀도는 커먼이 아닐 때만 적는다(기본값이 커먼) — 데이터가 불필요하게 커지지 않게
             if G.rar(nm) != "common":
                 e["r"] = G.rar(nm)
@@ -187,6 +189,8 @@ def main():
                 rarity=G.rar(nm), note=""))
             pool[nm] = {"c": c, "k": "en", "cc": cc, "v": E, "ch": C,
                         "el": el, "d": rule, "copies": cp}
+            if nm in G.FOEONLY:
+                pool[nm]["foe"] = 1
             # 인챈트는 트리거형이다 — 언제 발동하고 무엇을 하는지를 데이터로 싣는다
             tg = G.ENCH_TRIG.get(nm)
             if tg:
