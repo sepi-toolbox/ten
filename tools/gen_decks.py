@@ -462,6 +462,12 @@ DECKS = {
   # 고블린의 열의 — 토큰이 아니라 **카드 그대로** 둘을 부른다(연소 1 · 폭발까지 따라온다).
   #   기준 +2 는 '남는 게 없다' 는 대가다 — 체력 1 에 연소 1 이라 그 턴 종료에 둘 다 탄다.
   ("고블린의 열의", 2, "소환", 10, CRP[2], 2, 0, "고블린 폭탄병 2개체를 소환한다"),
+  # ── 적 전용 (FOEONLY · 예산 검산 제외) ────────────────────────
+  # 화산 폭발 — 빈 칸을 남기지 않는다. 3/1 연소1 이 열 칸까지 들어차는 그림이 이 카드의 전부다.
+  ("화산 폭발",   5, "소환", 70, CRP[5], 0, 0, "빈 슬롯을 전부 불씨정령으로 채운다"),
+  # 일대일 대련 — **개전**. 손에 잡히지 않는다(덱에 있기만 하면 게임 시작에 스스로 터진다).
+  ("일대일 대련",  3, "소환", 40, CRP[3], 0, 0,
+   "개전 · 양쪽 모두 자기 덱에서 가장 비용이 높은 크리처 1개체를 소환한다"),
  ],
  "enchants": [
   ("연쇄 발화",  2, "발동형", 3, 4, "단일", 1, "내 크리처가 소멸할 때마다 적 1개체에 3 피해"),
@@ -655,6 +661,13 @@ TARGET_CURVE = {1: 3, 2: 5, 3: 5, 4: 4, 5: 4, 6: 2}
 # 속성별 예외. **인쇄 비용이 그 카드의 실제 비용이 아닐 때만** 쓴다.
 #   불 — 용암거인은 8코로 인쇄하고 소멸한 크리처 수만큼 깎아서 낸다.
 #        커브에는 8코 한 칸으로 잡히지만 실제로는 3~5코에 나온다(연소 덱은 매 턴 뭔가 죽는다).
+# ── 적 전용 카드 ────────────────────────────────────────────
+# **플레이어가 절대 손에 넣지 못하는 카드.** 적의 고정 덱에서만 쓴다.
+# 예산 검산에서 통째로 빠진다 — 애초에 균형을 맞출 생각이 없는 카드라 기준을 들이대면
+# 의미 없는 '초과' 만 쌓인다. 대신 **여기에 이름을 적어야만** 빠진다(조용히 새지 않게).
+# ⚠ 원정 보상·상점에도 안 나온다(뷰어에는 '적 전용' 으로 찍힌다).
+FOEONLY = {"화산 폭발", "일대일 대련"}
+
 CURVE_OVERRIDE = {"fire": {1: 3, 2: 5, 3: 6, 4: 5, 5: 2, 6: 1, 8: 1}}
 
 
@@ -722,8 +735,9 @@ def main():
         print("  ▸ 크리처 11종")
         for (nm, c, tag, a, h, cp, keys) in deck["creatures"]:
             sp, bd, dv, text = check_creature(c, tag, a, h, keys, nm)
-            v = "적정" if dv == 0 else (f"초과+{dv}" if dv > 0 else f"여유{dv}")
-            if dv > 0:
+            v = "적 전용" if nm in FOEONLY else (
+                "적정" if dv == 0 else (f"초과+{dv}" if dv > 0 else f"여유{dv}"))
+            if dv > 0 and nm not in FOEONLY:
                 over += 1
             cap = " ⚠ATK캡" if tag in ("수호", "비행수호") and a > c - 1 and c > 1 else ""
             tally(c, cp)
@@ -735,8 +749,9 @@ def main():
         print("  ▸ 스펠 7종")
         for (nm, c, kind, val, ref, adj, cp, rule) in deck["spells"]:
             vv, rr, dv = check_spell(kind, val, ref, adj, nm)
-            v = "적정" if dv == 0 else (f"초과+{fmt(dv)}" if dv > 0 else f"여유{fmt(dv)}")
-            if dv > 0:
+            v = "적 전용" if nm in FOEONLY else (
+                "적정" if dv == 0 else (f"초과+{fmt(dv)}" if dv > 0 else f"여유{fmt(dv)}"))
+            if dv > 0 and nm not in FOEONLY:
                 over += 1
             tally(c, cp)
             print(f"    {nm:<12}{c}코 {kind:<5}{fmt(val):>4}  ×{cp}  기준{fmt(rr):<5}{v:<7}{rule}")
@@ -747,8 +762,9 @@ def main():
         print("  ▸ 인챈트 2종")
         for (nm, c, dr, E, C, scope, cp, rule) in deck["enchants"]:
             eff, tgt, dv = check_enchant(c, dr, E, C, scope, nm)
-            v = "적정" if abs(dv) <= 2 else (f"초과+{dv:.0f}" if dv > 0 else f"여유{dv:.0f}")
-            if dv > 2:
+            v = "적 전용" if nm in FOEONLY else (
+                "적정" if abs(dv) <= 2 else (f"초과+{dv:.0f}" if dv > 0 else f"여유{dv:.0f}"))
+            if dv > 2 and nm not in FOEONLY:
                 over += 1
             tally(c, cp)
             print(f"    {nm:<12}{c}코 {dr:<4} E{E}×C{C} ×{cp}  {eff:>4.0f}/{tgt:<4}{v:<7}{rule}")

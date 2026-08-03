@@ -148,6 +148,59 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
   ok('AI — 탈 몸에는 쓴다', A.쓴다.손===0&&(A.쓴다.후===7||A.쓴다.죽음),
      `화염정령(체력 5) 연소 ${A.쓴다.전} → ${A.쓴다.죽음?'심자마자 타 죽음':A.쓴다.후}`);
 
+  /* ── 2·3단계 적 전용 카드 ──────────────────────────────────
+     이 둘은 **플레이어가 절대 못 얻는다**(FOEONLY). 예산 검산에서도 빠진다. */
+  ok('적 전용 표시', pool['화산 폭발'].foe===1&&pool['일대일 대련'].foe===1,
+     '뷰어에 "적 전용" 으로 찍히고 원정 보상·상점에도 안 나온다');
+  ok('그록 단계 카드', nm(1).includes('화산 폭발')&&!nm(0).includes('화산 폭발')
+     &&nm(2).includes('일대일 대련')&&!nm(1).includes('일대일 대련')
+     &&grok.decks[2].find(x=>x[0]==='일대일 대련')[1]===1,
+     '2단계 +화산 폭발 · 3단계 +일대일 대련(1장만)');
+
+  const F=await p.evaluate(async()=>{
+    const o={};
+    const reset=()=>{S.me.board=[];S.ai.board=[];S.me.hp=60;S.ai.hp=60;S.me.hand=[];
+      S.me.lands=[];S.ai.lands=[];S.dead=0;S.over=false;S.busy=false;S.sel=null;S.mode=null;};
+
+    /* 화산 폭발 — 빈 칸을 남기지 않는다 */
+    reset(); ['검사','창병'].forEach(n=>placeCreature('me',n,S.me.board.length));
+    resolveSummon('me','화산 폭발',null);
+    o.폭발={칸:S.me.board.filter(Boolean).length,
+            불씨:S.me.board.filter(u=>u&&u.name==='불씨정령').length,
+            스탯:(S.me.board.find(u=>u&&u.name==='불씨정령')||{}).a,
+            연소:(S.me.board.find(u=>u&&u.name==='불씨정령')||{}).burn};
+    /* 이미 꽉 찼으면 아무 일도 없다 */
+    o.폭발.가득=resolveSummon('me','화산 폭발',null);
+
+    /* 일대일 대련 — 개전. 양쪽이 자기 덱에서 제일 비싼 몸을 하나씩 */
+    reset();
+    S.me.deck=['검사','겁화룡','불씨정령'];        /* 제일 비싼 것 = 겁화룡 6코 */
+    S.ai.deck=['용암거인','창병'];                /* 제일 비싼 것 = 용암거인 8코 */
+    resolveSummon('ai','일대일 대련',null);
+    o.대련={나:S.me.board.map(u=>u.name), 상대:S.ai.board.map(u=>u.name),
+            내덱:S.me.deck.slice(), 상대덱:S.ai.deck.slice()};
+
+    /* 개전 판정 — 덱에 있기만 하면 게임 시작에 스스로 빠져나온다 */
+    o.개전판정=[isOpening('일대일 대련'), isOpening('화산 폭발'), isOpening('겁화룡')];
+    reset();
+    S.me.deck=['검사','겁화룡','불씨정령']; S.ai.deck=['일대일 대련','용암거인','고블린 폭탄병'];
+    openingStep();
+    o.개전={상대판:S.ai.board.map(u=>u.name), 내판:S.me.board.map(u=>u.name),
+            상대덱:S.ai.deck.slice()};
+    return o;
+  });
+  ok('화산 폭발 = 판을 채운다', F.폭발.칸===10&&F.폭발.불씨===8&&F.폭발.스탯===3&&F.폭발.연소===1,
+     `검사·창병 2칸 + 불씨정령 ${F.폭발.불씨} = ${F.폭발.칸}칸 (3/1 연소 1)`);
+  ok('꽉 차면 안 나온다', F.폭발.가득===false, '빈 슬롯이 없으면 헛돌지 않는다');
+  ok('대련 = 양쪽 각자 최고가', F.대련.나.join()==='겁화룡'&&F.대련.상대.join()==='용암거인'
+     &&!F.대련.내덱.includes('겁화룡')&&!F.대련.상대덱.includes('용암거인'),
+     `나 ${F.대련.나.join()} · 상대 ${F.대련.상대.join()} — 각자 덱에서 빠진다`);
+  ok('개전 판정', F.개전판정.join()==='true,false,false',
+     '규칙문에 낱말 개전이 있는 카드만');
+  ok('개전 = 시작하자마자', F.개전.상대판.join()==='용암거인'&&F.개전.내판.join()==='겁화룡'
+     &&!F.개전.상대덱.includes('일대일 대련'),
+     `상대 ${F.개전.상대판.join()} · 나 ${F.개전.내판.join()} · 대련 카드는 덱에서 사라진다`);
+
   if(errs.length){bad++;console.log('   ERR',errs.slice(0,3));}
   console.log(bad?`❌ ${bad}건 실패`:'✅ 전부 통과');
   await b.close(); process.exit(bad?1:0);

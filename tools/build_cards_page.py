@@ -458,7 +458,7 @@ function cellHTML(n,copies,core){
   const decks=F.mode==='foe'?''
     :(d.length>1?d.map(([e,c])=>`${(EL[e]||{}).ko||e}×${c}`).join(' · ')
       :(d.length?(rr&&rr!=='common'?`<span style="color:${RARCOL[rr]}">${RARKO[rr]}</span>`:'')
-        :'덱 미수록'));
+        :((POOL[n]||{}).foe?'적 전용':'덱 미수록')));
   return `<div class="cell${core?' core':''}" data-n="${n}">${copies?`<span class="cnum">×${copies}</span>`:''}`
     +`${html}${decks?`<div class="cdecks">${decks}</div>`:''}</div>`;
 }

@@ -53,6 +53,8 @@ def main():
         for (nm, c, tag, a, h, cp, keys) in deck["creatures"]:
             n_cr += 1
             spent, bud, dv, _ = G.check_creature(c, tag, a, h, keys, nm)
+            if nm in G.FOEONLY:      # 적 전용 — 애초에 균형을 안 맞춘 카드다
+                continue
             if dv > 0:
                 over.append(f"{G.KO[el]} {nm} 크리처 소모 {spent} > 예산 {bud}")
             if tag in ("수호", "비행수호") and c > 1 and a > c - 1:
@@ -60,11 +62,15 @@ def main():
         for (nm, c, kind, val, ref, adj, cp, rule) in deck["spells"]:
             n_sp += 1
             vv, rr, dv = G.check_spell(kind, val, ref, adj, nm)
+            if nm in G.FOEONLY:
+                continue
             if dv > 0:
                 over.append(f"{G.KO[el]} {nm} 스펠 {G.fmt(vv)} > 기준 {G.fmt(rr)}")
         for (nm, c, dr, E, C, scope, cp, rule) in deck["enchants"]:
             n_en += 1
             eff, tgt, dv = G.check_enchant(c, dr, E, C, scope, nm)
+            if nm in G.FOEONLY:
+                continue
             if dv > 2:
                 over.append(f"{G.KO[el]} {nm} 인챈트 {eff:.0f} > 예산 {tgt}")
     total = n_cr + n_sp + n_en

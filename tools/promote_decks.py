@@ -164,6 +164,8 @@ def main():
                 rarity=G.rar(nm), note=""))
             pool[nm] = {"c": c, "k": "sp", "cc": cc, "mode": mode, "v": val,
                         "el": el, "d": rule, "copies": cp}
+            if nm in G.FOEONLY:      # 적 전용 — 뷰어가 '적 전용' 으로 찍고 보상에도 안 낸다
+                pool[nm]["foe"] = 1
             # 인챈트는 트리거형이다 — 언제 발동하고 무엇을 하는지를 데이터로 싣는다
             tg = G.ENCH_TRIG.get(nm)
             if tg:
