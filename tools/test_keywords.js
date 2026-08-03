@@ -48,10 +48,15 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
     const nBoom=kw('폭발'); put('me',nBoom,0);
     const other=find(c=>!(c.kw||'').includes('폭발')&&c.h>=4);
     put('ai',other,0);
-    const foeHp0=S.ai.hp, foeCr0=hp('ai',0), v=S.me.board[0].boom;
+    const foeHp0=S.ai.hp, foeCr0=hp('ai',0), v=S.me.board[0].a;
     S.me.board[0].insts[0].hp=0; cleanup('me');
-    ok('폭발 = 얼굴 피해', S.ai.hp===foeHp0-v&&hp('ai',0)===foeCr0,
-       `${nBoom} 폭발 ${v} — 상대 HP ${foeHp0}→${S.ai.hp} · 적 크리처 ${foeCr0} 그대로`);
+    ok('폭발 = ATK 만큼 얼굴', S.ai.hp===foeHp0-v&&hp('ai',0)===foeCr0,
+       `${nBoom} ATK ${v} — 상대 HP ${foeHp0}→${S.ai.hp} · 적 크리처 ${foeCr0} 그대로`);
+    /* 2-b) 수치가 카드에 없다 = **죽는 시점의 ATK**. 연마로 커진 값이 그대로 들어간다. */
+    reset(); put('me',nBoom,0);
+    S.me.board[0].a+=4; const grown=S.me.board[0].a, fh=S.ai.hp;
+    S.me.board[0].insts[0].hp=0; cleanup('me');
+    ok('폭발 = 커진 ATK 반영', S.ai.hp===fh-grown, `ATK +4 → 폭발 ${grown} (HP ${fh}→${S.ai.hp})`);
 
     // 3) 환류 — 손으로 돌아오지만 **그 능력은 소진**된다
     reset();
