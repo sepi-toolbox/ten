@@ -128,6 +128,31 @@ const PROTO='file://'+path.join(ROOT,'prototype','index.html');
   await p.click('#tabCard'); await p.waitForTimeout(300);
   ok('카드 탭으로 복귀', (await p.evaluate(()=>document.querySelectorAll('.dsec').length))===7, '');
 
+  /* 8-b) 효과 태그 필터 — 목록의 정본은 GLOSSARY 다. 뷰어가 따로 적어 두면 반드시 어긋난다. */
+  const tg=await p.evaluate(()=>({
+    칩:TAGS.map(t=>t.k),
+    정본:Object.keys(GLOSSARY),
+    설명일치:TAGS.every(t=>!GLOSSARY[t.k]||GLOSSARY[t.k][1]===t.desc),
+    합:TAGS.filter(t=>t.k!=='없음').reduce((s,t)=>s+t.n,0),
+    크리처:CRN}));
+  ok('태그 목록 = 용어집', tg.칩.filter(k=>tg.정본.includes(k)).every((k,i,a)=>
+        tg.정본.indexOf(k)>(i?tg.정본.indexOf(a[i-1]):-1)) && tg.설명일치,
+     `${tg.칩.length}종 — ${tg.칩.join(' · ')}`);
+  for(const [t,chk] of [['비행',n=>POOL[n].f],['대가',n=>/대가/.test(POOL[n].kw||'')],
+                        ['고유',n=>/(소환|소멸) 시/.test(POOL[n].kw||'')],
+                        ['없음',n=>!(POOL[n].kw||'').replace(/[—\s]/g,'')&&!POOL[n].g&&!POOL[n].f&&!POOL[n].p]]){
+    await p.click(`#tagBar .chip[data-t="${t}"]`); await p.waitForTimeout(250);
+    const r=await p.evaluate(k=>{
+      const cs=[...document.querySelectorAll('.cell')].map(e=>e.dataset.n);
+      return {수:cs.length, 크리처만:cs.every(n=>(POOL[n]||{}).k==='cr'),
+        기대:TAGS.find(x=>x.k===k).n,
+        설명:document.getElementById('tagDesc').classList.contains('on'), 예:cs.slice(0,3)};},t);
+    ok(`태그 필터 · ${t}`, r.수===r.기대&&r.크리처만&&r.설명&&
+       await p.evaluate(c=>[...document.querySelectorAll('.cell')].every(e=>eval(c)(e.dataset.n)),chk.toString()),
+       `${r.수}종 (${r.예.join(' · ')}…)`);
+  }
+  await p.click('#tagBar .chip[data-t="all"]'); await p.waitForTimeout(250);
+
   // 9) 앱(PWA) — 게임과 **별개의 앱**으로 깔리고, 서로의 오프라인 캐시를 지우지 않는다
   const MIME={'.html':'text/html;charset=utf-8','.js':'text/javascript','.png':'image/png',
     '.webmanifest':'application/manifest+json','.json':'application/json'};

@@ -107,6 +107,13 @@ h1{font-family:'Cinzel Decorative','Cinzel',serif;font-weight:900;font-size:26px
   padding:8px 12px;border-radius:20px;border:1px solid var(--rule);
   background:rgba(10,7,4,.7);color:var(--parch);min-height:36px}
 .csearch::placeholder{color:var(--ink-faint)}
+/* 효과 태그 줄 — 고른 태그의 규칙 설명을 바로 아래에 한 줄로 편다(용어집과 같은 문장) */
+.chip.tg{font-family:'Gothic A1',sans-serif;font-size:12px;letter-spacing:0;padding:6px 11px;min-height:32px}
+.tagdesc{font-family:'Gowun Batang',serif;font-size:12.5px;line-height:1.6;color:var(--gold);
+  opacity:.9;margin:-4px 0 12px;padding:9px 12px;border-radius:6px;
+  border:1px solid var(--rule);border-left:3px solid var(--dot,var(--gold));background:#150e08;display:none}
+.tagdesc b{color:var(--gold-bright)}
+.tagdesc.on{display:block}
 
 /* 덱 묶음 */
 .dsec{margin:22px 0 8px;padding-top:14px;border-top:1px solid var(--rule)}
@@ -202,6 +209,8 @@ h1{font-family:'Cinzel Decorative','Cinzel',serif;font-weight:900;font-size:26px
     <input class="csearch" id="q" placeholder="이름·효과 검색">
   </div>
   <div class="cbar" id="bandBar" style="display:none"></div>
+  <div class="cbar" id="tagBar"></div>
+  <div class="tagdesc" id="tagDesc"></div>
   <div class="cbar" id="rarBar"></div>
   <div class="cbar" id="prBar"></div>
 
@@ -240,7 +249,46 @@ const KINDS=[['all','전체'],['cr','크리처'],['sp','스펠'],['en','인챈�
 const RARS=['common','uncommon','rare','legendary'];
 const RARCOL={common:'#9aa6b4',uncommon:'#35a35a',rare:'#3b7fd4',legendary:'#e08a17'};
 const rarCount=r=>BASE.filter(n=>((POOL[n]||{}).r||'common')===r).length;
-let F={mode:'card',el:'all',k:'all',q:'',band:0,r:'all'};
+
+/* ── 크리처 효과 태그 ─────────────────────────────────────────────
+   크리처가 지는 효과는 두 갈래다.
+     1) **배타 태그** — 스탯 가중치를 바꾸는 수호·비행·관통. 데이터에서는 g/f/p 플래그.
+     2) **키워드**   — 속성마다 하나씩 가진 메커니즘. 데이터에서는 `kw` 문자열 한 줄
+                       ("연소 3 · 폭산 2" 처럼 ' · ' 로 이어 붙는다).
+   ⚠ 목록을 여기에 다시 적지 않는다. **정본은 GLOSSARY**(build_proto_data.py) 이고
+      순서도 거기 순서(태그 → 속성별 → 기타)를 그대로 쓴다. 두 벌이 되면 반드시 어긋난다.
+   ⚠ `kw` 의 머리 낱말이 GLOSSARY 에 없으면 그 카드만의 **고유 효과**다
+      ("소환 시 …", "소멸 시 …"). 이것도 한 칸으로 묶어 걸러 볼 수 있게 한다. */
+const TAGFLAG=[['g','수호'],['f','비행'],['p','관통']];
+function tagsOf(n){
+  const c=POOL[n];
+  if(!c||c.k!=='cr')return [];
+  const t=[];
+  TAGFLAG.forEach(([k,ko])=>{ if(c[k])t.push(ko); });
+  (c.kw||'').split('·').map(s=>s.trim()).filter(s=>s&&s!=='—').forEach(s=>{
+    const head=s.split(/[\s+]/)[0];
+    t.push(GLOSSARY[head]?head:'고유');
+  });
+  return t.filter((x,i)=>t.indexOf(x)===i);
+}
+const TAGEXTRA=[['고유','이 카드에만 있는 1회성 효과. 소환·소멸 순간에 한 번 발동한다.'],
+                ['없음','태그도 키워드도 없는 순수 스탯 크리처. 예산을 전부 공/체에 쓴다.']];
+/* GLOSSARY 순서 그대로 → 실제로 카드에 붙은 것만 남긴다(비행·수호 조합, 토큰 등은 빠진다) */
+const TAGS=(()=>{
+  const cnt={}, all=BASE.filter(n=>(POOL[n]||{}).k==='cr');
+  all.forEach(n=>tagsOf(n).forEach(t=>cnt[t]=(cnt[t]||0)+1));
+  cnt['없음']=all.filter(n=>!tagsOf(n).length).length;
+  const ko2el={}; Object.keys(EL).forEach(e=>ko2el[EL[e].ko]=e);
+  const rows=Object.keys(GLOSSARY).filter(k=>cnt[k]).map(k=>{
+    const [grp,desc]=GLOSSARY[k];
+    return {k, grp, desc, n:cnt[k], c:(EL[ko2el[grp]]||{}).c||'#c9a24b'};
+  });
+  TAGEXTRA.forEach(([k,desc])=>{ if(cnt[k])rows.push({k,grp:'기타',desc,n:cnt[k],c:'#8f7b52'}); });
+  return rows;
+})();
+const CRN=BASE.filter(n=>(POOL[n]||{}).k==='cr').length;
+
+let F={mode:'card',el:'all',k:'all',q:'',band:0,r:'all',t:'all'};
 
 function elChip(el,on){
   const e=EL[el]||{};
@@ -269,6 +317,20 @@ function renderBars(){
     +`<button class="chip${F.r==='all'?' on':''}" data-r="all">전체<span class="n">${BASE.length}</span></button>`
     +RARS.map(r=>`<button class="chip${F.r===r?' on':''}" data-r="${r}" style="--dot:${RARCOL[r]}">`
       +`<i></i>${RARKO[r]}<span class="n">${rarCount(r)}</span></button>`).join('');
+  /* 효과 태그 줄 — 크리처에게만 붙는 것이라 카드 목록에서만 쓴다 */
+  const tb=document.getElementById('tagBar'), td=document.getElementById('tagDesc');
+  tb.style.display=foe?'none':'flex';
+  td.classList.toggle('on',!foe&&F.t!=='all');
+  if(!foe){
+    tb.innerHTML='<span class="lbl2">효과 태그</span>'
+      +`<button class="chip tg${F.t==='all'?' on':''}" data-t="all">전체<span class="n">크리처 ${CRN}</span></button>`
+      +TAGS.map(t=>`<button class="chip tg${F.t===t.k?' on':''}" data-t="${t.k}" `
+        +`title="${t.desc.replace(/"/g,'&quot;')}" style="--dot:${t.c}">`
+        +`<i></i>${t.k}<span class="n">${t.n}</span></button>`).join('');
+    const cur=TAGS.find(t=>t.k===F.t);
+    if(cur)td.innerHTML=`<b>${cur.k}</b> <span style="opacity:.6">(${cur.grp})</span> — ${cur.desc}`,
+      td.style.setProperty('--dot',cur.c);
+  }
   const bb=document.getElementById('bandBar');
   bb.style.display=foe?'flex':'none';
   if(foe)bb.innerHTML='<span class="lbl2">난이도</span>'+[0,1,2].map(b=>{
@@ -279,6 +341,7 @@ function renderBars(){
   document.querySelectorAll('#kBar .chip').forEach(b=>b.onclick=()=>{F.k=b.dataset.k;draw();});
   document.querySelectorAll('#bandBar .chip').forEach(b=>b.onclick=()=>{F.band=+b.dataset.b;draw();});
   document.querySelectorAll('#rarBar .chip').forEach(b=>b.onclick=()=>{F.r=b.dataset.r;draw();});
+  document.querySelectorAll('#tagBar .chip').forEach(b=>b.onclick=()=>{F.t=b.dataset.t;draw();});
   /* 레전더리 프리즘 강도 — 게임과 같은 값(localStorage 'ten.prism')을 공유한다 */
   const pv=prismGet();
   document.getElementById('prBar').innerHTML='<span class="lbl2">프리즘</span>'
@@ -336,6 +399,12 @@ function foeHit(e){
 function kindOf(n){ return LANDS[n]?'land':(POOL[n]||{}).k; }
 function hit(n){
   if(F.k!=='all'&&kindOf(n)!==F.k)return false;
+  /* 효과 태그를 좁히면 크리처만 남는다 — 스펠·인챈트·지형은 이 태그를 지지 않는다 */
+  if(F.t!=='all'){
+    if((POOL[n]||{}).k!=='cr')return false;
+    const t=tagsOf(n);
+    if(F.t==='없음'?t.length:!t.includes(F.t))return false;
+  }
   /* 지형은 희귀도 개념 밖이다 — 희귀도를 좁히면 지형은 빠진다 */
   if(F.r!=='all'&&(LANDS[n]||((POOL[n]||{}).r||'common')!==F.r))return false;
   if(!F.q)return true;
@@ -397,7 +466,7 @@ function draw(){
   box.innerHTML=h||'<div class="empty2">조건에 맞는 것이 없습니다.</div>';
   box.querySelectorAll('.cell').forEach(el=>el.onclick=()=>openZoom(el.dataset.n));
 }
-function setMode(m){ F.mode=m; F.k='all'; F.q=''; document.getElementById('q').value=''; draw(); }
+function setMode(m){ F.mode=m; F.k='all'; F.q=''; F.t='all'; document.getElementById('q').value=''; draw(); }
 document.getElementById('tabCard').onclick=()=>setMode('card');
 document.getElementById('tabFoe').onclick=()=>setMode('foe');
 /* 확대 — 게임의 확대 화면과 같은 규격(lg) + 용어 설명 */
