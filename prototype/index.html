@@ -1616,10 +1616,18 @@ function rgDeckView(){
   /* ⚠ 판 번호를 여기 같이 찍는다. 옛 캐시가 남아 **지운 카드가 그대로 보이는** 일이 있었는데,
      화면만 봐서는 '카드가 안 지워졌다' 와 '옛 판을 보고 있다' 를 구분할 수가 없었다.
      이 줄 하나면 스크린샷만으로 판가름이 난다. */
-  rgOpen(rgHead('내 덱',`카드 ${RG.deck.length}장 + 지형 ${landsFor(RG.deck.length)}장 = ${RG.deck.length+landsFor(RG.deck.length)}장`
+  const lands=runLands();
+  const nl=lands.reduce((a,[,c])=>a+c,0);
+  rgOpen(rgHead('내 덱',`카드 ${RG.deck.length}장 + 지형 ${nl}장 = ${RG.deck.length+nl}장`
       +` <span style="opacity:.55">· v${VERSION}</span>`)
+    +`<div class="lbl" style="margin:2px 0 6px">카드 ${RG.deck.length}장</div>`
     +`<div class="rgcards">${names.map(n=>`<div class="rgc ${POOL[n].over?'ovr':''}">
         ${tcardHTML(n,{size:'md'})}<span class="price">×${cnt[n]}</span></div>`).join('')}</div>`
+    /* ⚠ 지형도 같이 보여 준다. 원정 보상으로 지형을 얻을 수 있게 된 뒤로는
+       '내가 무슨 지형을 들고 있나' 가 곧 덱 정보다. */
+    +`<div class="lbl" style="margin:14px 0 6px">지형 ${nl}장</div>`
+    +`<div class="rgcards">${lands.map(([n,c])=>`<div class="rgc">
+        ${landCardHTML(n,'md')}<span class="price">×${c}</span></div>`).join('')}</div>`
     +`<div class="mbtns"><button class="go" id="rgBack">지도로</button></div>`);
   document.getElementById('rgBack').onclick=rgMap;
 }
@@ -1695,10 +1703,9 @@ function rgFight(kind,e,nd){
   EHP=hp; EOPEN=(e&&e.opener)||null;
   const pc={}; RG.deck.forEach(n=>pc[n]=(pc[n]||0)+1);
   PDECK=Object.entries(pc).map(([n,c])=>[n,c]);
-  /* 원정에서 얻은 특수 지형(화염의 원천)은 기본 지형 몫에서 그만큼 빼고 섞는다 */
-  const sp=(RG.lands||[]).slice();
-  PDECK.push([BASICLAND[RG.el], Math.max(1,landsFor(RG.deck.length)-sp.length)]);
-  sp.forEach(n=>PDECK.push([n,1]));
+  /* 원정에서 얻은 특수 지형(화염의 원천·지하 감옥…)은 기본 지형 몫에서 그만큼 빼고 섞는다.
+     ⚠ 계산은 runLands() 한 곳에만 둔다 — 덱 화면이 같은 값을 보여 줘야 한다. */
+  runLands().forEach(([n,c])=>PDECK.push([n,c]));
   RG.foe=e?e.id:null;
   rgClose();
   log(`— ${NODEKO[kind]} 전투 · ${RG.floor+1}층 · ${label} · 적 HP ${hp}`,'a');
@@ -1708,6 +1715,17 @@ function rgFight(kind,e,nd){
   veilRun(`${e?e.name:'적'} 과(와)의 전투 준비 중…`,()=>{ newGame(); RG.fighting=true; });
 }
 const BASICLAND={fire:'화산',water:'심해',nature:'수림',steel:'대장간',earth:'고원',dark:'심연',light:'성소'};
+/* 이번 원정의 **지형 구성**. 기본 지형으로 채우되 원정에서 얻은 특수 지형(화염의 원천·지하 감옥…)
+   이 있으면 그만큼 기본 지형 몫을 뺀다.
+   ⚠⚠ 전투(startFight)와 덱 화면(rgDeckView)이 **반드시 같은 값**을 써야 한다. 예전에는 이 계산이
+     전투 쪽에만 있어서 덱 화면에 지형이 아예 안 보였다 — 보상으로 얻은 지형을 확인할 길이 없었다. */
+function runLands(){
+  const sp=(RG.lands||[]).slice();
+  const n=Math.max(1,landsFor(RG.deck.length)-sp.length);
+  const out=[[BASICLAND[RG.el],n]];
+  sp.forEach(x=>out.push([x,1]));
+  return out;
+}
 
 /* ── 전투 종료 ─────────────────────────────────────────── */
 function rgAfterBattle(win){
@@ -4760,7 +4778,7 @@ document.getElementById('restart').onclick=()=>{
      시작 → 모드 선택 → 덱 선택 → (배틀: 상대 덱 선택 | 원정: 지도) → 게임
      패배 → 다시 도전하기(덱 선택으로) · 초기 화면(모드 선택으로)
    ⚠ ?dev=1 로 열면 페이지를 건너뛰고 바로 배틀로 들어간다(자동 테스트용). */
-const VERSION='0.27.2', BUILD='2026-08-03';
+const VERSION='0.28.0', BUILD='2026-08-03';
 const DEV=/[?&]dev=1/.test(location.search);
 let PAGE=null, FLOW={mode:'battle', my:null, foe:null};
 function pageOpen(html){
