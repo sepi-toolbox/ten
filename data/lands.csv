@@ -15,3 +15,10 @@ LD13,범람원,dual,water,nature,1,0,water,두 속성 중 택1 · 놓은 턴 사
 LD14,여명의 경계,dual,dark,light,1,0,dark,두 속성 중 택1 · 놓은 턴 사용 불가
 LD15,고블린 요새,special,,,0,0,fire,자원을 만들지 않는다 · 매 턴 시작 시 고블린 폭탄병 소환
 LD16,화염의 원천,rich,fire,,0,0,fire,불 자원 2 생성 · 덱에 1장만
+LD17,파도 지대,basic,water,,0,0,water,물 자원 1 생성 · 즉시 사용
+LD18,폭포,basic,water,,0,0,water,물 자원 1 생성 · 즉시 사용
+LD19,설원 지대,basic,water,,0,0,water,물 자원 1 생성 · 즉시 사용
+LD20,호수 유적,special,,,0,0,water,자원을 만들지 않는다 · 내 턴 종료마다 무작위 아군 HP +1
+LD21,바닷속 풍경,special,,,0,0,water,자원을 만들지 않는다 · 내 턴 종료마다 카드 1장
+LD22,인어 기둥,extra,water,,0,0,water,자원 2를 내고 놓는다 · 지형을 이미 놓았어도 추가로 놓는다
+LD23,수정구,temp,water,,0,0,water,소멸 · 다음 내 턴에 한 번 쓰고 사라진다
