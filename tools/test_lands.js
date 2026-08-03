@@ -140,6 +140,82 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
      `${dim.tsp}: 대상 없을 때 흐림 ${dim.before[0]}(${dim.why}) → 대상 생기면 ${dim.after[0]}`
      +` · ${dim.cr}: ${dim.before[1]}`);
 
+  /* ── 불 지형 5종 ─────────────────────────────────────────────
+     불지옥·용암 폭포·용암 동굴 = 평범한 기본 지형(불 1) · 불지옥의 계곡 = 자원 0, 턴 종료마다
+     파이어버그 · 지하 감옥 = 자원 2 내고 턴 제한 무시.
+     ⚠ 지하 감옥/인어 기둥은 **이름이 아니라 `L.extra`/`L.pay`** 로 돈다 — 새 추가 지형은
+       lands.csv 에 kind=extra 만 적으면 되고, 이 검사가 그 배관이 일반적인지를 지킨다. */
+  const fire=await p.evaluate(()=>{
+    const r={};
+    S.gen=(S.gen||0)+1;
+    // 기본 3종 — 각각 불 자원 1
+    S.me.lands=[];S.me.board=[];
+    ['불지옥','용암 폭포','용암 동굴'].forEach(n=>{S.me.landPlayed=false;playLand('me',n);});
+    r.기본=S.me.lands.map(l=>l.name+':'+l.els.join('')+'×'+(l.n||1)).join(' ');
+    r.기본마나=manaLeft('me');
+    // 불지옥의 계곡 — 자원 0 · 내 턴 종료마다 파이어버그
+    S.me.lands=[];S.me.board=[];S.me.landPlayed=false;
+    playLand('me','불지옥의 계곡');
+    r.계곡마나=manaLeft('me');
+    landEnd('me'); landEnd('me');
+    r.계곡몸=S.me.board.map(u=>`${u.name} ${u.a}/${u.insts[0].hp} ${u.kw||''}`).join(' | ');
+    // 만석이면 안 나온다(고블린 요새와 같은 규칙)
+    S.me.board=[]; for(let i=0;i<SLOTS;i++)placeCreature('me','작열병',i);
+    landEnd('me');
+    r.만석=S.me.board.length; r.칸=SLOTS;
+    // 지하 감옥 — 이번 턴 지형을 이미 놓았어도 추가로 놓인다. 대신 자원 2.
+    S.me.lands=[];S.me.board=[];
+    ['화산','화산','화산'].forEach(n=>{S.me.landPlayed=false;playLand('me',n);});
+    S.me.landPlayed=true;                     // 이번 턴 지형은 이미 놓았다
+    const before=manaLeft('me');
+    r.추가배치=playLand('me','지하 감옥');
+    r.마나=`${before}→${manaLeft('me')}`;      // 2 내고 제 몫 1 을 도로 내니 -1
+    r.지형수=S.me.lands.length;
+    // 자원이 모자라면 못 놓는다
+    S.me.lands=[];S.me.landPlayed=false;playLand('me','화산');   // 자원 1뿐
+    r.자원부족=playLand('me','지하 감옥');
+    r.부족후지형수=S.me.lands.length;
+    // 보통 지형은 여전히 턴당 1장
+    S.me.lands=[];S.me.landPlayed=false;
+    playLand('me','불지옥'); playLand('me','용암 폭포');
+    r.턴당1장=S.me.lands.length;
+    return r;
+  });
+  ok('불 기본 3종', /불지옥:fire×1/.test(fire.기본)&&fire.기본마나===3, `${fire.기본} → ${fire.기본마나}마나`);
+  ok('계곡 — 자원 0', fire.계곡마나===0, `마나 ${fire.계곡마나}`);
+  ok('계곡 — 파이어버그', fire.계곡몸==='파이어버그 3/1 폭발 | 파이어버그 3/1 폭발', fire.계곡몸);
+  ok('계곡 — 만석이면 안 나옴', fire.만석===fire.칸, `${fire.만석}/${fire.칸}`);
+  ok('지하 감옥 — 추가 배치', fire.추가배치===true&&fire.지형수===4, `놓임 ${fire.추가배치} · 지형 ${fire.지형수}장`);
+  ok('지하 감옥 — 자원 2 지불', fire.마나==='3→2', `${fire.마나} (2 내고 제 몫 1 회수)`);
+  ok('지하 감옥 — 모자라면 못 놓음', fire.자원부족===false&&fire.부족후지형수===1,
+     `결과 ${fire.자원부족} · 지형 ${fire.부족후지형수}장`);
+  ok('보통 지형은 턴당 1장', fire.턴당1장===1, `${fire.턴당1장}장`);
+
+  /* ── 보상 지형 후보 ─────────────────────────────────────────
+     ⚠ 예전엔 속성당 딱 하나(`RICHLAND`)만 손으로 적어 둬서, 뒤에 넣은 특수 지형이
+       **영영 안 나오는 죽은 카드**였다. 이제 lands.csv 가 정본이다 —
+       희귀도가 붙은 지형(rich·extra·special)만 후보, 기본 지형과 소멸 지형은 제외. */
+  const off=await p.evaluate(()=>{
+    window.RG=window.RG||{}; const r={};
+    RG.el='fire'; RG.lands=[]; r.불=landOffers('fire').sort();
+    RG.el='water'; r.물=landOffers('water').sort();
+    RG.el='nature'; r.자연=landOffers('nature');           // 아직 특수 지형이 없는 속성
+    RG.el='fire'; RG.lands=['화염의 원천']; r.중복=landOffers('fire').includes('화염의 원천');
+    RG.lands=[];
+    r.기본=['불지옥','용암 폭포','용암 동굴','화산'].filter(n=>landOffers('fire').includes(n));
+    RG.el='water'; r.소멸=landOffers('water').includes('수정구');
+    r.희귀도=[rarOf('화염의 원천'),rarOf('지하 감옥'),rarOf('불지옥')].join('/');
+    return r;
+  });
+  ok('보상 지형 — 불', off.불.join(' ')==='고블린 요새 불지옥의 계곡 지하 감옥 화염의 원천', off.불.join(' '));
+  ok('보상 지형 — 물', off.물.join(' ')==='바닷속 풍경 인어 기둥 호수 유적', off.물.join(' '));
+  ok('특수 지형 없는 속성', off.자연.length===0, `자연 ${off.자연.length}종`);
+  ok('이미 가진 지형은 제외', off.중복===false, `화염의 원천 재등장 ${off.중복}`);
+  ok('기본 지형은 보상 아님', off.기본.length===0, off.기본.join(' ')||'0종 (화산과 똑같아 함정 선택지다)');
+  ok('소멸 지형은 보상 아님', off.소멸===false, `수정구 ${off.소멸}`);
+  /* 지형은 POOL 이 아니라 LANDS 에 희귀도가 있다 — 여기서 못 읽으면 전부 커먼으로 잡힌다 */
+  ok('지형 희귀도를 읽는다', off.희귀도==='legendary/rare/common', off.희귀도);
+
   if(errs.length){bad++;console.log('   ERR',errs.slice(0,2));}
   console.log(bad?`❌ ${bad}건 실패`:'✅ 전부 통과');
   await b.close(); process.exit(bad?1:0);

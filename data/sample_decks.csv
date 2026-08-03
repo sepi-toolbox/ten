@@ -1,6 +1,7 @@
 ﻿element,kind,name,cost,cost_color,cost_generic,tag,atk,hp,copies,rule,budget,spent,verdict
 fire,creature,불씨정령,1,1,0,일반,3,1,2,연소 1,7,7,적정
 fire,creature,고블린 폭탄병,1,1,0,일반,2,1,0,연소 1 · 폭발,5,5,적정
+fire,creature,파이어버그,1,1,0,일반,3,1,0,폭발,1,7,지형산물
 fire,creature,잿불새,2,1,1,비행,1,5,2,연소 1,9,9,적정
 fire,creature,작열병,2,1,1,일반,2,2,1,폭발,6,6,적정
 fire,creature,화염정령,3,1,2,일반,5,5,2,연소 2,15,15,적정

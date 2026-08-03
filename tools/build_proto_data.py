@@ -103,6 +103,9 @@ def main():
             e["sp"] = r["name"]
             e["home"] = r.get("element") or "fire"
             e["note"] = r.get("note", "")
+        # 모든 지형에 속성을 싣는다 — 원정 보상이 '이 속성의 지형' 을 골라야 하기 때문이다.
+        # ⚠ 특수 지형은 els 가 비어서 자원 색으로는 속성을 알 수 없다. 그래서 csv 의 element 가 정본.
+        e["el"] = r.get("element") or (els[0] if els else "fire")
         lands[r["name"]] = e
 
     ce = {name: c.get("el", "steel") for name, c in pool.items()}

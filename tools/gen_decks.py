@@ -397,6 +397,11 @@ DECKS = {
   # 신규 · 덱 미수록(매수 0) — 낸 턴에 스스로 터지는 1코 폭탄.
   # 체력 1 + 연소 1 이라 내 턴 종료에 반드시 소멸한다 → 공격 1 + 폭발 2 = 얼굴 3.
   ("고블린 폭탄병", 1, "일반", 2, 1, 0, ["연소1", "폭발"]),
+  # 신규 · 덱 미수록(매수 0) — 불지옥의 계곡이 **내 턴이 끝날 때** 뽑아내는 몸.
+  #   고블린 요새(턴 시작)와 달리 턴 종료 소환이라 상대 턴을 넘겨 살아남는다 → 벽으로 먼저 쓰이고,
+  #   그래서 요새의 폭탄병보다 몸을 세웠다. 대신 연소가 없어 스스로는 안 죽고, 체력 1 이라
+  #   뭐든 한 대 맞으면 사라진다. 폭발이 붙어 막혀도 얼굴에 3 이 들어간다.
+  ("파이어버그",  1, "일반", 3, 1, 0, ["폭발"]),
   ("잿불새",     2, "비행", 1, 5, 2, ["연소1"]),
   ("작열병",     2, "일반", 2, 2, 1, ["폭발"]),
   ("화염정령",   3, "일반", 5, 5, 2, ["연소2"]),
@@ -732,6 +737,20 @@ TARGET_CURVE = {1: 3, 2: 5, 3: 5, 4: 4, 5: 4, 6: 2}
 # ⚠ 원정 보상·상점에도 안 나온다(뷰어에는 '적 전용' 으로 찍힌다).
 FOEONLY = {"화산 폭발", "일대일 대련", "홍염", "용의 숨결", "이그니스"}
 
+# ── 지형이 낳는 몸 ──────────────────────────────────────────
+# **지형이 매 턴 뽑아내는 크리처.** 손에 잡히지 않고(매수 0) 그 지형이 없으면 존재하지 않는다.
+# 예산 검산에서 빠지는 이유가 FOEONLY 와 다르다 — 균형을 안 맞추는 게 아니라,
+# **값을 이미 지형이 냈는데 검산표가 그걸 못 본다.** 불지옥의 계곡은 자원을 하나도 만들지
+# 않으므로 판에 깔린 내내 실질 마나 상한이 1 낮다. 환산표로 1마나 = 예산 4 이고 그게 영구히
+# 나가니, 뽑히는 몸이 1코 예산(4)을 넘는 것은 오히려 당연하다. 그런데 지형은 lands.csv 에
+# 있어서 크리처 예산표에 잡히지 않는다 — 그래서 몸만 보면 늘 '초과' 로 찍힌다.
+# ⚠ **여기 이름을 적은 것만** 빠진다. 그리고 스펠로도 뽑히는 몸은 적지 말 것 —
+#   고블린 폭탄병은 고블린의 열의(2코 스펠)가 CRP 로 값을 매겨 부르므로 검산이 살아 있어야 한다.
+LANDBORN = {"파이어버그"}
+
+# 검산에서 통째로 빠지는 이름 전부. 라벨은 갈라 찍는다(왜 빠졌는지가 서로 다르다).
+NOBUDGET = FOEONLY | LANDBORN
+
 CURVE_OVERRIDE = {"fire": {1: 3, 2: 5, 3: 6, 4: 5, 5: 2, 6: 1, 8: 1}}
 
 
@@ -799,9 +818,9 @@ def main():
         print("  ▸ 크리처 11종")
         for (nm, c, tag, a, h, cp, keys) in deck["creatures"]:
             sp, bd, dv, text = check_creature(c, tag, a, h, keys, nm)
-            v = "적 전용" if nm in FOEONLY else (
-                "적정" if dv == 0 else (f"초과+{dv}" if dv > 0 else f"여유{dv}"))
-            if dv > 0 and nm not in FOEONLY:
+            v = "적 전용" if nm in FOEONLY else ("지형산물" if nm in LANDBORN else (
+                "적정" if dv == 0 else (f"초과+{dv}" if dv > 0 else f"여유{dv}")))
+            if dv > 0 and nm not in NOBUDGET:
                 over += 1
             cap = " ⚠ATK캡" if tag in ("수호", "비행수호") and a > c - 1 and c > 1 else ""
             tally(c, cp)
@@ -813,9 +832,9 @@ def main():
         print("  ▸ 스펠 7종")
         for (nm, c, kind, val, ref, adj, cp, rule) in deck["spells"]:
             vv, rr, dv = check_spell(kind, val, ref, adj, nm)
-            v = "적 전용" if nm in FOEONLY else (
-                "적정" if dv == 0 else (f"초과+{fmt(dv)}" if dv > 0 else f"여유{fmt(dv)}"))
-            if dv > 0 and nm not in FOEONLY:
+            v = "적 전용" if nm in FOEONLY else ("지형산물" if nm in LANDBORN else (
+                "적정" if dv == 0 else (f"초과+{fmt(dv)}" if dv > 0 else f"여유{fmt(dv)}")))
+            if dv > 0 and nm not in NOBUDGET:
                 over += 1
             tally(c, cp)
             print(f"    {nm:<12}{c}코 {kind:<5}{fmt(val):>4}  ×{cp}  기준{fmt(rr):<5}{v:<7}{rule}")
@@ -826,9 +845,9 @@ def main():
         print("  ▸ 인챈트 2종")
         for (nm, c, dr, E, C, scope, cp, rule) in deck["enchants"]:
             eff, tgt, dv = check_enchant(c, dr, E, C, scope, nm)
-            v = "적 전용" if nm in FOEONLY else (
-                "적정" if abs(dv) <= 2 else (f"초과+{dv:.0f}" if dv > 0 else f"여유{dv:.0f}"))
-            if dv > 2 and nm not in FOEONLY:
+            v = "적 전용" if nm in FOEONLY else ("지형산물" if nm in LANDBORN else (
+                "적정" if abs(dv) <= 2 else (f"초과+{dv:.0f}" if dv > 0 else f"여유{dv:.0f}")))
+            if dv > 2 and nm not in NOBUDGET:
                 over += 1
             tally(c, cp)
             print(f"    {nm:<12}{c}코 {dr:<4} E{E}×C{C} ×{cp}  {eff:>4.0f}/{tgt:<4}{v:<7}{rule}")
