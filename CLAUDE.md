@@ -133,6 +133,23 @@ python3 tools/build_pages.py --push <GITHUB_TOKEN>
   카드 중심을 지나면 다음 자리. 판이 비면 한가운데. 드롭하면 `playFromHand(i,hit,at)`이 그 자리에 넣는다.
   `dropbar`의 z-index는 드래그 고스트(88)보다 높아야 손가락에 가려지지 않는다.
 
+## 로딩 표시 3종 (2026-08)
+
+- **`boot`** — 앱 시작 스플래시. 글꼴이 늦게 오면 카드 글자가 튀므로 `document.fonts.ready`까지 기다린다.
+  **최대 2.5초 뒤에는 무조건 걷는다**(멈춘 것처럼 보이는 게 최악이다).
+- **`veilOn/veilOff/veilRun(text, work, ms)`** — 화면을 **가리는** 전환 로딩.
+  모드 전환·새 게임·덱 교체·원정 전투 진입에 쓴다. 1.6초 안전장치로 절대 갇히지 않는다.
+- **`busyOn/busyOff`** — **가리지 않고 조작만 막는** 로딩. 위쪽 얇은 진행 막대 + 투명 입력 차단막.
+  `render()`가 `S.busy`를 보고 자동으로 켠다(전투 처리·상대 턴).
+- ⚠ 지속 시간은 **`SPEED`로 나눈다**(`veilRun`). 자동 테스트가 `SPEED`를 올려 두면 즉시 사라져 방해하지 않는다.
+
+## 서랍이 터치를 먹던 문제 (2026-08 · 꼭 기억할 것)
+
+`.wrap{position:relative;z-index:1}`이 **쌓임 맥락**을 만든다. 그 안에 있던 `.side`(z-index 70)는
+`body.sideon::after` 딤(z-index 69)보다 **아래**로 깔린다 — z 숫자만 보면 이길 것 같지만 맥락이 다르다.
+그래서 서랍을 누르면 딤이 먹어 **스크롤도 안 되고 바로 닫혔다.**
+→ **톱니와 서랍은 `.wrap` 밖(body 직계)에 둔다.** 오버레이와 그 위에 뜨는 패널은 같은 맥락에 있어야 한다.
+
 ## 앱으로 설치 (PWA · 2026-08)
 
 - `prototype/manifest.webmanifest` + `sw.js` + 아이콘 4종(192·512·maskable·apple-touch).
