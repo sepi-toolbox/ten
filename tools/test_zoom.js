@@ -1,4 +1,5 @@
-/* 손패 확대 동작 — 누르는 즉시 뜨는가 · 떼면 닫히는가 · 겹침 순서가 유지되는가
+/* 카드 확대 동작 — 롱프레스로 뜨는가 · **팝업으로 남는가** · 아무 데나 눌러 닫히는가 ·
+ * 용어 설명이 카드를 안 덮는가 · 겹침 순서가 유지되는가
  *   node tools/test_zoom.js */
 const path=require('path');
 const {chromium}=require('/opt/node-tools/node_modules/playwright');
@@ -55,9 +56,36 @@ for(const [w,h,tag] of [[390,844,'모바일'],[1020,1300,'데스크톱']]){
   const same=['x','y','width','height'].every(k=>Math.abs(rm0[k]-rm1[k])<0.6);
   ok('눌러도 제자리', same, `${Math.round(rm0.x)},${Math.round(rm0.y)},${Math.round(rm0.width)}`
     +` → ${Math.round(rm1[ 'x'])},${Math.round(rm1.y)},${Math.round(rm1.width)}`);
-  // 4) 손을 떼면 닫힌다 (확대가 화면에 남으면 다음 드래그를 오버레이가 먹는다)
+  // 4) 손을 떼도 닫히지 않는다 — 팝업이라 읽을 시간이 있어야 한다
   await p.mouse.up(); await p.waitForTimeout(250);
-  ok('떼면 닫힘', !(await p.$eval('#zoom',e=>e.classList.contains('on'))), '');
+  const stay=await p.$eval('#zoom',e=>e.classList.contains('on'));
+  ok('떼도 안 닫힘(팝업)', stay, '');
+  // 4-b) 화면 아무 곳이나 누르면 닫힌다
+  await p.mouse.click(Math.round(w*0.5),Math.round(h*0.06)); await p.waitForTimeout(250);
+  ok('아무 곳이나 눌러 닫기', !(await p.$eval('#zoom',e=>e.classList.contains('on'))),
+     `(${Math.round(w*0.5)},${Math.round(h*0.06)}) 탭`);
+  // 4-c) 용어 설명은 카드 **아래**에 놓이고 겹치지 않는다
+  const gl=await p.evaluate(async()=>{
+    let best=null,bn=0;
+    for(const n of Object.keys(POOL)){const c=POOL[n];let k=0;
+      if(c.g)k++;if(c.f)k++;if(c.p)k++;if(c.kw)k+=c.kw.split('·').length;
+      if(k>bn&&k<=3){bn=k;best=n;}}
+    showZoom(best,null,null,false);
+    await new Promise(r=>setTimeout(r,600));
+    const card=document.querySelector('#zoom .tcard').getBoundingClientRect();
+    const side=document.querySelector('#zoom .zside');
+    const sr=side.getBoundingClientRect();
+    const 상자=[...side.children].map(x=>Math.round(x.getBoundingClientRect().bottom));
+    hideZoom(); lpFired=false;
+    return {카드:best, 태그:side.children.length,
+      아래:Math.round(sr.top-card.bottom), 옆:Math.round(sr.left-card.right),
+      마지막바닥:상자[상자.length-1], 화면:innerHeight};});
+  /* 모바일(세로)에서는 카드 **아래**, 데스크톱(가로)에서는 **옆**.
+     둘 다 겹치면 안 된다 — 예전에는 모바일에서 화면 하단에 고정돼 카드를 덮었다. */
+  const 안겹침 = w<900 ? gl.아래>=0 : (gl.옆>=0||gl.아래>=0);
+  ok(w<900?'용어는 카드 아래':'용어는 카드 옆', 안겹침&&gl.태그>=2&&gl.마지막바닥<=gl.화면,
+     `${gl.카드} 태그 ${gl.태그}개 · 아래 ${gl.아래}px / 옆 ${gl.옆}px · 마지막 상자 ${gl.마지막바닥}/${gl.화면}`);
+  await p.evaluate(()=>{hideZoom();lpFired=false;S.sel=null;S.mode=null;render();}); await p.waitForTimeout(200);
   // 5) 짧게 탭하면 선택으로 넘어간다
   await p.evaluate(()=>{hideZoom();lpFired=false;S.sel=null;S.mode=null;render();}); await p.waitForTimeout(200);
   const el2=await p.$('#hand .hcw:last-child'); const b2=await el2.boundingBox();

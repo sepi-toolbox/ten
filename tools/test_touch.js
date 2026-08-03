@@ -57,7 +57,8 @@ async function tryDrag(label,holdMs){
 await tryDrag('바로 끌기 (홀드 0ms)',0);
 await tryDrag('0.2초 뒤 끌기',200);
 await tryDrag('0.6초 홀드 뒤 끌기 (확대 뜬 상태)',600);
-// 4) 확대했다 떼면 닫히고, 곧바로 다음 카드를 끌 수 있어야 한다
+// 4) 확대는 팝업이다 — 떼도 남아 있고, 화면 아무 곳이나 탭해야 닫힌다.
+//    닫은 뒤에는 곧바로 다음 카드를 끌 수 있어야 한다.
 await p.evaluate(()=>{hideZoom();lpFired=false;S.sel=null;S.mode=null;
   S.me.board=Array(SLOTS).fill(null);
   S.me.lands.forEach(l=>{l.used=false;l.entering=false;});
@@ -72,8 +73,13 @@ await p.waitForTimeout(250);
   const open1=await p.$eval('#zoom',e=>e.classList.contains('on'));
   await touch('touchEnd',0,0); await p.waitForTimeout(250);
   const open2=await p.$eval('#zoom',e=>e.classList.contains('on'));
-  console.log(`${open1&&!open2?'✅':'❌'} 확대 후 떼면 닫힘          누르는 중 ${open1} · 뗀 뒤 ${open2}`);
-  // 곧바로 끌기
+  /* 빈 곳을 탭해 닫는다 — 손패 위를 짚으면 카드가 선택되어 다음 검사가 흔들린다 */
+  await touch('touchStart',Math.round(390*0.5),40); await touch('touchEnd',0,0);
+  await p.waitForTimeout(250);
+  const open3=await p.$eval('#zoom',e=>e.classList.contains('on'));
+  console.log(`${open1&&open2&&!open3?'✅':'❌'} 확대는 팝업으로 남는다      뗀 뒤 ${open2} · 빈 곳 탭 뒤 ${open3}`);
+  await p.evaluate(()=>{lpFired=false;S.sel=null;S.mode=null;render();}); await p.waitForTimeout(200);
+  // 닫은 뒤 곧바로 끌기
   const b1=await (await p.$('#hand .hcw:last-child')).boundingBox();
   const x1=b1.x+b1.width/2, y1=b1.y+b1.height/2;
   await touch('touchStart',x1,y1);
@@ -81,7 +87,7 @@ await p.waitForTimeout(250);
   await touch('touchMove',board.x+board.width/2,board.y+board.height/2);
   await p.waitForTimeout(60); await touch('touchEnd',0,0); await p.waitForTimeout(450);
   const placed=await p.evaluate(()=>S.me.board.filter(x=>x).length);
-  console.log(`${placed>0?'✅':'❌'} 확대 직후 바로 끌기         소환 ${placed}`);
+  console.log(`${placed>0?'✅':'❌'} 닫은 직후 바로 끌기         소환 ${placed}`);
 }
 // 5) 드래그 도중 손패 DOM 이 살아 있어야 한다 (터치 캡처가 끊기면 드래그가 죽는다)
 await p.evaluate(()=>{hideZoom();lpFired=false;S.sel=null;S.mode=null;
