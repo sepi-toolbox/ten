@@ -24,9 +24,14 @@
 :root{
   /* 손패·크리처 판·지형존이 **같은 규격**을 쓴다. 크기는 이 변수 하나로만 바꾼다. */
   --cardw:76px;
-  /* 상대 손패(뒷면)만 예외로 작다. 정보가 없는 카드라 내 손패와 같은 크기로 두면
-     화면 위쪽을 너무 많이 잡아먹는다(실제로 그렇게 만들었다가 되돌렸다). */
-  --foecw:calc(var(--cardw) * .48);
+  /* 상대 손패도 **내 카드와 완전히 같은 규격**이다(뒷면만 다르다).
+     한때 0.48배로 줄였다가 되돌렸다 — 줄이는 게 아니라 **더 깊이 집어넣어야** 했다.
+     차지하는 자리는 크기가 아니라 노출 비율(--foehide)로 조절한다. */
+  --foecw:var(--cardw);
+  /* 화면 밖으로 미는 양. 카드 높이는 1.4W 이므로 0.70W = 정확히 절반이 가려진다.
+     내 손패는 30%(0.42W)만 가리고, 상대 손패는 절반(0.70W)을 가린다. */
+  --myhide:calc(var(--cardw) * -0.42);
+  --foehide:calc(var(--cardw) * -0.76);
   /* ══ 딤 — 뒤 조작이 막히는 오버레이의 배경은 **전부 이 하나**를 쓴다 ══
      대상 지정 딤·확대·시작 손패·지도·설정·상대 카드 공개가 모두 같은 값을 공유한다.
      농도를 바꾸고 싶으면 여기 두 줄만 고칠 것. 개별 규칙에 rgba 를 직접 적지 말 것.
@@ -124,8 +129,16 @@ body.sideon .gear{opacity:0;pointer-events:none}
   font-size:8.5cqw;letter-spacing:.08em;line-height:1.5;padding:0 4%;border-radius:2px;
   background:rgba(8,5,3,.9);border:1px solid #6b5430;color:var(--gold)}
 .lz .slot.used .ltag{color:var(--rule);border-color:var(--rule)}
-.lzc{font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--gold-bright);
-  letter-spacing:.06em;margin-left:8px}
+/* 지형존 왼쪽 위 배지 — 남은 마나 / 배치한 지형 수. 라벨 줄을 없애고 이걸로 대신한다.
+   ⚠ packRow 는 `:scope > .slot` 만 건드리므로 이 요소는 안전하다(위치를 덮어쓰지 않는다). */
+.lzb{position:absolute;left:5px;top:4px;z-index:30;pointer-events:none;
+  font-family:'Cinzel',serif;font-size:11px;font-weight:700;letter-spacing:.04em;
+  font-style:normal;font-variant-numeric:tabular-nums;
+  padding:2px 7px;border-radius:11px;border:1px solid var(--bronze);
+  background:rgba(8,5,3,.88);color:var(--gold-bright);
+  box-shadow:0 1px 4px rgba(0,0,0,.5)}
+.lzb b{color:#fff;font-weight:700}
+.lzb i{font-style:normal;opacity:.55;margin:0 1px}
 
 /* ---- board ---- */
 /* 판은 격자가 아니라 '가운데로 모인 한 줄'이다. 카드는 --cardw 폭으로 크게 그리고,
@@ -761,7 +774,7 @@ html,body{touch-action:pan-x pan-y}
 /* 상대 손패 — 뒷면만 보인다. 만질 수 없고 부채꼴은 아래로 편다(상대가 쥔 모양). */
 .hand.foe{padding:6px 0 8px;align-items:flex-start}
 .hand.foe .hcw{pointer-events:none;cursor:default}
-.cback{width:var(--foecw,36px);aspect-ratio:5/7;border-radius:calc(var(--foecw,36px)*.06);
+.cback{width:var(--foecw,76px);aspect-ratio:5/7;border-radius:calc(var(--foecw,76px)*.06);
   border:1.5px solid var(--bronze);position:relative;overflow:hidden;
   background:
     radial-gradient(circle at 50% 38%, rgba(242,212,136,.16), transparent 60%),
@@ -862,14 +875,14 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
   .wrap{max-width:none;height:100%;display:flex;flex-direction:column;gap:0;padding:0}
 
   /* 판 — 세로로 쌓고, 가운데에 조작 줄을 끼운다 */
+  /* 게임 화면은 **스크롤하지 않는다** — 해상도에 맞게 카드가 줄어 한 화면에 들어간다.
+     ⚠ overflow-y:auto 를 두면 iOS 가 가로 팬까지 잡아채 손패 드래그를 취소시킨다(예전 증상). */
   .main{flex:1;min-height:0;display:flex;flex-direction:column;padding:4px 6px 0;
-    overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain}
-  #foeHand{order:0} #foeBar{order:1} #lbFoeLz{order:2} #foeLz{order:3}
-  #lbFoeB{order:4} #foeBoard{order:5}
-  .ctl{order:6}
-  #lbMyB{order:7} #myBoard{order:8}
-  #lbMyLz{order:9} #myLz{order:10}
-  #myBar{order:11} #lbHand{order:12} #hand{order:13}
+    overflow:hidden;overscroll-behavior:contain}
+  #foeHand{order:0} #foeBar{order:1} #foeLz{order:2} #foeBoard{order:3}
+  .ctl{order:4}
+  #myBoard{order:5} #myLz{order:6}
+  #myBar{order:7} #hand{order:8}
 
   .bar{flex:none;gap:7px;padding:4px 8px;margin-bottom:1px;border-radius:5px}
   .bar .who{font-size:10px;min-width:0;max-width:38%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -878,11 +891,12 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
   .bar .cnt{font-size:8.5px;letter-spacing:.03em;white-space:nowrap}
   .mana{display:none}                      /* 지형존이 같은 정보를 더 잘 보여준다 */
 
-  /* 남는 세로 여백을 각 구역 위로 고르게 나눈다 — 라벨이 자기 판을 데리고 내려온다.
-     (한 곳에 몰아주면 손패 위에 거대한 빈칸이 생긴다) */
-  .lbl{flex:none;font-size:8px;letter-spacing:.1em;margin:1px 0 2px;display:flex;align-items:center}
-  #lbFoeLz,#lbFoeB,#lbMyB,#lbMyLz{margin-top:auto}
-  .lzc{font-size:8.5px;margin-left:5px;letter-spacing:0}
+  /* 판 라벨은 없앴다. 남는 세로 여백은 각 판 **위**로 고르게 나눈다.
+     (한 곳에 몰아주면 손패 위에 거대한 빈칸이 생긴다 — 실제로 그렇게 만들었다가 되돌림)
+     ⚠ `.lbl` 자체를 숨기지 말 것 — 설정 서랍('덱 메커니즘'·'전투 로그')도 같은 클래스를 쓴다. */
+  .main .lbl{display:none}
+  #foeLz,#foeBoard,#myBoard,#myLz{margin-top:auto}
+  .lzb{font-size:9px;padding:1px 6px;left:4px;top:3px}
   .board{flex:none;padding:2px 4px;margin-bottom:1px;border-radius:5px;
     min-height:calc(var(--cardw)*1.4 + 6px)}
   .board.packed>.slot{bottom:3px}
@@ -901,20 +915,21 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
   /* 카드 규격 하나. 상대 손패도 같은 값을 쓴다(뒷면만 다르다).
      ⚠ 폭(vw)뿐 아니라 **높이(dvh)로도 묶어야** 한다 — 판 4줄 + 손패 2줄이 전부 이 값을 따라
      커지기 때문에, 주소창이 있는 브라우저처럼 세로가 짧으면 화면 밖으로 밀린다.
-     (앱으로 설치하면 주소창이 사라져 dvh 가 커지고 카드도 그만큼 커진다.) */
-  :root{--cardw:min(clamp(46px,19vw,86px),8.2dvh)}
-  /* 뒷면은 작으므로 밀어 넣는 양도 --foecw 기준이어야 한다(카드 높이 1.4W 의 30% = 0.42W).
+     (앱으로 설치하면 주소창이 사라져 dvh 가 커지고 카드도 그만큼 커진다.)
+     세로 예산 = 판 4줄(5.6W) + 내 손패 노출분(0.98W) + 상대 손패 노출분(0.64W) ≈ 7.2W + 바·조작줄 ~107px.
+     라벨 4줄을 없애고 상대 손패를 절반까지 밀어 넣어 8.2dvh → 10dvh 로 올렸다.
+     ⚠ 더 올리면 320×568 같은 화면에서 판 사이 여백이 0이 되고 손패가 잘린다(11dvh 에서 확인). */
+  :root{--cardw:min(clamp(46px,21vw,110px),10dvh)}
+  /* 상대 손패는 위로 절반을 밀어 넣는다.
      ⚠ margin-bottom 을 반드시 0 으로 되돌린다. `.hand.foe` 도 `.hand` 규칙을 함께 받으므로
-        내 손패용 음수 margin-bottom(-0.42×cardw)이 그대로 걸려, 아래에 오는 상대 HP 바를
+        내 손패용 음수 margin-bottom 이 그대로 걸려, 아래에 오는 상대 HP 바를
         위로 끌어올려 뒷면 카드가 바를 덮어 버렸다. */
-  .hand.foe{flex:none;padding:0 12px 2px;
-    margin-top:calc(var(--foecw) * -0.42);margin-bottom:0}
-  #lbHand{display:none}
+  .hand.foe{flex:none;padding:0 12px 2px;margin-top:var(--foehide);margin-bottom:0}
   /* 손패는 화면 바닥에 붙인다 — 남는 세로 여백이 판과 손패 사이로 간다 (하스스톤 배치) */
   /* 손패는 화면 가장자리에 **70%만** 걸치게 한다 — 카드 높이(1.4W)의 30%를 밖으로 민다.
      좌우로도 여백을 줘서 화면에 딱 붙지 않게 한다. */
   .hand{flex:none;margin-top:auto;padding:4px 12px 0;justify-content:center;overflow:visible;
-    margin-bottom:calc(var(--cardw) * -0.42)}
+    margin-bottom:var(--myhide)}
   /* 터치에는 hover 가 없다. 강조는 광채뿐이라 따로 끌 것이 없다. */
 
   /* 로그·덱 설명은 아래에서 올라오는 서랍으로 */
@@ -942,7 +957,7 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
 }
 /* 아주 좁은 화면(360px 이하) — 카드와 글자를 한 단계 더 줄인다 */
 @media (max-width:380px){
-  :root{--cardw:min(clamp(44px,18vw,72px),8.2dvh)}
+  :root{--cardw:min(clamp(44px,20vw,96px),10dvh)}
   .bar .hp{font-size:15px}
   .hint{font-size:9.5px}
 }
@@ -1030,16 +1045,11 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
       <div class="mana" id="foeMana"></div>
       <div class="cnt" id="foeCnt">손 0 · 덱 0</div>
     </div>
-    <div class="lbl" id="lbFoeLz">상대 지형 <span class="lzc" id="foeLzInfo"></span></div>
+    <!-- 판 라벨('상대 보드'·'내 지형' 등)은 지웠다 — 위아래 배치만 봐도 자명하고,
+         네 줄이 세로 예산을 잡아먹었다. 지형 정보는 지형존 왼쪽 위 배지로 옮겼다. -->
     <div class="board lz" id="foeLz"></div>
-
-    <div class="lbl" id="lbFoeB">상대 보드</div>
     <div class="board" id="foeBoard"></div>
-
-    <div class="lbl" id="lbMyB">내 보드</div>
     <div class="board" id="myBoard"></div>
-
-    <div class="lbl" id="lbMyLz">내 지형 <span class="lzc" id="myLzInfo"></span></div>
     <div class="board lz" id="myLz"></div>
 
     <div class="bar me" id="myBar">
@@ -1050,7 +1060,6 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
       <div class="cnt" id="myCnt">손 0 · 덱 0</div>
     </div>
 
-    <div class="lbl" id="lbHand">내 손패</div>
     <div class="hand" id="hand"></div>
 
     <div class="ctl">
@@ -2738,8 +2747,11 @@ function render(){
     el.innerHTML=`<span class="mtxt">${manaLeft(p)}/${S[p].lands.length}</span>`;
     const lzEl=document.getElementById(p==='me'?'myLz':'foeLz');
     lzEl.innerHTML=lzHTML(p); packRow(lzEl,true);   /* 지형은 항상 겹쳐 쌓는다 */
-    document.getElementById(p==='me'?'myLzInfo':'foeLzInfo').textContent=
-      `사용 가능 ${manaLeft(p)} / 배치 ${S[p].lands.length} / 상한 ${MANACAP}`;
+    /* 왼쪽 위 배지: 남은 마나 / 배치한 지형 수. packRow 뒤에 붙여야 위치 계산에 안 끼어든다. */
+    lzEl.insertAdjacentHTML('beforeend',
+      `<i class="lzb" id="${p==='me'?'myLzInfo':'foeLzInfo'}" title="남은 마나 / 배치한 지형"`
+      +` aria-label="남은 마나 ${manaLeft(p)}, 배치한 지형 ${S[p].lands.length}">`
+      +`<b>${manaLeft(p)}</b><i>/</i>${S[p].lands.length}</i>`);
     document.getElementById(p==='me'?'myCnt':'foeCnt').textContent=`손 ${S[p].hand.length} · 덱 ${S[p].deck.length}`;
   });
   document.getElementById('turnMeta').textContent=`TURN ${S.turn} · ${S.active==='me'?'내 턴':'상대 턴'}`;
@@ -2872,7 +2884,7 @@ document.getElementById('restart').onclick=()=>{
      시작 → 모드 선택 → 덱 선택 → (배틀: 상대 덱 선택 | 원정: 지도) → 게임
      패배 → 다시 도전하기(덱 선택으로) · 초기 화면(모드 선택으로)
    ⚠ ?dev=1 로 열면 페이지를 건너뛰고 바로 배틀로 들어간다(자동 테스트용). */
-const VERSION='0.9.4', BUILD='2026-08-03';
+const VERSION='0.9.5', BUILD='2026-08-03';
 const DEV=/[?&]dev=1/.test(location.search);
 let PAGE=null, FLOW={mode:'battle', my:null, foe:null};
 function pageOpen(html){

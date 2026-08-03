@@ -32,11 +32,13 @@ const FILE='file://'+path.join(ROOT,'index.html');
     const me=document.querySelector('#hand .hcw .tcard').getBoundingClientRect();
     const foe=document.querySelector('#foeHand .cback').getBoundingClientRect();
     return {me:[+me.width.toFixed(1),+me.height.toFixed(1)],foe:[+foe.width.toFixed(1),+foe.height.toFixed(1)]};});
-  /* 상대 손패는 뒷면뿐이라 정보가 없다 — 내 손패와 같은 크기로 두면 화면 위쪽을 너무 먹는다.
-     --foecw = cardw × 0.48 로 되돌렸다(한 번 같은 크기로 키웠다가 '가린다'는 지적을 받음). */
-  const 비율=sz.foe[0]/sz.me[0];
-  ok('상대 손패는 작다', 비율>0.4&&비율<0.58&&Math.abs(sz.foe[1]/sz.foe[0]-1.4)<0.08,
-     `내 ${sz.me.join('×')} · 상대 ${sz.foe.join('×')} (${Math.round(비율*100)}%)`);
+  /* 상대 손패는 **내 카드와 같은 규격**이다. 화면을 덜 먹게 하는 건 크기가 아니라
+     노출 비율로 한다 — 위로 절반을 밀어 넣는다(--foehide). 한때 0.48배로 줄였다가 되돌렸다. */
+  ok('상대 손패 규격 동일', Math.abs(sz.foe[0]-sz.me[0])<1.5&&Math.abs(sz.foe[1]-sz.me[1])<2,
+     `내 ${sz.me.join('×')} · 상대 ${sz.foe.join('×')}`);
+  const 노출=await p.evaluate(()=>{const r=document.querySelector('#foeHand .cback').getBoundingClientRect();
+    return Math.round((r.bottom-Math.max(0,r.top))/r.height*100);});
+  ok('상대 손패는 절반만 보인다', 노출>=44&&노출<=58, `노출 ${노출}%`);
   ok('상대 손패는 뒷면', await p.evaluate(()=>document.getElementById('foeHand').textContent.trim()===''), '글자 없음');
   /* 뒷면 카드가 상대 HP 바를 덮으면 안 된다 — .hand 의 음수 margin-bottom 이 새어 들어와 실제로 덮었다 */
   ok('상대 바를 안 가린다', await p.evaluate(()=>{
@@ -48,11 +50,11 @@ const FILE='file://'+path.join(ROOT,'index.html');
   const lock=await p.evaluate(()=>({
     본문:getComputedStyle(document.body).userSelect,
     안내:getComputedStyle(document.getElementById('hint')).userSelect,
-    라벨:getComputedStyle(document.getElementById('lbMyB')).userSelect,
+    라벨:getComputedStyle(document.querySelector('#myBar .who')).userSelect,
     터치:getComputedStyle(document.body).touchAction,
     메타:(document.querySelector('meta[name=viewport]')||{}).content||''}));
   ok('글자 선택 잠금', [lock.본문,lock.안내,lock.라벨].every(v=>v==='none'),
-     `body/안내/라벨 = ${lock.본문}/${lock.안내}/${lock.라벨}`);
+     `body/안내/바 = ${lock.본문}/${lock.안내}/${lock.라벨}`);
   ok('화면 확대 잠금', /maximum-scale=1/.test(lock.메타)&&/user-scalable=no/.test(lock.메타)
      &&/pan-x/.test(lock.터치)&&/pan-y/.test(lock.터치)&&!/pinch/.test(lock.터치),
      `touch-action=${lock.터치} · ${/maximum-scale=1/.test(lock.메타)?'maximum-scale=1':'없음'}`);

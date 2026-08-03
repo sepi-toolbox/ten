@@ -117,6 +117,12 @@ await p.waitForTimeout(250);
 await p.evaluate(()=>{hideZoom();lpFired=false;S.sel=null;S.mode=null;
   S.me.board=Array(SLOTS).fill(null);
   S.me.lands.forEach(l=>{l.used=true;});     /* 마나를 전부 소진시킨다 */
+  S.me.landPlayed=true;                      /* 지형도 이미 놓은 것으로 */
+  /* ⚠ 맨 오른쪽 카드가 무작위라 지형이 걸리면 '못 내는 카드'가 아니게 된다.
+     마나가 드는 크리처를 직접 심어 검사를 고정한다. */
+  const cr=Object.keys(POOL).filter(n=>POOL[n].k==='cr'&&POOL[n].c>=2)
+    .sort((a,b)=>POOL[b].c-POOL[a].c)[0];
+  if(cr)S.me.hand[S.me.hand.length-1]=cr;
   render();});
 await p.waitForTimeout(250);
 {

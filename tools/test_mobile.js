@@ -40,6 +40,10 @@ const SIZES=[[390,844,'iPhone 앱'],[390,745,'iPhone 브라우저'],[360,640,'�
         손패밖:cs.length?(cs[0].left<-2||cs[cs.length-1].right>innerWidth+2):false,
         보이는폭:vis, 카드폭:cs.length?Math.round(cs[0].width):0,
         내노출:pct(hb), 상대노출:pct(fb),
+        /* 게임 화면은 스크롤하지 않는다 — .main 이 스크롤 가능하면 실패다 */
+        판스크롤:getComputedStyle(document.querySelector('.main')).overflowY,
+        배지:[...document.querySelectorAll('.lzb')].map(x=>x.textContent).join(' '),
+        라벨:document.querySelectorAll('.main .lbl').length,   /* 서랍 라벨은 그대로 둔다 */
         좌여백:cs.length?Math.round(cs[0].left):0,
         우여백:cs.length?Math.round(innerWidth-cs[cs.length-1].right):0};});
     // 드래그로 소환 — 겹친 손패에서 가운데 카드를 집으면 오른쪽 이웃이 먼저 잡힌다.
@@ -63,12 +67,15 @@ const SIZES=[[390,844,'iPhone 앱'],[390,745,'iPhone 브라우저'],[360,640,'�
     await p.click('#gearBtn'); await p.waitForTimeout(300);
     const drawer=await p.evaluate(()=>{const s=document.querySelector('.side').getBoundingClientRect();
       return document.body.classList.contains('sideon')&&s.top<innerHeight-40;});
-    const 노출OK=m.내노출>=62&&m.내노출<=85&&m.상대노출>=62&&m.상대노출<=85;
+    /* 내 손패는 70%, 상대 손패는 50%만 드러난다(크기는 둘 다 --cardw 로 같다) */
+    const 노출OK=m.내노출>=62&&m.내노출<=80&&m.상대노출>=44&&m.상대노출<=58;
     const 여백OK=m.좌여백>=6&&m.우여백>=6;
-    const ok=!m.스크롤&&!m.손패밖&&노출OK&&여백OK&&played>0&&zoom&&drawer&&!errs.length;
+    const 판OK=m.판스크롤==='hidden'&&m.배지.split(' ').length===2&&m.라벨===0;
+    const ok=!m.스크롤&&!m.손패밖&&노출OK&&여백OK&&판OK&&played>0&&zoom&&drawer&&!errs.length;
     if(!ok)bad++;
     console.log(`${ok?'✅':'❌'} ${label.padEnd(9)} ${w}×${h} | 스크롤없음 ${!m.스크롤} · 손패안쪽 ${!m.손패밖}`
       +` · 노출 내 ${m.내노출}%/상대 ${m.상대노출}% · 좌우여백 ${m.좌여백}/${m.우여백}`
+      +` · 판스크롤 ${m.판스크롤} · 배지 ${m.배지}`
       +` · 카드 ${m.카드폭}px(보이는폭 ${m.보이는폭}) · 드래그소환 ${played>0} · 확대 ${zoom} · 서랍 ${drawer}`
       +(errs.length?` · ERR(${errs.length}) ${errs[0]}`:''));
     await p.close();
