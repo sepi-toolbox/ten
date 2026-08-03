@@ -487,8 +487,33 @@ draw();
 /* ── 앱(PWA) 설치 ────────────────────────────────────────────────
    게임과 **캐시 이름이 다른** 서비스워커를 쓴다(cards/sw.js). 같은 이름이면
    한쪽이 activate 될 때 다른 쪽 캐시를 지워 버린다. */
+/* 새 판이 올라오면 바로 반영한다. 뷰어는 잃을 상태가 없으므로 **묻지 않고 새로고침**한다.
+   ⚠ 브라우저는 알아서 갱신을 확인하지 않는다 — reg.update() 로 직접 찔러야 한다.
+   ⚠ 첫 설치에도 controllerchange 가 뜨므로, 등록 전에 컨트롤러가 있었는지를 기억해 둔다. */
+let RELOADING=false;
+function hardReload(){
+  if(RELOADING)return; RELOADING=true;
+  const z=document.getElementById('zoom'); if(z)z.classList.remove('on');
+  location.reload();
+}
 if('serviceWorker' in navigator&&location.protocol!=='file:')
-  addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+  addEventListener('load',()=>{
+    /* ⚠ updateViaCache:'none' 이 없으면 브라우저가 HTTP 캐시의 옛 sw.js 와 비교해 갱신을 놓친다 */
+    navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(reg=>{
+      const poke=()=>{ try{ reg.update(); }catch(e){} };
+      setInterval(poke,10*60*1000);
+      addEventListener('visibilitychange',()=>{ if(!document.hidden)poke(); });
+      addEventListener('online',poke);
+      /* 첫 설치와 갱신을 구분한다 — updatefound 시점에 이미 컨트롤러가 있었으면 갱신이다.
+         뷰어는 잃을 상태가 없으므로 **묻지 않고 바로** 새로고침한다. */
+      reg.addEventListener('updatefound',()=>{
+        const nw=reg.installing; if(!nw)return;
+        const hadCtrl=!!navigator.serviceWorker.controller;
+        nw.addEventListener('statechange',()=>{ if(nw.state==='activated'&&hadCtrl)hardReload(); });
+      });
+      poke();
+    }).catch(()=>{});
+  });
 const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 let INSTALLP=null;
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();INSTALLP=e;syncInstall();});

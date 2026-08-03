@@ -17,7 +17,9 @@ https://sepi-toolbox.github.io/ten/ 로 게시한다.)
 "proxy-injected" 같은 더미 값으로 미리 채워 두는 경우가 있어, 먼저 보면
 진짜 토큰을 두고도 가짜로 인증을 시도하게 된다. 형식 검사도 함께 한다.
 """
+import hashlib
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -90,10 +92,31 @@ def build():
         if os.path.exists(s):
             shutil.copy2(s, os.path.join(OUT, "data", name))
             n += 1
+    stamp_sw()
     # Jekyll 처리를 끈다 (밑줄로 시작하는 경로 등이 사라지는 것 방지)
     open(os.path.join(OUT, ".nojekyll"), "w").close()
     print(f"빌드 완료: {n}개 파일 → {OUT}")
     return n
+
+
+def stamp_sw():
+    """배포본 sw.js 의 CACHE 이름 뒤에 **내용 해시**를 붙인다.
+
+    자동 갱신(앱이 스스로 새 판을 감지해 새로고침)은 **sw.js 가 바이트 단위로 달라져야만** 돈다.
+    손으로 CACHE 를 올리는 걸 한 번이라도 빠뜨리면 앱이 옛 화면에 영영 갇힌다 —
+    그래서 배포할 때 여기서 자동으로 찍는다. 저장소의 sw.js 는 읽기 좋은 이름 그대로 둔다.
+    """
+    for page, sw in (("prototype/index.html", "prototype/sw.js"),
+                     ("cards/index.html", "cards/sw.js")):
+        pf, sf = os.path.join(OUT, page), os.path.join(OUT, sw)
+        if not (os.path.exists(pf) and os.path.exists(sf)):
+            continue
+        h = hashlib.sha1(open(pf, "rb").read()).hexdigest()[:8]
+        src = open(sf, encoding="utf-8").read()
+        new = re.sub(r"const CACHE = '([^']+)'",
+                     lambda m: f"const CACHE = '{m.group(1).split('-h')[0]}-h{h}'", src, count=1)
+        open(sf, "w", encoding="utf-8").write(new)
+        print(f"  {sw} → {re.search(chr(39)+'([^'+chr(39)+']+)'+chr(39), new).group(1)}")
 
 
 def push(token):
