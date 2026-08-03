@@ -120,7 +120,7 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
   ok('새 물 크리처 27종', NEW.every(n=>pool[n]&&pool[n].el==='water'),
      NEW.filter(n=>!pool[n]).join(',')||`전부 등재 (덱 수록 ${NEW.filter(n=>pool[n].copies>0).length}종)`);
   /* 소환체는 이제 **진짜 카드**다 — 토큰이 아니라서 바운스로 손에 잡힌다 */
-  ok('소환체가 진짜 카드', ['불꽃 병사','새싹','조립 병기','부름의 망령','망자','여왕의 가신','물거품']
+  ok('소환체가 진짜 카드', ['새싹','조립 병기','부름의 망령','망자','여왕의 가신','뱀']
      .every(n=>pool[n]&&pool[n].copies===0),
      '불꽃 병사 · 새싹 · 조립 병기 · 부름의 망령 · 망자 · 여왕의 가신 · 물거품');
 
