@@ -1284,6 +1284,34 @@ h1{font-family:'Cinzel Decorative','Cinzel',serif;font-weight:900;font-size:26px
 .empty2{font-family:'Gowun Batang',serif;color:var(--ink-faint);padding:30px 0;text-align:center}
 /* 확대 — 프로토타입의 .zoom 을 그대로 쓴다 */
 .zoom{cursor:pointer}
+/* 카드 뽑아보기 — 그 덱으로 실제 시작 손패를 돌려 본다 */
+.drawbtn{margin-left:auto;font-family:'Gothic A1',sans-serif;font-size:11px;font-weight:700;
+  padding:5px 11px;border-radius:14px;cursor:pointer;white-space:nowrap;
+  border:1px solid var(--bronze);background:rgba(20,14,8,.7);color:var(--gold)}
+.drawbtn:hover{border-color:var(--gold-bright);color:var(--gold-bright)}
+.draw{position:fixed;inset:0;z-index:150;display:none;overflow-y:auto;
+  background:var(--dim);backdrop-filter:blur(var(--dim-blur));
+  padding:calc(16px + env(safe-area-inset-top)) 12px calc(20px + env(safe-area-inset-bottom))}
+.draw.on{display:block}
+.dwrap{max-width:1000px;margin:0 auto}
+.dhd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.dhd h3{font-family:'Gowun Batang',serif;font-size:17px;font-weight:700;color:#fff}
+.dhd .sub{font-family:'Gothic A1',sans-serif;font-size:11px;color:var(--gold);opacity:.8}
+.dhd button{margin-left:auto;font-family:'Gothic A1',sans-serif;font-size:12px;font-weight:700;
+  padding:7px 14px;border-radius:16px;cursor:pointer;
+  border:1px solid var(--gold-bright);background:linear-gradient(180deg,#3a2a12,#241809);color:var(--gold-bright)}
+.dhd button.x{border-color:var(--rule);background:rgba(20,14,8,.7);color:var(--gold);margin-left:0}
+.dhand{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:14px}
+/* 7장이 넓은 화면에서 한 줄에 들어가도록 — 좁아지면 자연히 두 줄로 접힌다 */
+.dhand .tcard{--cw:clamp(88px,12.5vw,118px)}
+.dsum{font-family:'Gothic A1',sans-serif;font-size:12px;line-height:1.9;color:var(--parch-2);
+  border:1px solid var(--rule);border-radius:8px;background:rgba(12,8,5,.85);padding:10px 13px;margin-bottom:12px}
+.dsum b{color:var(--gold-bright)}
+.dbar{display:flex;align-items:center;gap:8px;font-family:'Gothic A1',sans-serif;font-size:11px;color:var(--gold)}
+.dbar i{flex:1;height:9px;border-radius:5px;background:#241809;overflow:hidden;font-style:normal;display:block}
+.dbar i>span{display:block;height:100%;background:linear-gradient(90deg,var(--bronze),var(--gold-bright))}
+.dbar .n{width:74px;text-align:right;opacity:.75}
+.dbar .k{width:56px}
 /* 앱 설치 줄 */
 .inst{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:0 0 14px;
   padding:9px 12px;border:1px solid var(--rule);border-radius:8px;background:rgba(20,14,8,.5)}
@@ -1322,6 +1350,7 @@ h1{font-family:'Cinzel Decorative','Cinzel',serif;font-weight:900;font-size:26px
 
   <div id="list"></div>
 </div>
+<div class="draw" id="draw"></div>
 <div class="zoom" id="zoom"></div>
 
 <script>
@@ -1366,6 +1395,7 @@ const DECKS={"fire":{"name":"연소 러시","core":"스스로 타들어 가는 �
 let DECKEL='steel';
 let DECKLIST=DECKS[DECKEL].list;
 const isLand=n=>!!LANDS[n];
+const LANDFX={'고블린 요새':'내 턴이 시작될 때 <b>고블린 폭탄병</b>을 소환한다.'};
 /* 희귀도 — POOL 의 `r` 필드(없으면 커먼). 예산 배수는 tools/gen_decks.py 가 정본. */
 const RARKO={common:'커먼',uncommon:'언커먼',rare:'레어',legendary:'레전더리'};
 const RARMULT={common:1.00,uncommon:1.10,rare:1.22,legendary:1.40};
@@ -1631,7 +1661,9 @@ function foeSection(e){
   const c=(EL[e.el]||{}).c||'#c9a24b';
   const cards=(e.decks[F.band]||e.decks[0]||[]).slice();
   const n=cards.reduce((a,[,k])=>a+k,0);
-  const lands=landsFor(n);
+  /* 고정 덱을 가진 적은 지형 구성까지 지정한다(고블린 요새처럼 자원을 안 내는 지형 포함) */
+  const landRows=(e.lands&&e.lands.length)?e.lands.map(([x,k])=>[x,k]):[[e.land,landsFor(n)]];
+  const lands=landRows.reduce((a,[,k])=>a+k,0);
   const over=cards.filter(([x])=>(POOL[x]||{}).over).reduce((a,[,k])=>a+k,0);
   const [lo,hi]=bandRange(F.band);
   /* '주력 카드' 는 게임의 적 조우 화면(rgEnter)과 **같은 정의** — 코스트가 높은 순 4장.
@@ -1647,7 +1679,7 @@ function foeSection(e){
   const rows=cards.filter(([x])=>core.includes(x))
     .sort((a,b)=>core.indexOf(a[0])-core.indexOf(b[0]))
     .map(r=>[r[0],r[1],true])
-    .concat([[e.land,lands,false]]).concat(rest.map(r=>[r[0],r[1],false]));
+    .concat(landRows.map(([x,k])=>[x,k,false])).concat(rest.map(r=>[r[0],r[1],false]));
   return `<div class="foe" style="--c:${c}">
     <div class="foehd">
       <span class="nm">${e.name}</span>
@@ -1660,6 +1692,7 @@ function foeSection(e){
       <span class="hp">HP <b>${foeHpFor(e.tier,lo)}~${foeHpFor(e.tier,hi)}</b> · ${lo}~${hi}층</span>
       <span>덱 <b>${n+lands}</b>장 · 카드 ${n} + 지형 ${lands}</span>
       ${over?`<span class="ovr">강화 <b>${over}</b>장</span>`:''}
+      <button class="drawbtn" data-foe="${e.id}">카드 뽑아보기</button>
     </div>
     <div class="cgrid">${rows.map(([x,k,cr])=>cellHTML(x,k,cr)).join('')}</div>
   </div>`;
@@ -1721,7 +1754,8 @@ function section(el){
   const extra=rows.filter(([,x])=>!x).length;
   return `<div class="dsec" style="--c:${c}">
     <h2><span class="ko">${(EL[el]||{}).ko}</span>${d.name}
-      <span class="cnt">${rows.length-extra}종 · ${total}장${extra?` · 덱 미수록 ${extra}종`:''}</span></h2>
+      <span class="cnt">${rows.length-extra}종 · ${total}장${extra?` · 덱 미수록 ${extra}종`:''}</span>
+      <button class="drawbtn" data-el="${el}">카드 뽑아보기</button></h2>
     <div class="core">${d.core||''}</div>
     <div class="cgrid">${rows.map(([n,cnt])=>cellHTML(n,cnt)).join('')}</div>
   </div>`;
@@ -1746,7 +1780,99 @@ function draw(){
   }
   box.innerHTML=h||'<div class="empty2">조건에 맞는 것이 없습니다.</div>';
   box.querySelectorAll('.cell').forEach(el=>el.onclick=()=>openZoom(el.dataset.n));
+  box.querySelectorAll('.drawbtn').forEach(el=>el.onclick=ev=>{ ev.stopPropagation();
+    openDraw(el.dataset.el?'el':'foe', el.dataset.el||el.dataset.foe); });
 }
+/* ── 카드 뽑아보기 ─────────────────────────────────────────────
+   그 덱을 실제로 40장 쌓아 시작 손패 7장을 돌려 본다. 게임과 **같은 뽑기 보정**을 건다
+   (첫 손패에 지형이 없으면 덱의 지형 한 장과 가장 비싼 카드를 맞바꾼다 — prototype 의 fixLand).
+   ⚠ 여기서 규칙을 새로 만들지 말 것. 손패 매수·보정 규칙이 게임과 갈리면 이 화면이 거짓말을 한다. */
+const HAND_N=7;
+function deckList(kind,key){
+  if(kind==='el'){ const d=DECKS[key]; return d?(d.list||[]).map(([n,c])=>[n,c]):[]; }
+  const e=FOES.find(x=>x.id===key); if(!e)return [];
+  const cards=(e.decks[F.band]||e.decks[0]||[]).map(([n,c])=>[n,c]);
+  const tot=cards.reduce((s,[,c])=>s+c,0);
+  const lands=(e.lands&&e.lands.length)?e.lands.map(([n,c])=>[n,c]):[[e.land,landsFor(tot)]];
+  return cards.concat(lands);
+}
+const flat=list=>list.reduce((a,[n,c])=>{for(let i=0;i<c;i++)a.push(n);return a;},[]);
+function drawHand(list){
+  const d=flat(list);
+  for(let i=d.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [d[i],d[j]]=[d[j],d[i]]; }
+  const hand=d.slice(0,HAND_N), rest=d.slice(HAND_N);
+  const raw=hand.filter(n=>LANDS[n]).length;
+  if(!raw){                                   /* 뽑기 보정 — 게임의 fixLand 와 같은 규칙 */
+    const li=rest.findIndex(n=>LANDS[n]);
+    if(li>=0){
+      let worst=0;
+      hand.forEach((n,i)=>{ if(((POOL[n]||{}).c||0)>((POOL[hand[worst]]||{}).c||0))worst=i; });
+      hand[worst]=rest[li];
+    }
+  }
+  return {hand,raw};
+}
+function handStats(list,trials){
+  const dist=Array(HAND_N+1).fill(0);
+  let noLand=0, cheap=0, land=0;
+  for(let t=0;t<trials;t++){
+    const {hand,raw}=drawHand(list);
+    if(!raw)noLand++;
+    const L=hand.filter(n=>LANDS[n]).length;
+    dist[L]++; land+=L;
+    cheap+=hand.filter(n=>!LANDS[n]&&((POOL[n]||{}).c||9)<=2).length;
+  }
+  return {dist,noLand,land:land/trials,cheap:cheap/trials,trials};
+}
+let DRAW=null;
+function openDraw(kind,key){
+  const list=deckList(kind,key);
+  if(!list.length)return;
+  const name=kind==='el'
+    ? `${(EL[key]||{}).ko} · ${(DECKS[key]||{}).name||''}`
+    : `${(FOES.find(x=>x.id===key)||{}).name||''} · ${F.band+1}단계`;
+  DRAW={kind,key,list,name};
+  renderDraw(true);
+}
+function renderDraw(fresh){
+  const d=document.getElementById('draw'); if(!DRAW)return;
+  if(fresh)DRAW.res=drawHand(DRAW.list);
+  const {hand,raw}=DRAW.res;
+  const tot=DRAW.list.reduce((s,[,c])=>s+c,0);
+  const lands=hand.filter(n=>LANDS[n]).length;
+  const cards=hand.filter(n=>!LANDS[n]);
+  const costs=cards.map(n=>(POOL[n]||{}).c||0).sort((a,b)=>a-b);
+  const st=DRAW.st||(DRAW.st=handStats(DRAW.list,2000));
+  const maxd=Math.max(...st.dist);
+  d.innerHTML=`<div class="dwrap">
+    <div class="dhd"><h3>${DRAW.name}</h3>
+      <span class="sub">덱 ${tot}장 · 시작 손패 ${HAND_N}장</span>
+      <button id="dAgain">다시 뽑기</button><button class="x" id="dClose">닫기</button></div>
+    <div class="dhand">${hand.map(n=>LANDS[n]?landCardHTML(n,'md'):tcardHTML(n,{size:'md'})).join('')}</div>
+    <div class="dsum">
+      이번 손패 — 지형 <b>${lands}</b>장 · 카드 <b>${cards.length}</b>장
+      · 코스트 ${costs.length?costs.join('·'):'—'}
+      · 2코 이하 <b>${costs.filter(c=>c<=2).length}</b>장
+      ${raw?'':'<br><span style="color:var(--gold-bright)">뽑기 보정 발동</span> — 지형이 한 장도 없어 가장 비싼 카드를 지형과 맞바꿨습니다.'}
+    </div>
+    <div class="dsum">
+      <b>${st.trials.toLocaleString()}번</b> 돌린 통계 — 평균 지형 <b>${st.land.toFixed(2)}</b>장
+      · 평균 2코 이하 <b>${st.cheap.toFixed(2)}</b>장
+      · 보정이 일한 비율 <b>${(st.noLand/st.trials*100).toFixed(1)}%</b>
+      <div style="margin-top:7px">${st.dist.map((v,i)=>v?`<div class="dbar"><span class="k">지형 ${i}장</span>`
+        +`<i><span style="width:${(v/maxd*100).toFixed(1)}%"></span></i>`
+        +`<span class="n">${(v/st.trials*100).toFixed(1)}%</span></div>`:'').join('')}</div>
+    </div></div>`;
+  d.classList.add('on');
+  document.getElementById('dAgain').onclick=()=>renderDraw(true);
+  document.getElementById('dClose').onclick=closeDraw;
+  d.querySelectorAll('.dhand .tcard').forEach((el,i)=>{ el.style.cursor='pointer';
+    el.onclick=ev=>{ ev.stopPropagation(); openZoom(hand[i]); }; });
+}
+function closeDraw(){ const d=document.getElementById('draw');
+  d.classList.remove('on'); d.innerHTML=''; DRAW=null; }
+document.getElementById('draw').onclick=e=>{ if(e.target.id==='draw')closeDraw(); };
+
 function setMode(m){ F.mode=m; F.k='all'; F.q=''; F.t='all'; document.getElementById('q').value=''; draw(); }
 document.getElementById('tabCard').onclick=()=>setMode('card');
 document.getElementById('tabFoe').onclick=()=>setMode('foe');

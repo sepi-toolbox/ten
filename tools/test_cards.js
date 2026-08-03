@@ -155,6 +155,29 @@ const PROTO='file://'+path.join(ROOT,'prototype','index.html');
   }
   await p.click('#tagBar .chip[data-t="all"]'); await p.waitForTimeout(250);
 
+  /* 8-c) 카드 뽑아보기 — 그 덱을 실제로 40장 쌓아 시작 손패를 돌린다.
+     ⚠ 손패 매수·뽑기 보정은 **게임과 같아야** 한다. 갈리면 이 화면이 거짓말을 한다. */
+  await p.click('.drawbtn[data-el="fire"]'); await p.waitForTimeout(600);
+  const dr=await p.evaluate(()=>{
+    const d=document.getElementById('draw');
+    const names=[...d.querySelectorAll('.dhand .tcard .tname')].map(e=>e.textContent);
+    return {on:d.classList.contains('on'), n:names.length,
+      lands:names.filter(x=>LANDS[x]).length, all:names.every(x=>POOL[x]||LANDS[x]),
+      tot:DRAW.list.reduce((s,[,c])=>s+c,0), stat:!!DRAW.st};});
+  ok('뽑아보기 = 7장', dr.on&&dr.n===7&&dr.all&&dr.tot===40,
+     `덱 ${dr.tot}장에서 ${dr.n}장 · 지형 ${dr.lands}`);
+  ok('뽑기 보정이 걸린다', dr.lands>=1&&dr.stat,
+     '지형이 최소 1장(게임의 fixLand 와 같은 규칙) · 2000회 통계도 함께');
+  const again=await p.evaluate(async()=>{
+    const before=[...document.querySelectorAll('.dhand .tcard .tname')].map(e=>e.textContent).join();
+    let diff=false;
+    for(let i=0;i<8&&!diff;i++){ document.getElementById('dAgain').click();
+      diff=[...document.querySelectorAll('.dhand .tcard .tname')].map(e=>e.textContent).join()!==before; }
+    return diff;});
+  ok('다시 뽑기', again, '누를 때마다 새로 섞는다');
+  await p.click('#dClose'); await p.waitForTimeout(250);
+  ok('뽑아보기 닫힘', !(await p.evaluate(()=>document.getElementById('draw').classList.contains('on'))), '');
+
   // 9) 앱(PWA) — 게임과 **별개의 앱**으로 깔리고, 서로의 오프라인 캐시를 지우지 않는다
   const MIME={'.html':'text/html;charset=utf-8','.js':'text/javascript','.png':'image/png',
     '.webmanifest':'application/manifest+json','.json':'application/json'};
