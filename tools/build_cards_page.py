@@ -17,6 +17,8 @@
   /* CARDJS_START … CARDJS_END */   frameKey/frameVars/frameCardHTML/tcardHTML
   landCardHTML / glossaryFor        (이름으로 찾아 함수 한 덩어리씩)
 
+원정 모드 적 덱도 같은 데이터(ENEMY)로 보여 준다 — 적마다 난이도 단계별 덱이 3벌씩 들어 있다.
+
 프로토타입의 카드 마크업이 바뀌면 이 스크립트를 다시 돌리기만 하면 된다.
 """
 import os
@@ -124,6 +126,33 @@ h1{font-family:'Cinzel Decorative','Cinzel',serif;font-weight:900;font-size:26px
 :root{--cardw:clamp(112px,15vw,150px)}
 @media (max-width:520px){ :root{--cardw:clamp(104px,30vw,140px)} .cgrid{gap:12px 8px} }
 
+/* 상단 모드 탭 */
+.tabs{display:flex;gap:0;margin:0 0 14px;border-bottom:1px solid var(--rule)}
+.tabs button{font-family:'Cinzel',serif;font-size:13px;font-weight:700;letter-spacing:.1em;
+  background:none;border:none;border-bottom:2px solid transparent;color:var(--ink-faint);
+  padding:9px 16px;cursor:pointer;min-height:40px}
+.tabs button.on{color:var(--gold-bright);border-bottom-color:var(--gold-bright)}
+
+/* 적 한 명 */
+.foe{margin:20px 0 6px;padding-top:16px;border-top:1px solid var(--rule)}
+.foehd{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.foehd .nm{font-family:'Gowun Batang',serif;font-weight:700;font-size:19px;color:#fff}
+.foehd .tag{font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:.12em;
+  padding:2px 9px;border-radius:11px;border:1px solid var(--c,var(--gold));color:var(--c,var(--gold));
+  align-self:center;white-space:nowrap}
+.foehd .tag.t{border-color:var(--bronze);color:var(--gold)}
+.foehd .tag.boss{background:linear-gradient(180deg,#3a2a12,#241809);color:var(--gold-bright);
+  border-color:var(--gold-bright)}
+.foedesc{font-family:'Gowun Batang',serif;font-size:12.5px;line-height:1.7;color:var(--parch-2);
+  opacity:.85;margin-top:7px;max-width:70ch}
+.foestat{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+.foestat span{font-family:'Cinzel',serif;font-size:10.5px;font-weight:700;letter-spacing:.06em;
+  padding:3px 10px;border-radius:4px;border:1px solid var(--rule);color:var(--gold);
+  background:rgba(20,14,8,.5)}
+.foestat span b{color:#fff}
+.foestat span.hp{border-color:#c04a3f;color:#f0a89f}
+.foestat span.ovr{border-color:var(--gold-bright);color:var(--gold-bright)}
+
 .empty2{font-family:'Gowun Batang',serif;color:var(--ink-faint);padding:30px 0;text-align:center}
 /* 확대 — 프로토타입의 .zoom 을 그대로 쓴다 */
 .zoom{cursor:pointer}
@@ -132,14 +161,20 @@ h1{font-family:'Cinzel Decorative','Cinzel',serif;font-weight:900;font-size:26px
 <body>
 <div class="cwrap">
   <h1>TEN — 카드 목록</h1>
-  <div class="csub">전체 <b id="tot">0</b>종 · 속성 덱 7종 &nbsp;·&nbsp; <a href="../prototype/">게임으로</a></div>
+  <div class="csub"><span id="tot"></span> &nbsp;·&nbsp; <a href="../prototype/">게임으로</a></div>
+
+  <div class="tabs">
+    <button id="tabCard" class="on">카드 목록</button>
+    <button id="tabFoe">적 덱 (원정)</button>
+  </div>
 
   <div class="cbar" id="elBar"></div>
-  <div class="cbar">
-    <span class="lbl2">종류</span>
+  <div class="cbar" id="row2">
+    <span class="lbl2" id="row2lbl">종류</span>
     <span id="kBar" style="display:contents"></span>
     <input class="csearch" id="q" placeholder="이름·효과 검색">
   </div>
+  <div class="cbar" id="bandBar" style="display:none"></div>
 
   <div id="list"></div>
 </div>
@@ -155,8 +190,25 @@ const DECKOF={};
 Object.keys(DECKS).forEach(el=>{
   (DECKS[el].list||[]).forEach(([n,c])=>{ (DECKOF[n]=DECKOF[n]||[]).push([el,c]); });
 });
+/* 강화 카드(ROGUE.over)는 적 덱에만 나온다 — 카드 목록의 '전체 N종' 은 기본 카드만 센다.
+   ⚠ 합치기 **전에** 기본 목록을 떠 둔다. 게임도 같은 자리에서 Object.assign 한다. */
+const BASE=Object.keys(POOL).slice();
+if(typeof ROGUE!=='undefined'&&ROGUE.over)Object.assign(POOL,ROGUE.over);
+
+/* ── 원정 적 ── */
+const FOES=(typeof ENEMY!=='undefined'&&ENEMY.list)?ENEMY.list:[];
+const FOEHP=(typeof ENEMY!=='undefined'&&ENEMY.hp)?ENEMY.hp:{normal:[20,1.5],elite:[30,2],boss:[60,2]};
+const FOEBANDS=(typeof ENEMY!=='undefined'&&ENEMY.bands)?ENEMY.bands:[0,3,7];
+const FOEOVER=(typeof ENEMY!=='undefined'&&ENEMY.overN)?ENEMY.overN:{};
+const FLOORS=((typeof ROGUE!=='undefined'&&ROGUE.config&&ROGUE.config.floors)||11)-1;
+const TIERKO={normal:'일반',elite:'정예',boss:'보스'};
+/* 단계별 층 구간 — bands=[0,3,7] 이면 0~2 · 3~6 · 7~마지막 */
+function bandRange(b){ return [FOEBANDS[b], (b+1<FOEBANDS.length?FOEBANDS[b+1]-1:FLOORS)]; }
+function foeHpFor(tier,floor){ const [a,per]=FOEHP[tier]||FOEHP.normal; return Math.round(a+per*floor); }
+function landsFor(n){ return Math.max(8, Math.round(n*17/23)); }
+
 const KINDS=[['all','전체'],['cr','크리처'],['sp','스펠'],['en','인챈트'],['land','지형']];
-let F={el:'all',k:'all',q:''};
+let F={mode:'card',el:'all',k:'all',q:'',band:0};
 
 function elChip(el,on){
   const e=EL[el]||{};
@@ -164,17 +216,65 @@ function elChip(el,on){
     +`<i></i>${e.ko||'전체'}<span class="n">${countOf(el)}</span></button>`;
 }
 function countOf(el){
-  if(el==='all')return Object.keys(POOL).length+Object.keys(LANDS).length;
+  if(F.mode==='foe')return el==='all'?FOES.length:FOES.filter(e=>e.el===el).length;
+  if(el==='all')return BASE.length+Object.keys(LANDS).length;
   const d=DECKS[el]; return d?(d.list||[]).length:0;
 }
+const TIERS=[['all','전체'],['normal','일반'],['elite','정예'],['boss','보스']];
 function renderBars(){
+  const foe=F.mode==='foe';
   document.getElementById('elBar').innerHTML=
     `<button class="chip${F.el==='all'?' on':''}" data-el="all">전체<span class="n">${countOf('all')}</span></button>`
     +Object.keys(DECKS).map(el=>elChip(el,F.el===el)).join('');
-  document.getElementById('kBar').innerHTML=KINDS.map(([k,ko])=>
+  document.getElementById('row2lbl').textContent=foe?'등급':'종류';
+  document.getElementById('kBar').innerHTML=(foe?TIERS:KINDS).map(([k,ko])=>
     `<button class="chip${F.k===k?' on':''}" data-k="${k}">${ko}</button>`).join('');
+  document.getElementById('q').placeholder=foe?'적 이름·설명 검색':'이름·효과 검색';
+  const bb=document.getElementById('bandBar');
+  bb.style.display=foe?'flex':'none';
+  if(foe)bb.innerHTML='<span class="lbl2">난이도</span>'+[0,1,2].map(b=>{
+    const [lo,hi]=bandRange(b);
+    return `<button class="chip${F.band===b?' on':''}" data-b="${b}">${b+1}단계`
+      +`<span class="n">${lo}~${hi}층</span></button>`;}).join('');
   document.querySelectorAll('#elBar .chip').forEach(b=>b.onclick=()=>{F.el=b.dataset.el;draw();});
   document.querySelectorAll('#kBar .chip').forEach(b=>b.onclick=()=>{F.k=b.dataset.k;draw();});
+  document.querySelectorAll('#bandBar .chip').forEach(b=>b.onclick=()=>{F.band=+b.dataset.b;draw();});
+  document.getElementById('tabCard').classList.toggle('on',!foe);
+  document.getElementById('tabFoe').classList.toggle('on',foe);
+}
+
+/* ── 적 한 명 ── */
+function foeSection(e){
+  const c=(EL[e.el]||{}).c||'#c9a24b';
+  const cards=(e.decks[F.band]||e.decks[0]||[]).slice();
+  const n=cards.reduce((a,[,k])=>a+k,0);
+  const lands=landsFor(n);
+  const over=cards.filter(([x])=>(POOL[x]||{}).over).reduce((a,[,k])=>a+k,0);
+  const [lo,hi]=bandRange(F.band);
+  const rows=[[e.land,lands]].concat(cards.slice().sort((a,b)=>{
+    const ca=(POOL[a[0]]||{}).c||0, cb=(POOL[b[0]]||{}).c||0;
+    return ca-cb||a[0].localeCompare(b[0]);}));
+  return `<div class="foe" style="--c:${c}">
+    <div class="foehd">
+      <span class="nm">${e.name}</span>
+      <span class="tag">${(EL[e.el]||{}).ko}</span>
+      <span class="tag t${e.tier==='boss'?' boss':''}">${TIERKO[e.tier]||e.tier}</span>
+      ${e.style&&e.style!==TIERKO[e.tier]?`<span class="tag t">${e.style}</span>`:''}
+    </div>
+    <div class="foedesc">${e.desc||''}</div>
+    <div class="foestat">
+      <span class="hp">HP <b>${foeHpFor(e.tier,lo)}~${foeHpFor(e.tier,hi)}</b> · ${lo}~${hi}층</span>
+      <span>덱 <b>${n+lands}</b>장 · 카드 ${n} + 지형 ${lands}</span>
+      ${over?`<span class="ovr">강화 <b>${over}</b>장</span>`:''}
+    </div>
+    <div class="cgrid">${rows.map(([x,k])=>cellHTML(x,k)).join('')}</div>
+  </div>`;
+}
+function foeHit(e){
+  if(F.el!=='all'&&e.el!==F.el)return false;
+  if(F.k!=='all'&&e.tier!==F.k)return false;
+  if(!F.q)return true;
+  return (e.name+' '+(e.desc||'')+' '+(e.style||'')).toLowerCase().includes(F.q);
 }
 function kindOf(n){ return LANDS[n]?'land':(POOL[n]||{}).k; }
 function hit(n){
@@ -187,8 +287,10 @@ function cellHTML(n,copies){
   const html=LANDS[n]?landCardHTML(n,'md'):tcardHTML(n,{size:'md'});
   /* 덱별로 묶어 보여 주므로 소속 표시는 **두 덱 이상**일 때만 의미가 있다. 아니면 군더더기다. */
   const d=DECKOF[n]||[];
-  const decks=d.length>1?d.map(([e,c])=>`${(EL[e]||{}).ko||e}×${c}`).join(' · ')
-             :(d.length?'':'덱 미수록');
+  /* 적 덱 보기에서는 '어느 속성 덱에 들어가는가' 가 의미 없다(강화 카드는 아예 안 들어간다) */
+  const decks=F.mode==='foe'?''
+    :(d.length>1?d.map(([e,c])=>`${(EL[e]||{}).ko||e}×${c}`).join(' · ')
+      :(d.length?'':'덱 미수록'));
   return `<div class="cell" data-n="${n}">${copies?`<span class="cnum">×${copies}</span>`:''}`
     +`${html}${decks?`<div class="cdecks">${decks}</div>`:''}</div>`;
 }
@@ -213,19 +315,30 @@ function section(el){
     <div class="cgrid">${rows.map(([n,cnt])=>cellHTML(n,cnt)).join('')}</div>
   </div>`;
 }
+const ORD={normal:0,elite:1,boss:2};
 function draw(){
   renderBars();
   const box=document.getElementById('list');
   let h='';
-  if(F.el==='all'){
-    h=Object.keys(DECKS).map(section).join('');
-  } else {
-    h=section(F.el);
+  if(F.mode==='foe'){
+    /* 속성 → 등급(일반·정예·보스) 순으로 늘어놓는다 */
+    const list=FOES.filter(foeHit).slice().sort((a,b)=>{
+      const ea=Object.keys(DECKS).indexOf(a.el), eb=Object.keys(DECKS).indexOf(b.el);
+      return ea-eb||ORD[a.tier]-ORD[b.tier]||a.name.localeCompare(b.name);});
+    h=list.map(foeSection).join('');
+    document.getElementById('tot').innerHTML=
+      `원정 적 <b>${FOES.length}</b>명 · 일반 21 · 정예 7 · 보스 7 · 난이도 3단계`;
+  }else{
+    h=(F.el==='all'?Object.keys(DECKS).map(section).join(''):section(F.el));
+    document.getElementById('tot').innerHTML=
+      `카드 <b>${BASE.length}</b>종 + 지형 <b>${Object.keys(LANDS).length}</b>종 · 속성 덱 7종`;
   }
-  box.innerHTML=h||'<div class="empty2">조건에 맞는 카드가 없습니다.</div>';
-  document.getElementById('tot').textContent=Object.keys(POOL).length+Object.keys(LANDS).length;
+  box.innerHTML=h||'<div class="empty2">조건에 맞는 것이 없습니다.</div>';
   box.querySelectorAll('.cell').forEach(el=>el.onclick=()=>openZoom(el.dataset.n));
 }
+function setMode(m){ F.mode=m; F.k='all'; F.q=''; document.getElementById('q').value=''; draw(); }
+document.getElementById('tabCard').onclick=()=>setMode('card');
+document.getElementById('tabFoe').onclick=()=>setMode('foe');
 /* 확대 — 게임의 확대 화면과 같은 규격(lg) + 용어 설명 */
 function openZoom(n){
   const z=document.getElementById('zoom');

@@ -1,4 +1,4 @@
-/* 카드 뷰어(cards/index.html) 검사 — 덱별 묶음 · 필터 · 검색 · 확대 ·
+/* 카드 뷰어(cards/index.html) 검사 — 덱별 묶음 · 원정 적 덱(난이도 3단계) · 필터 · 검색 · 확대 ·
  * 그리고 무엇보다 **게임과 카드 규격이 같은가**
  *   node tools/test_cards.js */
 const path=require('path'), fs=require('fs'), cp=require('child_process');
@@ -82,6 +82,37 @@ const PROTO='file://'+path.join(ROOT,'prototype','index.html');
   const diff=names.filter((n,i)=>vHtml[i]!==gHtml[i]);
   ok('게임과 마크업 동일', diff.length===0,
      diff.length?`어긋난 카드: ${diff.slice(0,4).join(', ')}`:`${names.length}종 대조 일치`);
+
+  // 8) 원정 적 덱 — 난이도 단계별로 볼 수 있는가
+  await p.click('#tabFoe'); await p.waitForTimeout(400);
+  const f0=await p.evaluate(()=>({
+    적:document.querySelectorAll('.foe').length,
+    난이도:[...document.querySelectorAll('#bandBar .chip')].length,
+    등급:[...document.querySelectorAll('#kBar .chip')].map(e=>e.textContent.trim()),
+    첫통계:document.querySelector('.foestat').textContent.replace(/\s+/g,' ').trim()}));
+  ok('적 35명 · 3단계', f0.적===35&&f0.난이도===3&&f0.등급.join()==='전체,일반,정예,보스',
+     `${f0.적}명 · 난이도 ${f0.난이도}단계`);
+  ok('1단계 통계', /HP 20~23/.test(f0.첫통계)&&/덱 40장/.test(f0.첫통계), f0.첫통계);
+  /* 단계를 올리면 체력과 강화 카드가 늘어야 한다 — 이게 '난이도별'의 실체다 */
+  await p.click('#bandBar .chip[data-b="2"]'); await p.waitForTimeout(350);
+  const f2=await p.evaluate(()=>document.querySelector('.foestat').textContent.replace(/\s+/g,' ').trim());
+  ok('3단계는 더 강하다', /HP 3\d~3\d/.test(f2)&&/강화/.test(f2), f2);
+  // 등급 필터 · 보스 체력
+  await p.click('#kBar .chip[data-k="boss"]'); await p.waitForTimeout(350);
+  const bs=await p.evaluate(()=>({수:document.querySelectorAll('.foe').length,
+    통계:document.querySelector('.foestat').textContent.replace(/\s+/g,' ').trim()}));
+  ok('보스 7명', bs.수===7&&/HP 7\d~\d+/.test(bs.통계), `${bs.수}명 · ${bs.통계}`);
+  /* 강화 카드가 회색이 아니라 제 속성 색으로 그려지는가 (CE 에 없어서 steel 로 떨어지던 버그) */
+  const ov=await p.evaluate(()=>{
+    const c=[...document.querySelectorAll('.cell')].find(e=>/^강화/.test(e.dataset.n));
+    if(!c)return null;
+    const t=c.querySelector('.tcard');
+    return {n:c.dataset.n, el:getComputedStyle(t).getPropertyValue('--el').trim(),
+      art:!!t.querySelector('.tart').style.backgroundImage};});
+  ok('강화 카드도 제 속성 색', ov&&ov.el.toLowerCase()!=='#8894a6',
+     ov?`${ov.n} → ${ov.el}${ov.art?' · 원본 일러스트 차용':''}`:'강화 카드 없음');
+  await p.click('#tabCard'); await p.waitForTimeout(300);
+  ok('카드 탭으로 복귀', (await p.evaluate(()=>document.querySelectorAll('.dsec').length))===7, '');
 
   if(errs.length){bad++;console.log('   ERR',errs.slice(0,2));}
   console.log(bad?`❌ ${bad}건 실패`:'✅ 전부 통과');

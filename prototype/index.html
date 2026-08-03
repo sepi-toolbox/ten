@@ -2734,12 +2734,14 @@ function tcardHTML(name,opt){
       <div class="tstat"><span class="tb a">${t.a}</span><span class="tb h">${hp}</span></div></div>`;
   }
   {
-    const el0=CE[name]||'steel';
+    /* ⚠ 강화 카드(ROGUE.over)는 CE 에 없다 — 카드 자신의 el 을 봐야 한다.
+       예전에는 여기서 그냥 'steel' 로 떨어져 **원정의 강화 카드가 전부 회색**으로 나왔다. */
+    const el0=CE[name]||c.el||'steel';
     const kind=c.k==='cr'?'cr':(c.k==='sp'?'sp':'en');
     const key=frameKey(el0,kind);
     if(key) return frameCardHTML(name,opt,c,el0,(EL[el0]||EL.steel).c,key);
   }
-  const el=CE[name]||'steel', ec=(EL[el]||EL.steel).c;
+  const el=CE[name]||c.el||'steel', ec=(EL[el]||EL.steel).c;
   const cc=Math.min(+c.cc||1,c.c);
   const pips=`<i class="cp c" style="background:${ec}"></i>`.repeat(cc)+'<i class="cp g"></i>'.repeat(c.c-cc);
   const cls=c.k==='cr'?((c.g&&c.f)?'flyguard':c.g?'guard':c.f?'fly':(c.p?'pierce':'normal')):c.k;
@@ -2749,7 +2751,9 @@ function tcardHTML(name,opt){
     const kw=(c.kw&&c.kw!=='—')?c.kw:'';
     eff=(tag?`<b>${tag}</b>`:'')+((tag&&kw)?' · ':'')+kw;
   } else eff=c.d||'';
-  const art=ART[name]?`<div class="tart" style="background-image:url(${ART[name]})"></div>`:'<div class="tart"></div>';
+  /* 강화 카드는 자기 일러스트가 없다 — 원본(base)의 것을 빌려 쓴다 */
+  const src=ART[name]||(c.base?ART[c.base]:null);
+  const art=src?`<div class="tart" style="background-image:url(${src})"></div>`:'<div class="tart"></div>';
   const u=opt.unit;
   let foot='';
   if(c.k==='cr'){
