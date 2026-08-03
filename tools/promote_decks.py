@@ -149,7 +149,9 @@ def main():
             if en_tag == "pierce":
                 e["p"] = 1
             pool[nm] = e
-            entries.append([nm, cp])
+            # 매수 0 = 카드 풀에만 두고 덱에는 안 싣는다(골격을 안 건드리고 새 카드를 시험할 때)
+            if cp:
+                entries.append([nm, cp])
 
         for (nm, c, kind, val, ref, adj, cp, rule) in deck["spells"]:
             ns += 1
@@ -164,7 +166,9 @@ def main():
                         "el": el, "d": rule, "copies": cp}
             if G.rar(nm) != "common":
                 pool[nm]["r"] = G.rar(nm)
-            entries.append([nm, cp])
+            # 매수 0 = 카드 풀에만 두고 덱에는 안 싣는다(골격을 안 건드리고 새 카드를 시험할 때)
+            if cp:
+                entries.append([nm, cp])
 
         for (nm, c, dr, E, C, scope, cp, rule) in deck["enchants"]:
             ne += 1
@@ -179,7 +183,9 @@ def main():
                         "el": el, "d": rule, "copies": cp}
             if G.rar(nm) != "common":
                 pool[nm]["r"] = G.rar(nm)
-            entries.append([nm, cp])
+            # 매수 0 = 카드 풀에만 두고 덱에는 안 싣는다(골격을 안 건드리고 새 카드를 시험할 때)
+            if cp:
+                entries.append([nm, cp])
 
         cards = sum(cp for _, cp in entries)
         decks[el] = {

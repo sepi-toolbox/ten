@@ -21,12 +21,14 @@ const PROTO='file://'+path.join(ROOT,'prototype','index.html');
   const errs=[]; p.on('pageerror',e=>errs.push(e.message));
   await p.goto(VIEW); await p.waitForTimeout(800);
 
-  // 1) 덱별로 묶여 있고, 각 덱이 40장이다
+  /* 1) 덱별로 묶여 있고, 각 덱이 40장이다.
+     ⚠ 셀 수는 **덱 장수와 다를 수 있다** — gen_decks 의 매수 0(덱 미수록) 카드도 그 속성 칸에
+        같이 보여 주기 때문이다. 검사는 헤더의 '… 40장' 문구로 한다. */
   const secs=await p.evaluate(()=>[...document.querySelectorAll('.dsec')].map(s=>({
     제목:s.querySelector('h2 .ko').textContent,
     수:s.querySelector('h2 .cnt').textContent,
     셀:s.querySelectorAll('.cell').length})));
-  ok('덱 7종으로 묶임', secs.length===7&&secs.every(s=>/40장$/.test(s.수)),
+  ok('덱 7종으로 묶임', secs.length===7&&secs.every(s=>/21종 · 40장/.test(s.수)),
      secs.map(s=>`${s.제목}(${s.셀})`).join(' '));
 
   // 2) 카드가 게임 규격(5:7)으로 그려진다

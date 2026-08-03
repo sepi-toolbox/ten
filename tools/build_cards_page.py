@@ -298,7 +298,7 @@ function elChip(el,on){
 function countOf(el){
   if(F.mode==='foe')return el==='all'?FOES.length:FOES.filter(e=>e.el===el).length;
   if(el==='all')return BASE.length+Object.keys(LANDS).length;
-  const d=DECKS[el]; return d?(d.list||[]).length:0;
+  const d=DECKS[el]; return d?(d.list||[]).length+poolOnlyOf(el).length:0;
 }
 const TIERS=[['all','전체'],['normal','일반'],['elite','정예'],['boss','보스']];
 function renderBars(){
@@ -418,10 +418,16 @@ function cellHTML(n,copies,core){
   return `<div class="cell${core?' core':''}" data-n="${n}">${copies?`<span class="cnum">×${copies}</span>`:''}`
     +`${html}${decks?`<div class="cdecks">${decks}</div>`:''}</div>`;
 }
+/* 그 속성에 속하지만 **어느 덱에도 안 실린** 카드(gen_decks 의 매수 0).
+   골격을 안 건드리고 새로 만들어 본 카드들이다 — 목록에서 빠지면 만든 걸 볼 수가 없다. */
+function poolOnlyOf(el){
+  return BASE.filter(n=>{ const c=POOL[n]||{};
+    return c.el===el&&!LANDS[n]&&!(DECKOF[n]||[]).length; }).map(n=>[n,0]);
+}
 function section(el){
   const d=DECKS[el]; if(!d)return '';
   /* 지형이 먼저 오도록 정렬한다(덱 목록의 첫 항목이 지형) — 그 뒤는 코스트 순. */
-  const rows=(d.list||[]).filter(([n])=>hit(n)).slice().sort((a,b)=>{
+  const rows=(d.list||[]).concat(poolOnlyOf(el)).filter(([n])=>hit(n)).slice().sort((a,b)=>{
     const la=LANDS[a[0]]?0:1, lb=LANDS[b[0]]?0:1;
     if(la!==lb)return la-lb;
     const ca=(POOL[a[0]]||{}).c||0, cb=(POOL[b[0]]||{}).c||0;
@@ -432,9 +438,10 @@ function section(el){
   if(!rows.length)return '';
   const c=(EL[el]||{}).c||'#c9a24b';
   const total=rows.reduce((a,[,x])=>a+x,0);
+  const extra=rows.filter(([,x])=>!x).length;
   return `<div class="dsec" style="--c:${c}">
     <h2><span class="ko">${(EL[el]||{}).ko}</span>${d.name}
-      <span class="cnt">${rows.length}종 · ${total}장</span></h2>
+      <span class="cnt">${rows.length-extra}종 · ${total}장${extra?` · 덱 미수록 ${extra}종`:''}</span></h2>
     <div class="core">${d.core||''}</div>
     <div class="cgrid">${rows.map(([n,cnt])=>cellHTML(n,cnt)).join('')}</div>
   </div>`;
