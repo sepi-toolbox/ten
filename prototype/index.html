@@ -576,7 +576,8 @@ html,body{touch-action:pan-x pan-y}
   .zdef{padding:7px 10px}
   .zdef .kn{font-size:12px}
   .zdef .kd{font-size:11px;line-height:1.5}
-  .zhint{position:fixed;left:0;right:0;top:calc(14px + env(safe-area-inset-top))}
+  /* ⚠ bottom 을 풀어 준다 — top 과 bottom 이 함께 잡히면 상자가 화면 높이만큼 늘어난다 */
+  .zhint{position:fixed;left:0;right:0;top:calc(14px + env(safe-area-inset-top));bottom:auto}
 }
 .zside{width:min(78vw,240px);max-height:62vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
   display:flex;flex-direction:column;gap:8px}
@@ -697,8 +698,13 @@ html,body{touch-action:pan-x pan-y}
 .elpick .en{display:block;font-family:'Cinzel',serif;font-size:9px;letter-spacing:.16em;opacity:.75}
 .elpick .kn{display:block;font-size:17px;font-weight:700;margin:3px 0 2px}
 .elpick .mc{display:block;font-size:11px;opacity:.85}
+/* ⚠⚠ pointer-events:none 이 **꼭** 있어야 한다. 이 안내줄은 position:fixed 에 left/right 가
+   0 인데, 좁은 화면 미디어 규칙이 top 까지 잡으면 top~bottom 사이가 통째로 늘어나
+   **화면을 덮는 투명 판**이 된다. 그러면 겹친 카드를 넘기려고 눌러도 히트 테스트가
+   .zstack 이 아니라 이 안내줄에 걸려 창이 그냥 닫혔다(실제로 그렇게 막혔다). */
 .zhint{position:fixed;bottom:26px;left:0;right:0;text-align:center;font-family:'Cinzel',serif;
-  font-size:11px;letter-spacing:.14em;color:var(--gold);opacity:.85}
+  font-size:11px;letter-spacing:.14em;color:var(--gold);opacity:.85;pointer-events:none}
+.zhint b{color:var(--gold-bright);font-weight:700}
 
 .ztico{flex:none;width:20px;height:20px;color:var(--zc)}
 .ztico svg{width:100%;height:100%;display:block}
@@ -2726,11 +2732,39 @@ async function aiTurn(){
     }
     const playable=P.hand.map((n,i)=>({n,i,c:POOL[n]})).filter(x=>x.c&&canPay('ai',x.n));
     if(!playable.length)break;
+    /* 내 크리처에 붙이는 강화·부여 스펠(도화선 · 화염 방패). 광역 판단이 이걸 먼저 봐야 해서
+       여기서 한 번만 찾아 두고 아래 2.65 와 4) 가 같은 것을 쓴다. */
+    const gsp=playable.find(x=>x.c.k==='sp'&&NEEDS_MINE.includes(x.c.mode)&&!isMassBuff(x.n));
 
-    /* 1) 광역 : 내 개체가 3 이상이면 */
+    /* 1) 광역 — 상대 판이 두꺼울 때.
+       ⚠ **내 판까지 태우는 광역**(파이어볼·겁화)은 내 몸이 살아남을 때 쓴다.
+          살릴 수단(화염 방패 같은 +HP 강화)이 손에 있으면 이번 턴은 **그걸 먼저** 낸다 —
+          그게 화염술사의 콤보다. 한때 조건이 '내 개체 3 이상' 하나뿐이라
+          제 화염 아귀를 매번 같이 태워 죽였다. */
     const aoe=playable.find(x=>x.c.k==='sp'&&x.c.mode==='aoe');
     const myInsts=S.me.board.reduce((s,u)=>s+(u&&u.kind==='cr'?u.insts.length:0),0);
-    if(aoe&&myInsts>=3){
+    let aoeSelf=0, saveIdx=-1, aoeOK=false;
+    if(aoe){
+      /* ⚠ aoeVal 은 부르면 안 된다 — 분신은 재는 순간 내 크리처를 태워 버린다(부작용). */
+      const v=aoe.c.v||0;
+      aoeSelf=selfDmgOf(aoe.n);
+      const foeKill=S.me.board.reduce((s,u)=>
+        s+(u&&u.kind==='cr'?u.insts.filter(i=>i.hp<=v).length:0),0);
+      let lose=0, bv=-1;
+      P.board.forEach((u,j)=>{
+        if(!u||u.kind!=='cr'||!u.insts.length||!aoeSelf)return;
+        if(u.insts[0].hp>aoeSelf)return;
+        lose++;
+        const val=u.a*10+u.insts[0].hp; if(val>bv){bv=val;saveIdx=j;}   /* 살릴 값어치가 큰 쪽 */
+      });
+      /* ⚠ 살릴 수단이 **지금 손에** 있으면 이번 턴은 쏘지 않는다. 셈으로만 보면
+         화염 아귀 하나와 상대 셋을 바꾸는 게 이득이지만, 화염술사가 하려는 건 그 교환이 아니라
+         **방패를 두르고 혼자 살아남는** 것이다 — 다음 차례에 그대로 쏜다. */
+      const saveH=gsp?parseBuff(gsp.c.d).h:0;
+      const rescuable=saveIdx>=0&&saveH>0&&(P.board[saveIdx].insts[0].hp+saveH)>aoeSelf;
+      aoeOK=(myInsts>=3||foeKill>=2)&&(lose===0||foeKill>lose)&&!rescuable;
+    }
+    if(aoe&&aoeOK){
       await reveal('ai',aoe.n);
       pay('ai',aoe.n);P.hand.splice(aoe.i,1);
       const av=aoeVal('ai',aoe.n);
@@ -2824,10 +2858,9 @@ async function aiTurn(){
       continue;
     }
 
-    /* 2.65) 강화·부여 — 내 크리처에 붙이는 스펠(도화선 · 화염 방패).
+    /* 2.65) 강화·부여 — 대상을 고를 수 있을 때 쓴다.
        ⚠ 예전에는 AI 가 이 부류를 **아예 못 냈다** — 고블린 덱의 도화선이 손에서 썩었다.
        대상은 붙이고도 이번 턴을 넘길 몸으로 고른다(연소로 곧 타 죽을 개체에 주면 그냥 버리는 것). */
-    const gsp=playable.find(x=>x.c.k==='sp'&&NEEDS_MINE.includes(x.c.mode)&&!isMassBuff(x.n));
     if(gsp){
       const bf=parseBuff(gsp.c.d), gr=grantOf(gsp.c.d);
       let best=-1,bv=-1;
@@ -2835,7 +2868,9 @@ async function aiTurn(){
         if(!u||u.kind!=='cr'||!u.insts.length)return;
         const hp=u.insts[0].hp+bf.h, bn=(u.burn||0)+gr.burn;
         if(bn&&hp<=bn)return;                /* 붙여도 이번 턴 종료에 타 죽는다 */
-        const v=(u.a+bf.a)*10+hp;
+        /* 이번 턴 쏘려던 광역에 타 죽을 몸을 **먼저** 살린다 — 화염 방패 → 파이어볼 순서 */
+        const rescue=(j===saveIdx&&hp>aoeSelf)?1000:0;
+        const v=rescue+(u.a+bf.a)*10+hp;
         if(v>bv){bv=v;best=j;}
       });
       if(best>=0){
@@ -2871,7 +2906,24 @@ async function aiTurn(){
 
     /* 3) 크리처 / 인챈트 */
     const units=playable.filter(x=>x.c.k==='cr'||x.c.k==='en').sort((a,b)=>b.c.c-a.c.c);
-    if(!units.length)break;
+    if(!units.length){
+      /* 4) **가장 낮은 순위** — 좋은 대상이 없어도 남은 하수인에게 부여 스펠을 쓴다.
+         2.65 는 '이번 턴을 넘길 몸' 만 고르므로, 잿불 방화범처럼 판이 죄다 자폭병인 덱에서는
+         도화선이 손에서 그대로 썩는다. 더 낼 게 없으면 아무에게나 붙이는 편이 낫다 —
+         어차피 태워 죽일 몸이라 얹은 ATK 만큼은 얼굴에 들어간다. */
+      if(gsp){
+        let j=-1,bv=-1;
+        P.board.forEach((x,k)=>{ if(x&&x.kind==='cr'&&x.insts.length){
+          const v=x.a*10+x.insts[0].hp; if(v>bv){bv=v;j=k;} } });
+        if(j>=0){
+          await reveal('ai',gsp.n);
+          resolveOnMine('ai',gsp.n,j);
+          pay('ai',gsp.n);P.hand.splice(gsp.i,1);render();
+          continue;
+        }
+      }
+      break;
+    }
     const u=units[0];
     let slot=-1;
     if(u.c.k==='en'){
@@ -2949,6 +3001,8 @@ function spellHeal(p,name,killed){
   log(`  ${p==='me'?'나':'상대'} ${name} — HP ${b}→${S[p].hp}`,'g');
   return v;
 }
+/* 자해 조항의 수치만 읽는다 — AI 가 '이걸 쏘면 내 몸도 죽나' 를 미리 재는 데 쓴다 */
+const selfDmgOf=n=>+((rule(n).match(/내 크리처(?:도| 전체) (\d+)\s*피해/)||[])[1]||0);
 /* "내 크리처도 3 피해" · "내 크리처 전체 2 피해" — 광역·요격의 자해 조항 */
 function spellSelfDmg(p,name){
   const m=rule(name).match(/내 크리처(?:도| 전체) (\d+)\s*피해/); if(!m)return 0;
@@ -3759,7 +3813,7 @@ document.getElementById('restart').onclick=()=>{
      시작 → 모드 선택 → 덱 선택 → (배틀: 상대 덱 선택 | 원정: 지도) → 게임
      패배 → 다시 도전하기(덱 선택으로) · 초기 화면(모드 선택으로)
    ⚠ ?dev=1 로 열면 페이지를 건너뛰고 바로 배틀로 들어간다(자동 테스트용). */
-const VERSION='0.17.0', BUILD='2026-08-03';
+const VERSION='0.17.1', BUILD='2026-08-03';
 const DEV=/[?&]dev=1/.test(location.search);
 let PAGE=null, FLOW={mode:'battle', my:null, foe:null};
 function pageOpen(html){
@@ -4027,7 +4081,8 @@ function zoomHTML(name,u){
         +`<i class="zswipe">← 넘겨서 ${peerLabel(name,peer,u)} 보기 →</i></div>`
       : tcardHTML(name,{size:'lg',unit:u});
     return `<div class="zwrap">${stack}${glossaryFor(name,u)}</div>`
-      +'<div class="zhint">아무 곳이나 눌러 닫기</div>';
+      +`<div class="zhint">${peer?'카드를 넘겨 뒷면 · <b>카드 밖</b>을 눌러 닫기'
+                               :'아무 곳이나 눌러 닫기'}</div>`;
   }
   if(LANDS[name]) return landCardHTML(name,'lg')+'<div class="zhint">아무 곳이나 눌러 닫기</div>';
   if(u&&u.token){                                /* 소환된 토큰 */
@@ -4055,7 +4110,21 @@ function showZoom(name,u,src,hold){
   lpHold=!!hold;
   z.classList.toggle('hold',!!hold);
   bindZoomSwipe(z);
-  if(!hold)setTimeout(()=>document.addEventListener('pointerdown',hideZoom,{once:true,capture:true}),60);
+  if(!hold)setTimeout(()=>armZoomCloser(),60);
+}
+/* '아무 곳이나 누르면 닫힘' 을 document 의 **캡처** 단계에 건다.
+   ⚠⚠ 그래서 겹친 카드(.zstack) 위에서 손을 대도 이게 **먼저** 잡아 창이 닫혔다 —
+      .zstack 쪽 stopPropagation 은 캡처가 끝난 뒤라 이미 늦는다. 성장·삼킴·되살아남 카드를
+      넘겨 보려는 손짓이 매번 창을 닫아 버려 뒷면을 아예 볼 수 없었다.
+   그래서 카드 안에서 시작한 손짓이면 **닫지 않고 다시 건다**(once 로 걸었으니 재무장). */
+function armZoomCloser(){
+  document.addEventListener('pointerdown',zoomCloser,{once:true,capture:true});
+}
+function zoomCloser(e){
+  const z=document.getElementById('zoom');
+  if(!z.classList.contains('on'))return;
+  if(e.target&&e.target.closest&&e.target.closest('.zstack')){ armZoomCloser(); return; }
+  hideZoom(e);
 }
 /* 성장 전/후 넘기기 — 가로로 24px 이상 끌거나 그냥 탭하면 앞뒤가 바뀐다.
    ⚠ 여기서 이벤트를 **삼켜야** 한다. 확대창은 '아무 데나 누르면 닫힘' 이라

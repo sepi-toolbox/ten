@@ -576,7 +576,8 @@ html,body{touch-action:pan-x pan-y}
   .zdef{padding:7px 10px}
   .zdef .kn{font-size:12px}
   .zdef .kd{font-size:11px;line-height:1.5}
-  .zhint{position:fixed;left:0;right:0;top:calc(14px + env(safe-area-inset-top))}
+  /* ⚠ bottom 을 풀어 준다 — top 과 bottom 이 함께 잡히면 상자가 화면 높이만큼 늘어난다 */
+  .zhint{position:fixed;left:0;right:0;top:calc(14px + env(safe-area-inset-top));bottom:auto}
 }
 .zside{width:min(78vw,240px);max-height:62vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
   display:flex;flex-direction:column;gap:8px}
@@ -697,8 +698,13 @@ html,body{touch-action:pan-x pan-y}
 .elpick .en{display:block;font-family:'Cinzel',serif;font-size:9px;letter-spacing:.16em;opacity:.75}
 .elpick .kn{display:block;font-size:17px;font-weight:700;margin:3px 0 2px}
 .elpick .mc{display:block;font-size:11px;opacity:.85}
+/* ⚠⚠ pointer-events:none 이 **꼭** 있어야 한다. 이 안내줄은 position:fixed 에 left/right 가
+   0 인데, 좁은 화면 미디어 규칙이 top 까지 잡으면 top~bottom 사이가 통째로 늘어나
+   **화면을 덮는 투명 판**이 된다. 그러면 겹친 카드를 넘기려고 눌러도 히트 테스트가
+   .zstack 이 아니라 이 안내줄에 걸려 창이 그냥 닫혔다(실제로 그렇게 막혔다). */
 .zhint{position:fixed;bottom:26px;left:0;right:0;text-align:center;font-family:'Cinzel',serif;
-  font-size:11px;letter-spacing:.14em;color:var(--gold);opacity:.85}
+  font-size:11px;letter-spacing:.14em;color:var(--gold);opacity:.85;pointer-events:none}
+.zhint b{color:var(--gold-bright);font-weight:700}
 
 .ztico{flex:none;width:20px;height:20px;color:var(--zc)}
 .ztico svg{width:100%;height:100%;display:block}
@@ -1537,6 +1543,51 @@ function glossaryFor(name,u){
       +`<div class="kd">${def}</div></div>`;
   }).join('')}</div>`;
 }
+const RISE=/소멸 시 (.+?)(?:으로|로) 되살아난다/;
+function riseOf(kw){
+  const m=(kw||'').match(RISE);
+  return (m&&POOL[m[1].trim()])?m[1].trim():null;
+}
+function grownPeer(name){
+  const c=POOL[name]||{};
+  if(c.grown&&c.base)return c.base;                     /* 이미 상위 몸 → 원본을 뒤에 */
+  const kw=c.kw||'';
+  if(/성장/.test(kw)&&POOL['성장한 '+name])return '성장한 '+name;
+  if(/진형/.test(kw)&&POOL['각성한 '+name])return '각성한 '+name;
+  const r=riseOf(kw); if(r)return r;                     /* 작열 좀비 → 잿더미 좀비 */
+  return riseBase(name);                                 /* 잿더미 좀비 → 작열 좀비 (역방향) */
+}
+function riseBase(name){
+  for(const n in POOL){ if(riseOf((POOL[n]||{}).kw)===name)return n; }
+  return null;
+}
+function peerLabel(front,back,u){
+  if(u&&u.ate&&u.ate===back)return '삼킨 크리처';
+  if((POOL[back]||{}).grown)return '성장한 몸';
+  if((POOL[front]||{}).grown)return '원래 몸';
+  if(riseOf((POOL[front]||{}).kw)===back)return '남기는 몸';
+  if(riseOf((POOL[back]||{}).kw)===front)return '원래 몸';
+  return '뒷면';
+}
+function bindZoomSwipe(z){
+  const st=z.querySelector('.zstack'); if(!st)return;
+  let x0=null,y0=null;
+  const flip=e=>{ e.stopPropagation(); e.preventDefault();
+    st.classList.toggle('flip');
+    const sw=st.querySelector('.zswipe');
+    if(sw){ const a=st.dataset.a,b=st.dataset.b, f=st.classList.contains('flip');
+      sw.textContent=`← 넘겨서 ${peerLabel(f?b:a,f?a:b)} 보기 →`; }
+  };
+  st.addEventListener('pointerdown',e=>{ e.stopPropagation(); x0=e.clientX; y0=e.clientY; },true);
+  st.addEventListener('pointerup',e=>{
+    if(x0===null)return;
+    const dx=Math.abs(e.clientX-x0), dy=Math.abs(e.clientY-y0);
+    x0=null;
+    if(dx>=24&&dx>dy)flip(e);          /* 가로 스와이프 */
+    else if(dx<10&&dy<10)flip(e);      /* 그냥 탭 */
+    else e.stopPropagation();
+  },true);
+}
 
 /* ── 뷰어 ───────────────────────────────────────────────────────── */
 /* 카드가 어느 덱에 몇 장 들어가는지 미리 뒤집어 둔다 (카드 → [[덱, 장수], …]) */
@@ -1884,15 +1935,29 @@ document.getElementById('draw').onclick=e=>{ if(e.target.id==='draw')closeDraw()
 function setMode(m){ F.mode=m; F.k='all'; F.q=''; F.t='all'; document.getElementById('q').value=''; draw(); }
 document.getElementById('tabCard').onclick=()=>setMode('card');
 document.getElementById('tabFoe').onclick=()=>setMode('foe');
-/* 확대 — 게임의 확대 화면과 같은 규격(lg) + 용어 설명 */
+/* 확대 — 게임의 확대 화면과 같은 규격(lg) + 용어 설명.
+   성장·진형 상위 몸, 되살아나는 몸이 있으면 **뒤에 겹쳐** 보여 준다(게임과 같은 .zstack).
+   ⚠ 여기서 안 보여 주면 상위 몸·잿더미 몸은 목록 어디에도 안 나온다. */
 function openZoom(n){
   const z=document.getElementById('zoom');
+  const peer=LANDS[n]?null:grownPeer(n);
   const card=LANDS[n]?landCardHTML(n,'lg'):tcardHTML(n,{size:'lg'});
-  z.innerHTML=`<div class="zwrap">${card}${LANDS[n]?'':glossaryFor(n,null)}</div>`
-    +'<div class="zhint">아무 곳이나 눌러 닫기</div>';
+  const stack=peer
+    ? `<div class="zstack" data-a="${n}" data-b="${peer}">`
+      +`<div class="zfront">${card}</div>`
+      +`<div class="zback">${tcardHTML(peer,{size:'lg'})}</div>`
+      +`<i class="zswipe">← 넘겨서 ${peerLabel(n,peer)} 보기 →</i></div>`
+    : card;
+  z.innerHTML=`<div class="zwrap">${stack}${LANDS[n]?'':glossaryFor(n,null)}</div>`
+    +`<div class="zhint">${peer?'카드를 넘겨 뒷면 · <b>카드 밖</b>을 눌러 닫기'
+                              :'아무 곳이나 눌러 닫기'}</div>`;
   z.classList.add('on');
+  bindZoomSwipe(z);
 }
-document.getElementById('zoom').onclick=()=>{
+/* ⚠ 겹친 카드 위에서 시작한 손짓은 창을 닫지 않는다 —
+   막지 않으면 넘겨 보려는 탭·스와이프가 그대로 창을 닫아 뒷면을 아예 볼 수 없다. */
+document.getElementById('zoom').onclick=e=>{
+  if(e.target&&e.target.closest&&e.target.closest('.zstack'))return;
   const z=document.getElementById('zoom'); z.classList.remove('on'); z.innerHTML='';
 };
 document.getElementById('q').oninput=e=>{F.q=e.target.value.trim().toLowerCase();draw();};

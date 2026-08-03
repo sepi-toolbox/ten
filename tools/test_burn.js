@@ -157,10 +157,27 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
     await aiTurn();
     o.방패={손:S.ai.hand.length, hp:S.ai.board[0]&&S.ai.board[0].insts[0].hp,
             burn:S.ai.board[0]&&S.ai.board[0].burn};
-    /* 붙여도 그 턴에 타 죽는 몸에는 주지 않는다 — 용암 정령 3/1 에 도화선(연소 3) */
+    /* 잿불 방화범 — 도화선은 **한 턴을 넘길 몸**에 먼저 간다(와이번 4/6 vs 용암 정령 3/1) */
+    setup(['도화선'],['용암 정령','와이번']);
+    await aiTurn();
+    o.도화선={손:S.ai.hand.length,
+              대상:S.ai.board.map(u=>`${u.name} ${u.a}/${u.insts[0].hp} b${u.burn||0}`)};
+    /* 그런 몸이 없어도 **마지막 순위로** 남은 하수인에게 쓴다 — 손에서 썩히지 않는다 */
     setup(['도화선'],['용암 정령']);
     await aiTurn();
-    o.낭비={손:S.ai.hand.length};
+    o.낭비={손:S.ai.hand.length, 몸:S.ai.board[0]
+      &&`${S.ai.board[0].name} ${S.ai.board[0].a}/${S.ai.board[0].insts[0].hp} b${S.ai.board[0].burn}`};
+    /* 화염술사 — 파이어볼이 제 화염 아귀까지 태우면, 방패를 **먼저** 두르고 쏜다 */
+    setup(['화염 방패','파이어볼'],['화염 아귀']);
+    ['검사','검사','검사'].forEach(n=>{const i=S.me.board.length;placeCreature('me',n,i);});
+    await aiTurn();
+    o.연계={손:S.ai.hand.length, 아귀:S.ai.board[0]&&S.ai.board[0].insts[0].hp,
+            내판:S.me.board.filter(Boolean).length};
+    /* 방패가 없고 상대 판도 두꺼우면(안 죽으면) 제 몸을 태우면서까지 쏘지 않는다 */
+    setup(['파이어볼'],['화염 아귀']);
+    ['석벽','석벽','석벽'].forEach(n=>{const i=S.me.board.length;placeCreature('me',n,i);});
+    await aiTurn();
+    o.보류={손:S.ai.hand.length, 아귀:S.ai.board[0]&&S.ai.board[0].insts[0].hp};
     setup(['불씨 살리기'],['불씨정령','화염정령']);
     await aiTurn();
     o.살리기={손:S.ai.hand.length, hp:S.ai.board.map(u=>u.insts[0].hp)};
@@ -172,7 +189,14 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
   /* 3/1 + 방패(+0/+5) = 6, 게다가 방패 자체가 스펠이라 화염 아귀가 한 번 더 반응해 8 이 된다 */
   ok('AI 도 강화 스펠을 낸다', A.방패.손===0&&A.방패.hp===8&&A.방패.burn===2,
      `화염 방패 → 화염 아귀 HP ${A.방패.hp} 연소 ${A.방패.burn} (방패도 스펠이라 +1 이 더 붙는다)`);
-  ok('탈 몸에는 안 붙인다', A.낭비.손===1, '용암 정령(3/1)에 도화선(연소 3) — 그냥 죽으므로 보류');
+  ok('도화선은 살 몸에 먼저', A.도화선.손===0&&/와이번 9\/6 b5/.test(A.도화선.대상.join()),
+     A.도화선.대상.join(' · '));
+  ok('없으면 아무에게나', A.낭비.손===0&&/용암 정령 8\/1 b3/.test(A.낭비.몸||''),
+     `${A.낭비.몸} — 손에서 썩히느니 얹은 ATK 만큼이라도 얼굴에 넣는다`);
+  ok('방패 → 파이어볼 순서', A.연계.손===0&&A.연계.아귀>0&&A.연계.내판===0,
+     `두 장 다 사용 · 화염 아귀 HP ${A.연계.아귀} 생존 · 내 판 ${A.연계.내판}종`);
+  ok('못 살리면 안 쏜다', A.보류.손===1&&A.보류.아귀===1,
+     '방패가 없고 상대도 안 죽는다 — 제 화염 아귀를 태우면서까지 쏘지 않는다');
   ok('AI 전체 강화', A.살리기.손===0&&A.살리기.hp.join()!=='',
      `불씨 살리기 → 연소 크리처 HP ${A.살리기.hp.join('/')}`);
   ok('받을 게 없으면 안 낸다', A.헛손질.손===1, '검사만 있을 때는 불씨 살리기를 아낀다');

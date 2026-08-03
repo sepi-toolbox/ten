@@ -607,15 +607,29 @@ document.getElementById('draw').onclick=e=>{ if(e.target.id==='draw')closeDraw()
 function setMode(m){ F.mode=m; F.k='all'; F.q=''; F.t='all'; document.getElementById('q').value=''; draw(); }
 document.getElementById('tabCard').onclick=()=>setMode('card');
 document.getElementById('tabFoe').onclick=()=>setMode('foe');
-/* 확대 — 게임의 확대 화면과 같은 규격(lg) + 용어 설명 */
+/* 확대 — 게임의 확대 화면과 같은 규격(lg) + 용어 설명.
+   성장·진형 상위 몸, 되살아나는 몸이 있으면 **뒤에 겹쳐** 보여 준다(게임과 같은 .zstack).
+   ⚠ 여기서 안 보여 주면 상위 몸·잿더미 몸은 목록 어디에도 안 나온다. */
 function openZoom(n){
   const z=document.getElementById('zoom');
+  const peer=LANDS[n]?null:grownPeer(n);
   const card=LANDS[n]?landCardHTML(n,'lg'):tcardHTML(n,{size:'lg'});
-  z.innerHTML=`<div class="zwrap">${card}${LANDS[n]?'':glossaryFor(n,null)}</div>`
-    +'<div class="zhint">아무 곳이나 눌러 닫기</div>';
+  const stack=peer
+    ? `<div class="zstack" data-a="${n}" data-b="${peer}">`
+      +`<div class="zfront">${card}</div>`
+      +`<div class="zback">${tcardHTML(peer,{size:'lg'})}</div>`
+      +`<i class="zswipe">← 넘겨서 ${peerLabel(n,peer)} 보기 →</i></div>`
+    : card;
+  z.innerHTML=`<div class="zwrap">${stack}${LANDS[n]?'':glossaryFor(n,null)}</div>`
+    +`<div class="zhint">${peer?'카드를 넘겨 뒷면 · <b>카드 밖</b>을 눌러 닫기'
+                              :'아무 곳이나 눌러 닫기'}</div>`;
   z.classList.add('on');
+  bindZoomSwipe(z);
 }
-document.getElementById('zoom').onclick=()=>{
+/* ⚠ 겹친 카드 위에서 시작한 손짓은 창을 닫지 않는다 —
+   막지 않으면 넘겨 보려는 탭·스와이프가 그대로 창을 닫아 뒷면을 아예 볼 수 없다. */
+document.getElementById('zoom').onclick=e=>{
+  if(e.target&&e.target.closest&&e.target.closest('.zstack'))return;
   const z=document.getElementById('zoom'); z.classList.remove('on'); z.innerHTML='';
 };
 document.getElementById('q').oninput=e=>{F.q=e.target.value.trim().toLowerCase();draw();};
@@ -693,6 +707,14 @@ def main():
         block(src, "CARDJS"),
         func(src, "landCardHTML"),
         func(src, "glossaryFor"),
+        # 겹쳐 보기(성장·진형·되살아남) — 판정은 전부 게임 쪽 함수를 그대로 가져다 쓴다.
+        # 여기서 다시 적으면 두 벌이 되어 반드시 어긋난다.
+        const(src, "RISE"),
+        func(src, "riseOf"),
+        func(src, "grownPeer"),
+        func(src, "riseBase"),
+        func(src, "peerLabel"),
+        func(src, "bindZoomSwipe"),
     ])
     out = PAGE.replace("__PROTO_CSS__", css).replace("__PROTO_JS__", js)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
