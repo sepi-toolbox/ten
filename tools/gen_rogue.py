@@ -70,9 +70,15 @@ def make_over(el, deck):
                             "v": nv, "el": el, "d": rule, "over": 1, "base": nm,
                             "r": G.rar(nm)}
     for (nm, c, dr, E, C, scope, cp, rule) in deck["enchants"]:
-        out[PREFIX + nm] = {"c": c, "k": "en", "cc": G.color_req(c),
-                            "v": math.ceil(E * OVER), "ch": C, "el": el,
-                            "d": rule, "over": 1, "base": nm, "r": G.rar(nm)}
+        e = {"c": c, "k": "en", "cc": G.color_req(c),
+             "v": math.ceil(E * OVER), "ch": C, "el": el,
+             "d": rule, "over": 1, "base": nm, "r": G.rar(nm)}
+        # ⚠ 트리거·효과를 **반드시 물려받아야** 한다. 빠뜨리면 강화 인챈트가 전부
+        #   기본값(얼굴 피해)으로 떨어져 인쇄된 규칙과 다르게 돈다.
+        tg = G.ENCH_TRIG.get(nm)
+        if tg:
+            e["tg"], e["fx"] = tg
+        out[PREFIX + nm] = e
     return out
 
 

@@ -164,6 +164,10 @@ def main():
                 rarity=G.rar(nm), note=""))
             pool[nm] = {"c": c, "k": "sp", "cc": cc, "mode": mode, "v": val,
                         "el": el, "d": rule, "copies": cp}
+            # 인챈트는 트리거형이다 — 언제 발동하고 무엇을 하는지를 데이터로 싣는다
+            tg = G.ENCH_TRIG.get(nm)
+            if tg:
+                pool[nm]["tg"], pool[nm]["fx"] = tg
             if G.rar(nm) != "common":
                 pool[nm]["r"] = G.rar(nm)
             # 매수 0 = 카드 풀에만 두고 덱에는 안 싣는다(골격을 안 건드리고 새 카드를 시험할 때)
@@ -181,6 +185,10 @@ def main():
                 rarity=G.rar(nm), note=""))
             pool[nm] = {"c": c, "k": "en", "cc": cc, "v": E, "ch": C,
                         "el": el, "d": rule, "copies": cp}
+            # 인챈트는 트리거형이다 — 언제 발동하고 무엇을 하는지를 데이터로 싣는다
+            tg = G.ENCH_TRIG.get(nm)
+            if tg:
+                pool[nm]["tg"], pool[nm]["fx"] = tg
             if G.rar(nm) != "common":
                 pool[nm]["r"] = G.rar(nm)
             # 매수 0 = 카드 풀에만 두고 덱에는 안 싣는다(골격을 안 건드리고 새 카드를 시험할 때)
