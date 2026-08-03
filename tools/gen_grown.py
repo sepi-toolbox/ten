@@ -78,7 +78,8 @@ def build():
                 continue
             kind, rest = gk
             aw, hw, tadj = G.W[tag]
-            mult, adj, text = G.kw_resolve(rest, cost)
+            # ⚠ 연소가 남아 있으면 배수가 체력에 달렸다 — 원본 체력으로 잡는다
+            mult, adj, text = G.kw_resolve(rest, cost, h)
             bud = round((G.cbase(cost) + tadj) * mult * G.rmult(name) * G.GROW_MULT) + adj
             na, nh = fit(bud, tag, a, h, cost)
             gname = f"{PREFIX[kind]} {name}"
