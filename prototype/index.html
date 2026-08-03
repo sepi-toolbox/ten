@@ -12,6 +12,8 @@
 <noscript><style>#nojs{display:block!important}</style></noscript>
 <style>
 :root{
+  --fieldcw:84px;                 /* 크리처·인챈트 판의 카드 폭 */
+  --lzcw:66px;                    /* 지형존 카드 폭 (읽을 정보가 적어 조금 작게) */
   --bg:#120d09; --leather:#241a12; --leather-2:#2e2116; --wood:#3a2a1a;
   --parch:#ece0c4; --parch-2:#ddceac; --parch-edge:#c9b688;
   --ink:#2a1d10; --ink-soft:#5a4630; --ink-faint:#8a7452;
@@ -95,17 +97,37 @@ body::before{
   letter-spacing:.06em;margin-left:8px}
 
 /* ---- board ---- */
-.board{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin-bottom:14px;padding:9px;
+/* 판은 격자가 아니라 '가운데로 모인 한 줄'이다. 카드는 --fieldcw 폭으로 크게 그리고,
+   자리가 모자라면 손패처럼 겹친다(오른쪽이 왼쪽을 덮는다). */
+.board{position:relative;display:flex;justify-content:center;align-items:flex-end;
+  min-height:calc(var(--fieldcw,84px)*1.4 + 10px);gap:0;margin-bottom:14px;padding:5px 6px;
   background:linear-gradient(180deg,rgba(0,0,0,.32),rgba(0,0,0,.14));
   border:1px solid var(--rule);border-radius:8px;
   box-shadow:inset 0 0 30px rgba(0,0,0,.6)}
+/* 자리는 packRow 가 left 로 직접 잡는다.
+   ⚠ .slot 의 기본 transition 은 `all` 이라 left 까지 물린다 → render 마다 카드가 왼쪽에서
+   미끄러져 들어오고, 방금 넣은 값을 읽으면 아직 0 이 나온다(테스트가 통째로 헷갈렸다).
+   판에서는 위치를 즉시 반영하고 색·그림자만 부드럽게 둔다. */
+.board.packed>.slot{position:absolute;bottom:5px;left:0;
+  transition:border-color .16s,box-shadow .16s,filter .16s}
+.board>.slot{flex:none;width:var(--fieldcw,84px)}
+.board.lz{min-height:calc(var(--lzcw,66px)*1.4 + 10px)}
+.board.lz>.slot{width:var(--lzcw,66px)}
+.board.empty::after{content:'여기에 소환';position:absolute;left:50%;top:50%;
+  transform:translate(-50%,-50%);font-family:'Cinzel',serif;font-size:10px;letter-spacing:.2em;
+  color:var(--gold);opacity:.28;pointer-events:none}
+/* 끼워 넣을 자리 표시 — 드래그 중 손끝 위치에 따라 좌/우/사이가 정해진다 */
+.dropbar{position:absolute;top:4px;bottom:4px;width:3px;margin-left:-1.5px;border-radius:3px;
+  background:linear-gradient(180deg,var(--gold-bright),var(--gold));opacity:0;z-index:90;
+  box-shadow:0 0 10px var(--gold-bright),0 0 22px rgba(242,212,136,.6);
+  transition:left .09s ease,opacity .12s}
+.dropbar.on{opacity:1}
 .slot{
   aspect-ratio:5/7;container-type:inline-size;border:1px solid #4a371f;border-radius:5px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   position:relative;background:linear-gradient(180deg,#1e150d,#150e08);
   cursor:default;transition:.16s;padding:2px;overflow:hidden;font-family:'Gowun Batang',serif;
   box-shadow:inset 0 1px 3px rgba(0,0,0,.6)}
-.slot.idx::after{content:attr(data-i);position:absolute;top:2px;left:4px;font-size:7px;font-family:'Cinzel',serif;color:var(--gold);opacity:.35}
 .slot.occ{background:linear-gradient(180deg,var(--parch),var(--parch-2));border:1.5px solid var(--gold);cursor:pointer;
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.3),0 2px 5px rgba(0,0,0,.45)}
 .slot.guard{border-color:var(--emerald);box-shadow:inset 0 0 0 1px rgba(255,255,255,.25),0 0 9px rgba(47,157,132,.45)}
@@ -677,16 +699,16 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
   .wrap{max-width:none;height:100dvh;display:flex;flex-direction:column;gap:0;padding:0}
 
   /* 머리 — 한 줄로 압축 */
-  .hdr{margin:0;padding:5px 8px 4px;gap:6px;flex:none;align-items:center;border-bottom:1px solid var(--rule)}
-  .hdr h1{font-size:15px;letter-spacing:0}
+  .hdr{margin:0;padding:3px 8px 2px;gap:5px;flex:none;align-items:center;border-bottom:1px solid var(--rule)}
+  .hdr h1{font-size:14px;letter-spacing:0}
   .hdr .meta{font-size:9px;letter-spacing:.1em;order:4;margin-left:auto}
   .modepick{margin-left:6px;order:2;gap:4px}
   .modepick button{font-size:9.5px;padding:4px 8px}
   .sideBtn{padding:4px 9px!important;font-size:12px!important}
-  .deckpick{order:5;flex:1 0 100%;margin:4px 0 0;flex-wrap:nowrap;overflow-x:auto;
+  .deckpick{order:5;flex:1 0 100%;margin:2px 0 0;flex-wrap:nowrap;overflow-x:auto;
     -webkit-overflow-scrolling:touch;scrollbar-width:none}
   .deckpick::-webkit-scrollbar{display:none}
-  .deckpick button{font-size:9px;padding:4px 8px;flex:none}
+  .deckpick button{font-size:8.5px;padding:3px 7px;flex:none}
 
   /* 판 — 세로로 쌓고, 가운데에 조작 줄을 끼운다 */
   .main{flex:1;min-height:0;display:flex;flex-direction:column;padding:4px 6px 0;
@@ -698,7 +720,7 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
   #lbMyLz{order:9} #myLz{order:10}
   #myBar{order:11} #lbHand{order:12} #hand{order:13}
 
-  .bar{flex:none;gap:7px;padding:5px 8px;margin-bottom:2px;border-radius:5px}
+  .bar{flex:none;gap:7px;padding:4px 8px;margin-bottom:1px;border-radius:5px}
   .bar .who{font-size:10px;min-width:0;max-width:38%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .bar .hp{font-size:17px;min-width:26px}
   .bar .hpbar{height:8px;min-width:40px}
@@ -710,9 +732,11 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
   .lbl{flex:none;font-size:8px;letter-spacing:.1em;margin:1px 0 2px;display:flex;align-items:center}
   #lbFoeLz,#lbFoeB,#lbMyB,#lbMyLz{margin-top:auto}
   .lzc{font-size:8.5px;margin-left:5px;letter-spacing:0}
-  .board{flex:none;gap:2px;padding:3px;margin-bottom:2px;border-radius:5px}
+  .board{flex:none;padding:2px 4px;margin-bottom:1px;border-radius:5px;
+    min-height:calc(var(--fieldcw)*1.4 + 6px)}
+  .board.lz{min-height:calc(var(--lzcw)*1.4 + 6px)}
+  .board.packed>.slot{bottom:3px}
   .slot{border-radius:3px;padding:1px}
-  .slot.idx::after{font-size:5.5px;top:1px;left:2px}
   .kb{font-size:5.5px;padding:1px 2px}
   .kbs{gap:1px;right:1px}
 
@@ -722,11 +746,13 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
   .ctl button{font-size:10.5px;padding:7px 10px;flex:none}
 
   /* 손패 — 넘치면 겹친다(--hgap 은 render 가 계산해 음수로 넣는다) */
-  :root{--handcw:clamp(78px,24vw,112px);--foecw:clamp(38px,11vw,52px)}
-  .hand.foe{flex:none;padding:6px 0 6px}
+  /* 모바일 — 판 카드는 손패보다 조금만 작게. 10칸 격자를 버렸으니 크게 그릴 수 있다. */
+  :root{--handcw:clamp(76px,23vw,108px);--foecw:clamp(30px,8.5vw,42px);
+        --fieldcw:clamp(54px,17.5vw,80px);--lzcw:clamp(42px,12.5vw,58px)}
+  .hand.foe{flex:none;padding:3px 0 3px}
   #lbHand{display:none}
   /* 손패는 화면 바닥에 붙인다 — 남는 세로 여백이 판과 손패 사이로 간다 (하스스톤 배치) */
-  .hand{flex:none;margin-top:auto;padding:6px 0 12px;justify-content:center;overflow:visible}
+  .hand{flex:none;margin-top:auto;padding:4px 0 6px;justify-content:center;overflow:visible}
   /* 터치에는 hover 가 없다. 강조는 광채뿐이라 따로 끌 것이 없다. */
 
   /* 로그·덱 설명은 아래에서 올라오는 서랍으로 */
@@ -1520,11 +1546,11 @@ function landCardHTML(name,size){
 }
 
 /* 지형존 — 내려놓은 지형 카드를 그대로 보여주고, 그 위에 자원 토큰을 얹는다. */
+/* 지형존도 놓은 것만 보여 준다 — 손패처럼 오른쪽이 왼쪽을 일부 덮으며 쌓인다. */
 function lzHTML(p){
   const L=S[p].lands; let h='';
-  for(let i=0;i<MANACAP;i++){
+  for(let i=0;i<L.length;i++){
     const l=L[i];
-    if(!l){ h+=`<div class="slot idx" data-i="${i+1}"></div>`; continue; }
     const c1=(EL[l.els[0]]||EL.steel).c;
     const c2=l.els[1]?(EL[l.els[1]]||EL.steel).c:null;
     const fill=c2?`linear-gradient(135deg,${c1} 0 50%,${c2} 50% 100%)`:c1;
@@ -1536,7 +1562,7 @@ function lzHTML(p){
           :`<i class="tok" style="background:${fill};box-shadow:0 0 9px ${c1}"></i>`)
       : `<i class="tok ${st==='ent'?'ent':'gone'}"></i>`;
     const tag=st==='ent'?'대기':(st==='used'?'소모':'');
-    h+=`<div class="slot occ idx ${st}" data-i="${i+1}" title="${l.name} · ${tip}">`
+    h+=`<div class="slot occ ${st}" title="${l.name} · ${tip}">`
       +`${landCardHTML(l.name,'sm')}${tok}${tag?`<span class="ltag">${tag}</span>`:''}</div>`;
   }
   return h;
@@ -1647,18 +1673,30 @@ function onSummon(p,name,idx){
   }
   const fn=ONSUMMON[name]; if(fn)fn(p,idx);
 }
-/* 크리처는 빈 슬롯에만 놓인다. 같은 이름이라도 겹치지 않는다. */
-function placeCreature(p,name,idx){
+/* 보드는 **구멍 없는 목록**이다(2026-08). 슬롯 번호가 아니라 '몇 번째'가 곧 위치이고,
+   원하는 자리에 끼워 넣을 수 있다. 상한은 SLOTS(10)장. */
+function boardRoom(p){ return S[p].board.filter(Boolean).length<SLOTS; }
+function placeCreature(p,name,at){
   const B=S[p].board;
-  if(B[idx])return false;
-  B[idx]=mkUnit(name,idx); return true;
+  if(!boardRoom(p))return false;
+  const i=Math.max(0,Math.min(B.length,at==null?B.length:at));
+  B.splice(i,0,mkUnit(name,i));
+  reform(p); return true;
 }
-function firstEmpty(p,fromLeft=true){
-  const B=S[p].board;
-  if(fromLeft){for(let i=0;i<SLOTS;i++) if(!B[i]) return i;}
-  else{for(let i=SLOTS-1;i>=0;i--) if(!B[i]) return i;}
-  return -1;
+/* 진형 — 앞자리(1~3번)에 있을 때만 체력이 붙는다. 끼워 넣기로 자리가 밀리면 다시 계산한다. */
+function reform(p){
+  S[p].board.forEach((u,i)=>{
+    if(!u||u.kind!=='cr')return;
+    const f=kwNum(u.kw,'진형'); if(!f)return;
+    const on=i<3, was=!!u.form;
+    if(on===was)return;
+    u.form=on?f:0;
+    u.insts.forEach(x=>{ x.mh+=on?f:-f; x.hp+=on?f:-f; if(x.hp<1&&!on)x.hp=Math.max(1,x.hp); });
+    log(`  ${u.name} 진형 ${on?'적용':'해제'} (체력 ${on?'+':'−'}${f})`,'t');
+  });
 }
+/* 빈 자리 = 목록의 끝. 자리가 없으면 -1. */
+function firstEmpty(p){ return boardRoom(p)?S[p].board.length:-1; }
 /* 사망 판정은 전부 여기를 지난다 — 가호(파괴 무효)·환류·폭산·불사조가 걸려 있다 */
 let DEATHD=0;                                /* 폭산 연쇄가 무한히 튀지 않게 하는 깊이 제한 */
 function cleanup(p){
@@ -1680,6 +1718,8 @@ function cleanup(p){
     if(!u.insts.length)B[i]=null;
   }
   deaths.forEach(d=>onDeath(p,d.u,d.i,d.died));
+  const packed=B.filter(Boolean);                 /* 구멍을 남기지 않는다 */
+  if(packed.length!==B.length){ B.length=0; packed.forEach(u=>B.push(u)); reform(p); }
 }
 function onDeath(p,u,idx,cnt){
   if(u.token)return;
@@ -2111,11 +2151,12 @@ function resolveSummon(p,name,idx){
   const c=POOL[name], t=parseSummon(c.d), who=p==='me'?'나':'상대';
   let made=0;
   for(let k=0;k<t.n;k++){
-    const slot=k===0?idx:firstEmpty(p,true);
-    if(slot<0||S[p].board[slot])continue;
-    S[p].board[slot]=mkToken(name.replace(/\s.*$/,'')+' 토큰',t.a,t.h);
+    if(!boardRoom(p))break;
+    const at=Math.max(0,Math.min(S[p].board.length,(idx==null?S[p].board.length:idx)+k));
+    S[p].board.splice(at,0,mkToken(name.replace(/\s.*$/,'')+' 토큰',t.a,t.h));
     made++;
   }
+  if(made)reform(p);
   log(`${who} ${name} — ${t.a}/${t.h} 토큰 ${made}개체 소환`,'g');
   return made>0;
 }
@@ -2144,16 +2185,17 @@ async function clickSlot(side,idx){
   if(S.over||S.busy||S.active!=='me'||S.sel===null)return;
   const n=S.me.hand[S.sel],c=POOL[n];
   if(S.mode==='place'&&side==='me'){
-    const B=S.me.board[idx];
-    if(B)return;
-    placeCreature('me',n,idx);
-    log(`나 ${n} 소환 [슬롯 ${idx+1}]`,c.g?'g':(c.f?'f':''));
+    /* idx 는 '몇 번째에 끼울지'다 — 그 자리에 카드가 있어도 밀어 넣는다 */
+    if(!placeCreature('me',n,idx))return;
+    log(`나 ${n} 소환 [${Math.min(idx,S.me.board.length)+1}번째]`,c.g?'g':(c.f?'f':''));
     onSummon('me',n,idx);
     S.spawn={side:'me',idx};setTimeout(()=>{S.spawn=null;},520/SPEED);
   }else if(S.mode==='ench'&&side==='me'){
-    if(S.me.board[idx])return;
-    S.me.board[idx]={name:n,kind:'en',v:c.v,charge:c.ch};
-    log(`나 ${n} 배치 [슬롯 ${idx+1}] 충전 ${c.ch}`,'e');
+    if(!boardRoom('me'))return;
+    const at=Math.max(0,Math.min(S.me.board.length,idx));
+    S.me.board.splice(at,0,{name:n,kind:'en',v:c.v,charge:c.ch});
+    reform('me');
+    log(`나 ${n} 배치 [${at+1}번째] 충전 ${c.ch}`,'e');
     S.spawn={side:'me',idx};setTimeout(()=>{S.spawn=null;},520/SPEED);
   }else if(S.mode==='summon'&&side==='me'){
     if(S.me.board[idx])return;
@@ -2269,11 +2311,10 @@ function modeOf(n){
   if(NEEDS_MINE.includes(c.mode))return 'mine';
   return 'target';
 }
-function leftFree(p){ for(let i=0;i<SLOTS;i++) if(!S[p].board[i]) return i; return -1; }
+function leftFree(p){ return boardRoom(p)?S[p].board.length:-1; }
 function slotOkFor(mode,n,side,idx){
   const u=S[side].board[idx];
-  if(mode==='place')  return !u;
-  if(mode==='ench'||mode==='summon') return !u;
+  if(mode==='place'||mode==='ench'||mode==='summon') return boardRoom(side);
   if(mode==='mine')   return !!u&&u.kind==='cr'&&u.insts.length>0;
   if(mode==='target') return !!u&&(POOL[n].mode==='shatter'?u.kind==='en':u.kind==='cr');
   return false;
@@ -2298,8 +2339,7 @@ function autoFoe(n){                       /* 제거 대상 — 잡을 수 있�
   return kill>=0?kill:best;
 }
 function autoIdx(mode,n){
-  if(mode==='place') return leftFree('me');
-  if(mode==='ench'||mode==='summon') return leftFree('me');
+  if(mode==='place'||mode==='ench'||mode==='summon') return boardRoom('me')?S.me.board.length:-1;
   if(mode==='mine')   return autoMine();
   if(mode==='target') return autoFoe(n);
   return -1;
@@ -2312,7 +2352,7 @@ function toast(msg){
   document.body.appendChild(t); setTimeout(()=>t.remove(),1600);
 }
 /* hit = {side,idx} 드롭 지점의 슬롯(없으면 null) */
-function playFromHand(i,hit){
+function playFromHand(i,hit,at){
   if(S.over||S.busy||S.active!=='me')return false;
   const n=S.me.hand[i]; if(n===undefined)return false;
   if(isLand(n)){
@@ -2330,6 +2370,8 @@ function playFromHand(i,hit){
      대상 스펠만은 떨어진 곳이 유효한 대상이면 그 대상을 존중한다. */
   const honor=(mode==='target'||mode==='mine');
   let idx=(honor&&hit&&hit.side===side&&slotOkFor(mode,n,side,hit.idx))?hit.idx:-1;
+  /* 소환·배치는 드래그가 정해 준 끼울 자리를 쓴다(없으면 맨 뒤) */
+  if(idx<0&&!honor&&at!=null&&boardRoom('me'))idx=Math.max(0,Math.min(S.me.board.length,at));
   if(idx<0)idx=autoIdx(mode,n);
   if(idx<0){ S.sel=null;S.mode=null;render(); toast(NOSLOT[mode]||'놓을 수 없다'); return false; }
   clickSlot(side,idx);
@@ -2443,15 +2485,45 @@ function kwBadges(u){
   return b.length?`<div class="kbs">${b.join('')}</div>`:'';
 }
 function slotHTML(u,side,i){
-  if(!u)return `<div class="slot idx" data-i="${i+1}" data-side="${side}" data-idx="${i}"></div>`;
-  let cls='slot occ idx';
+  if(!u)return '';
+  let cls='slot occ';
   if(u.kind==='en')cls+=' ench';
   else if(u.g&&u.f)cls+=' flyguard';
   else if(u.g)cls+=' guard';
   else if(u.f)cls+=' fly';
   else if(u.p)cls+=' pierce';
-  return `<div class="${cls}" data-i="${i+1}" data-side="${side}" data-idx="${i}">`
+  return `<div class="${cls}" data-side="${side}" data-idx="${i}">`
     +`${tcardHTML(u.name,{size:'sm',unit:u})}${kwBadges(u)}</div>`;
+}
+/* 판 한 줄을 가운데로 모으고, 폭이 모자라면 손패처럼 오른쪽이 왼쪽을 덮게 겹친다.
+   ⚠ 카드를 **절대 배치**로 깐다. 플렉스 + 음수 margin 으로 하려다 실패했다 —
+   판의 슬롯은 `container-type:inline-size` 라 컨테인먼트가 걸려 있어서
+   margin(인라인·!important 포함)이 먹지 않았다. left 로 직접 놓으면 그런 변수가 없다. */
+function packRow(el){
+  if(!el)return;
+  const cards=[...el.querySelectorAll(':scope > .slot')];
+  const n=cards.length;
+  el.classList.toggle('empty',!n);
+  el.classList.toggle('packed',!!n);
+  if(!n)return;
+  const cw=cards[0].offsetWidth||60;
+  const avail=Math.max(40,el.clientWidth-8);
+  let step=cw+5;                                     /* 겹치지 않을 때의 간격 */
+  if(n>1&&cw+(n-1)*step>avail){
+    const minShow=Math.max(24,cw*0.36);              /* 한 장이 최소 이만큼은 보이게 */
+    step=Math.max(minShow,(avail-cw)/(n-1));
+  }
+  const vis=cw+(n-1)*step;
+  const x0=Math.max(4,(el.clientWidth-vis)/2);
+  cards.forEach((c,i)=>{
+    c.style.left=(x0+i*step).toFixed(1)+'px';
+    c.style.zIndex=String(10+i);                     /* 오른쪽 카드가 왼쪽을 덮는다 */
+  });
+}
+function boardHTML(p){
+  const side=p==='me'?'me':'ai';
+  const cards=S[p].board.map((u,i)=>slotHTML(u,side,i)).join('');
+  return cards+(p==='me'?'<i class="dropbar" id="dropbar"></i>':'');
 }
 function render(){
   const mine=S.active==='me'&&!S.over&&!S.busy;
@@ -2463,15 +2535,18 @@ function render(){
   ['me','ai'].forEach(p=>{
     const el=document.getElementById(p==='me'?'myMana':'foeMana');
     el.innerHTML=`<span class="mtxt">${manaLeft(p)}/${S[p].lands.length}</span>`;
-    document.getElementById(p==='me'?'myLz':'foeLz').innerHTML=lzHTML(p);
+    const lzEl=document.getElementById(p==='me'?'myLz':'foeLz');
+    lzEl.innerHTML=lzHTML(p); packRow(lzEl);
     document.getElementById(p==='me'?'myLzInfo':'foeLzInfo').textContent=
       `사용 가능 ${manaLeft(p)} / 배치 ${S[p].lands.length} / 상한 ${MANACAP}`;
     document.getElementById(p==='me'?'myCnt':'foeCnt').textContent=`손 ${S[p].hand.length} · 덱 ${S[p].deck.length}`;
   });
   document.getElementById('turnMeta').textContent=`TURN ${S.turn} · ${S.active==='me'?'내 턴':'상대 턴'}`;
   // boards
-  document.getElementById('foeBoard').innerHTML=S.ai.board.map((u,i)=>slotHTML(u,'ai',i)).join('');
-  document.getElementById('myBoard').innerHTML=S.me.board.map((u,i)=>slotHTML(u,'me',i)).join('');
+  document.getElementById('foeBoard').innerHTML=boardHTML('ai');
+  document.getElementById('myBoard').innerHTML=boardHTML('me');
+  packRow(document.getElementById('foeBoard'));
+  packRow(document.getElementById('myBoard'));
   // pick highlight
   if(mine&&S.sel!==null){
     const n=S.me.hand[S.sel],c=POOL[n];
@@ -2577,9 +2652,9 @@ function render(){
     const n=S.me.hand[S.sel];
     const cm=POOL[n]||{};
     if(isLand(n))hint.textContent=`${n} — 손패 밖에 놓으면 지형 배치`;
-    else if(S.mode==='place')hint.textContent=`${n} — 손패 밖에 놓으면 왼쪽 빈 칸부터 소환 (슬롯을 탭하면 그 자리)`;
-    else if(S.mode==='ench')hint.textContent=`${n} — 손패 밖에 놓으면 왼쪽 빈 슬롯에 배치`;
-    else if(S.mode==='summon')hint.textContent=`${n} — 손패 밖에 놓으면 왼쪽 빈 슬롯에 토큰 소환`;
+    else if(S.mode==='place')hint.textContent=`${n} — 판 위로 끌면 놓일 자리가 표시된다 (사이에도 끼울 수 있다)`;
+    else if(S.mode==='ench')hint.textContent=`${n} — 판 위로 끌면 놓일 자리가 표시된다`;
+    else if(S.mode==='summon')hint.textContent=`${n} — 판 위로 끌면 토큰이 놓일 자리가 표시된다`;
     else if(S.mode==='mine')hint.textContent=`${n} — 강화할 내 크리처를 지정하세요`;
     else if(S.mode==='target')hint.textContent=`${n} — 상대 ${cm.mode==='shatter'?'인챈트':'크리처'}를 지정하세요`;
     else{hint.innerHTML=`${n} — ${SPELL_KO[cm.mode]||''} 즉시 발동 &nbsp;<b style="cursor:pointer;text-decoration:underline" id="fire">[발동]</b>`;
@@ -2697,8 +2772,8 @@ document.addEventListener('contextmenu',e=>{ if(e.target.closest('.slot.occ,.hcw
 /* 손패는 가로 스크롤이므로 제스처를 나눈다 — 가로 우세 = 스크롤 · 세로(위) = 카드 끌어내기.
    드롭 판정은 "손패 사각형 밖이면 발동". 슬롯을 정확히 맞출 필요가 없다. */
 let DR=null, dg=null, HANDLOCK=false;
-const DZTIP={land:'지형 배치',place:'왼쪽 빈 칸부터 소환',ench:'왼쪽 빈 칸에 배치',
-  summon:'왼쪽 빈 칸에 토큰 소환',instant:'즉시 발동',
+const DZTIP={land:'지형 배치',place:'표시된 자리에 소환',ench:'표시된 자리에 배치',
+  summon:'표시된 자리에 토큰 소환',instant:'즉시 발동',
   mine:'대상 지정으로',target:'대상 지정으로'};
 function handRect(){ return document.getElementById('hand').getBoundingClientRect(); }
 function inHand(x,y){
@@ -2730,6 +2805,28 @@ function dragStart(i,x,y,dgid){
   DR={i,n,mode,g,tip,payable,pid:dgid};
   dragMove(x,y);
 }
+/* 손끝 x 로 '몇 번째에 끼울지'를 정한다 — 카드 중심을 지나면 그 다음 자리. */
+function insertAt(x){
+  const b=document.getElementById('myBoard'); if(!b)return 0;
+  const cards=[...b.querySelectorAll(':scope > .slot')];
+  let at=0;
+  cards.forEach(c=>{ const r=c.getBoundingClientRect(); if(x>r.left+r.width/2)at++; });
+  return Math.min(at,cards.length);
+}
+function showDropbar(at){
+  const b=document.getElementById('myBoard'), bar=document.getElementById('dropbar');
+  if(!b||!bar)return;
+  const cards=[...b.querySelectorAll(':scope > .slot')];
+  const bb=b.getBoundingClientRect();
+  let x;
+  if(!cards.length) x=bb.width/2;                                   /* 비면 한가운데 */
+  else if(at<=0) x=cards[0].getBoundingClientRect().left-bb.left-3;
+  else if(at>=cards.length) x=cards[cards.length-1].getBoundingClientRect().right-bb.left+3;
+  else{ const a=cards[at-1].getBoundingClientRect(), c=cards[at].getBoundingClientRect();
+        x=(Math.max(a.right,c.left)+c.left)/2-bb.left; }
+  bar.style.left=x+'px'; bar.classList.add('on');
+}
+function hideDropbar(){ const bar=document.getElementById('dropbar'); if(bar)bar.classList.remove('on'); }
 function dragMove(x,y){
   if(!DR)return;
   DR.g.style.transform=`translate(${x-46}px,${y-74}px) rotate(-3.5deg) scale(1.05)`;
@@ -2738,10 +2835,14 @@ function dragMove(x,y){
   DR.g.classList.toggle('bad',!DR.payable);
   DR.tip.classList.toggle('ok',ok);
   document.body.classList.toggle('armed',ok);
+  /* 소환·배치는 놓일 자리를 미리 보여 준다 */
+  if(ok&&(DR.mode==='place'||DR.mode==='ench'||DR.mode==='summon')&&boardRoom('me')){
+    DR.at=insertAt(x); showDropbar(DR.at);
+  }else{ DR.at=null; hideDropbar(); }
 }
 function dragEnd(x,y,cancel){
   if(!DR)return; const d=DR; DR=null;
-  d.g.remove(); d.tip.remove();
+  d.g.remove(); d.tip.remove(); hideDropbar();
   if(d.pid!=null){ try{document.body.releasePointerCapture(d.pid);}catch(_){ } }
   document.body.classList.remove('dragmode','armed');
   document.querySelectorAll('.hcw.dragging').forEach(e=>e.classList.remove('dragging'));
@@ -2758,7 +2859,7 @@ function dragEnd(x,y,cancel){
     if(autoIdx(d.mode,d.n)<0){ toast(NOSLOT[d.mode]); S.sel=null;S.mode=null;render(); return; }
     startTargeting(d.i,d.n,d.mode,x,y); return;
   }
-  playFromHand(d.i, hit);
+  playFromHand(d.i, hit, d.at);
 }
 
 /* ============ 타게팅 (하스스톤 방식) ============ */

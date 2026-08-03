@@ -57,8 +57,8 @@ const SIZES=[[390,844,'iPhone 14'],[360,780,'작은 안드로이드'],[430,932,'
     const ok=!m.스크롤&&!m.손패밖&&!m.바닥초과&&played>0&&zoom&&drawer&&!errs.length;
     if(!ok)bad++;
     console.log(`${ok?'✅':'❌'} ${label.padEnd(9)} ${w}×${h} | 스크롤없음 ${!m.스크롤} · 손패안쪽 ${!m.손패밖}`
-      +` · 카드 ${m.카드폭}px(보이는폭 ${m.보이는폭}) · 드래그소환 ${played>0} · 확대 ${zoom} · 서랍 ${drawer}`
-      +(errs.length?` · ERR ${errs[0]}`:''));
+      +` · 바닥초과 ${m.바닥초과} · 카드 ${m.카드폭}px(보이는폭 ${m.보이는폭}) · 드래그소환 ${played>0} · 확대 ${zoom} · 서랍 ${drawer}`
+      +(errs.length?` · ERR(${errs.length}) ${errs[0]}`:''));
     await p.close();
   }
   console.log(bad?`❌ ${bad}/${SIZES.length} 실패`:`✅ ${SIZES.length}종 전부 통과`);

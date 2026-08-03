@@ -7,7 +7,7 @@ await p.click('#keepBtn').catch(()=>{});await p.waitForTimeout(200);
 await p.evaluate(()=>{SPEED=40;});await p.waitForTimeout(150);
 const R=await p.evaluate(async()=>{
   const out=[]; const ok=(k,pass,detail)=>out.push({k,pass,detail});
-  const reset=()=>{ S.gen=(S.gen||0)+1; S.me.board=Array(SLOTS).fill(null); S.ai.board=Array(SLOTS).fill(null);
+  const reset=()=>{ S.gen=(S.gen||0)+1; S.me.board=[]; S.ai.board=[];
     S.me.hp=60; S.ai.hp=60; S.me.hand=[]; S.ai.hand=[]; S.over=false; S.busy=false; };
   const put=(p,n,i)=>{placeCreature(p,n,i);onSummon(p,n,i);};
   const hp=(p,i)=>{const u=S[p].board[i];return u&&u.insts[0]?u.insts[0].hp:null;};
@@ -71,10 +71,12 @@ const R=await p.evaluate(async()=>{
   ok('연마', S.me.board[0].a===a1+3&&hp('me',0)===h1+6,
      `${a1}/${h1} → ${S.me.board[0].a}/${hp('me',0)} (3회 상한)`);
 
-  // 진형 +4 — 앞열에서만 체력 가산
-  reset(); put('me','성문지기',0); put('ai','성문지기',5);
+  // 진형 +4 — 앞열(1~3번째)에서만 체력 가산. 보드는 구멍 없는 목록이라 6번째를 만들려면 앞을 채운다.
+  reset(); put('me','성문지기',0);
+  for(let k=0;k<5;k++)put('ai','파수병',k);
+  put('ai','성문지기',5);
   ok('진형', hp('me',0)===POOL['성문지기'].h+4 && S.ai.board[5].insts[0].hp===POOL['성문지기'].h,
-     `슬롯1 ${hp('me',0)} vs 슬롯6 ${S.ai.board[5].insts[0].hp} (기본 ${POOL['성문지기'].h})`);
+     `1번째 ${hp('me',0)} vs 6번째 ${S.ai.board[5].insts[0].hp} (기본 ${POOL['성문지기'].h})`);
 
   // 대가 6 — 소환 시 HP 지불
   reset(); const bhp=S.me.hp; put('me','피의광신도',0);
@@ -102,10 +104,11 @@ const R=await p.evaluate(async()=>{
   ok('조수술사', S.me.board[0]===null&&S.me.hand.includes('파수병'), `손패 ${JSON.stringify(S.me.hand)}`);
   reset(); put('me','파수병',0); const qa=S.me.board[0].a,qh=hp('me',0); put('me','숲의 여왕',1);
   ok('숲의 여왕', S.me.board[0].a===qa+1&&hp('me',0)===qh+1, `파수병 ${qa}/${qh} → ${S.me.board[0].a}/${hp('me',0)}`);
-  reset(); put('ai','파수병',0);put('ai','파수병',2);put('ai','파수병',5);
+  /* 보드는 구멍 없는 목록이라 6번째를 만들려면 6장을 세워야 한다 */
+  reset(); for(let k=0;k<6;k++)put('ai','파수병',k);
   const eh=hp('ai',0); put('me','지진술사',0);
   ok('지진술사', hp('ai',0)===eh-2&&hp('ai',2)===eh-2&&hp('ai',5)===eh,
-     `슬롯1 ${hp('ai',0)} · 슬롯3 ${hp('ai',2)} · 슬롯6 ${hp('ai',5)} (기본 ${eh})`);
+     `1번째 ${hp('ai',0)} · 3번째 ${hp('ai',2)} · 6번째 ${hp('ai',5)} (기본 ${eh})`);
   reset(); put('me','불사조',0);
   S.me.board[0].insts[0].hp=0; cleanup('me');
   const tk=S.me.board.find(x=>x&&x.token);

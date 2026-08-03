@@ -14,7 +14,8 @@ async function stock(){ await p.evaluate(()=>{
   /* 대상 스펠 한 장을 손에 보장한다 */
   const tsp=Object.keys(POOL).find(n=>POOL[n].k==='sp'&&POOL[n].el==='fire'&&POOL[n].c<=3
     &&!INSTANT.includes(POOL[n].mode)&&POOL[n].mode!=='summon'&&!NEEDS_MINE.includes(POOL[n].mode));
-  if(tsp&&!S.me.hand.includes(tsp))S.me.hand[0]=tsp;
+  /* 겹친 손패에서는 가운데를 집으면 오른쪽 이웃이 잡힌다 → 맨 오른쪽에 둔다 */
+  if(tsp)S.me.hand[S.me.hand.length-1]=tsp;
   render();}); await p.waitForTimeout(150); }
 async function dragOut(i,tx,ty){
   const el=await p.$(`#hand .hcw[data-h="${i}"]`); const bx=await el.boundingBox();
@@ -30,8 +31,7 @@ const board=await (await p.$('#myBoard')).boundingBox();
 const foeb =await (await p.$('#foeBoard')).boundingBox();
 
 // 1) 대상 스펠을 빈 곳에 떨구면 → 타게팅 진입 (즉시 발동 X)
-let i=await p.evaluate(()=>S.me.hand.findIndex(n=>POOL[n]&&POOL[n].k==='sp'&&canPay('me',n)
-  &&!INSTANT.includes(POOL[n].mode)&&POOL[n].mode!=='summon'&&!NEEDS_MINE.includes(POOL[n].mode)));
+let i=await p.evaluate(()=>S.me.hand.length-1);
 const nm=await p.evaluate(j=>S.me.hand[j],i);
 const h0=await p.evaluate(()=>S.me.hand.length);
 await dragOut(i, board.x+board.width/2, board.y-60);
@@ -55,8 +55,7 @@ console.log('3) 대상 탭 →','타게팅',await p.evaluate(()=>!!TGT),
 
 // 4) 빈 곳 탭 → 취소되고 카드는 손에 남는다
 await stock();
-i=await p.evaluate(()=>S.me.hand.findIndex(n=>POOL[n]&&POOL[n].k==='sp'&&canPay('me',n)
-  &&!INSTANT.includes(POOL[n].mode)&&POOL[n].mode!=='summon'&&!NEEDS_MINE.includes(POOL[n].mode)));
+i=await p.evaluate(()=>S.me.hand.length-1);
 if(i>=0){
   const h1=await p.evaluate(()=>S.me.hand.length);
   await dragOut(i, board.x+board.width/2, board.y-60);
@@ -70,8 +69,7 @@ if(i>=0){
 await stock();
 await p.evaluate(()=>{ const cr=Object.keys(POOL).filter(n=>POOL[n].k==='cr'&&POOL[n].el==='fire'&&POOL[n].h>=4);
   if(!S.ai.board.some(x=>x))placeCreature('ai',cr[0],2); render(); });
-i=await p.evaluate(()=>S.me.hand.findIndex(n=>POOL[n]&&POOL[n].k==='sp'&&canPay('me',n)
-  &&!INSTANT.includes(POOL[n].mode)&&POOL[n].mode!=='summon'&&!NEEDS_MINE.includes(POOL[n].mode)));
+i=await p.evaluate(()=>S.me.hand.length-1);
 if(i>=0){ const s=await p.$('#foeBoard .slot.occ'); const sb=await s.boundingBox();
   const h2=await p.evaluate(()=>S.me.hand.length);
   await dragOut(i, sb.x+sb.width/2, sb.y+sb.height/2);
@@ -85,9 +83,11 @@ await dragOut(i, board.x+board.width-20, board.y+30);
 console.log('6) 크리처 | 타게팅',await p.evaluate(()=>!!TGT),'· 보드',await p.evaluate(()=>S.me.board.map(u=>u?u.name:'·').join(' ')));
 
 // 7) 취소 버튼으로 타게팅 해제
+await p.evaluate(()=>{   /* 앞 검사에서 적이 다 죽었을 수 있다 — 대상이 없으면 타게팅에 들어가지 않는다 */
+  const cr=Object.keys(POOL).filter(n=>POOL[n].k==='cr'&&POOL[n].el==='fire'&&POOL[n].h>=4&&!POOL[n].over);
+  S.ai.board=[]; placeCreature('ai',cr[0]); placeCreature('ai',cr[1]); render();});
 await stock();
-i=await p.evaluate(()=>S.me.hand.findIndex(n=>POOL[n]&&POOL[n].k==='sp'&&canPay('me',n)
-  &&!INSTANT.includes(POOL[n].mode)&&POOL[n].mode!=='summon'&&!NEEDS_MINE.includes(POOL[n].mode)));
+i=await p.evaluate(()=>S.me.hand.length-1);
 if(i>=0){ await dragOut(i, board.x+board.width/2, board.y-60);
   const on=await p.evaluate(()=>!!TGT);
   await p.click('#cancel'); await p.waitForTimeout(250);
