@@ -30,12 +30,18 @@ const SIZES=[[390,844,'iPhone 앱'],[390,745,'iPhone 브라우저'],[360,640,'�
     await p.waitForTimeout(300);
     const m=await p.evaluate(()=>{
       const hand=document.getElementById('hand'), hb=hand.getBoundingClientRect();
+      const foe=document.getElementById('foeHand'), fb=foe.getBoundingClientRect();
       const cs=[...hand.children].map(c=>c.getBoundingClientRect());
       const vis=cs.length>1?Math.round(cs[1].left-cs[0].left):999;
+      /* 양쪽 손패는 화면 밖으로 30% 정도 밀어 넣는다(70%만 보인다) — 밑으로 넘치는 건 정상.
+         대신 **얼마나 보이는지**를 재고, 좌우로는 여백이 남아 있어야 한다. */
+      const pct=(r)=>Math.round((Math.min(innerHeight,r.bottom)-Math.max(0,r.top))/r.height*100);
       return {스크롤:document.documentElement.scrollHeight>innerHeight+2,
         손패밖:cs.length?(cs[0].left<-2||cs[cs.length-1].right>innerWidth+2):false,
         보이는폭:vis, 카드폭:cs.length?Math.round(cs[0].width):0,
-        바닥초과:Math.round(hb.bottom)>innerHeight+2};});
+        내노출:pct(hb), 상대노출:pct(fb),
+        좌여백:cs.length?Math.round(cs[0].left):0,
+        우여백:cs.length?Math.round(innerWidth-cs[cs.length-1].right):0};});
     // 드래그로 소환 — 겹친 손패에서 가운데 카드를 집으면 오른쪽 이웃이 먼저 잡힌다.
     // 맨 오른쪽(= 앞에서 심어 둔 저코 크리처)만 온전히 드러나 있으므로 그것으로 검사한다.
     const i=await p.evaluate(()=>S.me.hand.length-1);
@@ -57,10 +63,13 @@ const SIZES=[[390,844,'iPhone 앱'],[390,745,'iPhone 브라우저'],[360,640,'�
     await p.click('#gearBtn'); await p.waitForTimeout(300);
     const drawer=await p.evaluate(()=>{const s=document.querySelector('.side').getBoundingClientRect();
       return document.body.classList.contains('sideon')&&s.top<innerHeight-40;});
-    const ok=!m.스크롤&&!m.손패밖&&!m.바닥초과&&played>0&&zoom&&drawer&&!errs.length;
+    const 노출OK=m.내노출>=62&&m.내노출<=85&&m.상대노출>=62&&m.상대노출<=85;
+    const 여백OK=m.좌여백>=6&&m.우여백>=6;
+    const ok=!m.스크롤&&!m.손패밖&&노출OK&&여백OK&&played>0&&zoom&&drawer&&!errs.length;
     if(!ok)bad++;
     console.log(`${ok?'✅':'❌'} ${label.padEnd(9)} ${w}×${h} | 스크롤없음 ${!m.스크롤} · 손패안쪽 ${!m.손패밖}`
-      +` · 바닥초과 ${m.바닥초과} · 카드 ${m.카드폭}px(보이는폭 ${m.보이는폭}) · 드래그소환 ${played>0} · 확대 ${zoom} · 서랍 ${drawer}`
+      +` · 노출 내 ${m.내노출}%/상대 ${m.상대노출}% · 좌우여백 ${m.좌여백}/${m.우여백}`
+      +` · 카드 ${m.카드폭}px(보이는폭 ${m.보이는폭}) · 드래그소환 ${played>0} · 확대 ${zoom} · 서랍 ${drawer}`
       +(errs.length?` · ERR(${errs.length}) ${errs[0]}`:''));
     await p.close();
   }

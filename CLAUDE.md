@@ -187,8 +187,19 @@ python3 tools/build_pages.py --push <GITHUB_TOKEN>
 
 ## 모바일 세로 UI (2026-08) — 하스스톤/MTGA 배치
 
-- **한 화면에서 끝난다.** `@media (max-width:900px)`에서 `.wrap`이 `100dvh` 세로 플렉스가 되고
+- **한 화면에서 끝난다.** `@media (max-width:900px)`에서 `.wrap`이 세로 플렉스가 되고
   `body{overflow:hidden}`. **`vh`가 아니라 `dvh`** — 모바일 주소창이 접히면 `vh`는 어긋난다.
+  ⚠ **`.wrap`은 `100dvh`가 아니라 `height:100%`다.** `body`가 `padding-top/bottom:env(safe-area-inset-*)`를
+  들고 있어서, `.wrap`을 `100dvh`로 두면 노치·홈 인디케이터 높이만큼 **아래가 잘린다**
+  (실제로 손패가 반만 보였다). `body`의 **안쪽 높이**를 따라가야 한다.
+- **양쪽 손패는 화면 가장자리에 70%만 걸친다.** 하스스톤처럼 손패 일부를 화면 밖으로 밀어
+  가운데 판에 세로를 몰아준다. `.hand{margin-bottom:calc(var(--cardw)*-0.42)}` /
+  `.hand.foe{margin-top:calc(var(--cardw)*-0.42)}` — 카드 높이가 `1.4W`라 `0.42W`가 정확히 30%다.
+  따라서 **손패가 화면 밑/위로 넘치는 것은 정상**이다. 회귀 검사는 "바닥 초과 여부"가 아니라
+  **노출률(62~85%)** 을 본다(`test_mobile.js`).
+- **손패 좌우에 여백을 준다**(`.hand{padding:4px 12px 0}`). ⚠ `fanHand`의 `avail` 계산에서
+  **`clientWidth`는 padding을 포함**하므로 그냥 쓰면 이 여백이 무시되고 카드가 화면 끝까지 붙는다
+  (실제로 "갑갑하다"는 지적을 받았다). `getComputedStyle`로 좌우 padding을 빼고 재야 한다.
 - 배치는 위→아래: 상대 바 · 상대 지형 · 상대 보드 · **가운데 조작 줄(안내 + 턴 종료)** ·
   내 보드 · 내 지형 · 내 바 · 손패. DOM은 그대로 두고 **CSS `order`로 재배치**한다
   (그래서 라벨마다 id가 붙어 있다 — `#lbFoeLz`·`#lbFoeB`·`#lbMyB`·`#lbMyLz`·`#lbHand`).

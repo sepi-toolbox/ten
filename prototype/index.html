@@ -799,10 +799,13 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
   /* 앱(standalone)으로 열면 노치·홈 인디케이터를 피해야 한다 */
   body{padding:0;height:100dvh;overflow:hidden;
     padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+  /* ⚠ body 가 안전영역만큼 줄었으므로 .wrap 은 100dvh 가 아니라 그 **안쪽 높이**를 따라야 한다.
+     100dvh 로 두면 노치·홈 인디케이터 높이만큼 아래가 잘린다(손패가 반만 보였다). */
+  .wrap{height:100%}
   .gear{top:calc(6px + env(safe-area-inset-top));right:calc(6px + env(safe-area-inset-right));
     width:34px;height:34px;font-size:16px}
   .side{padding-bottom:calc(14px + env(safe-area-inset-bottom))}
-  .wrap{max-width:none;height:100dvh;display:flex;flex-direction:column;gap:0;padding:0}
+  .wrap{max-width:none;height:100%;display:flex;flex-direction:column;gap:0;padding:0}
 
   /* 판 — 세로로 쌓고, 가운데에 조작 줄을 끼운다 */
   .main{flex:1;min-height:0;display:flex;flex-direction:column;padding:4px 6px 0;
@@ -846,10 +849,13 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
      커지기 때문에, 주소창이 있는 브라우저처럼 세로가 짧으면 화면 밖으로 밀린다.
      (앱으로 설치하면 주소창이 사라져 dvh 가 커지고 카드도 그만큼 커진다.) */
   :root{--cardw:min(clamp(46px,19vw,86px),8.2dvh)}
-  .hand.foe{flex:none;padding:2px 0 2px}
+  .hand.foe{flex:none;padding:0 12px 2px;margin-top:calc(var(--cardw) * -0.42)}
   #lbHand{display:none}
   /* 손패는 화면 바닥에 붙인다 — 남는 세로 여백이 판과 손패 사이로 간다 (하스스톤 배치) */
-  .hand{flex:none;margin-top:auto;padding:4px 0 6px;justify-content:center;overflow:visible}
+  /* 손패는 화면 가장자리에 **70%만** 걸치게 한다 — 카드 높이(1.4W)의 30%를 밖으로 민다.
+     좌우로도 여백을 줘서 화면에 딱 붙지 않게 한다. */
+  .hand{flex:none;margin-top:auto;padding:4px 12px 0;justify-content:center;overflow:visible;
+    margin-bottom:calc(var(--cardw) * -0.42)}
   /* 터치에는 hover 가 없다. 강조는 광채뿐이라 따로 끌 것이 없다. */
 
   /* 로그·덱 설명은 아래에서 올라오는 서랍으로 */
@@ -2357,7 +2363,11 @@ function fanHand(id,invert){
   /* 1) 가로 — 넘치면 겹친다. 겹치더라도 한 장이 최소 이만큼은 보이게 둔다.
         offsetWidth 는 조상 transform 의 영향을 받지 않는다 — 반드시 이걸로 잰다. */
   const base=cards[0].offsetWidth||86;
-  const avail=h.clientWidth-4;
+  /* ⚠ clientWidth 는 padding 을 **포함**한다. 그대로 쓰면 손패 좌우 여백이 무시되고
+        카드가 화면 끝까지 붙는다(갑갑해 보였던 원인). 안쪽 폭으로 깎아서 쓴다. */
+  const cs=getComputedStyle(h);
+  const pad=(parseFloat(cs.paddingLeft)||0)+(parseFloat(cs.paddingRight)||0);
+  const avail=h.clientWidth-pad-4;
   const need=n*base+(n-1)*7;
   let gap=7;
   if(n>1&&need>avail){

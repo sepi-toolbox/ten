@@ -80,7 +80,14 @@ if(i>=0){ const s=await p.$('#foeBoard .slot.occ'); const sb=await s.boundingBox
 
 // 6) 크리처는 여전히 타게팅 없이 왼쪽부터
 await stock();
+/* 무작위 드로우로 낼 수 있는 크리처가 하나도 없을 수 있다 — 맨 오른쪽에 한 장 심어 둔다.
+   (겹친 손패에서 온전히 드러나 집을 수 있는 자리는 맨 오른쪽뿐이다) */
+await p.evaluate(()=>{const c=Object.keys(POOL).filter(n=>POOL[n].k==='cr'&&POOL[n].el==='fire'&&POOL[n].c<=2)
+  .sort((a,b)=>POOL[a].c-POOL[b].c)[0];
+  if(c)S.me.hand[S.me.hand.length-1]=c; render();});
+await p.waitForTimeout(150);
 i=await p.evaluate(()=>S.me.hand.findIndex(n=>POOL[n]&&POOL[n].k==='cr'&&canPay('me',n)));
+if(i<0)i=await p.evaluate(()=>S.me.hand.length-1);
 await dragOut(i, board.x+board.width-20, board.y+30);
 console.log('6) 크리처 | 타게팅',await p.evaluate(()=>!!TGT),'· 보드',await p.evaluate(()=>S.me.board.map(u=>u?u.name:'·').join(' ')));
 
