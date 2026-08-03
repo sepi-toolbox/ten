@@ -19,7 +19,7 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
 
   /* 데이터 쪽 — 다섯 장이 실제로 카드 풀에 있고 매수 0(덱 미수록)인가 */
   const pool=JSON.parse(fs.readFileSync(path.join(ROOT,'data','cards.json'),'utf8')).pool;
-  const NEW=['정령의 불꽃','불씨 살리기','화염 아귀','파이어볼','화염 방패'];
+  const NEW=['정령의 불꽃','불씨 살리기','화염 아귀','파이어볼','화염 방패','작열 좀비','잿더미 좀비'];
   ok('신규 5종이 풀에 있다', NEW.every(n=>pool[n]),
      NEW.map(n=>`${n}(${pool[n]?pool[n].c+'코':'없음'})`).join(' · '));
   ok('전부 덱 미수록(매수 0)', NEW.every(n=>pool[n]&&pool[n].copies===0),
@@ -31,10 +31,12 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
   const names=e=>e.decks[0].map(x=>x[0]);
   const n23=e=>e.decks[0].reduce((s,x)=>s+x[1],0);
   ok('방화범 = 연소 8종 23장', n23(arson)===23&&names(arson).length===8
-     &&names(arson).includes('정령의 불꽃')&&names(arson).includes('불씨 살리기'),
+     &&names(arson).includes('정령의 불꽃')&&names(arson).includes('화염 방패')
+     &&!names(arson).includes('불사조의 깃털'),
      `${names(arson).length}종 ${n23(arson)}장 — ${names(arson).join(' · ')}`);
-  ok('카린 = 주문 7종 23장', n23(karin)===23&&names(karin).length===7
-     &&names(karin).includes('화염 아귀')&&names(karin).includes('파이어볼'),
+  ok('카린 = 주문 8종 23장', n23(karin)===23&&names(karin).length===8
+     &&names(karin).includes('화염 아귀')&&names(karin).includes('파이어볼')
+     &&names(karin).includes('작열 좀비'),
      `${names(karin).length}종 ${n23(karin)}장 — ${names(karin).join(' · ')}`);
   /* 컨셉이 섞이지 않았는가 — 방화범 덱에 카린 전용이 들어가면 둘을 구분할 이유가 없어진다 */
   ok('두 덱이 안 겹친다', !names(arson).includes('파이어볼')&&!names(karin).includes('정령의 불꽃'),
@@ -93,6 +95,17 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
     resolveOnMine('me','화염 방패',0);
     o.방패={a:S.me.board[0].a, hp:hp('me',0), burn:S.me.board[0].burn};
 
+    // ── 작열 좀비 — 죽으면 잿더미 좀비(0/3 수호)가 그 자리에 남는다
+    reset(); put('me','검사'); put('me','작열 좀비'); put('me','창병');
+    const z=S.me.board[1];
+    o.좀비={전:`${z.a}/${z.insts[0].hp}`, burn:z.burn, rise:z.rise};
+    z.insts[0].hp=0; cleanup('me');
+    const ash=S.me.board[1];
+    o.좀비.뒤=ash?`${ash.name} ${ash.a}/${ash.insts[0].hp}${ash.g?' 수호':''}`:'없음';
+    o.좀비.자리=S.me.board.map(u=>u.name).join(',');
+    /* 확대창 — 앞뒤로 서로를 가리키는가 */
+    o.좀비.짝=[grownPeer('작열 좀비'), grownPeer('잿더미 좀비')];
+
     // ── 파이어볼 — 적 전체 4 · 내 크리처도 4
     reset(); put('ai','화염정령'); put('me','화염정령');
     S.ai.board.forEach(u=>hurtAll(u,0));
@@ -117,10 +130,15 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
   ok('최대치도 같이 오른다', R.살리기.최대[0]===R.살리기.후[0],
      `최대 HP ${R.살리기.최대.join('/')} — 회복 상한이 아니라 몸이 커진 것`);
 
-  ok('화염 아귀 = 스펠에 반응', R.아귀.스펠2회===R.아귀.전+2&&R.아귀.크리처뒤===R.아귀.스펠2회,
-     `HP ${R.아귀.전} → 스펠 2장 뒤 ${R.아귀.스펠2회} → 크리처는 반응 없음 ${R.아귀.크리처뒤}`);
-  ok('화염 방패 = 버프+연소', R.방패.a===4&&R.방패.hp===6&&R.방패.burn===2,
-     `화염 아귀 4/1 → ${R.방패.a}/${R.방패.hp} 연소 ${R.방패.burn}`);
+  ok('화염 아귀 = 스펠에 반응', R.아귀.스펠2회===R.아귀.전+4&&R.아귀.크리처뒤===R.아귀.스펠2회,
+     `HP ${R.아귀.전} → 스펠 2장 뒤 ${R.아귀.스펠2회}(장당 +2) → 크리처는 반응 없음 ${R.아귀.크리처뒤}`);
+  ok('화염 방패 = 버프+연소', R.방패.a===3&&R.방패.hp===6&&R.방패.burn===2,
+     `화염 아귀 3/1 → ${R.방패.a}/${R.방패.hp} 연소 ${R.방패.burn}`);
+  ok('작열 좀비 = 잿더미로', R.좀비.rise==='잿더미 좀비'&&/잿더미 좀비 0\/3 수호/.test(R.좀비.뒤)
+     &&R.좀비.자리==='검사,잿더미 좀비,창병',
+     `${R.좀비.전} 연소 ${R.좀비.burn} → ${R.좀비.뒤} · 자리 유지 [${R.좀비.자리}]`);
+  ok('확대창이 짝을 가리킨다', R.좀비.짝[0]==='잿더미 좀비'&&R.좀비.짝[1]==='작열 좀비',
+     `작열 좀비 ↔ ${R.좀비.짝.join(' ↔ ')}`);
   ok('파이어볼 = 양쪽 4', R.파이어볼.적===R.파이어볼.전[0]-4&&R.파이어볼.나===R.파이어볼.전[1]-4,
      `적 ${R.파이어볼.전[0]}→${R.파이어볼.적} · 나 ${R.파이어볼.전[1]}→${R.파이어볼.나}`);
 
@@ -151,8 +169,8 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
     o.헛손질={손:S.ai.hand.length};
     return o;
   });
-  /* 4/1 + 방패(+0/+5) = 6, 게다가 방패 자체가 스펠이라 화염 아귀가 한 번 더 반응해 7 이 된다 */
-  ok('AI 도 강화 스펠을 낸다', A.방패.손===0&&A.방패.hp===7&&A.방패.burn===2,
+  /* 3/1 + 방패(+0/+5) = 6, 게다가 방패 자체가 스펠이라 화염 아귀가 한 번 더 반응해 8 이 된다 */
+  ok('AI 도 강화 스펠을 낸다', A.방패.손===0&&A.방패.hp===8&&A.방패.burn===2,
      `화염 방패 → 화염 아귀 HP ${A.방패.hp} 연소 ${A.방패.burn} (방패도 스펠이라 +1 이 더 붙는다)`);
   ok('탈 몸에는 안 붙인다', A.낭비.손===1, '용암 정령(3/1)에 도화선(연소 3) — 그냥 죽으므로 보류');
   ok('AI 전체 강화', A.살리기.손===0&&A.살리기.hp.join()!=='',

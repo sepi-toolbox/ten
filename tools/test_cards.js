@@ -95,10 +95,15 @@ const PROTO='file://'+path.join(ROOT,'prototype','index.html');
   ok('적 35명 · 3단계', f0.적===35&&f0.난이도===3&&f0.등급.join()==='전체,일반,정예,보스',
      `${f0.적}명 · 난이도 ${f0.난이도}단계`);
   ok('1단계 통계', /HP 20~23/.test(f0.첫통계)&&/덱 40장/.test(f0.첫통계), f0.첫통계);
-  /* 단계를 올리면 체력과 강화 카드가 늘어야 한다 — 이게 '난이도별'의 실체다 */
+  /* 단계를 올리면 체력이 오르고, **자동 생성 덱**에는 강화 카드가 섞인다.
+     ⚠ 고정 덱(FIXED)은 강화 치환을 안 받는다 — 대신 단계마다 새 카드가 들어간다.
+        첫 적이 마침 고정 덱(사나운 고블린)이라, 강화 여부는 고정이 아닌 적에서 본다. */
   await p.click('#bandBar .chip[data-b="2"]'); await p.waitForTimeout(350);
-  const f2=await p.evaluate(()=>document.querySelector('.foestat').textContent.replace(/\s+/g,' ').trim());
-  ok('3단계는 더 강하다', /HP 3\d~3\d/.test(f2)&&/강화/.test(f2), f2);
+  const f2=await p.evaluate(()=>{
+    const all=[...document.querySelectorAll('.foestat')].map(e=>e.textContent.replace(/\s+/g,' ').trim());
+    return {첫:all[0], 강화:all.filter(t=>/강화/.test(t)).length, 수:all.length};});
+  ok('3단계는 더 강하다', /HP 3\d~3\d/.test(f2.첫)&&f2.강화>=f2.수-3,
+     `${f2.첫} · 강화 카드를 든 적 ${f2.강화}/${f2.수}명 (고정 덱 3명은 새 카드로 대신한다)`);
   // 등급 필터 · 보스 체력
   await p.click('#kBar .chip[data-k="boss"]'); await p.waitForTimeout(350);
   const bs=await p.evaluate(()=>({수:document.querySelectorAll('.foe').length,

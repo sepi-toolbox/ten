@@ -16,14 +16,22 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
   ok('고정 덱 23장', !!gob.fixed&&n0===23, `${gob.name} · ${n0}장 · 지형 ${JSON.stringify(gob.lands)}`);
   /* ⚠ **기존 불 카드가 한 장이라도 섞이면 실패다.** 한 번 자동 생성 덱에 고블린을 얹었더니
      용암거인·겁화룡·소이탄 같은 옛 카드가 8장 남아 컨셉 덱이 아니게 됐다. */
-  const GOB=['고블린 폭탄병','파이어 볼트','용암 정령','도화선','불사조의 깃털','고블린 지휘관',
-             '고블린 전차','불꽃광대','고블린 화염포','고블린 방패병','와이번'];
-  const strays=gob.decks[0].map(([n])=>n.replace(/^강화 /,'')).filter(n=>!GOB.includes(n));
+  const GOB=['고블린 폭탄병','용암 정령','불사조의 깃털','고블린 지휘관','고블린 전차',
+             '불꽃광대','고블린 화염포','고블린 방패병',
+             '고블린 미치광이','고블린의 열의','고블린 지뢰'];
+  const strays=gob.decks[0].map(([n])=>n).filter(n=>!GOB.includes(n));
   ok('고블린 카드만으로', strays.length===0,
      strays.length?`섞인 옛 카드: ${strays.join(', ')}`:`${GOB.length}종 · 4코에서 끝나는 어그로 커브`);
-  const bandOk=[0,1,2].every(b=>gob.decks[b].map(([n])=>n.replace(/^강화 /,''))
-    .every(n=>GOB.includes(n)));
-  ok('난이도 3단계 모두', bandOk, '강화 치환도 고블린 카드 안에서만 일어난다');
+  /* ⚠ 고정 덱은 **강화 카드 치환을 받지 않는다.** 강화는 '같은 카드인데 수치만 큰 것' 이라
+     컨셉 덱에서는 단계가 올라도 하는 일이 안 변한다 — 대신 단계마다 새 카드가 들어간다. */
+  const band=[0,1,2].map(b=>gob.decks[b].map(([n])=>n));
+  ok('단계마다 강화 0장', band.every(l=>l.every(n=>!/^강화 /.test(n))&&l.every(n=>GOB.includes(n))),
+     band.map((l,i)=>`${i+1}단계 ${l.length}종`).join(' · '));
+  ok('단계가 오르면 덱이 바뀐다',
+     band[1].includes('고블린 미치광이')&&band[1].includes('고블린의 열의')
+     &&!band[0].includes('고블린 미치광이')&&band[2].includes('고블린 지뢰')
+     &&!band[1].includes('고블린 지뢰')&&[0,1,2].every(b=>gob.decks[b].reduce((s,[,c])=>s+c,0)===23),
+     '2단계 미치광이·열의 · 3단계 지뢰 — 매 단계 23장 유지');
 
   const b=await chromium.launch();
   const p=await b.newPage({viewport:{width:430,height:844}});
@@ -75,6 +83,32 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
     const after=['me','ai'].reduce((s,side)=>s+S[side].board
       .reduce((t,u)=>t+(u&&u.kind==='cr'&&u.insts[0]?u.insts[0].hp:0),0),0);
     out.cannon=[before,after];
+
+    /* ── 2·3단계 신규 3종 ─────────────────────────────────── */
+    /* 미치광이 — 12 을 1점씩 흩뿌린다. 자신은 안 맞고, 아군도 맞는다 */
+    /* ⚠ 경화·가호가 있는 몸을 세우면 1 점짜리 탄이 먹히지 않아 합계가 안 맞는다 —
+       방어 키워드가 없는 불 크리처로만 판을 채운다(총 체력 16 > 12 발). */
+    reset(); ['불씨정령','화염정령'].forEach(n=>put('me',n));
+    ['불씨정령','화염정령'].forEach(n=>put('ai',n));
+    const tot=()=>['me','ai'].reduce((s,side)=>s+S[side].board
+      .reduce((t,u)=>t+(u&&u.kind==='cr'&&u.insts[0]?u.insts[0].hp:0),0),0);
+    const t0=tot(); put('me','고블린 미치광이');
+    const mad=S.me.board.find(u=>u&&u.name==='고블린 미치광이');
+    out.mad=[t0, tot(), mad?mad.insts[0].hp:0];
+
+    /* 열의 — **토큰이 아니라 카드 그대로** 둘을 부른다(연소 1 · 폭발이 따라온다) */
+    reset(); put('me','검사');
+    resolveSummon('me','고블린의 열의',0);
+    out.zeal=S.me.board.filter(Boolean).map(u=>
+      `${u.name}${u.token?'(토큰)':''} ${u.a}/${u.insts[0].hp} b${u.burn||0}${u.boom?' 폭발':''}`);
+
+    /* 지뢰 — 폭발이 터지면 그 값만큼 상대 크리처에게도 꽂힌다 */
+    reset(); put('me','고블린 폭탄병'); put('ai','석벽');
+    S.me.board.push({name:'고블린 지뢰',kind:'en',v:POOL['고블린 지뢰'].v,charge:POOL['고블린 지뢰'].ch});
+    const wall0=S.ai.board[0].insts[0].hp, face1=S.ai.hp, bomb=S.me.board[0];
+    bomb.insts[0].hp=0; cleanup('me');
+    out.mine={얼굴:face1-S.ai.hp, 벽:[wall0, S.ai.board[0]?S.ai.board[0].insts[0].hp:0],
+              충전:(S.me.board.find(u=>u&&u.kind==='en')||{charge:0}).charge};
     return out;
   });
 
@@ -92,6 +126,15 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
      `지형 1장인데 마나 ${R.fortMana} · 턴 시작에 ${R.fortBoard.join()}`);
   ok('화염포 = 양쪽 무작위', R.cannon[0]-R.cannon[1]===5,
      `충전 5 → 총 체력 ${R.cannon[0]} → ${R.cannon[1]} (아군도 맞는다)`);
+  /* 뒤 합계에는 미치광이 자신의 체력이 새로 들어가 있으므로 빼고 잰다 */
+  ok('미치광이 = 12 를 흩뿌린다', R.mad[0]-(R.mad[1]-R.mad[2])===12&&R.mad[2]===1,
+     `남 체력 ${R.mad[0]} → ${R.mad[1]-R.mad[2]} · 자신은 안 맞는다 (HP ${R.mad[2]})`);
+  ok('열의 = 카드 그대로 둘', R.zeal.filter(x=>/고블린 폭탄병/.test(x)).length===2
+     &&!/토큰/.test(R.zeal.join())&&/b1 폭발/.test(R.zeal.join())
+     &&/^검사 /.test(R.zeal[0]),
+     `${R.zeal.join(' · ')} — 오른쪽에 붙는다`);
+  ok('지뢰 = 폭발 되메아리', R.mine.얼굴===2&&R.mine.벽[1]===R.mine.벽[0]-2&&R.mine.충전===5,
+     `폭탄병 폭발 2 → 얼굴 ${R.mine.얼굴} · 석벽 ${R.mine.벽[0]}→${R.mine.벽[1]} · 잔여 충전 ${R.mine.충전}`);
 
   if(errs.length){bad++;console.log('   ERR',errs.slice(0,2));}
   console.log(bad?`❌ ${bad}건 실패`:'✅ 전부 통과');
