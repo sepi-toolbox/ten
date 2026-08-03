@@ -22,6 +22,7 @@
   --slot:#1c140d;
 }
 *{box-sizing:border-box;margin:0;padding:0}
+html{overflow-x:hidden}         /* 닫힌 서랍이 오른쪽으로 밀려 있어 가로 스크롤이 생긴다 */
 body{
   background:
     radial-gradient(120% 80% at 50% -10%, rgba(201,162,75,.14), transparent 60%),
@@ -35,24 +36,31 @@ body::before{
   content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;mix-blend-mode:overlay;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
 }
-.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1fr 268px;gap:14px;position:relative;z-index:1}
-@media(max-width:900px){.wrap{grid-template-columns:1fr}}
+.wrap{max-width:900px;margin:0 auto;position:relative;z-index:1}
 
 /* ---- header ---- */
-.hdr{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;margin-bottom:12px;
-  grid-column:1/-1;border-bottom:1px solid var(--rule);padding-bottom:9px}
-.hdr h1{flex:0 0 auto} .hdr .meta{flex:0 0 auto;white-space:nowrap}
-.deckpick{flex:1 0 100%;order:3}
-.modepick{display:flex;gap:5px;order:2;margin-left:12px}
+/* 톱니 — 화면 위에 떠 있고 자리를 차지하지 않는다. 예전 헤더 정보는 전부 서랍 안에. */
+.gear{position:fixed;top:8px;right:8px;z-index:66;width:38px;height:38px;padding:0;
+  border-radius:50%;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(180deg,var(--leather-2),var(--leather));color:var(--gold-bright);
+  border:1px solid var(--bronze);box-shadow:0 2px 8px rgba(0,0,0,.55);opacity:.82}
+.gear:hover{opacity:1}
+body.sideon .gear{opacity:0;pointer-events:none}
+.shdr{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;
+  padding-bottom:8px;border-bottom:1px solid var(--rule)}
+.shdr h1{font-family:'Cinzel Decorative','Cinzel',serif;font-weight:900;font-size:20px;
+  color:var(--gold-bright);text-shadow:0 1px 0 #000,0 0 14px rgba(201,162,75,.4)}
+.shdr h1 span{color:var(--emerald)}
+.shdr .meta{font-family:'Cinzel',serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+.sclose{margin-left:auto;padding:4px 10px;font-size:13px;background:none;border:1px solid var(--rule);
+  color:var(--gold);box-shadow:none}
+.deckpick{margin:0 0 8px}
+.modepick{display:flex;gap:5px;margin-bottom:10px}
 .modepick button{font-family:'Cinzel',serif;font-size:11px;font-weight:700;letter-spacing:.08em;
   padding:5px 14px;border-radius:4px;border:1px solid var(--rule);background:#150e08;
   color:var(--gold);cursor:pointer;opacity:.6;transition:.14s}
 .modepick button.on{opacity:1;color:#1a1206;border-color:var(--gold-bright);
   background:linear-gradient(180deg,var(--gold-bright),var(--gold));box-shadow:0 0 12px rgba(242,212,136,.45)}
-.hdr h1{font-family:'Cinzel Decorative','Cinzel',serif;font-weight:900;font-size:24px;letter-spacing:.02em;
-  color:var(--gold-bright);text-shadow:0 1px 0 #000,0 0 14px rgba(201,162,75,.4)}
-.hdr h1 span{color:var(--emerald)}
-.hdr .meta{font-family:'Cinzel',serif;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
 
 /* ---- player bars ---- */
 .bar{position:relative;display:flex;align-items:center;gap:14px;padding:10px 14px;margin-bottom:9px;
@@ -205,9 +213,14 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
 .hint b{color:var(--gold-bright)}
 
 /* ---- log ---- */
-.side{border:1px solid var(--bronze);border-radius:8px;
-  background:linear-gradient(180deg,var(--leather-2),var(--leather));padding:11px;height:fit-content;position:sticky;top:12px;
-  box-shadow:inset 0 1px 0 rgba(242,212,136,.1),inset 0 0 24px rgba(0,0,0,.4),0 2px 6px rgba(0,0,0,.4)}
+/* 설정 서랍 — 톱니로만 연다. 데스크톱은 오른쪽에서, 모바일은 아래에서 올라온다. */
+.side{position:fixed;z-index:70;top:0;right:0;bottom:0;width:min(92vw,320px);overflow-y:auto;
+  border:1px solid var(--bronze);border-radius:10px 0 0 10px;
+  background:linear-gradient(180deg,var(--leather-2),var(--leather));padding:14px;
+  transform:translateX(101%);transition:transform .22s cubic-bezier(.2,.8,.3,1);
+  box-shadow:-10px 0 30px rgba(0,0,0,.6)}
+body.sideon .side{transform:none}
+body.sideon::after{content:'';position:fixed;inset:0;z-index:69;background:rgba(0,0,0,.45)}
 .log{font-family:'Gowun Batang',serif;font-size:11px;line-height:1.7;max-height:64vh;overflow-y:auto;color:var(--parch-2)}
 .log div{padding:3px 0;border-bottom:1px solid rgba(90,67,38,.4)}
 .log .t{color:var(--gold-bright);font-family:'Cinzel',serif;font-weight:700;margin-top:6px;letter-spacing:.03em}
@@ -215,7 +228,7 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
 .log .g{color:#5fc4a6}
 .log .f{color:#e6b552}
 .log .e{color:#b79ae8}
-@media(max-width:900px){.log{max-height:190px}.side{position:static}}
+@media(max-width:900px){.log{max-height:190px}}   /* 서랍은 좁은 화면에서도 fixed 다 */
 
 /* ---- game over ---- */
 .over{
@@ -693,20 +706,10 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
    높이는 dvh 로 잡는다(모바일 브라우저 주소창이 접히면 vh 가 어긋난다).
    ══════════════════════════════════════════════════════════ */
 @media (max-width:900px){
+  /* fixed 인 서랍은 body 의 overflow 로 잘리지 않는다 — html 에서 잘라야 문서가 안 늘어난다 */
+  html{overflow:hidden;height:100dvh}
   body{padding:0;height:100dvh;overflow:hidden}
   .wrap{max-width:none;height:100dvh;display:flex;flex-direction:column;gap:0;padding:0}
-
-  /* 머리 — 한 줄로 압축 */
-  .hdr{margin:0;padding:3px 8px 2px;gap:5px;flex:none;align-items:center;border-bottom:1px solid var(--rule)}
-  .hdr h1{font-size:14px;letter-spacing:0}
-  .hdr .meta{font-size:9px;letter-spacing:.1em;order:4;margin-left:auto}
-  .modepick{margin-left:6px;order:2;gap:4px}
-  .modepick button{font-size:9.5px;padding:4px 8px}
-  .sideBtn{padding:4px 9px!important;font-size:12px!important}
-  .deckpick{order:5;flex:1 0 100%;margin:2px 0 0;flex-wrap:nowrap;overflow-x:auto;
-    -webkit-overflow-scrolling:touch;scrollbar-width:none}
-  .deckpick::-webkit-scrollbar{display:none}
-  .deckpick button{font-size:8.5px;padding:3px 7px;flex:none}
 
   /* 판 — 세로로 쌓고, 가운데에 조작 줄을 끼운다 */
   .main{flex:1;min-height:0;display:flex;flex-direction:column;padding:4px 6px 0;
@@ -745,7 +748,7 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
   /* 손패 — 넘치면 겹친다(--hgap 은 render 가 계산해 음수로 넣는다) */
   /* 모바일 — 판 카드는 손패보다 조금만 작게. 10칸 격자를 버렸으니 크게 그릴 수 있다. */
   /* 모바일 — 손패·판·지형존이 전부 이 하나를 쓴다. 세로 예산이 빠듯하니 여기서만 조절할 것. */
-  :root{--cardw:clamp(54px,18.5vw,84px);--foecw:clamp(28px,8vw,40px)}
+  :root{--cardw:clamp(60px,21vw,96px);--foecw:clamp(30px,8.5vw,44px)}
   .hand.foe{flex:none;padding:3px 0 3px}
   #lbHand{display:none}
   /* 손패는 화면 바닥에 붙인다 — 남는 세로 여백이 판과 손패 사이로 간다 (하스스톤 배치) */
@@ -753,12 +756,11 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
   /* 터치에는 hover 가 없다. 강조는 광채뿐이라 따로 끌 것이 없다. */
 
   /* 로그·덱 설명은 아래에서 올라오는 서랍으로 */
-  .side{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:70;max-height:72dvh;overflow-y:auto;
+  .side{left:0;right:0;bottom:0;top:auto;width:auto;max-height:78dvh;
     border-radius:12px 12px 0 0;border-bottom:none;transform:translateY(101%);
-    transition:transform .22s cubic-bezier(.2,.8,.3,1);box-shadow:0 -10px 30px rgba(0,0,0,.6)}
-  body.sideon .side{transform:none}
-  body.sideon::after{content:'';position:fixed;inset:0;z-index:69;background:rgba(0,0,0,.45)}
-  .log{max-height:44dvh}
+    box-shadow:0 -10px 30px rgba(0,0,0,.6)}
+  .log{max-height:34dvh}
+  .gear{top:6px;right:6px;width:34px;height:34px;font-size:16px}
 
   /* 원정 화면 */
   .mbox{padding:14px 12px;max-height:92dvh}
@@ -781,15 +783,13 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
 }
 /* 아주 좁은 화면(360px 이하) — 카드와 글자를 한 단계 더 줄인다 */
 @media (max-width:380px){
-  .hdr h1{font-size:13px}
   .bar .hp{font-size:15px}
   .hint{font-size:9.5px}
 }
 /* 가로로 눕힌 휴대폰 — 세로 여유가 없으므로 손패만 줄인다 */
 @media (max-width:900px) and (max-height:560px){
   :root{--cardw:56px}
-  .hdr{padding:3px 8px}
-  .deckpick{display:none}
+
 }
 
 /* 지도 노드의 적 표시 */
@@ -854,16 +854,8 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
 
 <div id="nojs" style="display:none;margin:40px auto;max-width:640px;padding:20px;border:1px solid #6b5430;border-radius:8px;background:#1a1208;color:#e8d7a8;font-family:sans-serif;line-height:1.7"><b>스크립트가 차단되어 있습니다.</b><br>이 프로토타입은 전체 화면을 JavaScript로 그립니다. 미리보기 창이 스크립트를 막으면 빈 화면만 보입니다. 파일을 내려받아 사파리로 직접 열거나, GitHub Pages 주소로 접속해 주세요.</div>
 <div class="wrap">
-  <div class="hdr">
-    <h1>TE<span>N</span> — 플레이 프로토타입</h1>
-    <div class="modepick" id="modepick">
-      <button id="mBattle" class="on">배틀</button>
-      <button id="mRogue">원정</button>
-      <button id="sideBtn" class="sideBtn" title="전투 로그">☰</button>
-    </div>
-    <div class="deckpick" id="deckpick"></div>
-    <div class="meta" id="turnMeta">TURN 1 · 내 턴</div>
-  </div>
+  <!-- 헤더는 없앴다. 톱니 하나만 화면 위에 띄우고, 예전 헤더 정보는 전부 설정 서랍으로 옮겼다. -->
+  <button class="gear" id="gearBtn" title="설정 · 로그" aria-label="설정">⚙</button>
 
   <div class="main">
     <div class="hand foe" id="foeHand"></div>
@@ -904,7 +896,18 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
     </div>
   </div>
 
-  <div class="side">
+  <div class="side" id="side">
+    <div class="shdr">
+      <h1>TE<span>N</span></h1>
+      <div class="meta" id="turnMeta">TURN 1 · 내 턴</div>
+      <button class="sclose" id="sideClose" aria-label="닫기">✕</button>
+    </div>
+    <div class="modepick" id="modepick">
+      <button id="mBattle" class="on">배틀</button>
+      <button id="mRogue">원정</button>
+    </div>
+    <div class="lbl">덱 선택</div>
+    <div class="deckpick" id="deckpick"></div>
     <div class="lbl">덱 메커니즘</div>
     <div class="dmech" id="dmech"></div>
     <div class="lbl">전투 로그</div>
@@ -2670,11 +2673,12 @@ document.getElementById('speed').onclick=()=>{
 document.getElementById('restart').onclick=()=>{ if(RG.on)return rgMap(); newGame(); };
 document.getElementById('mBattle').onclick=()=>{ if(!RG.on)return; RG.on=false; PDECK=EDECK=null; EHP=null; RG.foe=null; rgClose(); newGame(); };
 document.getElementById('mRogue').onclick=()=>{ rgPickEl(); };
-/* 모바일 — 로그·덱 설명을 아래에서 올라오는 서랍으로 연다 */
-document.getElementById('sideBtn').onclick=()=>document.body.classList.toggle('sideon');
+/* 톱니 — 설정 서랍(제목·턴·모드·덱 선택·메커니즘·로그·속도·새 게임)을 연다 */
+document.getElementById('gearBtn').onclick=()=>document.body.classList.toggle('sideon');
+document.getElementById('sideClose').onclick=()=>document.body.classList.remove('sideon');
 document.addEventListener('pointerdown',e=>{
   if(!document.body.classList.contains('sideon'))return;
-  if(e.target.closest('.side')||e.target.closest('#sideBtn'))return;
+  if(e.target.closest('.side')||e.target.closest('#gearBtn'))return;
   document.body.classList.remove('sideon');
 },true);
 document.getElementById('again').onclick=()=>{ if(RG.on)return rgMap(); newGame(); };

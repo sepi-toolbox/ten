@@ -3,7 +3,7 @@ const {chromium}=require('/opt/node-tools/node_modules/playwright');
 const errs=[];p.on('pageerror',e=>errs.push('ERR: '+e.message));
 await p.goto('file:///home/claude/ten/prototype/index.html');await p.waitForTimeout(700);
 await p.click('#keepBtn').catch(()=>{}); await p.waitForTimeout(150);
-await p.click('#mRogue'); await p.waitForTimeout(250);
+await p.evaluate(()=>{document.body.classList.add('sideon');document.getElementById('mRogue').click();}); await p.waitForTimeout(250);
 await p.click('.elpick button[data-e="nature"]'); await p.waitForTimeout(300);
 await p.evaluate(()=>{RG.floor=2;RG.at=0;rgShop();}); await p.waitForTimeout(250);
 console.log('상점 재고:',await p.$$eval('#rg .rgc',e=>e.length),'(5여야 함)');

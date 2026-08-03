@@ -51,7 +51,7 @@ const SIZES=[[390,844,'iPhone 14'],[360,780,'작은 안드로이드'],[430,932,'
     const zoom=await p.$eval('#zoom',e=>e.classList.contains('on'));
     await p.mouse.up(); await p.evaluate(()=>{hideZoom();lpFired=false;}); await p.waitForTimeout(200);
     // 서랍
-    await p.click('#sideBtn'); await p.waitForTimeout(300);
+    await p.click('#gearBtn'); await p.waitForTimeout(300);
     const drawer=await p.evaluate(()=>{const s=document.querySelector('.side').getBoundingClientRect();
       return document.body.classList.contains('sideon')&&s.top<innerHeight-40;});
     const ok=!m.스크롤&&!m.손패밖&&!m.바닥초과&&played>0&&zoom&&drawer&&!errs.length;

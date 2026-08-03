@@ -5,7 +5,7 @@ const errs=[];p.on('pageerror',e=>errs.push('ERR: '+e.message));
 await p.goto('file:///home/claude/ten/prototype/index.html');await p.waitForTimeout(700);
 await p.click('#keepBtn').catch(()=>{});await p.waitForTimeout(150);
 await p.evaluate(()=>{SPEED=40;});
-await p.click('#mRogue');await p.waitForTimeout(250);
+await p.evaluate(()=>{document.body.classList.add('sideon');document.getElementById('mRogue').click();});await p.waitForTimeout(250);
 await p.click('.elpick button[data-e="nature"]');await p.waitForTimeout(400);
 console.log('적 명단:',await p.evaluate(()=>FOES.length),'명 · 내 속성 제외 후보',
   await p.evaluate(()=>FOES.filter(e=>e.el!=='nature').length));
