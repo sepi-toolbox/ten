@@ -71,6 +71,12 @@ def main():
     for r in landrows:
         els = [e for e in (r.get("produces", ""), r.get("produces2", "")) if e]
         e = {"els": els, "dual": int(r.get("tapped") or 0)}
+        # rich = 한 장이 자원을 **둘** 낸다. 마나 계산이 '지형 수' 가 아니라 'n 의 합' 이 된다.
+        if r.get("kind") == "rich":
+            e["n"] = 2
+            e["r"] = "legendary"
+            e["max"] = 1                      # 덱에 1장만
+            e["note"] = r.get("note", "")
         # 특수 지형 — 자원을 만들지 않고 다른 일을 한다. `sp` 가 그 종류다.
         # ⚠ els 가 비면 카드 색·자원 pip 이 없어지므로 `home`(테마 속성)을 따로 실어 준다.
         if r.get("kind") == "special":

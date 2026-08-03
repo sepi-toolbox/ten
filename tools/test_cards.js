@@ -102,8 +102,8 @@ const PROTO='file://'+path.join(ROOT,'prototype','index.html');
   const f2=await p.evaluate(()=>{
     const all=[...document.querySelectorAll('.foestat')].map(e=>e.textContent.replace(/\s+/g,' ').trim());
     return {첫:all[0], 강화:all.filter(t=>/강화/.test(t)).length, 수:all.length};});
-  ok('3단계는 더 강하다', /HP 3\d~3\d/.test(f2.첫)&&f2.강화>=f2.수-3,
-     `${f2.첫} · 강화 카드를 든 적 ${f2.강화}/${f2.수}명 (고정 덱 3명은 새 카드로 대신한다)`);
+  ok('3단계는 더 강하다', /HP 3\d~3\d/.test(f2.첫)&&f2.강화>=f2.수-4,
+     `${f2.첫} · 강화 카드를 든 적 ${f2.강화}/${f2.수}명 (고정 덱 4명은 새 카드로 대신한다)`);
   // 등급 필터 · 보스 체력
   await p.click('#kBar .chip[data-k="boss"]'); await p.waitForTimeout(350);
   const bs=await p.evaluate(()=>({수:document.querySelectorAll('.foe').length,

@@ -14,3 +14,4 @@ LD12,용암 지대,dual,fire,earth,1,0,fire,두 속성 중 택1 · 놓은 턴 �
 LD13,범람원,dual,water,nature,1,0,water,두 속성 중 택1 · 놓은 턴 사용 불가
 LD14,여명의 경계,dual,dark,light,1,0,dark,두 속성 중 택1 · 놓은 턴 사용 불가
 LD15,고블린 요새,special,,,0,0,fire,자원을 만들지 않는다 · 매 턴 시작 시 고블린 폭탄병 소환
+LD16,화염의 원천,rich,fire,,0,0,fire,불 자원 2 생성 · 덱에 1장만

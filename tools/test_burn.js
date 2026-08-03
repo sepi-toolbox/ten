@@ -22,8 +22,10 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
   const NEW=['정령의 불꽃','불씨 살리기','화염 아귀','파이어볼','화염 방패','작열 좀비','잿더미 좀비'];
   ok('신규 5종이 풀에 있다', NEW.every(n=>pool[n]),
      NEW.map(n=>`${n}(${pool[n]?pool[n].c+'코':'없음'})`).join(' · '));
-  ok('전부 덱 미수록(매수 0)', NEW.every(n=>pool[n]&&pool[n].copies===0),
-     '플레이어 불 덱 골격은 건드리지 않는다');
+  /* 파이어볼만 예외 — 겁화를 밀어내고 플레이어 불 덱에 정식 채용됐다(3코 광역) */
+  ok('덱 미수록(파이어볼 제외)', NEW.every(n=>pool[n]&&(pool[n].copies===0||n==='파이어볼'))
+     &&pool['파이어볼'].copies===1&&pool['겁화'].copies===0,
+     '파이어볼 ×1 채용 · 겁화는 카드 풀로 내려갔다');
 
   /* 적 고정 덱 — 두 적이 이 카드들로 짜였는가 */
   const foes=JSON.parse(fs.readFileSync(path.join(ROOT,'data','enemies.json'),'utf8')).list;
