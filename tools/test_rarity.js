@@ -1,0 +1,91 @@
+/* 희귀도 — 데이터 · 카드 표시 · 뷰어 필터 · 보상 가중치 · 적 덱 구성
+ *   node tools/test_rarity.js
+ * (예산 배수 검산은 파이썬 쪽 tools/validate_budget.py 의 [1-b] 가 본다) */
+const path=require('path'), fs=require('fs');
+const {chromium}=require('/opt/node-tools/node_modules/playwright');
+const ROOT=path.join(__dirname,'..');
+const PROTO='file://'+path.join(ROOT,'prototype','index.html');
+const VIEW='file://'+path.join(ROOT,'cards','index.html');
+const RARS=['common','uncommon','rare','legendary'];
+(async()=>{
+  let bad=0; const ok=(k,v,d)=>{ if(!v)bad++; console.log((v?'✅':'❌')+' '+k.padEnd(24)+' '+d); };
+
+  // 1) 데이터 — 네 등급이 모두 존재하고 POOL·rogue 양쪽에 실려 있다
+  const pool=JSON.parse(fs.readFileSync(path.join(ROOT,'data','cards.json'),'utf8')).pool;
+  const cnt={}; RARS.forEach(r=>cnt[r]=0);
+  Object.values(pool).forEach(c=>cnt[c.r||'common']++);
+  ok('네 등급 모두 존재', RARS.every(r=>cnt[r]>0),
+     RARS.map(r=>`${r} ${cnt[r]}`).join(' · '));
+  const rogue=JSON.parse(fs.readFileSync(path.join(ROOT,'data','rogue.json'),'utf8'));
+  ok('강화 카드도 희귀도 상속', Object.values(rogue.over).every(c=>!!c.r)
+     && rogue.over['강화 겁화룡'].r===(pool['겁화룡'].r||'common'),
+     `강화 겁화룡 = ${rogue.over['강화 겁화룡'].r}`);
+  ok('보상 가중치 데이터', !!(rogue.config.rarityWeights&&rogue.config.rarityWeights.elite),
+     JSON.stringify(rogue.config.rarityWeights.elite));
+
+  const b=await chromium.launch();
+  const p=await b.newPage({viewport:{width:1020,height:1300}});
+  const errs=[]; p.on('pageerror',e=>errs.push(e.message));
+  await p.goto(PROTO+'?dev=1'); await p.waitForTimeout(800);
+
+  // 2) 카드에 희귀도 보석이 붙는다 — 어느 규격에서나 --cw 비례
+  const gem=await p.evaluate(()=>{
+    const leg=Object.keys(POOL).find(n=>POOL[n].r==='legendary');
+    const d=document.createElement('div');
+    d.innerHTML=tcardHTML(leg,{size:'md'})+tcardHTML(Object.keys(POOL).find(n=>!POOL[n].r),{size:'md'});
+    document.body.appendChild(d);
+    const gs=[...d.querySelectorAll('.rgem')];
+    const t=d.querySelector('.tcard');
+    /* ⚠ 보석은 45° 회전이라 getBoundingClientRect 는 √2 배로 부푼 상자를 준다 —
+       offsetWidth 로 재야 실제 변 길이가 나온다(공개 카드 검사에서도 같은 함정을 밟았다). */
+    const r={leg, 개수:gs.length, 클래스:gs.map(g=>g.className.replace('rgem ','')),
+      비율:+(gs[0].offsetWidth/t.offsetWidth).toFixed(3),
+      색:getComputedStyle(gs[0]).getPropertyValue('--rc').trim()};
+    d.remove(); return r;});
+  ok('보석이 붙는다', gem.개수===2&&gem.클래스[0]==='legendary'&&gem.클래스[1]==='common',
+     `${gem.leg} → ${gem.클래스.join(' / ')}`);
+  ok('보석 크기는 --cw 비례', Math.abs(gem.비율-0.115)<0.01, `카드 폭의 ${(gem.비율*100).toFixed(1)}%`);
+  ok('등급마다 색이 다르다', gem.색.toLowerCase()!=='#9aa6b4', `레전더리 ${gem.색}`);
+
+  // 3) 보상 가중치가 실제로 분포를 기울인다 (정예가 상위 등급을 더 많이 준다)
+  const dist=await p.evaluate(()=>{
+    RG.el='fire';
+    const run=(elite)=>{const c={common:0,uncommon:0,rare:0,legendary:0};
+      for(let i=0;i<4000;i++){
+        const n=pickByRarity(poolOf('fire'), elite?'elite':'normal');
+        c[(POOL[n]||{}).r||'common']++; }
+      return c;};
+    return {일반:run(false), 정예:run(true)};});
+  const hi=o=>o.rare+o.legendary;
+  ok('정예 보상이 더 좋다', hi(dist.정예)>hi(dist.일반)*1.4,
+     `레어+레전더리 — 일반 ${hi(dist.일반)} vs 정예 ${hi(dist.정예)} (4000회)`);
+  ok('커먼이 여전히 다수', dist.일반.common>dist.일반.legendary*3,
+     `일반 커먼 ${dist.일반.common} · 레전더리 ${dist.일반.legendary}`);
+
+  // 4) 적 덱 — 난이도 단계가 오를수록 상위 등급이 늘어난다
+  const foe=await p.evaluate(()=>{
+    const rar=n=>((POOL[n.replace(/^강화 /,'')]||{}).r)||'common';
+    const hi=d=>d.reduce((s,[n,k])=>s+((rar(n)==='rare'||rar(n)==='legendary')?k:0),0);
+    /* 곡선이 좁은 일반 등급으로 본다 — 정예·보스는 처음부터 비싼 카드를 들어 차이가 안 난다 */
+    const es=FOES.filter(e=>e.tier==='normal');
+    const avg=b=>es.reduce((s,e)=>s+hi(e.decks[b]||[]),0)/es.length;
+    return {일:+avg(0).toFixed(2), 이:+avg(1).toFixed(2), 삼:+avg(2).toFixed(2), 수:es.length};});
+  ok('단계가 오르면 덱이 좋아진다', foe.삼>foe.일,
+     `일반 적 ${foe.수}명 평균 레어+레전더리 — 1단계 ${foe.일} → 2단계 ${foe.이} → 3단계 ${foe.삼}장`);
+
+  // 5) 뷰어 — 희귀도 필터
+  const v=await b.newPage({viewport:{width:1240,height:1000},deviceScaleFactor:2});
+  await v.goto(VIEW); await v.waitForTimeout(800);
+  const chips=await v.evaluate(()=>[...document.querySelectorAll('#rarBar .chip')].map(e=>e.textContent.trim()));
+  ok('뷰어 희귀도 칩', chips.length===5&&/레전더리/.test(chips[4]), chips.join(' · '));
+  await v.click('#rarBar .chip[data-r="legendary"]'); await v.waitForTimeout(350);
+  const only=await v.evaluate(()=>[...document.querySelectorAll('.cell')]
+    .every(e=>(POOL[e.dataset.n]||{}).r==='legendary'));
+  const n=await v.evaluate(()=>document.querySelectorAll('.cell').length);
+  ok('레전더리만 걸러진다', only&&n===cntLeg(), `${n}종`);
+  function cntLeg(){ return Object.values(pool).filter(c=>c.r==='legendary').length; }
+
+  if(errs.length){bad++;console.log('   ERR',errs.slice(0,2));}
+  console.log(bad?`❌ ${bad}건 실패`:'✅ 전부 통과');
+  await b.close(); process.exit(bad?1:0);
+})();

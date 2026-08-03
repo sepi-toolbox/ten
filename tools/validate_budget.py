@@ -52,19 +52,19 @@ def main():
     for el, deck in G.DECKS.items():
         for (nm, c, tag, a, h, cp, keys) in deck["creatures"]:
             n_cr += 1
-            spent, bud, dv, _ = G.check_creature(c, tag, a, h, keys)
+            spent, bud, dv, _ = G.check_creature(c, tag, a, h, keys, nm)
             if dv > 0:
                 over.append(f"{G.KO[el]} {nm} 크리처 소모 {spent} > 예산 {bud}")
             if tag in ("수호", "비행수호") and c > 1 and a > c - 1:
                 over.append(f"{G.KO[el]} {nm} 수호 ATK 캡 초과 ({a} > {c-1})")
         for (nm, c, kind, val, ref, adj, cp, rule) in deck["spells"]:
             n_sp += 1
-            vv, rr, dv = G.check_spell(kind, val, ref, adj)
+            vv, rr, dv = G.check_spell(kind, val, ref, adj, nm)
             if dv > 0:
                 over.append(f"{G.KO[el]} {nm} 스펠 {G.fmt(vv)} > 기준 {G.fmt(rr)}")
         for (nm, c, dr, E, C, scope, cp, rule) in deck["enchants"]:
             n_en += 1
-            eff, tgt, dv = G.check_enchant(c, dr, E, C, scope)
+            eff, tgt, dv = G.check_enchant(c, dr, E, C, scope, nm)
             if dv > 2:
                 over.append(f"{G.KO[el]} {nm} 인챈트 {eff:.0f} > 예산 {tgt}")
     total = n_cr + n_sp + n_en
@@ -73,6 +73,34 @@ def main():
     for m in over[:12]:
         print(f"      ✗ {m}")
     problems += over
+
+    # ── 1-b) 희귀도 ───────────────────────────────────────────
+    # 희귀도를 올려 놓기만 하고 스탯을 안 올린 카드를 알려 준다(실패는 아니고 '여유').
+    rc = {r: 0 for r in G.RARS}
+    slack = []
+    for el, deck in G.DECKS.items():
+        for (nm, c, tag, a, h, cp, keys) in deck["creatures"]:
+            rc[G.rar(nm)] += 1
+            spent, bud, dv, _ = G.check_creature(c, tag, a, h, keys, nm)
+            if G.rar(nm) != "common" and dv < 0:
+                slack.append(f"{nm}({G.RARKO[G.rar(nm)]}) 예산 {bud} 중 {spent} 사용 — {-dv} 남음")
+        for (nm, c, kind, val, ref, adj, cp, rule) in deck["spells"]:
+            rc[G.rar(nm)] += 1
+            vv, rr, dv = G.check_spell(kind, val, ref, adj, nm)
+            if G.rar(nm) != "common" and isinstance(rr, (int, float)) and dv < 0:
+                slack.append(f"{nm}({G.RARKO[G.rar(nm)]}) 기준 {G.fmt(rr)} 중 {G.fmt(vv)} — 여유 {G.fmt(-dv)}")
+        for (nm, c, dr, E, C, scope, cp, rule) in deck["enchants"]:
+            rc[G.rar(nm)] += 1
+            eff, tgt, dv = G.check_enchant(c, dr, E, C, scope, nm)
+            if G.rar(nm) != "common" and dv < -2:
+                slack.append(f"{nm}({G.RARKO[G.rar(nm)]}) 예산 {tgt} 중 {eff:.0f} — 여유 {-dv:.0f}")
+    dist = " · ".join(f"{G.RARKO[r]} {rc[r]}" for r in G.RARS)
+    print(f"\n[1-b] 희귀도  {dist}")
+    print("      배수 " + " · ".join(f"{G.RARKO[r]} ×{G.RARMULT[r]:.2f}" for r in G.RARS))
+    if slack:
+        print(f"      ⓘ 예산이 남는 카드 {len(slack)}종 (실패 아님 — 올린 만큼 안 쓴 것):")
+        for m in slack[:10]:
+            print(f"        · {m}")
 
     # ── 2) 동기화 ─────────────────────────────────────────────
     csvs = {"creatures.csv": load_csv("creatures.csv"),

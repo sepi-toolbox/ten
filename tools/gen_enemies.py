@@ -48,8 +48,24 @@ BANDS = [0, 3, 7]
 HP = {"normal": [20, 1.5], "elite": [30, 2.0], "boss": [60, 2.0]}
 
 
-def score(c, arch):
-    """이 카드가 아키타입에 얼마나 맞는가."""
+# 난이도 단계 → 희귀도 선호. 단계가 오를수록 상위 희귀도를 더 많이 집는다.
+# (아키타입 점수에 그대로 더한다 — 점수 1은 '이 카드가 조금 더 잘 맞는다' 정도의 크기다)
+RAR_BONUS = {
+    0: {"common":  0.6, "uncommon":  0.0, "rare": -0.9, "legendary": -1.8},
+    1: {"common":  0.0, "uncommon":  0.5, "rare":  0.6, "legendary":  0.0},
+    2: {"common": -0.6, "uncommon":  0.3, "rare":  1.2, "legendary":  2.4},
+}
+
+
+def score(c, arch, band=None):
+    """이 카드가 아키타입에 얼마나 맞는가. band 를 주면 희귀도 선호를 더한다."""
+    base = _arch_score(c, arch)
+    if band is None:
+        return base
+    return base + RAR_BONUS[band].get(c.get("r") or "common", 0.0)
+
+
+def _arch_score(c, arch):
     kw = c.get("kw") or ""
     cr, sp, en = c["k"] == "cr", c["k"] == "sp", c["k"] == "en"
     a, h = c.get("a", 0), c.get("h", 0)
@@ -116,7 +132,7 @@ def build_deck(pool, kinds, arch, band):
     for n in kinds:
         by_cost.setdefault(pool[n]["c"], []).append(n)
     for c in by_cost:
-        by_cost[c].sort(key=lambda n: (-score(pool[n], arch), n))
+        by_cost[c].sort(key=lambda n: (-score(pool[n], arch, band), n))
 
     picked = {}
 
@@ -135,7 +151,7 @@ def build_deck(pool, kinds, arch, band):
         left += take(cost, curve.get(cost, 0))
     # 남은 몫 — 아키타입 선호가 높은 순으로 아무 코스트에서나 채운다
     if left:
-        rest = sorted(kinds, key=lambda n: (-score(pool[n], arch), pool[n]["c"], n))
+        rest = sorted(kinds, key=lambda n: (-score(pool[n], arch, band), pool[n]["c"], n))
         for n in rest:
             while left > 0 and picked.get(n, 0) < COPY:
                 picked[n] = picked.get(n, 0) + 1

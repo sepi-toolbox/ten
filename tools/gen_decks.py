@@ -27,6 +27,114 @@ DATA = os.path.join(ROOT, "data")
 R = json.load(open(os.path.join(DATA, "rules.json"), encoding="utf-8"))
 B = R["budget"]
 
+# ── 희귀도 ──────────────────────────────────────────────────
+# 카드마다 **직접** 지정한다. 여기 없는 카드는 전부 커먼이다.
+# 희귀도는 예산에 배수로 곱해진다 — 같은 코스트라도 레전더리가 더 강할 수 있다.
+#   커먼 ×1.00 · 언커먼 ×1.10 · 레어 ×1.22 · 레전더리 ×1.40
+#   (5코 기준 예산 24 → 24 / 26 / 29 / 34)
+# ⚠ 배수를 올려 놓기만 해서는 카드가 강해지지 않는다. 예산이 늘어난 만큼
+#   스탯·수치를 직접 올려야 한다. 검산은 '초과'만 막고 '미달'은 여유로 알려 준다.
+RARS = ["common", "uncommon", "rare", "legendary"]
+RARKO = {"common": "커먼", "uncommon": "언커먼", "rare": "레어", "legendary": "레전더리"}
+RARMULT = {"common": 1.00, "uncommon": 1.10, "rare": 1.22, "legendary": 1.40}
+
+# 이름 → 희귀도. **여기 없는 카드는 전부 커먼이다.**
+# 아래는 '덱에서의 역할'로 잡은 1차 초안이다 — 마음대로 고칠 것.
+#   레전더리 7종  각 속성의 얼굴(6코 크리처) 하나씩
+#   레어    21종  6코 요격 스펠 + 5코 크리처 상위 2종
+#   언커먼   42종  나머지 4~5코와 4코 인챈트
+#   커먼    70종  1~3코 엔진 카드 (여기에 안 적힌 전부)
+# ⚠ 희귀도를 올려도 카드가 저절로 강해지지 않는다. 늘어난 예산만큼 스탯·수치를
+#   직접 올려야 하고, 얼마나 남았는지는 validate_budget.py 의 [1-b] 가 알려 준다.
+RARITY = {
+    # 불
+    "겁화룡":           "legendary",
+    "용암거인":          "rare",
+    "불사조":           "rare",
+    "소이탄":           "rare",
+    "화염조":           "uncommon",
+    "재의 수호자":        "uncommon",
+    "화신":            "uncommon",
+    "불의 군단":         "uncommon",
+    "겁화":            "uncommon",
+    "불의 제단":         "uncommon",
+    # 물
+    "해신":            "legendary",
+    "심연룡":           "rare",
+    "만조의 수호자":       "rare",
+    "심연으로":          "rare",
+    "해류지기":          "uncommon",
+    "심해수호":          "uncommon",
+    "소용돌이 정령":       "uncommon",
+    "밀물의 부름":        "uncommon",
+    "대해일":           "uncommon",
+    "조수의 인장":        "uncommon",
+    # 자연
+    "세계수":           "legendary",
+    "대수호자":          "rare",
+    "덩굴군주":          "rare",
+    "포식":            "rare",
+    "고목":            "uncommon",
+    "포자군체":          "uncommon",
+    "숲의 여왕":         "uncommon",
+    "번식":            "uncommon",
+    "태고의 성장":        "uncommon",
+    "대지의 축복":        "uncommon",
+    # 강철
+    "철벽":            "legendary",
+    "파쇄병":           "rare",
+    "요새병":           "rare",
+    "분쇄추":           "rare",
+    "중장병":           "uncommon",
+    "기사":            "uncommon",
+    "단조장인":          "uncommon",
+    "병기 조립":         "uncommon",
+    "강철 폭풍":         "uncommon",
+    "병기고":           "uncommon",
+    # 대지
+    "공성귀":           "legendary",
+    "장군":            "rare",
+    "공성탑":           "rare",
+    "매몰":            "rare",
+    "성문지기":          "uncommon",
+    "돌파병":           "uncommon",
+    "지진술사":          "uncommon",
+    "축성":            "uncommon",
+    "산사태":           "uncommon",
+    "전열 구축":         "uncommon",
+    # 어둠
+    "파괴자":           "legendary",
+    "피의 군주":         "rare",
+    "어둠의 수호":        "rare",
+    "잠식":            "rare",
+    "그림자 습격자":       "uncommon",
+    "시체 수확자":        "uncommon",
+    "심연의 사제":        "uncommon",
+    "죽음의 계약":        "uncommon",
+    "흡혈 파도":         "uncommon",
+    "피의 성배":         "uncommon",
+    # 빛
+    "대천사":           "legendary",
+    "천공수호":          "rare",
+    "성기사":           "rare",
+    "심판":            "rare",
+    "수호천사":          "uncommon",
+    "성직기사":          "uncommon",
+    "심판자":           "uncommon",
+    "성광":            "uncommon",
+    "천벌":            "uncommon",
+    "성화":            "uncommon",
+}
+
+
+def rar(name):
+    return RARITY.get(name, "common")
+
+
+def rmult(name):
+    return RARMULT[rar(name)]
+
+
 # 태그 가중치: (ATK 가중, HP 가중, 예산 보정)
 W = {"일반": (2, 1, 0), "수호": (2, 2, 2), "비행": (4, 1, 0),
      "비행수호": (4, 2, 2), "관통": (3, 1, 0)}
@@ -349,25 +457,27 @@ KO = {"fire": "불", "water": "물", "nature": "자연", "steel": "강철",
 TARGET_CURVE = {1: 3, 2: 5, 3: 5, 4: 4, 5: 4, 6: 2}
 
 
-def check_creature(cost, tag, atk, hp, keys):
+def check_creature(cost, tag, atk, hp, keys, name=None):
+    """희귀도 배수는 **키워드 배수 다음에, 가감 전에** 곱한다.
+    (가감은 '대가 6' 처럼 절대량으로 사는 것이라 희귀도로 부풀리면 이중 할인이 된다.)"""
     aw, hw, tadj = W[tag]
     mult, adj, text = kw_resolve(keys)
     spent = aw * atk + hw * hp
-    bud = round((cbase(cost) + tadj) * mult) + adj
+    bud = round((cbase(cost) + tadj) * mult * rmult(name)) + adj
     return spent, bud, spent - bud, text
 
 
-def check_spell(kind, val, ref, adj):
+def check_spell(kind, val, ref, adj, name=None):
     if kind in ("요격", "바운스"):
         return val, "—", 0
-    r = ref + adj
+    r = round((ref + adj) * rmult(name), 2)
     return val, r, val - r
 
 
-def check_enchant(cost, drain, E, C, scope):
+def check_enchant(cost, drain, E, C, scope, name=None):
     sc = 3.5 if scope == "전체" else 1.0
     eff = E * C * sc
-    tgt = round(CT[cost] * DRAIN_MULT[drain])
+    tgt = round(CT[cost] * DRAIN_MULT[drain] * rmult(name))
     return eff, tgt, eff - tgt
 
 
@@ -396,7 +506,7 @@ def main():
 
         print("  ▸ 크리처 11종")
         for (nm, c, tag, a, h, cp, keys) in deck["creatures"]:
-            sp, bd, dv, text = check_creature(c, tag, a, h, keys)
+            sp, bd, dv, text = check_creature(c, tag, a, h, keys, nm)
             v = "적정" if dv == 0 else (f"초과+{dv}" if dv > 0 else f"여유{dv}")
             if dv > 0:
                 over += 1
@@ -409,7 +519,7 @@ def main():
 
         print("  ▸ 스펠 7종")
         for (nm, c, kind, val, ref, adj, cp, rule) in deck["spells"]:
-            vv, rr, dv = check_spell(kind, val, ref, adj)
+            vv, rr, dv = check_spell(kind, val, ref, adj, nm)
             v = "적정" if dv == 0 else (f"초과+{fmt(dv)}" if dv > 0 else f"여유{fmt(dv)}")
             if dv > 0:
                 over += 1
@@ -421,7 +531,7 @@ def main():
 
         print("  ▸ 인챈트 2종")
         for (nm, c, dr, E, C, scope, cp, rule) in deck["enchants"]:
-            eff, tgt, dv = check_enchant(c, dr, E, C, scope)
+            eff, tgt, dv = check_enchant(c, dr, E, C, scope, nm)
             v = "적정" if abs(dv) <= 2 else (f"초과+{dv:.0f}" if dv > 0 else f"여유{dv:.0f}")
             if dv > 2:
                 over += 1

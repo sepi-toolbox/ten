@@ -182,6 +182,7 @@ h1{font-family:'Cinzel Decorative','Cinzel',serif;font-weight:900;font-size:26px
     <input class="csearch" id="q" placeholder="이름·효과 검색">
   </div>
   <div class="cbar" id="bandBar" style="display:none"></div>
+  <div class="cbar" id="rarBar"></div>
 
   <div id="list"></div>
 </div>
@@ -215,7 +216,10 @@ function foeHpFor(tier,floor){ const [a,per]=FOEHP[tier]||FOEHP.normal; return M
 function landsFor(n){ return Math.max(8, Math.round(n*17/23)); }
 
 const KINDS=[['all','전체'],['cr','크리처'],['sp','스펠'],['en','인챈트'],['land','지형']];
-let F={mode:'card',el:'all',k:'all',q:'',band:0};
+const RARS=['common','uncommon','rare','legendary'];
+const RARCOL={common:'#9aa6b4',uncommon:'#35a35a',rare:'#3b7fd4',legendary:'#e08a17'};
+const rarCount=r=>BASE.filter(n=>((POOL[n]||{}).r||'common')===r).length;
+let F={mode:'card',el:'all',k:'all',q:'',band:0,r:'all'};
 
 function elChip(el,on){
   const e=EL[el]||{};
@@ -237,6 +241,13 @@ function renderBars(){
   document.getElementById('kBar').innerHTML=(foe?TIERS:KINDS).map(([k,ko])=>
     `<button class="chip${F.k===k?' on':''}" data-k="${k}">${ko}</button>`).join('');
   document.getElementById('q').placeholder=foe?'적 이름·설명 검색':'이름·효과 검색';
+  /* 희귀도 줄 — 카드 목록에서만 쓴다(적 덱은 등급 필터가 그 자리를 쓴다) */
+  const rb=document.getElementById('rarBar');
+  rb.style.display=foe?'none':'flex';
+  if(!foe)rb.innerHTML='<span class="lbl2">희귀도</span>'
+    +`<button class="chip${F.r==='all'?' on':''}" data-r="all">전체<span class="n">${BASE.length}</span></button>`
+    +RARS.map(r=>`<button class="chip${F.r===r?' on':''}" data-r="${r}" style="--dot:${RARCOL[r]}">`
+      +`<i></i>${RARKO[r]}<span class="n">${rarCount(r)}</span></button>`).join('');
   const bb=document.getElementById('bandBar');
   bb.style.display=foe?'flex':'none';
   if(foe)bb.innerHTML='<span class="lbl2">난이도</span>'+[0,1,2].map(b=>{
@@ -246,6 +257,7 @@ function renderBars(){
   document.querySelectorAll('#elBar .chip').forEach(b=>b.onclick=()=>{F.el=b.dataset.el;draw();});
   document.querySelectorAll('#kBar .chip').forEach(b=>b.onclick=()=>{F.k=b.dataset.k;draw();});
   document.querySelectorAll('#bandBar .chip').forEach(b=>b.onclick=()=>{F.band=+b.dataset.b;draw();});
+  document.querySelectorAll('#rarBar .chip').forEach(b=>b.onclick=()=>{F.r=b.dataset.r;draw();});
   document.getElementById('tabCard').classList.toggle('on',!foe);
   document.getElementById('tabFoe').classList.toggle('on',foe);
 }
@@ -297,6 +309,8 @@ function foeHit(e){
 function kindOf(n){ return LANDS[n]?'land':(POOL[n]||{}).k; }
 function hit(n){
   if(F.k!=='all'&&kindOf(n)!==F.k)return false;
+  /* 지형은 희귀도 개념 밖이다 — 희귀도를 좁히면 지형은 빠진다 */
+  if(F.r!=='all'&&(LANDS[n]||((POOL[n]||{}).r||'common')!==F.r))return false;
   if(!F.q)return true;
   const c=POOL[n]||{};
   return (n+' '+(c.kw||'')+' '+(c.d||'')).toLowerCase().includes(F.q);
@@ -306,9 +320,11 @@ function cellHTML(n,copies,core){
   /* 덱별로 묶어 보여 주므로 소속 표시는 **두 덱 이상**일 때만 의미가 있다. 아니면 군더더기다. */
   const d=DECKOF[n]||[];
   /* 적 덱 보기에서는 '어느 속성 덱에 들어가는가' 가 의미 없다(강화 카드는 아예 안 들어간다) */
+  const rr=LANDS[n]?null:((POOL[n]||{}).r||'common');
   const decks=F.mode==='foe'?''
     :(d.length>1?d.map(([e,c])=>`${(EL[e]||{}).ko||e}×${c}`).join(' · ')
-      :(d.length?'':'덱 미수록'));
+      :(d.length?(rr&&rr!=='common'?`<span style="color:${RARCOL[rr]}">${RARKO[rr]}</span>`:'')
+        :'덱 미수록'));
   return `<div class="cell${core?' core':''}" data-n="${n}">${copies?`<span class="cnum">×${copies}</span>`:''}`
     +`${html}${decks?`<div class="cdecks">${decks}</div>`:''}</div>`;
 }

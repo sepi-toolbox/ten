@@ -127,7 +127,7 @@ def main():
         entries = []
 
         for (nm, c, tag, a, h, cp, keys) in deck["creatures"]:
-            sp, bd, dv, text = G.check_creature(c, tag, a, h, keys)
+            sp, bd, dv, text = G.check_creature(c, tag, a, h, keys, nm)
             nc += 1
             en_tag = TAG_EN[tag]
             cc = G.color_req(c)
@@ -135,9 +135,13 @@ def main():
                 id=f"CR{nc:03d}", name=nm, cost=c, tag=en_tag, atk=a, hp=h, copies=cp,
                 cost_color=cc, cost_generic=c - cc, element=el,
                 art=art_for(nm, "creature", tag), desc=text, image=image_for(nm),
+                rarity=G.rar(nm),
                 budget_p=bd, verdict="적정" if dv == 0 else str(dv), note=""))
             e = {"c": c, "k": "cr", "cc": cc, "a": a, "h": h, "el": el,
                  "kw": text, "copies": cp}
+            # 희귀도는 커먼이 아닐 때만 적는다(기본값이 커먼) — 데이터가 불필요하게 커지지 않게
+            if G.rar(nm) != "common":
+                e["r"] = G.rar(nm)
             if en_tag in ("guard", "flyguard"):
                 e["g"] = 1
             if en_tag in ("fly", "flyguard"):
@@ -154,9 +158,12 @@ def main():
             spells.append(dict(
                 id=f"SP{ns:03d}", name=nm, cost=c, mode=mode, value=val, copies=cp,
                 cost_color=cc, cost_generic=c - cc, element=el,
-                art=art_for(nm, "spell", kind), desc=rule, image=image_for(nm), note=""))
+                art=art_for(nm, "spell", kind), desc=rule, image=image_for(nm),
+                rarity=G.rar(nm), note=""))
             pool[nm] = {"c": c, "k": "sp", "cc": cc, "mode": mode, "v": val,
                         "el": el, "d": rule, "copies": cp}
+            if G.rar(nm) != "common":
+                pool[nm]["r"] = G.rar(nm)
             entries.append([nm, cp])
 
         for (nm, c, dr, E, C, scope, cp, rule) in deck["enchants"]:
@@ -166,9 +173,12 @@ def main():
                 id=f"EN{ne:03d}", name=nm, cost=c, drain_type=DRAIN_EN[dr],
                 effect_value=E, charge=C, target=scope, copies=cp,
                 cost_color=cc, cost_generic=c - cc, element=el,
-                art=art_for(nm, "enchant", dr), desc=rule, image=image_for(nm), note=""))
+                art=art_for(nm, "enchant", dr), desc=rule, image=image_for(nm),
+                rarity=G.rar(nm), note=""))
             pool[nm] = {"c": c, "k": "en", "cc": cc, "v": E, "ch": C,
                         "el": el, "d": rule, "copies": cp}
+            if G.rar(nm) != "common":
+                pool[nm]["r"] = G.rar(nm)
             entries.append([nm, cp])
 
         cards = sum(cp for _, cp in entries)
@@ -182,13 +192,15 @@ def main():
 
     write_csv(os.path.join(DATA, "creatures.csv"), creatures,
               ["id", "name", "cost", "tag", "atk", "hp", "copies", "cost_color",
-               "cost_generic", "element", "art", "desc", "image", "budget_p", "verdict", "note"])
+               "cost_generic", "element", "art", "desc", "image", "rarity",
+               "budget_p", "verdict", "note"])
     write_csv(os.path.join(DATA, "spells.csv"), spells,
               ["id", "name", "cost", "mode", "value", "copies", "cost_color",
-               "cost_generic", "element", "art", "desc", "image", "note"])
+               "cost_generic", "element", "art", "desc", "image", "rarity", "note"])
     write_csv(os.path.join(DATA, "enchants.csv"), enchants,
               ["id", "name", "cost", "drain_type", "effect_value", "charge", "target",
-               "copies", "cost_color", "cost_generic", "element", "art", "desc", "image", "note"])
+               "copies", "cost_color", "cost_generic", "element", "art", "desc", "image",
+               "rarity", "note"])
     with open(os.path.join(DATA, "cards.json"), "w", encoding="utf-8") as f:
         json.dump({"pool": pool}, f, ensure_ascii=False, indent=1)
     with open(os.path.join(DATA, "decks.json"), "w", encoding="utf-8") as f:

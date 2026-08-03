@@ -50,7 +50,8 @@ def make_over(el, deck):
         if (na, nh) == (a, h):
             nh += 1
         e = {"c": c, "k": "cr", "cc": G.color_req(c), "a": na, "h": nh, "el": el,
-             "kw": G.check_creature(c, tag, a, h, keys)[3], "over": 1, "base": nm}
+             "kw": G.check_creature(c, tag, a, h, keys, nm)[3], "over": 1, "base": nm,
+             "r": G.rar(nm)}
         en = P.TAG_EN[tag]
         if en in ("guard", "flyguard"):
             e["g"] = 1
@@ -66,11 +67,12 @@ def make_over(el, deck):
         else:
             nc, nv = c, math.ceil(val * OVER)
         out[PREFIX + nm] = {"c": nc, "k": "sp", "cc": G.color_req(nc), "mode": mode,
-                            "v": nv, "el": el, "d": rule, "over": 1, "base": nm}
+                            "v": nv, "el": el, "d": rule, "over": 1, "base": nm,
+                            "r": G.rar(nm)}
     for (nm, c, dr, E, C, scope, cp, rule) in deck["enchants"]:
         out[PREFIX + nm] = {"c": c, "k": "en", "cc": G.color_req(c),
                             "v": math.ceil(E * OVER), "ch": C, "el": el,
-                            "d": rule, "over": 1, "base": nm}
+                            "d": rule, "over": 1, "base": nm, "r": G.rar(nm)}
     return out
 
 
@@ -132,6 +134,13 @@ CONFIG = {
     "rewardChoices": 3,
     "gold": {"normal": [22, 36], "elite": [50, 75]},
     "eliteOverChance": 0.6,       # 정예 보상 3장 중 강화 카드가 섞일 확률
+    # 보상·상점에 카드가 뜰 상대 가중치. 합이 100일 필요는 없다(비율만 본다).
+    # 정예·보스를 잡으면 상위 희귀도 쪽으로 기운다 — 레전더리를 보는 게 '사건'이 되게.
+    "rarityWeights": {
+        "normal": {"common": 60, "uncommon": 26, "rare": 11, "legendary": 3},
+        "elite":  {"common": 34, "uncommon": 30, "rare": 25, "legendary": 11},
+        "shop":   {"common": 48, "uncommon": 28, "rare": 18, "legendary": 6},
+    },
     "enemyOver": {                # 층수 → 적 덱에 섞이는 강화 카드 수
         "normalBase": 0, "normalPerFloor": 0.55,
         "eliteBonus": 4, "bossBonus": 7},

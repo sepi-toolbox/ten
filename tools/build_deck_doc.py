@@ -28,13 +28,13 @@ def pips(cost, el):
 def deck_rows(el, deck):
     out = []
     for (nm, c, tag, a, h, cp, keys) in deck["creatures"]:
-        sp, bd, dv, text = G.check_creature(c, tag, a, h, keys)
+        sp, bd, dv, text = G.check_creature(c, tag, a, h, keys, nm)
         out.append((c, "creature", nm, tag, f"{a}/{h}", cp, text, f"{sp}/{bd}"))
     for (nm, c, kind, val, ref, adj, cp, rule) in deck["spells"]:
-        vv, rr, dv = G.check_spell(kind, val, ref, adj)
+        vv, rr, dv = G.check_spell(kind, val, ref, adj, nm)
         out.append((c, "spell", nm, kind, "—", cp, rule, f"{G.fmt(vv)}/{G.fmt(rr)}"))
     for (nm, c, dr, E, C, scope, cp, rule) in deck["enchants"]:
-        eff, tgt, dv = G.check_enchant(c, dr, E, C, scope)
+        eff, tgt, dv = G.check_enchant(c, dr, E, C, scope, nm)
         out.append((c, "enchant", nm, dr, f"E{E}×C{C}", cp, rule, f"{eff:.0f}/{tgt}"))
     out.sort(key=lambda r: (r[0], {"creature": 0, "spell": 1, "enchant": 2}[r[1]]))
     return out
