@@ -224,6 +224,90 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
   ok('소환체는 토큰이 아니다', W.군단.join()==='불꽃 병사,불꽃 병사,불꽃 병사,불꽃 병사',
      W.군단.join(' · '));
 
+  /* ── 2단계: 스펠 13종 · 인챈트 5종 ──────────────────────────
+     ⚠ 옛 물 스펠/인챈트 9종(잔물결·환수·조류 읽기·역류·밀물의 부름·대해일·심연으로·
+       해무·조수의 인장)은 **통째로 지웠다.** 되살아나면 여기서 잡힌다. */
+  const S2=await p.evaluate(()=>{
+    const o={};
+    /* ⚠ 덱을 다시 채운다. 앞선 검사들이 뽑아 써서 바닥나 있으면 드로우가 조용히 0장이 되고,
+       폭풍의 구슬·안개성 소환처럼 '뽑는' 카드가 카드 탓이 아닌 이유로 빨간불이 된다. */
+    const setup=()=>{S.gen=(S.gen||0)+1;S.me.board=[];S.ai.board=[];S.me.hand=[];
+      S.me.nospell={};S.me.noecho={};
+      S.me.deck=[]; for(let i=0;i<30;i++)S.me.deck.push('피라냐');
+      S.me.lands=[];for(let i=0;i<10;i++){S.me.landPlayed=false;playLand('me','심해');}
+      S.me.lands.forEach(l=>{l.used=false;l.entering=false;});};
+    const ench=(nm,i)=>{const c=POOL[nm];S.me.board[i]={name:nm,kind:'en',v:c.v,charge:c.ch};};
+    o.옛카드=['잔물결','환수','조류 읽기','역류','밀물의 부름','대해일','심연으로','해무','조수의 인장']
+             .filter(n=>POOL[n]);
+    o.새카드=['수정구의 힘','얼음 방패','정신분열','허영','눈보라','복제 공격','환룡 강림',
+             '환영검 소환','투명화','안개성 소환','인어의 노래','인어의 비명','폭풍우',
+             '폭풍의 구슬','문어 다리','소원 거울','산호 검','인어의 하프'].filter(n=>!POOL[n]);
+    o.내가만든카드=['심해 거인','해룡','대왕 문어'].filter(n=>POOL[n]);
+    setup(); resolveInstant('me','수정구의 힘');
+    const cry=S.me.lands.filter(l=>l.name==='수정구');
+    o.수정구=`${cry.length}장 · 뒤집힘 ${cry.every(l=>l.used)} · 수명 ${(cry[0]||{}).temp}`;
+    setup(); placeCreature('me','피라냐',0); resolveOnMine('me','얼음 방패',0);
+    o.얼음방패=`${S.me.board[0].a}/${S.me.board[0].insts[0].hp} 수호=${S.me.board[0].g}`;
+    setup(); placeCreature('me','피라냐',0); resolveOnMine('me','허영',0);
+    o.허영=!!S.me.board[0].echo;
+    setup(); placeCreature('me','올렝',0); resolveOnMine('me','투명화',0);
+    o.투명화=`면역=${S.me.board[0].veil} 수호=${S.me.board[0].g}`;
+    setup(); placeCreature('ai','피라냐',0); placeCreature('ai','오아네스',1);
+    foeMassGrant('me','눈보라');
+    o.눈보라=S.ai.board.map(u=>`${u.g?'수호':'-'}/${u.insts[0].hp}`).join(' ');
+    setup(); placeCreature('ai','바다 공룡',0); resolveOnFoe('me','환영검 소환',0);
+    o.환영검=S.ai.board.length?S.ai.board[0].insts[0].hp:'파괴';
+    setup(); placeCreature('ai','바다 공룡',0);
+    o.환룡빈칸=emptySlots('ai'); resolveOnFoe('me','환룡 강림',0);
+    o.환룡=S.ai.board.length?S.ai.board[0].insts[0].hp:'파괴';
+    setup(); placeCreature('me','피라냐',0); placeCreature('ai','오아네스',0);
+    placeCreature('ai','바다 공룡',1); aoeSilence('me','인어의 노래');
+    o.노래=[S.me.board[0].a,S.ai.board[0].a,S.ai.board[1].a].join('/');
+    setup(); resolveInstant('me','안개성 소환');
+    o.안개성=`뒤집힘 ${S.me.lands.filter(l=>l.used).length} · 손 ${S.me.hand.length}`;
+    setup(); placeCreature('me','피라냐',0); S.me.hand=['바다 공룡'];
+    resolveOnMine('me','복제 공격',0);
+    o.복제=`${S.me.board[0].a}/${S.me.board[0].insts[0].hp}`;
+    /* 주문 환류 — **딱 한 번** 돌아온다 */
+    setup(); S.me.hand=['투명화']; onCast('me','투명화'); o.환류1=S.me.hand.length;
+    S.me.hand=S.me.hand.filter(x=>x!=='투명화'); onCast('me','투명화'); o.환류2=S.me.hand.length;
+    setup(); ench('폭풍의 구슬',0); fireEnch('me','end');
+    o.구슬=`손 ${S.me.hand.length} · 충전 ${(S.me.board[0]||{}).charge}`;
+    setup(); ench('문어 다리',0); placeCreature('me','전기 해파리',1);
+    S.me.board[1].insts[0].hp=0; cleanup('me');
+    o.문어=S.me.hand.join();
+    setup(); ench('소원 거울',0); placeCreature('me','바다 공룡',1); placeCreature('me','피라냐',2);
+    fireEnch('me','end');
+    o.거울=S.me.board.filter(u=>u&&u.kind==='cr').map(u=>u.name).join();
+    setup(); ench('산호 검',0); fireEnch('me','end'); o.산호=S.me.hand.join();
+    setup(); ench('인어의 하프',0); placeCreature('me','바다 공룡',1);
+    placeCreature('ai','오아네스',0); fireEnch('me','end');
+    o.하프=`${S.me.board[1].a}/${S.ai.board[0].a}`;
+    /* 시작 덱은 커먼만 · 5·6코가 통째로 비어 있다 */
+    return o;
+  });
+  ok('옛 물 카드 전부 삭제', S2.옛카드.length===0, S2.옛카드.join(' ')||'0종 남음');
+  ok('새 물 카드 18종 전부', S2.새카드.length===0, S2.새카드.join(' ')||'빠진 것 없음');
+  /* ⚠ 승인 없이 만들었던 커먼 셋. 다시 생기면 여기서 잡힌다. */
+  ok('멋대로 만든 카드 없음', S2.내가만든카드.length===0, S2.내가만든카드.join(' ')||'0종');
+  ok('수정구의 힘', S2.수정구==='2장 · 뒤집힘 true · 수명 2', S2.수정구);
+  ok('얼음 방패 = +0/+3 · 수호', S2.얼음방패==='1/5 수호=true', S2.얼음방패);
+  ok('허영 = 환류 부여', S2.허영===true, `echo=${S2.허영}`);
+  /* 면역은 수호와 양립하지 않는다 — 면역을 얻으면 수호가 풀린다 */
+  ok('투명화 = 면역(수호 해제)', S2.투명화==='면역=true 수호=false', S2.투명화);
+  ok('눈보라 = 수호 부여 · 1 피해', S2.눈보라==='수호/1 수호/3', S2.눈보라);
+  ok('환영검 = 제 ATK 만큼', S2.환영검===0, `바다 공룡 6/6 → hp ${S2.환영검}`);
+  ok('환룡 강림 = 빈 슬롯 수', S2.환룡빈칸===9&&S2.환룡===-3, `빈칸 ${S2.환룡빈칸} → hp ${S2.환룡}`);
+  ok('인어의 노래 = ATK 2 이하 침묵', S2.노래==='0/4/6', S2.노래);
+  ok('안개성 = 지형 뒤집고 드로우', S2.안개성==='뒤집힘 10 · 손 8', S2.안개성);
+  ok('복제 공격 = 손 맨 왼쪽', S2.복제==='7/8', `피라냐 1/2 + 바다 공룡 6/6 = ${S2.복제}`);
+  ok('주문 환류는 한 번만', S2.환류1===2&&S2.환류2===0, `1회차 손 ${S2.환류1} · 2회차 손 ${S2.환류2}`);
+  ok('폭풍의 구슬', S2.구슬==='손 1 · 충전 1', S2.구슬);
+  ok('문어 다리 = 환류 복제', S2.문어==='전기 해파리,전기 해파리', S2.문어);
+  ok('소원 거울 = 최저 비용 복제', S2.거울==='바다 공룡,피라냐,피라냐', S2.거울);
+  ok('산호 검 = 축복을 손으로', S2.산호==='산호의 축복', S2.산호||'(빈손)');
+  ok('인어의 하프 = 양쪽 ATK −1', S2.하프==='5/3', S2.하프);
+
   if(errs.length){bad++;console.log('   ERR',errs.slice(0,3));}
   console.log(bad?`❌ ${bad}건 실패`:'✅ 전부 통과');
   await b.close(); process.exit(bad?1:0);

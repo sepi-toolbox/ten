@@ -29,7 +29,9 @@ TAG_EN = {"일반": "normal", "수호": "guard", "비행": "fly",
 # 스펠 분류 → 엔진 모드
 MODE_EN = {"단일": "dmg", "광역": "aoe", "직접": "direct", "요격": "kill",
            "바운스": "bounce", "드로우": "draw", "회복": "heal",
-           "강화": "buff", "소환": "summon", "파쇄": "shatter", "부여": "grant"}
+           "강화": "buff", "소환": "summon", "파쇄": "shatter", "부여": "grant",
+           # 지형 = 임시 지형을 만들어 내는 주문(수정구의 힘). 대상이 없어 즉시 발동한다.
+           "지형": "ritual"}
 DRAIN_EN = {"지속형": "persistent", "발동형": "triggered", "사용형": "active"}
 
 # 속성별 기본 지형 (단색 덱은 기본 지형 17장)
