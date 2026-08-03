@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="color-scheme" content="dark only">
 <title>TEN — 카드 목록</title>
+<!-- 앱(PWA) — 게임과 **별개의 앱**으로 깔린다. scope 가 /cards/ 라 홈 화면 아이콘도 따로 생긴다. -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#120d09">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TEN 카드">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@700;900&family=Gowun+Batang:wght@400;700&family=Gothic+A1:wght@400;700;900&display=swap" rel="stylesheet">
@@ -1176,12 +1183,25 @@ h1{font-family:'Cinzel Decorative','Cinzel',serif;font-weight:900;font-size:26px
 .empty2{font-family:'Gowun Batang',serif;color:var(--ink-faint);padding:30px 0;text-align:center}
 /* 확대 — 프로토타입의 .zoom 을 그대로 쓴다 */
 .zoom{cursor:pointer}
+/* 앱 설치 줄 */
+.inst{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:0 0 14px;
+  padding:9px 12px;border:1px solid var(--rule);border-radius:8px;background:rgba(20,14,8,.5)}
+.inst .t{font-family:'Gowun Batang',serif;font-size:11.5px;color:var(--parch-2);opacity:.85;flex:1;min-width:170px}
+.inst button{font-family:'Cinzel',serif;font-size:12px;font-weight:700;letter-spacing:.08em;
+  padding:8px 16px;border-radius:20px;cursor:pointer;min-height:38px;
+  border:1px solid var(--gold-bright);background:linear-gradient(180deg,var(--gold),#8a6a24);color:#1a1206}
+.inst.off{display:none}
+/* 앱으로 열면 상단 안전영역만큼 내려 준다 */
+@media (display-mode:standalone){ .cwrap{padding-top:calc(18px + env(safe-area-inset-top))} }
 </style>
 </head>
 <body>
 <div class="cwrap">
   <h1>TEN — 카드 목록</h1>
   <div class="csub"><span id="tot"></span> &nbsp;·&nbsp; <a href="../prototype/">게임으로</a></div>
+
+  <div class="inst" id="inst"><span class="t" id="instHow"></span>
+    <button id="instBtn" style="display:none">앱으로 설치</button></div>
 
   <div class="tabs">
     <button id="tabCard" class="on">카드 목록</button>
@@ -1566,6 +1586,35 @@ document.getElementById('zoom').onclick=()=>{
 };
 document.getElementById('q').oninput=e=>{F.q=e.target.value.trim().toLowerCase();draw();};
 draw();
+
+/* ── 앱(PWA) 설치 ────────────────────────────────────────────────
+   게임과 **캐시 이름이 다른** 서비스워커를 쓴다(cards/sw.js). 같은 이름이면
+   한쪽이 activate 될 때 다른 쪽 캐시를 지워 버린다. */
+if('serviceWorker' in navigator&&location.protocol!=='file:')
+  addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+let INSTALLP=null;
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();INSTALLP=e;syncInstall();});
+addEventListener('appinstalled',()=>{INSTALLP=null;syncInstall();});
+function syncInstall(){
+  const box=document.getElementById('inst');
+  const b=document.getElementById('instBtn'), h=document.getElementById('instHow');
+  if(standalone()){ box.classList.add('off'); return; }
+  box.classList.remove('off');
+  if(INSTALLP){ b.style.display='';
+    h.textContent='홈 화면에 추가하면 주소창 없이 열리고, 오프라인에서도 카드를 볼 수 있습니다.'; return; }
+  b.style.display='none';
+  const ios=/iPad|iPhone|iPod/.test(navigator.userAgent)||
+    (navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  h.textContent=ios
+    ? '사파리에서 공유 버튼(⬆) → "홈 화면에 추가" — 게임과 별개의 앱으로 깔립니다.'
+    : '브라우저 메뉴에서 "홈 화면에 추가" 또는 "앱 설치" — 게임과 별개의 앱으로 깔립니다.';
+}
+document.getElementById('instBtn').onclick=async()=>{
+  if(!INSTALLP)return;
+  INSTALLP.prompt(); await INSTALLP.userChoice; INSTALLP=null; syncInstall();
+};
+syncInstall();
 </script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 /* 카드 뷰어(cards/index.html) 검사 — 덱별 묶음 · 원정 적 덱(난이도 3단계) · 필터 · 검색 · 확대 ·
- * 그리고 무엇보다 **게임과 카드 규격이 같은가**
+ * 앱(PWA) 설치 · 그리고 무엇보다 **게임과 카드 규격이 같은가**
  *   node tools/test_cards.js */
-const path=require('path'), fs=require('fs'), cp=require('child_process');
+const path=require('path'), fs=require('fs'), cp=require('child_process'), http=require('http');
 const {chromium}=require('/opt/node-tools/node_modules/playwright');
 const ROOT=path.join(__dirname,'..');
 const VIEW='file://'+path.join(ROOT,'cards','index.html');
@@ -127,6 +127,43 @@ const PROTO='file://'+path.join(ROOT,'prototype','index.html');
 
   await p.click('#tabCard'); await p.waitForTimeout(300);
   ok('카드 탭으로 복귀', (await p.evaluate(()=>document.querySelectorAll('.dsec').length))===7, '');
+
+  // 9) 앱(PWA) — 게임과 **별개의 앱**으로 깔리고, 서로의 오프라인 캐시를 지우지 않는다
+  const MIME={'.html':'text/html;charset=utf-8','.js':'text/javascript','.png':'image/png',
+    '.webmanifest':'application/manifest+json','.json':'application/json'};
+  const srv=http.createServer((q,r)=>{
+    let f=decodeURIComponent(q.url.split('?')[0]); if(f.endsWith('/'))f+='index.html';
+    const fp=path.join(ROOT,f);
+    if(!fs.existsSync(fp)){r.writeHead(404);return r.end('');}
+    r.writeHead(200,{'Content-Type':MIME[path.extname(fp)]||'application/octet-stream'});
+    r.end(fs.readFileSync(fp));});
+  await new Promise(res=>srv.listen(8733,res));
+  const ctx=await b.newContext({viewport:{width:390,height:844}});
+  const w=await ctx.newPage();
+  await w.goto('http://localhost:8733/cards/'); await w.waitForTimeout(1800);
+  const pwa=await w.evaluate(async()=>{
+    const man=await (await fetch(document.querySelector('link[rel=manifest]').href)).json();
+    const reg=await navigator.serviceWorker.getRegistration();
+    return {name:man.name, disp:man.display, icons:man.icons.length,
+      apple:!!document.querySelector('meta[name="apple-mobile-web-app-capable"]'),
+      scope:reg?reg.scope:null};});
+  ok('뷰어도 앱으로 깔린다', pwa.disp==='standalone'&&pwa.icons>=3&&pwa.apple
+     &&/\/cards\/$/.test(pwa.scope||''), `${pwa.name} · scope ${pwa.scope}`);
+  /* 아이콘이 게임과 달라야 홈 화면에서 구분된다 */
+  const ic=fs.readFileSync(path.join(ROOT,'cards','icon-512.png'));
+  const gi=fs.readFileSync(path.join(ROOT,'prototype','icon-512.png'));
+  ok('아이콘이 게임과 다르다', !ic.equals(gi), `뷰어 ${(ic.length/1024|0)}KB · 게임 ${(gi.length/1024|0)}KB`);
+  /* ⚠ 서비스워커 scope 는 달라도 캐시 저장소는 출처 하나를 공유한다.
+     게임 SW 가 옛 캐시를 지울 때 접두사를 안 보면 뷰어 캐시까지 날린다(실제로 그랬다). */
+  await w.goto('http://localhost:8733/prototype/'); await w.waitForTimeout(2200);
+  const keys=await w.evaluate(()=>caches.keys());
+  ok('게임을 열어도 뷰어 캐시 유지', keys.some(k=>k.startsWith('ten-cards-'))
+     &&keys.some(k=>k.startsWith('ten-v')), keys.join(' · '));
+  await w.goto('http://localhost:8733/cards/'); await w.waitForTimeout(1200);
+  await ctx.setOffline(true); await w.reload().catch(()=>{}); await w.waitForTimeout(800);
+  const off=await w.evaluate(()=>document.querySelectorAll('.cell').length);
+  ok('오프라인에서도 열린다', off>100, `카드 ${off}종`);
+  await ctx.setOffline(false); await ctx.close(); srv.close();
 
   if(errs.length){bad++;console.log('   ERR',errs.slice(0,2));}
   console.log(bad?`❌ ${bad}건 실패`:'✅ 전부 통과');
