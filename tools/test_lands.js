@@ -20,15 +20,22 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
 
   // 2) 취소 버튼 없음 · 턴 배너는 턴 수만
   ok('취소 버튼 없음', !(await p.$('#cancel')), '');
-  /* 가운데 조작 줄의 글자는 **진행된 턴만** 보여 준다(카드 이름·조작 안내를 넣지 않는다).
-     안내는 드래그 팁(.dztip)과 토스트가 맡는다. */
-  const h1=await p.evaluate(()=>{S.turn=4;S.active='me';S.busy=false;render();
+  /* 가운데 조작 줄은 조작 안내로 되돌렸다(턴 표시만 하던 판에서 원복) */
+  const h1=await p.evaluate(()=>{S.active='me';S.busy=false;render();
     return document.getElementById('hint').textContent.replace(/\s+/g,' ').trim();});
   const h2=await p.evaluate(()=>{S.active='ai';render();
     return document.getElementById('hint').textContent.replace(/\s+/g,' ').trim();});
-  await p.evaluate(()=>{S.active='me';S.turn=1;render();});
-  ok('조작 줄 = 턴 표시만', /^TURN 4/.test(h1)&&/내 턴/.test(h1)&&/상대 턴/.test(h2)
-     &&!/끌어|누르세요|발동/.test(h1+h2), `"${h1}" / "${h2}"`);
+  await p.evaluate(()=>{S.active='me';render();});
+  ok('조작 줄 = 안내 문구', /끌어/.test(h1)&&/상대 턴/.test(h2), `"${h1}" / "${h2}"`);
+  /* 턴 배너는 상자 없이 글자만 떴다 사라진다. 아래 그라데이션 바도 지웠다. */
+  const ban=await p.evaluate(()=>{turnBanner('me');
+    const e=document.querySelector('.turnban .tb1'), c=getComputedStyle(e);
+    const r={bg:c.backgroundColor,bd:c.borderStyle,bar:document.querySelectorAll('.turnban .bar').length,
+      txt:e.textContent.replace(/\s+/g,' ').trim()};
+    document.querySelector('.turnban').remove(); return r;});
+  ok('턴 배너 = 맨 글자', /rgba\(0, 0, 0, 0\)|transparent/.test(ban.bg)&&ban.bd==='none'&&ban.bar===0
+     &&/TURN/.test(ban.txt)&&/내 턴/.test(ban.txt),
+     `배경 ${ban.bg} · 테두리 ${ban.bd} · 바 ${ban.bar}개 · "${ban.txt}"`);
 
   // 3) 지형 6장을 깔고 카드 한 장을 끌어 낸다
   await p.evaluate(()=>{SPEED=6; setDeck('fire');}); await p.waitForTimeout(250);
@@ -105,6 +112,33 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
   await p.waitForTimeout(700); await p.evaluate(()=>render()); await p.waitForTimeout(120);
   ok('연출은 한 번만', (await p.evaluate(()=>document.querySelectorAll('#myLz .slot.flip').length))===0,
      '다시 그려도 재생 안 됨');
+
+  // 7) 조작 줄 위아래 여백이 대칭인가
+  await p.evaluate(()=>{S.ai.board=[];for(let i=0;i<3;i++){placeCreature('me','파수병');placeCreature('ai','파수병');}render();});
+  await p.waitForTimeout(300);
+  const gp=await p.evaluate(()=>{const g=s=>{const r=document.querySelector(s).getBoundingClientRect();
+    return [Math.round(r.top),Math.round(r.bottom)];};
+    const fb=g('#foeBoard'),ct=g('.ctl'),mb=g('#myBoard');
+    return {위:ct[0]-fb[1], 아래:mb[0]-ct[1]};});
+  ok('조작 줄 위아래 대칭', Math.abs(gp.위-gp.아래)<=2&&gp.위>4, `위 ${gp.위}px / 아래 ${gp.아래}px`);
+
+  // 8) 대상이 없어 못 쓰는 카드도 손패에서 흐려진다
+  const dim=await p.evaluate(()=>{
+    S.me.lands=[]; for(let i=0;i<10;i++){S.me.landPlayed=false;playLand('me','화산');}
+    S.me.lands.forEach(l=>{l.used=false;l.entering=false;});
+    S.ai.board=[]; S.me.board=[];
+    const tsp=Object.keys(POOL).find(n=>POOL[n].k==='sp'&&POOL[n].el==='fire'&&POOL[n].c<=3
+      &&!INSTANT.includes(POOL[n].mode)&&POOL[n].mode!=='summon'&&!NEEDS_MINE.includes(POOL[n].mode));
+    const cr=Object.keys(POOL).find(n=>POOL[n].k==='cr'&&POOL[n].el==='fire'&&POOL[n].c<=3);
+    S.me.hand=[tsp,cr]; render();
+    const before=[...document.querySelectorAll('#hand .hcw')].map(e=>e.classList.contains('no'));
+    const why=whyNotPlayable(tsp);
+    placeCreature('ai',cr); render();
+    const after=[...document.querySelectorAll('#hand .hcw')].map(e=>e.classList.contains('no'));
+    return {tsp,cr,before,after,why};});
+  ok('대상 없으면 흐림', dim.before[0]===true&&dim.before[1]===false&&dim.after[0]===false,
+     `${dim.tsp}: 대상 없을 때 흐림 ${dim.before[0]}(${dim.why}) → 대상 생기면 ${dim.after[0]}`
+     +` · ${dim.cr}: ${dim.before[1]}`);
 
   if(errs.length){bad++;console.log('   ERR',errs.slice(0,2));}
   console.log(bad?`❌ ${bad}건 실패`:'✅ 전부 통과');

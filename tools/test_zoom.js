@@ -51,7 +51,9 @@ for(const [w,h,tag] of [[390,844,'모바일'],[1020,1300,'데스크톱']]){
   await p.mouse.up(); await p.waitForTimeout(200);
   await p.evaluate(()=>{hideZoom();lpFired=false;S.sel=null;S.mode=null;render();}); await p.waitForTimeout(250);
   const rm0=await (await p.$(`#hand .hcw:nth-child(${mid+1})`)).boundingBox();
-  await p.mouse.move(rm0.x+10,rm0.y+rm0.height*0.7); await p.mouse.down(); await p.waitForTimeout(560);
+  /* ⚠ 세로 위치는 카드 높이의 절반 안쪽으로. 손패는 70%만 드러나 있어서
+     0.7 지점은 화면 밖(뷰포트 아래)으로 나가 아무것도 안 눌린다. */
+  await p.mouse.move(rm0.x+10,rm0.y+rm0.height*0.42); await p.mouse.down(); await p.waitForTimeout(560);
   const rm1=await (await p.$(`#hand .hcw:nth-child(${mid+1})`)).boundingBox();
   const same=['x','y','width','height'].every(k=>Math.abs(rm0[k]-rm1[k])<0.6);
   ok('눌러도 제자리', same, `${Math.round(rm0.x)},${Math.round(rm0.y)},${Math.round(rm0.width)}`

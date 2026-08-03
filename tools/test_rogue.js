@@ -10,6 +10,12 @@ await p.evaluate(()=>{FLOW.mode='rogue';pgDeck();}); await p.waitForTimeout(300)
 await p.click('#page .chsi[data-e="nature"]'); await p.waitForTimeout(500);
 await p.evaluate(()=>{RG.floor=2;RG.at=0;rgShop();}); await p.waitForTimeout(250);
 console.log('상점 재고:',await p.$$eval('#rg .rgc',e=>e.length),'(5여야 함)');
+/* ⚠ 강화 카드가 **보이는지** 반드시 확인할 것. 클래스 이름을 'over' 로 썼더니
+   패배 화면 `.over{display:none}` 에 걸려 0×0 으로 사라져 있었다(오래 못 잡던 버그). */
+{ const z=await p.$$eval('#rg .rgc',es=>es.filter(e=>!e.getBoundingClientRect().width).length);
+  console.log(`${z?'❌':'✅'} 안 보이는 카드 ${z}장 (0이어야 함)`);
+  const ov=await p.$$eval('#rg .rgc.ovr',e=>e.length);
+  console.log(`   강화 표시 카드 ${ov}장 · .rgc.over 잔재 ${await p.$$eval('#rg .rgc.over',e=>e.length)}장(0이어야 함)`); }
 // 카드 제거 흐름
 const before=await p.evaluate(()=>RG.deck.length);
 await p.click('#rgRm'); await p.waitForTimeout(200);

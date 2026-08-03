@@ -37,6 +37,7 @@ FILES = [
     ("prototype/icon-512.png",         "prototype/icon-512.png"),
     ("prototype/icon-maskable.png",    "prototype/icon-maskable.png"),
     ("prototype/apple-touch-icon.png", "prototype/apple-touch-icon.png"),
+    ("cards/index.html",           "cards/index.html"),
     ("tools/card_gallery.html",    "gallery.html"),
     ("tools/card_editor.html",     "editor.html"),
 ]
@@ -52,6 +53,10 @@ def sh(*args, cwd=None, check=True):
 
 
 def build():
+    # 카드 뷰어는 프로토타입에서 카드 CSS/마크업을 떼어다 만든다 —
+    # 올릴 때마다 다시 뽑아야 게임과 규격이 어긋나지 않는다.
+    r = sh("python3", os.path.join(ROOT, "tools", "build_cards_page.py"), check=False)
+    print("  " + (r.stdout.strip() or r.stderr.strip()))
     if os.path.exists(OUT):
         shutil.rmtree(OUT)
     os.makedirs(OUT)
