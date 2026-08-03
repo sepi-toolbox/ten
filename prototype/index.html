@@ -12,8 +12,8 @@
 <noscript><style>#nojs{display:block!important}</style></noscript>
 <style>
 :root{
-  --fieldcw:84px;                 /* 크리처·인챈트 판의 카드 폭 */
-  --lzcw:66px;                    /* 지형존 카드 폭 (읽을 정보가 적어 조금 작게) */
+  /* 손패·크리처 판·지형존이 **같은 규격**을 쓴다. 크기는 이 변수 하나로만 바꾼다. */
+  --cardw:84px;
   --bg:#120d09; --leather:#241a12; --leather-2:#2e2116; --wood:#3a2a1a;
   --parch:#ece0c4; --parch-2:#ddceac; --parch-edge:#c9b688;
   --ink:#2a1d10; --ink-soft:#5a4630; --ink-faint:#8a7452;
@@ -97,10 +97,10 @@ body::before{
   letter-spacing:.06em;margin-left:8px}
 
 /* ---- board ---- */
-/* 판은 격자가 아니라 '가운데로 모인 한 줄'이다. 카드는 --fieldcw 폭으로 크게 그리고,
+/* 판은 격자가 아니라 '가운데로 모인 한 줄'이다. 카드는 --cardw 폭으로 크게 그리고,
    자리가 모자라면 손패처럼 겹친다(오른쪽이 왼쪽을 덮는다). */
 .board{position:relative;display:flex;justify-content:center;align-items:flex-end;
-  min-height:calc(var(--fieldcw,84px)*1.4 + 10px);gap:0;margin-bottom:14px;padding:5px 6px;
+  min-height:calc(var(--cardw,84px)*1.4 + 10px);gap:0;margin-bottom:14px;padding:5px 6px;
   background:linear-gradient(180deg,rgba(0,0,0,.32),rgba(0,0,0,.14));
   border:1px solid var(--rule);border-radius:8px;
   box-shadow:inset 0 0 30px rgba(0,0,0,.6)}
@@ -110,9 +110,7 @@ body::before{
    판에서는 위치를 즉시 반영하고 색·그림자만 부드럽게 둔다. */
 .board.packed>.slot{position:absolute;bottom:5px;left:0;
   transition:border-color .16s,box-shadow .16s,filter .16s}
-.board>.slot{flex:none;width:var(--fieldcw,84px)}
-.board.lz{min-height:calc(var(--lzcw,66px)*1.4 + 10px)}
-.board.lz>.slot{width:var(--lzcw,66px)}
+.board>.slot{flex:none;width:var(--cardw,84px)}
 .board.empty::after{content:'여기에 소환';position:absolute;left:50%;top:50%;
   transform:translate(-50%,-50%);font-family:'Cinzel',serif;font-size:10px;letter-spacing:.2em;
   color:var(--gold);opacity:.28;pointer-events:none}
@@ -160,7 +158,7 @@ body::before{
 
 /* ---- hand ---- */
 .hand{display:flex;gap:0;overflow:visible;touch-action:none;padding:8px 0 12px;
-  justify-content:center;align-items:flex-end}
+  justify-content:center;align-items:flex-end;--basecw:var(--cardw,84px)}
 .hand>*{margin-left:var(--hgap,7px)}
 .hand>*:first-child{margin-left:0}
 .hc{
@@ -616,7 +614,7 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
 
 /* 크기 — 세 곳 모두 같은 규격, 폭만 다르다 */
 .tcard.sm{--cw:100cqw}                       /* 보드: 슬롯 폭에 맞춘다 */
-.tcard.md{--cw:var(--handcw,86px)}           /* 손패 — 모바일에서 --handcw 로 조절 */
+.tcard.md{--cw:var(--cardw,86px)}            /* 손패도 같은 규격 */
 .tcard.lg{--cw:min(72vw,260px)}              /* 확대 */
 @supports not (width:1cqw){ .tcard.sm{--cw:84px} }
 
@@ -733,8 +731,7 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
   #lbFoeLz,#lbFoeB,#lbMyB,#lbMyLz{margin-top:auto}
   .lzc{font-size:8.5px;margin-left:5px;letter-spacing:0}
   .board{flex:none;padding:2px 4px;margin-bottom:1px;border-radius:5px;
-    min-height:calc(var(--fieldcw)*1.4 + 6px)}
-  .board.lz{min-height:calc(var(--lzcw)*1.4 + 6px)}
+    min-height:calc(var(--cardw)*1.4 + 6px)}
   .board.packed>.slot{bottom:3px}
   .slot{border-radius:3px;padding:1px}
   .kb{font-size:5.5px;padding:1px 2px}
@@ -747,8 +744,8 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
 
   /* 손패 — 넘치면 겹친다(--hgap 은 render 가 계산해 음수로 넣는다) */
   /* 모바일 — 판 카드는 손패보다 조금만 작게. 10칸 격자를 버렸으니 크게 그릴 수 있다. */
-  :root{--handcw:clamp(76px,23vw,108px);--foecw:clamp(30px,8.5vw,42px);
-        --fieldcw:clamp(54px,17.5vw,80px);--lzcw:clamp(42px,12.5vw,58px)}
+  /* 모바일 — 손패·판·지형존이 전부 이 하나를 쓴다. 세로 예산이 빠듯하니 여기서만 조절할 것. */
+  :root{--cardw:clamp(54px,18.5vw,84px);--foecw:clamp(28px,8vw,40px)}
   .hand.foe{flex:none;padding:3px 0 3px}
   #lbHand{display:none}
   /* 손패는 화면 바닥에 붙인다 — 남는 세로 여백이 판과 손패 사이로 간다 (하스스톤 배치) */
@@ -784,14 +781,13 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
 }
 /* 아주 좁은 화면(360px 이하) — 카드와 글자를 한 단계 더 줄인다 */
 @media (max-width:380px){
-  :root{--handcw:clamp(72px,23vw,84px)}
   .hdr h1{font-size:13px}
   .bar .hp{font-size:15px}
   .hint{font-size:9.5px}
 }
 /* 가로로 눕힌 휴대폰 — 세로 여유가 없으므로 손패만 줄인다 */
 @media (max-width:900px) and (max-height:560px){
-  :root{--handcw:64px}
+  :root{--cardw:56px}
   .hdr{padding:3px 8px}
   .deckpick{display:none}
 }
@@ -2499,7 +2495,7 @@ function slotHTML(u,side,i){
    ⚠ 카드를 **절대 배치**로 깐다. 플렉스 + 음수 margin 으로 하려다 실패했다 —
    판의 슬롯은 `container-type:inline-size` 라 컨테인먼트가 걸려 있어서
    margin(인라인·!important 포함)이 먹지 않았다. left 로 직접 놓으면 그런 변수가 없다. */
-function packRow(el){
+function packRow(el,stack){
   if(!el)return;
   const cards=[...el.querySelectorAll(':scope > .slot')];
   const n=cards.length;
@@ -2508,7 +2504,8 @@ function packRow(el){
   if(!n)return;
   const cw=cards[0].offsetWidth||60;
   const avail=Math.max(40,el.clientWidth-8);
-  let step=cw+5;                                     /* 겹치지 않을 때의 간격 */
+  /* stack=true(지형존) → 자리가 남아도 **항상** 겹쳐 쌓는다. 손에 쥔 카드 뭉치처럼 보이게. */
+  let step=stack?cw*0.52:cw+5;
   if(n>1&&cw+(n-1)*step>avail){
     const minShow=Math.max(24,cw*0.36);              /* 한 장이 최소 이만큼은 보이게 */
     step=Math.max(minShow,(avail-cw)/(n-1));
@@ -2536,7 +2533,7 @@ function render(){
     const el=document.getElementById(p==='me'?'myMana':'foeMana');
     el.innerHTML=`<span class="mtxt">${manaLeft(p)}/${S[p].lands.length}</span>`;
     const lzEl=document.getElementById(p==='me'?'myLz':'foeLz');
-    lzEl.innerHTML=lzHTML(p); packRow(lzEl);
+    lzEl.innerHTML=lzHTML(p); packRow(lzEl,true);   /* 지형은 항상 겹쳐 쌓는다 */
     document.getElementById(p==='me'?'myLzInfo':'foeLzInfo').textContent=
       `사용 가능 ${manaLeft(p)} / 배치 ${S[p].lands.length} / 상한 ${MANACAP}`;
     document.getElementById(p==='me'?'myCnt':'foeCnt').textContent=`손 ${S[p].hand.length} · 덱 ${S[p].deck.length}`;

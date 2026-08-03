@@ -66,18 +66,19 @@ const late=await p.evaluate(()=>{
   const cards=[...bd.querySelectorAll(':scope > .slot')];
   const lz=[...document.getElementById('myLz').querySelectorAll(':scope > .slot')];
   const step=lz.length>1?lz[1].getBoundingClientRect().left-lz[0].getBoundingClientRect().left:0;
-  ok('지형 겹쳐 쌓임', lz.length===8&&step>0&&step<lz[0].getBoundingClientRect().width-2,
+  /* 지형은 자리가 남아도 항상 겹쳐 쌓인다 */
+  ok('지형 항상 겹침', lz.length===8&&step>0&&step<lz[0].getBoundingClientRect().width*0.6,
      `${lz.length}장 · 카드폭 ${Math.round(lz[0].getBoundingClientRect().width)} · 간격 ${Math.round(step)}`);
   const lzb=document.getElementById('myLz').getBoundingClientRect();
   const mid=(lz[0].getBoundingClientRect().left+lz[lz.length-1].getBoundingClientRect().right)/2;
   ok('지형 가운데 정렬', Math.abs(mid-(lzb.left+lzb.width/2))<3, `중심차 ${Math.round(mid-(lzb.left+lzb.width/2))}px`);
   const hcw=document.querySelector('#hand .hcw').getBoundingClientRect().width;
   const lw=lz[0].getBoundingClientRect().width;      /* 판을 비우기 전에 재 둔다 */
-  /* 크리처 판은 손패의 70% 이상, 지형존은 정보가 적으니 50% 이상이면 된다 */
   S.me.board=[]; placeCreature('me',Object.keys(POOL).find(n=>POOL[n].k==='cr')); render();
   const bw=document.querySelector('#myBoard > .slot').getBoundingClientRect().width;
-  ok('판 카드 크기', bw>=hcw*0.70&&lw>=hcw*0.50,
-     `크리처판 ${Math.round(bw)} · 지형 ${Math.round(lw)} vs 손패 ${Math.round(hcw)}`);
+  /* 손패·크리처 판·지형존은 **같은 규격**이어야 한다 */
+  ok('카드 규격 통일', Math.abs(bw-hcw)<1.5&&Math.abs(lw-hcw)<1.5,
+     `크리처판 ${bw.toFixed(1)} · 지형 ${lw.toFixed(1)} · 손패 ${hcw.toFixed(1)}`);
   return out;});
 console.log([...R.slice(0,6),...late].join('\n'));
 console.log('ERRORS:',errs.slice(0,3));
