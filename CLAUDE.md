@@ -133,6 +133,21 @@ python3 tools/build_pages.py --push <GITHUB_TOKEN>
   카드 중심을 지나면 다음 자리. 판이 비면 한가운데. 드롭하면 `playFromHand(i,hit,at)`이 그 자리에 넣는다.
   `dropbar`의 z-index는 드래그 고스트(88)보다 높아야 손가락에 가려지지 않는다.
 
+## 앱으로 설치 (PWA · 2026-08)
+
+- `prototype/manifest.webmanifest` + `sw.js` + 아이콘 4종(192·512·maskable·apple-touch).
+  `build_pages.py`의 `FILES`에 들어 있어야 게시된다 — 새 정적 파일을 추가하면 여기도 넣을 것.
+- HTML `<head>`에 `rel="manifest"` · `apple-mobile-web-app-capable` · `viewport-fit=cover`.
+  노치·홈 인디케이터는 `env(safe-area-inset-*)`로 피한다.
+- 설정 서랍 맨 아래에 **설치 버튼/안내**. 안드로이드·크롬은 `beforeinstallprompt`를 잡아 버튼을 띄우고,
+  iOS 사파리는 그 이벤트가 없으므로 "공유 → 홈 화면에 추가" 안내 문구를 대신 보여 준다.
+- `sw.js`는 **네트워크 우선, 실패 시 캐시**. ⚠ 새 판을 올릴 때 `CACHE` 이름을 바꾸지 않으면
+  옛 화면이 계속 뜰 수 있다.
+- **카드 크기는 `dvh`에도 묶여 있다**: `--cardw: min(clamp(46px,19vw,86px), 8.2dvh)`.
+  판 4줄 + 손패 2줄이 전부 이 값을 따라 커지므로, 주소창이 있는 브라우저(세로가 짧음)에서는
+  자동으로 줄고 **앱으로 설치하면 주소창이 사라진 만큼 카드가 커진다.**
+  `tools/test_mobile.js`가 앱(844)·브라우저(745)·작은 폰(640) 높이를 모두 검사한다.
+
 ## 모바일 세로 UI (2026-08) — 하스스톤/MTGA 배치
 
 - **한 화면에서 끝난다.** `@media (max-width:900px)`에서 `.wrap`이 `100dvh` 세로 플렉스가 되고
@@ -184,7 +199,8 @@ python3 tools/build_pages.py --push <GITHUB_TOKEN>
 - 드래그 중에는 `resize`에도 `fanHand()`를 돌리지 않는다 — iOS는 주소창이 접힐 때 resize를 쏘는데,
   그때 손패를 다시 배치하면 잡고 있던 카드가 어긋난다.
 - 주소 끝에 **`?dbg=1`** 을 붙이면 포인터 동작(어느 카드를 잡았는지·어디서 끊겼는지)이 전투 로그에 남는다.
-- **상대 손패는 맨 위에 뒷면(`.cback`)으로 보여 준다.** 매수만 드러내며 `pointer-events:none`.
+- **상대 손패는 맨 위에 뒷면(`.cback`)으로 보여 준다.** 내 손패와 **같은 규격**(`--cardw`)이고
+  매수만 드러내며 `pointer-events:none`.
   같은 `fanHand(id, invert)`를 쓴다(`invert`는 축소 기준점만 위쪽으로 바꾼다).
   ⚠ 상대 손패도 `.hcw`를 쓰므로 **선택자는 `#hand .hcw`로 한정할 것.**
   `.hcw:last-child` 같은 전역 선택자는 DOM 순서상 **상대 카드부터** 잡는다(테스트가 통째로 깨졌다).
@@ -265,6 +281,8 @@ python3 tools/build_pages.py --push <GITHUB_TOKEN>
 - **소환·배치는 슬롯을 고르지 않는다** — `leftFree()`로 **왼쪽 빈 칸부터** 채운다.
   보드 오른쪽 끝에 떨궈도 0번에 들어간다. 유효 슬롯 위에 떨궈도 무시한다(의도적).
   자리를 직접 지정하고 싶으면 **기존 탭 흐름**(카드 탭 → 슬롯 탭)이 그대로 남아 있다.
+- 대상 지정 중에는 **고를 수 없는 것은 어둡게**(`body.tgtmode`) 하고, 대상 카드는 판 한가운데에
+  '나간 것처럼' 세운다. 빈 곳을 누르면 손으로 돌아온다.
 - **대상이 필요한 스펠은 하스스톤 방식 타게팅으로 간다**(`mode==='target'||'mine'`).
   대상 위에 바로 떨구면 그대로 발동하고, 빈 곳에 떨구면 `startTargeting()` —
   카드가 손패 위에 서고 손끝까지 곡선 화살표가 이어진다. 유효 대상을 탭하면 발동, 딴 곳을 탭하면 취소(카드는 손에 남는다).

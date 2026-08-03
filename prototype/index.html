@@ -2,7 +2,15 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<!-- 앱으로 설치(PWA). 홈 화면에서 열면 주소창이 사라져 세로 공간이 더 생긴다. -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#120d09">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TEN">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="color-scheme" content="light only">
 <meta name="supported-color-schemes" content="light">
 <title>TEN — 플레이 프로토타입</title>
@@ -12,8 +20,8 @@
 <noscript><style>#nojs{display:block!important}</style></noscript>
 <style>
 :root{
-  /* 손패·크리처 판·지형존이 **같은 규격**을 쓴다. 크기는 이 변수 하나로만 바꾼다. */
-  --cardw:84px;
+  /* 손패·상대 손패·크리처 판·지형존이 **같은 규격**을 쓴다. 크기는 이 변수 하나로만 바꾼다. */
+  --cardw:76px;
   --bg:#120d09; --leather:#241a12; --leather-2:#2e2116; --wood:#3a2a1a;
   --parch:#ece0c4; --parch-2:#ddceac; --parch-edge:#c9b688;
   --ink:#2a1d10; --ink-soft:#5a4630; --ink-faint:#8a7452;
@@ -52,6 +60,8 @@ body.sideon .gear{opacity:0;pointer-events:none}
   color:var(--gold-bright);text-shadow:0 1px 0 #000,0 0 14px rgba(201,162,75,.4)}
 .shdr h1 span{color:var(--emerald)}
 .shdr .meta{font-family:'Cinzel',serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+.ihow{font-family:'Gowun Batang',serif;font-size:11px;line-height:1.7;color:var(--gold);
+  opacity:.85;margin-top:6px;padding:8px 10px;border:1px solid var(--rule);border-radius:5px;background:#150e08}
 .sclose{margin-left:auto;padding:4px 10px;font-size:13px;background:none;border:1px solid var(--rule);
   color:var(--gold);box-shadow:none}
 .deckpick{margin:0 0 8px}
@@ -632,9 +642,9 @@ body.sideon::after{content:'';position:fixed;inset:0;z-index:69;background:rgba(
 @supports not (width:1cqw){ .tcard.sm{--cw:84px} }
 
 /* 상대 손패 — 뒷면만 보인다. 만질 수 없고 부채꼴은 아래로 편다(상대가 쥔 모양). */
-.hand.foe{padding:8px 0 10px;align-items:flex-start}
+.hand.foe{padding:6px 0 8px;align-items:flex-start}
 .hand.foe .hcw{pointer-events:none;cursor:default}
-.cback{width:var(--foecw,58px);aspect-ratio:5/7;border-radius:calc(var(--foecw,58px)*.06);
+.cback{width:var(--cardw,76px);aspect-ratio:5/7;border-radius:calc(var(--cardw,76px)*.06);
   border:1.5px solid var(--bronze);position:relative;overflow:hidden;
   background:
     radial-gradient(circle at 50% 38%, rgba(242,212,136,.16), transparent 60%),
@@ -688,7 +698,10 @@ body.dragmode.armed .hand{outline-color:transparent}
 .tgtcard{position:fixed;z-index:86;left:50%;transform:translateX(-50%);pointer-events:none;
   filter:drop-shadow(0 0 18px rgba(242,212,136,.55)) drop-shadow(0 12px 24px rgba(0,0,0,.6));
   animation:tgtin .18s cubic-bezier(.2,.9,.3,1) both}
-.tgtcard .tcard{--cw:88px;border-color:var(--gold-bright)}
+.tgtcard .tcard{--cw:var(--cardw,76px);border-color:var(--gold-bright)}
+/* 대상을 고르는 동안 고를 수 없는 것은 어둡게 — 고를 수 있는 것만 눈에 들어오게 */
+body.tgtmode .board>.slot:not(.pick){filter:grayscale(.6) brightness(.55)}
+body.tgtmode .hand{filter:grayscale(.5) brightness(.6)}
 @keyframes tgtin{0%{opacity:0;transform:translateX(-50%) scale(.85)}100%{opacity:1;transform:translateX(-50%) scale(1)}}
 /* SVG는 대체 요소라 inset:0 만으로는 300x150 고유 크기로 남는다 — 크기를 명시할 것 */
 #tgtsvg{position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:85;pointer-events:none;overflow:visible}
@@ -708,7 +721,12 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
 @media (max-width:900px){
   /* fixed 인 서랍은 body 의 overflow 로 잘리지 않는다 — html 에서 잘라야 문서가 안 늘어난다 */
   html{overflow:hidden;height:100dvh}
-  body{padding:0;height:100dvh;overflow:hidden}
+  /* 앱(standalone)으로 열면 노치·홈 인디케이터를 피해야 한다 */
+  body{padding:0;height:100dvh;overflow:hidden;
+    padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+  .gear{top:calc(6px + env(safe-area-inset-top));right:calc(6px + env(safe-area-inset-right));
+    width:34px;height:34px;font-size:16px}
+  .side{padding-bottom:calc(14px + env(safe-area-inset-bottom))}
   .wrap{max-width:none;height:100dvh;display:flex;flex-direction:column;gap:0;padding:0}
 
   /* 판 — 세로로 쌓고, 가운데에 조작 줄을 끼운다 */
@@ -748,8 +766,12 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
   /* 손패 — 넘치면 겹친다(--hgap 은 render 가 계산해 음수로 넣는다) */
   /* 모바일 — 판 카드는 손패보다 조금만 작게. 10칸 격자를 버렸으니 크게 그릴 수 있다. */
   /* 모바일 — 손패·판·지형존이 전부 이 하나를 쓴다. 세로 예산이 빠듯하니 여기서만 조절할 것. */
-  :root{--cardw:clamp(60px,21vw,96px);--foecw:clamp(30px,8.5vw,44px)}
-  .hand.foe{flex:none;padding:3px 0 3px}
+  /* 카드 규격 하나. 상대 손패도 같은 값을 쓴다(뒷면만 다르다).
+     ⚠ 폭(vw)뿐 아니라 **높이(dvh)로도 묶어야** 한다 — 판 4줄 + 손패 2줄이 전부 이 값을 따라
+     커지기 때문에, 주소창이 있는 브라우저처럼 세로가 짧으면 화면 밖으로 밀린다.
+     (앱으로 설치하면 주소창이 사라져 dvh 가 커지고 카드도 그만큼 커진다.) */
+  :root{--cardw:min(clamp(46px,19vw,86px),8.2dvh)}
+  .hand.foe{flex:none;padding:2px 0 2px}
   #lbHand{display:none}
   /* 손패는 화면 바닥에 붙인다 — 남는 세로 여백이 판과 손패 사이로 간다 (하스스톤 배치) */
   .hand{flex:none;margin-top:auto;padding:4px 0 6px;justify-content:center;overflow:visible}
@@ -760,7 +782,6 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
     border-radius:12px 12px 0 0;border-bottom:none;transform:translateY(101%);
     box-shadow:0 -10px 30px rgba(0,0,0,.6)}
   .log{max-height:34dvh}
-  .gear{top:6px;right:6px;width:34px;height:34px;font-size:16px}
 
   /* 원정 화면 */
   .mbox{padding:14px 12px;max-height:92dvh}
@@ -783,6 +804,7 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
 }
 /* 아주 좁은 화면(360px 이하) — 카드와 글자를 한 단계 더 줄인다 */
 @media (max-width:380px){
+  :root{--cardw:min(clamp(44px,18vw,72px),8.2dvh)}
   .bar .hp{font-size:15px}
   .hint{font-size:9.5px}
 }
@@ -916,6 +938,9 @@ body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
       <button class="ghost" style="flex:1;padding:7px" id="speed">속도 ×1</button>
       <button class="ghost" style="flex:1;padding:7px" id="restart">새 게임</button>
     </div>
+    <div class="lbl" style="margin-top:12px">앱으로 설치</div>
+    <button class="ghost" style="width:100%;padding:9px;display:none" id="installBtn">앱으로 설치</button>
+    <div class="ihow" id="installHow"></div>
   </div>
 </div>
 
@@ -2655,8 +2680,8 @@ function render(){
     else if(S.mode==='place')hint.textContent=`${n} — 판 위로 끌면 놓일 자리가 표시된다 (사이에도 끼울 수 있다)`;
     else if(S.mode==='ench')hint.textContent=`${n} — 판 위로 끌면 놓일 자리가 표시된다`;
     else if(S.mode==='summon')hint.textContent=`${n} — 판 위로 끌면 토큰이 놓일 자리가 표시된다`;
-    else if(S.mode==='mine')hint.textContent=`${n} — 강화할 내 크리처를 지정하세요`;
-    else if(S.mode==='target')hint.textContent=`${n} — 상대 ${cm.mode==='shatter'?'인챈트':'크리처'}를 지정하세요`;
+    else if(S.mode==='mine')hint.textContent=`${n} — 빛나는 내 크리처를 누르세요 (빈 곳을 누르면 취소)`;
+    else if(S.mode==='target')hint.textContent=`${n} — 빛나는 상대 ${cm.mode==='shatter'?'인챈트':'크리처'}를 누르세요 (빈 곳을 누르면 취소)`;
     else{hint.innerHTML=`${n} — ${SPELL_KO[cm.mode]||''} 즉시 발동 &nbsp;<b style="cursor:pointer;text-decoration:underline" id="fire">[발동]</b>`;
       setTimeout(()=>{const f=document.getElementById('fire');if(f)f.onclick=castSelectedInstant;},0);}
   }
@@ -2673,8 +2698,33 @@ document.getElementById('speed').onclick=()=>{
 document.getElementById('restart').onclick=()=>{ if(RG.on)return rgMap(); newGame(); };
 document.getElementById('mBattle').onclick=()=>{ if(!RG.on)return; RG.on=false; PDECK=EDECK=null; EHP=null; RG.foe=null; rgClose(); newGame(); };
 document.getElementById('mRogue').onclick=()=>{ rgPickEl(); };
+/* ============ 앱으로 설치 (PWA) ============
+   홈 화면에 추가하면 주소창이 사라져 세로 공간이 그만큼 더 생긴다. */
+if('serviceWorker' in navigator&&location.protocol!=='file:')
+  addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+let INSTALLP=null;
+addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); INSTALLP=e; syncInstall(); });
+addEventListener('appinstalled',()=>{ INSTALLP=null; syncInstall(); });
+function syncInstall(){
+  const b=document.getElementById('installBtn'), h=document.getElementById('installHow');
+  if(!b)return;
+  if(isStandalone()){ b.style.display='none'; h.textContent='앱으로 실행 중입니다.'; return; }
+  if(INSTALLP){ b.style.display=''; b.textContent='앱으로 설치';
+    h.textContent='홈 화면에 추가하면 주소창 없이 전체 화면으로 열립니다.'; return; }
+  b.style.display='none';
+  const ios=/iPad|iPhone|iPod/.test(navigator.userAgent)||
+    (navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  h.textContent=ios
+    ? '사파리에서 공유 버튼(⬆) → "홈 화면에 추가"를 누르면 앱처럼 전체 화면으로 열립니다.'
+    : '브라우저 메뉴에서 "홈 화면에 추가" 또는 "앱 설치"를 누르면 전체 화면으로 열립니다.';
+}
 /* 톱니 — 설정 서랍(제목·턴·모드·덱 선택·메커니즘·로그·속도·새 게임)을 연다 */
-document.getElementById('gearBtn').onclick=()=>document.body.classList.toggle('sideon');
+document.getElementById('gearBtn').onclick=()=>{document.body.classList.toggle('sideon');syncInstall();};
+document.getElementById('installBtn').onclick=async()=>{
+  if(!INSTALLP)return;
+  INSTALLP.prompt(); await INSTALLP.userChoice; INSTALLP=null; syncInstall();
+};
 document.getElementById('sideClose').onclick=()=>document.body.classList.remove('sideon');
 document.addEventListener('pointerdown',e=>{
   if(!document.body.classList.contains('sideon'))return;
@@ -2894,8 +2944,12 @@ function startTargeting(i,n,mode,x,y){
   const card=document.createElement('div'); card.className='tgtcard';
   card.innerHTML=tcardHTML(n,{size:'md'});
   document.body.appendChild(card);
+  /* 판으로 나간 것처럼 보이게 — 내 보드 가운데(없으면 손패 위)에 세운다 */
+  const bd=document.getElementById('myBoard');
   const hr=document.getElementById('hand').getBoundingClientRect();
-  card.style.top=Math.max(8,hr.top-card.offsetHeight-14)+'px';
+  const br=bd?bd.getBoundingClientRect():null;
+  const top=br?br.top+(br.height-card.offsetHeight)/2:hr.top-card.offsetHeight-14;
+  card.style.top=Math.max(6,Math.min(top,innerHeight-card.offsetHeight-6))+'px';
   const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
   svg.id='tgtsvg'; document.body.appendChild(svg);
   document.body.classList.add('tgtmode');
@@ -2916,7 +2970,7 @@ document.addEventListener('pointerdown',e=>{
   e.stopPropagation(); e.preventDefault();
   const i=TGT.i; endTargeting();
   if(t){ lpFired=true; clickSlot(t.side,t.idx); }
-  else { S.sel=null;S.mode=null;render(); toast('대상 지정 취소'); }
+  else { S.sel=null;S.mode=null;render(); toast('취소 — 카드가 손으로 돌아왔다'); }
 },true);
 document.addEventListener('pointermove',e=>{ if(TGT)tgtDraw(e.clientX,e.clientY); },{passive:true});
 const DBG=/[?&]dbg=1/.test(location.search);   /* 주소 끝에 ?dbg=1 을 붙이면 포인터 동작을 로그로 남긴다 */

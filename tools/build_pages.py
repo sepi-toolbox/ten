@@ -30,6 +30,13 @@ OUT = "/tmp/ten-pages"
 FILES = [
     ("site_index.html",            "index.html"),
     ("prototype/index.html",       "prototype/index.html"),
+    # PWA — 홈 화면에 앱으로 설치할 때 쓰인다
+    ("prototype/manifest.webmanifest", "prototype/manifest.webmanifest"),
+    ("prototype/sw.js",                "prototype/sw.js"),
+    ("prototype/icon-192.png",         "prototype/icon-192.png"),
+    ("prototype/icon-512.png",         "prototype/icon-512.png"),
+    ("prototype/icon-maskable.png",    "prototype/icon-maskable.png"),
+    ("prototype/apple-touch-icon.png", "prototype/apple-touch-icon.png"),
     ("tools/card_gallery.html",    "gallery.html"),
     ("tools/card_editor.html",     "editor.html"),
 ]

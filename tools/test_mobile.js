@@ -3,7 +3,10 @@
 const path=require('path');
 const {chromium}=require('/opt/node-tools/node_modules/playwright');
 const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
-const SIZES=[[390,844,'iPhone 14'],[360,780,'작은 안드로이드'],[430,932,'Pro Max'],[820,1180,'태블릿 세로']];
+/* 앱(주소창 없음) · 브라우저(주소창 있음) 두 경우를 모두 본다 —
+   카드 크기가 dvh 에 묶여 있어 세로가 짧으면 알아서 줄어야 한다. */
+const SIZES=[[390,844,'iPhone 앱'],[390,745,'iPhone 브라우저'],[360,640,'작은 폰 브라우저'],
+             [430,932,'Pro Max 앱'],[820,1180,'태블릿 세로']];
 (async()=>{
   const b=await chromium.launch(); let bad=0;
   for(const [w,h,label] of SIZES){
