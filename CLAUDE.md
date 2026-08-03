@@ -49,9 +49,21 @@ python3 tools/build_deck_doc.py         # DECKS → docs/sample_decks.html
 # 3) 검산 — 통과(exit 0)해야 커밋한다
 python3 tools/validate_budget.py        # 예산 + CSV/POOL 동기화 + 7덱 40장
 
-# 4) 게시
-python3 tools/build_pages.py --push <GITHUB_TOKEN>
+# 4) 게시 — ⚠⚠ **이걸 안 하면 사이트는 안 바뀐다.** git push 는 배포가 아니다.
+python3 tools/build_pages.py --push
+python3 tools/check_published.py        # 게시본 == 작업본 인지 확인 (exit 1 이면 아직 옛 판)
 ```
+
+> ### ⚠⚠⚠ `git push` 는 배포가 아니다
+> GitHub Pages 는 `main` 이 아니라 **`gh-pages` 브랜치**를 게시한다.
+> main 에 커밋·푸시하고 "올렸다" 고 말하면 **거짓말이 된다.**
+>
+> 실제로 이걸 밟았다 — 판 넷(0.24 → 0.27)을 올리는 동안 사이트는 **0.23.0 에 멈춰** 있었다.
+> 성권이 "지운 카드가 아직 보인다" 며 스크린샷을 보내고, 캐시인 줄 알고 앱을 **다시 깔기까지** 했다.
+> 나는 저장소만 확인하고 "커밋된 빌드는 정상이니 기기 캐시" 라고 답했다. 저장소는 정상이었지만
+> **게시본은 정상이 아니었다.** 확인해야 할 것은 저장소가 아니라 `gh-pages` 였다.
+>
+> **판을 올렸다고 말하기 전에 반드시 `check_published.py` 를 돌린다.**
 
 - `tools/extract_cards.py`(xlsx → CSV)는 **보류 상태**다. 그냥 돌리면 승격된 140종을 옛 20종으로 덮어쓰므로
   `--force-legacy` 없이는 exit 2로 멈춘다. `data/ten_balance.xlsx`는 보관용이다.
@@ -688,6 +700,9 @@ python3 tools/build_pages.py --push <GITHUB_TOKEN>
 - **주소: https://sepi-toolbox.github.io/ten/** — 아이패드 사파리 북마크용. 랜딩에서 프로토타입·갤러리·에디터·설계문서 8종으로 이동한다.
 - `gh-pages` 브랜치가 정적 사이트다. main은 건드리지 않는다.
 - 갱신: `python3 tools/build_pages.py --push` (/tmp 별도 클론에서 gh-pages를 새로 쌓아 force push)
+- ⚠⚠ **확인: `python3 tools/check_published.py`** — 작업본과 게시본(gh-pages)의 VERSION 을 맞대 본다.
+  main 만 밀어 놓고 게시를 빠뜨리는 사고가 실제로 났다(0.23.0 에 넉 판 동안 멈춰 있었다).
+  사이트가 바뀐 것을 **눈으로 확인하기 전에는** '올렸다' 고 말하지 않는다.
 - **토큰**은 `--push` 뒤 인자 → `GITHUB_TOKEN` 환경변수 → `~/.config/ten/token` 순으로 찾는다.
   ⚠ **저장소는 공개다. 토큰을 저장소 안에 두면 그대로 노출된다.** `.gitignore`에 `*token*`·`*.pat`·`.env`를 넣어 두었지만
   근본적으로 저장 위치는 항상 저장소 **밖**(`~/.config/ten/token`, 권한 600)이어야 한다.
