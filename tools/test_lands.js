@@ -223,6 +223,47 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
   /* 지형은 POOL 이 아니라 LANDS 에 희귀도가 있다 — 여기서 못 읽으면 전부 커먼으로 잡힌다 */
   ok('지형 희귀도를 읽는다', off.희귀도==='legendary/rare/common', off.희귀도);
 
+  /* ── 어둠 지형 4종 (2026-08) ──────────────────────────────
+     ⚠ 지형 이름을 검사에 박지 않는다 — LANDS 의 note 를 읽어 고른다.
+       지형이 늘거나 이름이 바뀔 때 검사가 조용히 틀리는 걸 막는다. */
+  const dk=await p.evaluate(()=>{
+    const r={};
+    r.기본=(BASICLAND.dark||[]).slice();
+    r.나눔=splitBasics('dark',17).map(x=>x.join(':')).join(' ');
+    const reset=()=>{S.gen=(S.gen||0)+1;S.me.lands=[];S.me.board=[];S.me.landPlayed=false;S.me.hand=[];};
+    /* 망각의 숲 — 턴당 1장 제한을 안 먹는다. 자원은 그대로 내고 지불은 없다. */
+    reset();
+    playLand('me','죽음의 늪');
+    r.제한=S.me.landPlayed;
+    r.추가=playLand('me','망각의 숲')!==false&&S.me.lands.length===2;
+    r.무료=manaLeft('me');                       /* 2장 = 자원 2, 지불 없음 */
+    /* 저주의 땅 — 자원 2를 내고 놓는다 · 자원을 안 만든다 · 내 턴 종료마다 카드 1장 */
+    reset();
+    for(let i=0;i<3;i++){S.me.landPlayed=false;playLand('me','죽음의 늪');}
+    S.me.lands.forEach(l=>{l.used=false;l.entering=false;});
+    const m0=manaLeft('me');
+    S.me.landPlayed=true;                        /* 이미 지형을 놓은 턴이어도 놓을 수 있어야 한다 */
+    r.저주=playLand('me','저주의 땅')!==false;
+    r.지불=m0-manaLeft('me');
+    S.me.deck=['죽음의 늪','죽음의 늪','죽음의 늪']; S.me.hand=[];
+    landEnd('me'); r.드로우=S.me.hand.length;
+    /* 묘지 — 내 크리처가 소멸할 때마다 좀비랫 */
+    reset();
+    playLand('me','묘지'); r.묘지자원=manaLeft('me');
+    placeCreature('me','데스핸드',0);
+    S.me.board[0].insts[0].hp=0; cleanup('me');
+    r.무덤=S.me.board.filter(u=>u&&u.name==='좀비랫').length;
+    return r;});
+  ok('어둠 기본 지형 3종', dk.기본.join(' ')==='죽음의 늪 죽음의 호수 죽음의 대지', dk.기본.join(' '));
+  ok('17장을 고르게 나눈다', dk.나눔==='죽음의 늪:6 죽음의 호수:6 죽음의 대지:5', dk.나눔);
+  ok('망각의 숲 — 추가 배치', dk.제한===true&&dk.추가===true, `보통 지형 뒤에도 놓임 ${dk.추가}`);
+  ok('망각의 숲 — 지불 없음', dk.무료===2, `자원 ${dk.무료} (2장 = 2)`);
+  ok('저주의 땅 — 추가 배치', dk.저주===true, `놓임 ${dk.저주}`);
+  ok('저주의 땅 — 자원 2 지불', dk.지불===2, `${dk.지불} 소모 (자원을 안 만드니 회수 없음)`);
+  ok('저주의 땅 — 턴 종료 드로우', dk.드로우===1, `${dk.드로우}장`);
+  ok('묘지 — 자원 안 만듦', dk.묘지자원===0, `자원 ${dk.묘지자원}`);
+  ok('묘지 — 죽으면 좀비랫', dk.무덤===1, `좀비랫 ${dk.무덤}체`);
+
   if(errs.length){bad++;console.log('   ERR',errs.slice(0,2));}
   console.log(bad?`❌ ${bad}건 실패`:'✅ 전부 통과');
   await b.close(); process.exit(bad?1:0);

@@ -82,28 +82,37 @@ def main():
     for r in landrows:
         els = [e for e in (r.get("produces", ""), r.get("produces2", "")) if e]
         e = {"els": els, "dual": int(r.get("tapped") or 0)}
+        # ⚠ kind 는 **여러 개를 '+' 로 붙일 수 있다.** 저주의 땅은 extra(턴 제한 무시)이면서
+        #   동시에 special(자원을 안 만들고 다른 일을 한다)이다. 한 칸에 하나만 적을 수 있다는
+        #   전제로 짜 두면 그런 지형이 나올 때마다 새 kind 이름을 만들게 된다.
+        kinds = set((r.get("kind") or "").split("+"))
         # rich = 한 장이 자원을 **둘** 낸다. 마나 계산이 '지형 수' 가 아니라 'n 의 합' 이 된다.
-        if r.get("kind") == "rich":
+        if "rich" in kinds:
             e["n"] = 2
             e["r"] = "legendary"
             e["max"] = 1                      # 덱에 1장만
             e["note"] = r.get("note", "")
         # extra = **턴당 지형 1장 제한을 안 먹는다.** 대신 놓을 때 자원 2를 낸다.
-        if r.get("kind") == "extra":
+        if "extra" in kinds:
             e["extra"] = 1
             e["pay"] = 2
             e["r"] = "rare"
             e["note"] = r.get("note", "")
+        # twin = **평범한 지형인데 턴당 1장 제한을 안 먹는다.** extra 와 달리 자원을 안 낸다.
+        if "twin" in kinds:
+            e["extra"] = 1
+            e["pay"] = 0
+            e["note"] = r.get("note", "")
         # temp = 소멸 지형. 스펠이 만들어 내고, 내 턴 시작마다 수명이 하나씩 준다.
-        if r.get("kind") == "temp":
+        if "temp" in kinds:
             e["temp"] = 2
             e["note"] = r.get("note", "")
         # 효과가 있는 특수 지형은 전부 레어다
-        if r.get("kind") == "special":
+        if "special" in kinds:
             e["r"] = "rare"
         # 특수 지형 — 자원을 만들지 않고 다른 일을 한다. `sp` 가 그 종류다.
         # ⚠ els 가 비면 카드 색·자원 pip 이 없어지므로 `home`(테마 속성)을 따로 실어 준다.
-        if r.get("kind") == "special":
+        if "special" in kinds:
             e["sp"] = r["name"]
             e["home"] = r.get("element") or "fire"
             e["note"] = r.get("note", "")

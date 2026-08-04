@@ -29,19 +29,62 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
   await p.waitForTimeout(400);
 
   /* 데이터의 fx 키가 엔진에 전부 있는가 — 새 인챈트를 만들고 한쪽만 고치면 조용히 안 돈다 */
-  const miss=await p.evaluate(()=>Object.values(POOL).filter(c=>c.k==='en')
-    .map(c=>c.fx).filter((x,i,a)=>a.indexOf(x)===i).filter(k=>!ENCHFX[k]));
-  ok('fx 키가 엔진에 있다', miss.length===0, miss.length?`엔진에 없음: ${miss}`:'전부 짝이 맞는다');
+  const fxs=await p.evaluate(()=>{
+    const ks=Object.values(POOL).filter(c=>c.k==='en').map(c=>c.fx)
+      .filter((x,i,a)=>a.indexOf(x)===i);
+    return {miss:ks.filter(k=>!ENCHFX[k]), pend:[...FXPEND].filter(k=>ks.includes(k))};});
+  ok('fx 키가 엔진에 있다', fxs.miss.length===0,
+     fxs.miss.length?`엔진에 없음: ${fxs.miss}`:'전부 짝이 맞는다');
+  /* ⚠ '없음' 과 '아직 안 만듦' 을 갈라 본다. 미구현은 FXPEND 에 **선언**해야 하고,
+     선언된 것은 충전을 쓰지 않는다 — 반쯤 돌다 충전만 태우는 게 제일 나쁘다. */
+  ok('미구현 fx 는 선언돼 있다', fxs.pend.join()==='scry', fxs.pend.join()||'없음');
+
+  // ── 어둠 인챈트 3종 (호박 머리는 3단계)
+  const dk=await p.evaluate(()=>{
+    const r={}; const en=(pl,n)=>{const c=POOL[n];S[pl].board.push({name:n,kind:'en',v:c.v,charge:c.ch});};
+    const reset=()=>{S.me.board=[];S.ai.board=[];S.me.hp=60;S.ai.hp=60;S.me.deck=['검사','창병','석벽'];};
+    /* 오닉스 — 소환 트리거에 buffnew 를 그대로 쓴다(E3 → +1/+1) */
+    reset(); en('me','오닉스');
+    placeCreature('me','검사',0); onSummon('me','검사',0);
+    const t=S.me.board.find(u=>u&&u.kind==='cr');
+    r.오닉스=[t.a-POOL['검사'].a, t.insts[0].hp-POOL['검사'].h];
+    /* 만월석 — 충전이 다하는 그 턴에 늑대인간 */
+    reset(); en('me','만월석'); const mw=S.me.board[0];
+    const seen=[]; for(let k=0;k<4;k++){ fireEnch('me','end');
+      seen.push(S.me.board.filter(u=>u&&u.name==='늑대인간').length); }
+    r.만월=seen.join(''); r.충전=mw.charge;
+    /* 흑마도서 — 내 HP 가 줄면 아군 전체가 그만큼 커진다 */
+    reset(); en('me','흑마도서');
+    placeCreature('me','검사',1); placeCreature('me','창병',2);
+    const a0=S.me.board[1].a; faceDmg('me',3);
+    r.도서=[a0,S.me.board[1].a,S.me.board[2].a-POOL['창병'].a];
+    /* ⚠ 제물(HP 지불)은 피해가 아니다 — 흑마도서가 울면 안 된다 */
+    reset(); en('me','흑마도서'); placeCreature('me','검사',1);
+    const b0=S.me.board[1].a;
+    placeCreature('me','데스핸드',2); onSummon('me','데스핸드',2);   /* 제물 4 */
+    r.제물=[S.me.board[1].a-b0, S.me.hp];
+    return r;});
+  ok('오닉스 = 소환마다 +1/+1', fxs.miss.length===0&&dk.오닉스.join()==='1,1', dk.오닉스.join('/'));
+  ok('만월석 = 충전 끝에 늑대인간', dk.만월==='0011', `턴마다 늑대인간 수 [${dk.만월}] · 남은 충전 ${dk.충전}`);
+  ok('흑마도서 = 잃은 만큼 아군 강화', dk.도서[1]===dk.도서[0]+3&&dk.도서[2]===3,
+     `검사 ATK ${dk.도서[0]}→${dk.도서[1]} · 창병 +${dk.도서[2]}`);
+  /* ⚠ 제물은 **피해가 아니라 비용**이라 faceDmg 를 안 지난다 — 흑마도서가 울면 안 된다 */
+  ok('제물은 흑마도서를 안 울린다', dk.제물[0]===0&&dk.제물[1]===56,
+     `검사 ATK +${dk.제물[0]} · 내 HP ${dk.제물[1]}`);
 
   const R=await p.evaluate(async()=>{
     SPEED=40; const o={};
     const reset=()=>{S.me.board=[];S.ai.board=[];S.me.hp=60;S.ai.hp=60;S.me.hand=[];
       S.me.lands=[];S.me.deck=['검사','창병','석벽','돌덩이','가시병','기사'];S.tide=null;S.over=false;};
     const put=(pl,n)=>{const i=S[pl].board.length;placeCreature(pl,n,i);onSummon(pl,n,i);};
-    const en=(pl,n)=>{const c=POOL[n];S[pl].board.push({name:n,kind:'en',v:c.v,charge:c.ch});};
+    /* ⚠ 이름이 POOL 에 없으면 **여기서 이름을 밝히고 죽는다.** 예전엔 undefined.v 로
+       터져서 "어느 카드가 사라졌는지" 를 스택만 보고는 알 수 없었다. */
+    const en=(pl,n)=>{const c=POOL[n]; if(!c)throw new Error('POOL 에 없는 카드: '+n);
+      S[pl].board.push({name:n,kind:'en',v:c.v,charge:c.ch});};
+    const put0=(pl,n)=>{ if(!POOL[n])throw new Error('POOL 에 없는 카드: '+n); };
     const hp=(pl,i)=>{const u=S[pl].board[i];return u&&u.insts[0]?u.insts[0].hp:0;};
     const mana=n=>{S.me.lands=Array(n).fill(0)
-      .map(()=>({name:'심연',els:['dark','fire','water','nature','steel','earth','light'],
+      .map(()=>({name:'죽음의 늪',els:['dark','fire','water','nature','steel','earth','light'],
                  used:false,entering:false}));};
 
     // ── 턴 종료 트리거 8종
@@ -59,21 +102,26 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
     reset(); put('me','검사'); en('me','병기고'); fireEnch('me','end'); o.병기고=S.me.board[0].hard;
     reset(); en('me','고대 제단'); fireEnch('me','end'); o.고대제단=60-S.ai.hp;
     // ── 조건 트리거
-    reset(); put('me','검사'); en('me','흡혈 의식'); S.me.hp=30;
-    S.me.board[0].insts[0].hp=0; cleanup('me'); o.흡혈의식=S.me.hp-30;
-    reset(); put('me','검사'); put('ai','창병'); en('me','흡혈 의식');
-    S.me.board[0].insts[0].hp=0; cleanup('me'); o.연쇄발화=hp('ai',0);
+    /* ⚠ 흡혈 의식·피의 성배는 어둠 전면 교체 때 지운 카드다. 소멸 트리거는 지금 살아 있는
+       악마의 석상(내 크리처가 소멸할 때마다 아군 전체 ATK +1)으로 잰다.
+       ⚠ 'paid'(내가 HP 를 지불할 때마다) 트리거는 **지금 그 트리거를 쓰는 카드가 없다.**
+         장치는 살아 있으니 어둠 3단계에서 다시 카드가 붙으면 그때 검사를 되살린다. */
+    reset(); put('me','검사'); put('me','창병'); en('me','악마의 석상');
+    const ga=S.me.board[1].a;
+    S.me.board[0].insts[0].hp=0; cleanup('me');
+    o.석상=[ga,S.me.board[0].a,POOL['악마의 석상'].v];   /* +v 만큼 오른다 */
+    /* ⚠ 연쇄 발화도 불 전면 교체 때 지웠다. 소멸 트리거를 쓰는 카드는 지금
+       악마의 석상 · 불사조의 깃털 둘뿐이다. */
     reset(); en('me','대지의 축복'); put('me','검사');
     const nu=S.me.board.find(u=>u.kind==='cr'); o.축복=[nu.a,nu.insts[0].hp];
     reset(); en('me','빛의 장막'); S.me.hp=30; put('me','검사'); o.장막=S.me.hp-30;
     reset(); en('me','전열 구축'); put('ai','창병'); o.전열=hp('ai',0);
     reset(); put('me','검사'); en('me','강철 의지');
     const w=S.me.board[0]; hurt(w,w.insts[0],2); o.강철의지=[w.insts[0].hp,w.insts[0].mh];
-    reset(); put('ai','창병'); en('me','피의 성배'); put('me','망령'); o.성배=hp('ai',0);
 
     // ── 스펠 부가 조항
-    reset(); mana(6); put('ai','창병'); pay('me','피의 못'); o.피의못=60-S.me.hp;
-    reset(); mana(6); pay('me','금단의 지식'); o.금단=60-S.me.hp;
+    /* 피의 못·금단의 지식도 지운 카드다. 지금 HP 를 지불하는 주문은 동냥(1코, HP 8) 하나다. */
+    reset(); mana(6); pay('me','동냥'); o.동냥=60-S.me.hp;
     reset(); put('ai','창병'); S.me.hp=40; resolveOnFoe('me','심판',0); o.심판=S.me.hp-40;
     /* 소이탄 — 즉시 파괴가 아니라 **상대 몸에 연소 5를 심는다**(대상이 반대편으로 뒤집혔다) */
     /* 소이탄은 지웠다 — 지금 같은 일을 하는 카드는 **작열 감옥**(2코, 상대에게 연소 5) */
@@ -106,14 +154,13 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
      &&R.생명의샘[0]===3&&R.병기고===1&&R.고대제단===2,
      `성화 +${R.성화} · 구슬 드로우 ${R.구슬} · 거울 [${R.거울}] · 하프 ATK ${R.하프[0]}→${R.하프[1]}`
      +` · 샘 ${R.생명의샘} · 병기고 경화${R.병기고} · 고대제단 ${R.고대제단}`);
-  ok('소멸 트리거', R.흡혈의식===3, `흡혈 의식 +${R.흡혈의식}`);
+  ok('소멸 트리거', R.석상[1]===R.석상[0]+R.석상[2],
+     `악마의 석상 ATK ${R.석상[0]}→${R.석상[1]} (+${R.석상[2]})`);
   ok('소환 트리거', R.축복[0]===3&&R.축복[1]===6&&R.장막===3,
      `대지의 축복 ${R.축복.join('/')} · 빛의 장막 +${R.장막}`);
   ok('상대 소환 트리거', R.전열===1, `전열 구축 → 상대 창병 ${R.전열}`);
   ok('피해 트리거', R.강철의지[0]===R.강철의지[1], `강철 의지 — 맞자마자 ${R.강철의지[0]}/${R.강철의지[1]} 로 복구`);
-  ok('HP 지불 트리거', R.성배===1, `망령의 대가 4 지불 → 피의 성배가 창병에 3 (${R.성배} 남음)`);
-
-  ok('HP 지불 스펠', R.피의못===8&&R.금단===14, `피의 못 −${R.피의못} · 금단의 지식 −${R.금단}`);
+  ok('HP 지불 스펠', R.동냥===8, `동냥 −${R.동냥}`);
   ok('요격 뒤 조항', R.심판===8&&R.포식[0]===4,
      `심판 +${R.심판} 회복 · 포식 버프 ${R.포식.join('/')}`);
   ok('상대에게 심는 부여', R.감옥[0]===5&&R.감옥[1]==='target',

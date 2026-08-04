@@ -40,7 +40,8 @@ DRAIN_EN = {"지속형": "persistent", "발동형": "triggered", "사용형": "a
 BASIC_LAND = {"fire":  ["불지옥", "용암 폭포", "용암 동굴"],
               "water": ["파도 지대", "폭포", "설원 지대"],
               "nature": ["수림"], "steel": ["대장간"],
-              "earth": ["고원"], "dark": ["심연"], "light": ["성소"]}
+              "dark":  ["죽음의 늪", "죽음의 호수", "죽음의 대지"],
+              "earth": ["고원"], "light": ["성소"]}
 LAND_COUNT = 17
 
 
