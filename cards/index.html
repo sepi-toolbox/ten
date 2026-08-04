@@ -439,6 +439,37 @@ body.sideon::after{content:'';position:fixed;inset:0;z-index:155;
 .rwrap .tcard{box-shadow:0 18px 44px rgba(0,0,0,.65)}
 
 .slot.spawned{animation:spawn .5s cubic-bezier(.2,.7,.3,1) both;z-index:6}
+/* 단말마 부활 — 보라 오오라가 피어오르며 몸이 다시 선다. 소환(spawned)과 **다른 색**이라
+   무엇이 일어났는지 색만 보고도 갈린다. */
+.slot.revived{animation:spawn .5s cubic-bezier(.2,.7,.3,1) both;z-index:7}
+.slot.revived::after{content:'';position:absolute;inset:-9px;border-radius:12px;pointer-events:none;
+  background:radial-gradient(circle at 50% 60%,rgba(154,114,216,.55),rgba(154,114,216,.14) 55%,transparent 72%);
+  box-shadow:0 0 26px 6px rgba(154,114,216,.6),inset 0 0 18px rgba(196,160,255,.5);
+  animation:revaura .9s ease-out both}
+@keyframes revaura{
+  0%{opacity:0;transform:scale(.7)}
+  35%{opacity:1;transform:scale(1.06)}
+  100%{opacity:0;transform:scale(1.18)}}
+/* 환류 — 손패에 **일렁이며** 생겨난다 */
+.hcw.echoin{animation:echoin .72s cubic-bezier(.2,.7,.3,1) both;z-index:9}
+.hcw.echoin::after{content:'';position:absolute;inset:-4px;border-radius:9px;pointer-events:none;
+  background:linear-gradient(115deg,transparent 30%,rgba(126,214,255,.75) 48%,transparent 66%);
+  background-size:260% 100%;animation:echoshine .72s ease-out both}
+@keyframes echoin{
+  0%{opacity:0;transform:translateY(14px) scale(.82) skewX(-7deg);filter:blur(3px)}
+  55%{opacity:1;transform:translateY(-3px) scale(1.05) skewX(3deg);filter:blur(0)}
+  100%{opacity:1;transform:none}}
+@keyframes echoshine{0%{background-position:180% 0;opacity:0}
+  25%{opacity:1}100%{background-position:-80% 0;opacity:0}}
+/* 주문 발사체 — 시전자 쪽에서 대상까지 구슬이 날아가 터진다 */
+.bolt{position:fixed;z-index:145;   /* ⚠ 처리 가리개(.busy z-140) **위**여야 보인다 */
+  width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;
+  pointer-events:none;background:radial-gradient(circle at 38% 34%,#fff,var(--bc) 52%,transparent 74%);
+  box-shadow:0 0 14px 4px var(--bc),0 0 30px 10px color-mix(in srgb,var(--bc) 55%,transparent)}
+.bolt::after{content:'';position:absolute;inset:-3px;border-radius:50%;
+  background:radial-gradient(circle,var(--bc),transparent 70%);opacity:.55;filter:blur(4px)}
+.bolt.burst{animation:boltburst .24s ease-out both}
+@keyframes boltburst{0%{transform:scale(1);opacity:1}100%{transform:scale(3.2);opacity:0}}
 @keyframes spawn{
   0%{opacity:0;transform:translateY(-14px) scale(.7)}
   55%{opacity:1;transform:translateY(2px) scale(1.14)}

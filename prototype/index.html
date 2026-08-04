@@ -439,6 +439,37 @@ body.sideon::after{content:'';position:fixed;inset:0;z-index:155;
 .rwrap .tcard{box-shadow:0 18px 44px rgba(0,0,0,.65)}
 
 .slot.spawned{animation:spawn .5s cubic-bezier(.2,.7,.3,1) both;z-index:6}
+/* 단말마 부활 — 보라 오오라가 피어오르며 몸이 다시 선다. 소환(spawned)과 **다른 색**이라
+   무엇이 일어났는지 색만 보고도 갈린다. */
+.slot.revived{animation:spawn .5s cubic-bezier(.2,.7,.3,1) both;z-index:7}
+.slot.revived::after{content:'';position:absolute;inset:-9px;border-radius:12px;pointer-events:none;
+  background:radial-gradient(circle at 50% 60%,rgba(154,114,216,.55),rgba(154,114,216,.14) 55%,transparent 72%);
+  box-shadow:0 0 26px 6px rgba(154,114,216,.6),inset 0 0 18px rgba(196,160,255,.5);
+  animation:revaura .9s ease-out both}
+@keyframes revaura{
+  0%{opacity:0;transform:scale(.7)}
+  35%{opacity:1;transform:scale(1.06)}
+  100%{opacity:0;transform:scale(1.18)}}
+/* 환류 — 손패에 **일렁이며** 생겨난다 */
+.hcw.echoin{animation:echoin .72s cubic-bezier(.2,.7,.3,1) both;z-index:9}
+.hcw.echoin::after{content:'';position:absolute;inset:-4px;border-radius:9px;pointer-events:none;
+  background:linear-gradient(115deg,transparent 30%,rgba(126,214,255,.75) 48%,transparent 66%);
+  background-size:260% 100%;animation:echoshine .72s ease-out both}
+@keyframes echoin{
+  0%{opacity:0;transform:translateY(14px) scale(.82) skewX(-7deg);filter:blur(3px)}
+  55%{opacity:1;transform:translateY(-3px) scale(1.05) skewX(3deg);filter:blur(0)}
+  100%{opacity:1;transform:none}}
+@keyframes echoshine{0%{background-position:180% 0;opacity:0}
+  25%{opacity:1}100%{background-position:-80% 0;opacity:0}}
+/* 주문 발사체 — 시전자 쪽에서 대상까지 구슬이 날아가 터진다 */
+.bolt{position:fixed;z-index:145;   /* ⚠ 처리 가리개(.busy z-140) **위**여야 보인다 */
+  width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;
+  pointer-events:none;background:radial-gradient(circle at 38% 34%,#fff,var(--bc) 52%,transparent 74%);
+  box-shadow:0 0 14px 4px var(--bc),0 0 30px 10px color-mix(in srgb,var(--bc) 55%,transparent)}
+.bolt::after{content:'';position:absolute;inset:-3px;border-radius:50%;
+  background:radial-gradient(circle,var(--bc),transparent 70%);opacity:.55;filter:blur(4px)}
+.bolt.burst{animation:boltburst .24s ease-out both}
+@keyframes boltburst{0%{transform:scale(1);opacity:1}100%{transform:scale(3.2);opacity:0}}
 @keyframes spawn{
   0%{opacity:0;transform:translateY(-14px) scale(.7)}
   55%{opacity:1;transform:translateY(2px) scale(1.14)}
@@ -1463,7 +1494,9 @@ function newGame(){
     S[p]={hp:MAXHP,maxhp:MAXHP,deck:buildDeck(p==='me'?PDECK:EDECK),hand:[],board:Array(SLOTS).fill(null),lands:[],landPlayed:false,noecho:{},burned:[],
       /* 무덤 — 이번 판에서 소멸한 **그 편의** 크리처 이름. 혼령 부활이 여기서 꺼낸다.
          ⚠ 빼앗은 몸은 **원래 주인** 쪽에 쌓인다(ownerOf). */
-      grave:[]};
+      grave:[],
+      /* 환류로 손에 생겨난 장 — 상대 것도 앞면으로 보여 준다(shown), 그 순간엔 일렁인다(echoAt) */
+      shown:{}, echoAt:-1};
   });
   if(RG.on){ S.me.hp=RG.hp; S.me.maxhp=RG.maxhp; }
   if(RG.on&&EHP){ S.ai.hp=EHP; S.ai.maxhp=EHP; }
@@ -2174,6 +2207,7 @@ async function tutFoeTurn(){
       const at=Math.min(act.at||0,S.me.board.length-1);
       if(at<0||!S.me.board[at]||S.me.board[at].kind!=='cr')continue;
       await reveal('ai',nm);
+      await castBolt('ai',boltTarget('me',at),nm);
       pay('ai',nm); P.hand.splice(i,1);
       resolveOnFoe('ai',nm,at); cleanup('me');
     }
@@ -2885,7 +2919,9 @@ function reviveAt(p,u,idx,shrink){
          nu.insts.forEach(i=>{ i.hp=Math.max(1,(c.h||0)-n); i.mh=i.hp; }); }
   if(!shrink)nu.dr='';                 /* (1회) — 되살아난 몸은 그 능력을 잃는다 */
   S[p].board.splice(at,0,nu);
-  S.spawn={side:p,idx:at}; setTimeout(()=>{S.spawn=null;},520/SPEED);
+  /* 단말마 부활은 **보라 오오라**로 소환과 구별한다(성권 요청).
+     ⚠ 슬롯 번호가 아니라 **개체**에 표시를 단다 — 부활 뒤에도 판이 당겨져 번호가 밀린다. */
+  nu.revfx=true; setTimeout(()=>{ nu.revfx=false; render(); },Math.round(900/SPEED));
   log(`  ${who} ${u.name} 단말마 — 죽은 자리에 다시 소환`
       +(n?` (${nu.a}/${nu.insts[0].hp})`:''),'g');
   refreshVeilAura(p);
@@ -3638,6 +3674,36 @@ function drawTrace(aEl,tEl,cls){
   setTimeout(()=>el.remove(),420/SPEED);
 }
 function slotEl(side,idx){return document.querySelector(`.slot[data-side="${side}"][data-idx="${idx}"]`);}
+/* ── 주문 발사체 ────────────────────────────────────────────
+   시전자 쪽에서 구슬 하나가 날아가 대상에 터진다. **피해 주는 주문(mode dmg)** 만 쓴다.
+   ⚠ 부르는 곳을 늘리지 않는다 — 대상을 겨누는 주문은 사람·AI·튜토리얼이 전부
+     `castBolt()` 하나만 부른다. 늘리면 한쪽에서만 날아가는 일이 또 난다.
+   ⚠ 연출뿐이다. 실제 피해는 부르는 쪽이 이 함수 **뒤에** 준다 — 순서를 뒤집으면
+     맞고 나서 날아가는 것처럼 보인다. */
+async function castBolt(p,tEl,name){
+  if(typeof document==='undefined'||!tEl)return;
+  if(((POOL[name]||{}).mode)!=='dmg')return;
+  const src=document.getElementById(p==='me'?'myBar':'foeBar');
+  if(!src)return;
+  const a=src.getBoundingClientRect(), b=tEl.getBoundingClientRect();
+  const col=(EL[(POOL[name]||{}).el]||EL.fire).c;
+  const d=document.createElement('i');
+  d.className='bolt';
+  d.style.cssText=`left:${a.left+a.width/2}px;top:${a.top+a.height/2}px;--bc:${col}`;
+  document.body.appendChild(d);
+  const ms=Math.max(90,Math.round(380/SPEED));
+  requestAnimationFrame(()=>{
+    d.style.transition=`left ${ms}ms cubic-bezier(.35,0,.85,.6),top ${ms}ms cubic-bezier(.35,0,.85,.6)`;
+    d.style.left=(b.left+b.width/2)+'px';
+    d.style.top=(b.top+b.height/2)+'px';
+  });
+  await new Promise(r=>setTimeout(r,ms+30));
+  d.classList.add('burst');
+  setTimeout(()=>d.remove(),300);
+}
+/* 대상이 슬롯이면 그 슬롯, 본체면 그쪽 정보줄로 날아간다. */
+const boltTarget=(side,idx)=>idx===FACE||idx==null
+  ? document.getElementById(side==='me'?'myBar':'foeBar') : slotEl(side,idx);
 
 let DEALT=0;                             /* 흡혈용 — 방금 실제로 입힌 피해 */
 /* 한 개체가 **한 번** 때린다. 정규 공격도, 연합이 부른 추가 공격도 전부 여기를 지난다.
@@ -4191,6 +4257,7 @@ async function aiTurn(){
       kills.sort((a,b)=>b.val-a.val);
       const k=kills[0], u=S.me.board[k.j];
       await reveal('ai',k.x.n);
+      await castBolt('ai',boltTarget('me',k.j),k.x.n);
       const before=u.insts[0].hp;
       hurt(u,u.insts[0],k.x.c.v);
       log(`상대 ${k.x.n} → 내 ${u.name} ${before}→${Math.max(0,u.insts[0].hp)}`,'a');
@@ -4213,6 +4280,7 @@ async function aiTurn(){
       const foeBodies=S.me.board.some(u=>u&&u.kind==='cr'&&u.insts.length);
       if(fsp&&((fsp.c.v||0)>=S.me.hp||!foeBodies)){
         await reveal('ai',fsp.n);
+        await castBolt('ai',boltTarget('me',FACE),fsp.n);
         const v=dmgVal('ai',fsp.n,null), dv=faceDmg('me',v);
         log(`상대 ${fsp.n} → 내 본체 ${dv} 피해 · HP ${Math.max(0,S.me.hp)}`,'a');
         pay('ai',fsp.n);P.hand.splice(fsp.i,1);
@@ -4845,7 +4913,16 @@ function toHand(side,idx){
 /* 환류로 **제 발로** 손에 돌아온 카드(소멸 → 손). 문어 다리가 여기에 반응한다.
    ⚠ 밀물·정신분열 같은 강제 바운스는 환류가 아니다 — 그쪽은 이 함수를 안 부른다. */
 function echoToHand(side,name){
-  if(POOL[name]&&S[side].hand.length<8)S[side].hand.push(name);
+  if(POOL[name]&&S[side].hand.length<8){
+    S[side].hand.push(name);
+    /* 환류로 **생겨난** 장은 일렁이며 나타난다.
+       ⚠ 상대 것도 **앞면으로** 보여 준다(성권 결정) — 무엇이 돌아갔는지는 원래 양쪽이
+         다 아는 정보다(판 위에서 죽는 걸 보고 있었다). 뒷면으로 덮으면 없는 안개를 만든다. */
+    S[side].echoAt=S[side].hand.length-1;
+    S[side].shown=S[side].shown||{};
+    S[side].shown[name]=(S[side].shown[name]||0)+1;
+    setTimeout(()=>{ if(S[side])S[side].echoAt=-1; render(); },Math.round(800/SPEED));
+  }
   fireEnch(side,'echo',{name});
 }
 function resolveOnFoe(p,name,idx){
@@ -5186,6 +5263,9 @@ async function clickSlot(side,idx){
     if(!resolveOnMine('me',n,idx))return;
   }else if(S.mode==='target'&&side==='ai'&&idx===FACE){
     /* 본체에 꽂는다 — 크리처를 거치지 않는다. faceDmg 를 지나므로 무효화 장치도 그대로 먹는다. */
+    S.busy=true; render();
+    await castBolt('me',boltTarget('ai',FACE),n);
+    S.busy=false;
     const v=dmgVal('me',n,null);
     const dv=faceDmg('ai',v);
     log(`나 ${n} → 상대 본체 ${dv} 피해 · HP ${Math.max(0,S.ai.hp)}`,'a');
@@ -5200,6 +5280,11 @@ async function clickSlot(side,idx){
     const u=S.ai.board[idx];
     if(!u)return;
     const hpBefore=(u.kind==='cr'&&u.insts[0])?u.insts[0].hp:0;
+    /* 발사체가 먼저 날아가 맞고, 그 다음에 피해가 들어간다 — 순서를 뒤집으면
+       맞고 나서 날아가는 것처럼 보인다. */
+    S.busy=true; render();
+    await castBolt('me',boltTarget('ai',idx),n);
+    S.busy=false;
     if(!resolveOnFoe('me',n,idx))return;
     const dead=u.kind==='cr'&&u.insts[0]&&u.insts[0].hp<=0;
     pay('me',n);S.me.hand.splice(S.sel,1);S.sel=null;S.mode=null;
@@ -5298,8 +5383,20 @@ function fanHand(id,invert){
 /* 상대 손패 — 매수만 뒷면으로 보여 준다 */
 function renderFoeHand(){
   const el=document.getElementById('foeHand'); if(!el)return;
-  const n=S.ai?S.ai.hand.length:0;
-  el.innerHTML='<div class="hcw back"><div class="cback"></div></div>'.repeat(n);
+  const A=S.ai||{hand:[]};
+  const shown=A.shown||{};
+  /* ⚠ 낡은 표시를 **스스로 지운다.** 그 이름이 손에 남은 수보다 표시가 많으면 이미 낸 것이다.
+     낼 때마다 지우는 자리를 따로 두면(splice 하는 곳이 여럿이다) 언젠가 한 곳을 빠뜨린다. */
+  const cnt={}; A.hand.forEach(n=>{cnt[n]=(cnt[n]||0)+1;});
+  Object.keys(shown).forEach(n=>{ if(shown[n]>(cnt[n]||0))shown[n]=cnt[n]||0; });
+  const used={};
+  el.innerHTML=A.hand.map((n,i)=>{
+    used[n]=(used[n]||0)+1;
+    const fx=(A.echoAt===i)?' echoin':'';
+    if(used[n]<=(shown[n]||0))
+      return `<div class="hcw open${fx}">${isLand(n)?landCardHTML(n,'md'):tcardHTML(n,{size:'md'})}</div>`;
+    return `<div class="hcw back${fx}"><div class="cback"></div></div>`;
+  }).join('');
   fanHand('foeHand',true);
 }
 addEventListener('resize',()=>{
@@ -5772,6 +5869,9 @@ function render(){
     const el=slotEl(S.spawn.side,S.spawn.idx);
     if(el)el.classList.add('spawned');
   }
+  /* 부활한 몸 — 보라 오오라. 개체에 붙은 표시라 자리가 밀려도 따라간다. */
+  ['me','ai'].forEach(sd=>{ const B=(S[sd]||{}).board||[];
+    B.forEach((u,i)=>{ if(u&&u.revfx){ const el=slotEl(sd,i); if(el)el.classList.add('revived'); } }); });
   if(S.aoeFx){
     S[S.aoeFx.side].board.forEach((u,i)=>{
       if(!u||u.kind!=='cr')return;
@@ -5833,6 +5933,7 @@ function render(){
     const badge=cw!==c.c?`<span class="costnow">${cw}</span>`:'';
     /* ⚠ 환류로 **돌아온 장**은 이제 발동하지 않는다 → 설명에서 '환류' 를 뺀다.
        빼지 않으면 '또 돌아온다' 고 읽혀서 그 계산으로 판을 짜게 된다. */
+    if(S.me.echoAt===i)cls+=' echoin';        /* 환류로 방금 생겨난 장 */
     return `<div class="${cls}" data-h="${i}">${tcardHTML(n,{size:'md',noecho:echoSpent('me',n)})}${badge}</div>`;
   }).join('');
   /* 손패 탭에는 아무 동작도 걸지 않는다(끌어야만 발동). 길게 누르기는 전역 핸들러가 처리한다. */
@@ -5877,7 +5978,7 @@ document.getElementById('restart').onclick=()=>{
      시작 → 모드 선택 → 덱 선택 → (배틀: 상대 덱 선택 | 원정: 지도) → 게임
      패배 → 다시 도전하기(덱 선택으로) · 초기 화면(모드 선택으로)
    ⚠ ?dev=1 로 열면 페이지를 건너뛰고 바로 배틀로 들어간다(자동 테스트용). */
-const VERSION='0.40.2', BUILD='2026-08-04';
+const VERSION='0.41.0', BUILD='2026-08-04';
 const DEV=/[?&]dev=1/.test(location.search);
 let PAGE=null, FLOW={mode:'battle', my:null, foe:null};
 function pageOpen(html){
