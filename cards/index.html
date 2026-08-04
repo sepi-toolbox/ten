@@ -1512,7 +1512,14 @@ function frameCardHTML(name,opt,c,el,ec,key){
 const KWRE=/^(연소\s*\d+|폭발|환류|흡혈|경화\s*\d+|가호|면역|연격\s*\d+|광분|육중|속공|증식|연마|진형|연합)$/;
 function liveKw(name,u,opt){
   const c=POOL[name]||{};
-  const printed=(c.kw&&c.kw!=='—')?c.kw:'';
+  let printed=(c.kw&&c.kw!=='—')?c.kw:'';
+  /* ⚠⚠ **써 버려 사라진 능력은 글에서도 지운다.** 안 그러면 "아직 한 번 더 되살아난다" 로
+     읽힌다 — 판을 보고 판단할 방법이 없어진다(성권이 짚었다).
+     · 단말마 '(1회)' — 되살아난 몸은 `u.dr` 이 비어 있다.
+     · 환류 — 아래 `u.echo` 가 이미 그 일을 한다(KWRE 에 걸려 상태에서 다시 만든다).
+     ⚠ **조각으로 못 지운다.** 단말마는 '단말마 —' 뒤부터 줄 끝까지가 한 덩어리라
+       (drText 와 같은 규칙) ' · ' 로 잘라 내면 본드래곤처럼 뒤 문장이 홀로 남는다. */
+  if(u&&u.kind==='cr'&&!u.dr)printed=printed.replace(/(?:\s*·)?\s*단말마 — .*$/,'').trim();
   const parts=printed.split('·').map(t=>t.trim()).filter(Boolean);
   const prose=parts.filter(t=>!KWRE.test(t));       /* 고유 문구는 그대로 둔다 */
   const had=t=>parts.some(x=>x.replace(/\s+/g,'')===t.replace(/\s+/g,''));
@@ -1521,7 +1528,9 @@ function liveKw(name,u,opt){
   if(u){
     if(u.burn)add(`연소 ${u.burn}`);
     if(u.boom)add('폭발');
-    if(u.veil)add('면역');
+    /* ⚠ 포그위저드가 걸어 준 면역(u.vaura)도 보여야 한다 — 안 보이면 지금 이 몸이
+       왜 안 깎이는지 알 수가 없다. 인쇄에 없으므로 금색(부여)으로 뜬다. */
+    if(veiled(u))add('면역');
     if(u.ward)add('가호');
     if(u.hard)add(`경화 ${u.hard}`);
     if(u.drain)add('흡혈');

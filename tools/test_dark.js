@@ -26,7 +26,10 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
     const need=n=>{ if(!POOL[n])throw new Error('POOL 에 없는 카드: '+n); return n; };
     const reset=()=>{S.gen=(S.gen||0)+1;S.me.board=[];S.ai.board=[];S.me.hp=60;S.ai.hp=60;
       S.me.hand=[];S.ai.hand=[];S.me.deck=[];S.ai.deck=[];S.me.grave=[];S.ai.grave=[];
-      S.dead=0;S.pick=null;S.me.lands=[];S.ai.lands=[];};
+      S.dead=0;S.pick=null;S.cpick=null;S.me.lands=[];S.ai.lands=[];
+      /* ⚠ noecho 도 지운다 — 앞 절에서 환류를 한 번 쓴 이름이 남아 있으면
+         **다음에 놓는 같은 이름의 몸이 환류 없이 나온다**(실제로 헛봤다). */
+      S.me.noecho={};S.ai.noecho={};};
     const put=(pl,n,at)=>{ need(n); const i=at==null?S[pl].board.length:at;
       placeCreature(pl,n,i); onSummon(pl,n,i); return S[pl].board[i]; };
     const kill=u=>{ u.insts.forEach(i=>{i.hp=0;}); };
@@ -204,6 +207,32 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
     reset(); playLand('me','묘지'); await hitGuard('me','구울');
     o.전투묘지=names('me');
 
+    /* ══════ 써 버린 능력은 설명에서도 사라진다 ══════
+       ⚠ 안 지우면 "아직 한 번 더 되살아난다" 로 읽힌다 — 판을 보고 판단할 방법이 없어진다.
+       ⚠ 단말마는 '단말마 —' 뒤부터 줄 끝까지가 한 덩어리다. 조각으로 지우면
+         본드래곤처럼 효과 안에 ' · ' 가 든 카드에서 뒤 문장이 홀로 남는다. */
+    const strip=t=>String(t).replace(/<[^>]+>/g,'');
+    reset();
+    const dk1=put('me','스켈톤');
+    o.글전=strip(liveKw('스켈톤',dk1));
+    dk1.insts.forEach(i=>{i.hp=0;}); cleanup('me');
+    o.글후=strip(liveKw('스켈톤',S.me.board.find(u=>u&&u.name==='스켈톤')))||'(빔)';
+    reset();
+    const mm=put('me','본맘모스');
+    mm.insts.forEach(i=>{i.hp=0;}); cleanup('me');
+    o.맘모스글=strip(liveKw('본맘모스',S.me.board.find(u=>u&&u.name==='본맘모스')))||'(빔)';
+    reset();
+    o.용글=strip(liveKw('본드래곤',put('me','본드래곤')));
+    reset();
+    const jf2=put('me','전기 해파리');
+    o.환류글=[strip(liveKw('전기 해파리',jf2)),''];
+    jf2.echo=false; o.환류글[1]=strip(liveKw('전기 해파리',jf2))||'(빔)';
+    o.손글=strip(liveKw('스켈톤',null));
+    /* 포그위저드가 걸어 준 면역도 보여야 한다 — 인쇄에 없으니 금색(부여)으로 */
+    reset();
+    const gl=put('me','구울'); put('me','포그위저드');
+    o.아우라글=[liveKw('구울',gl), strip(liveKw('구울',gl))];
+
     /* ══════ 3단계 — 덱 조작 ══════ */
     /* 듀라한 — 출진으로 덱에 머리를 심고, 뽑으면 판 위 듀라한이 커지고 머리는 덱으로 */
     reset(); S.me.deck=['구울','좀비','고스트'];
@@ -326,6 +355,20 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
   ok('전투 사망 = 폭발', R.전투폭발[1]<R.전투폭발[0],
      `상대 HP ${R.전투폭발[0]}→${R.전투폭발[1]}`);
   ok('전투 사망 = 묘지', /좀비랫/.test(R.전투묘지), `판 [${R.전투묘지}]`);
+
+  /* ── 써 버린 능력은 글에서도 사라진다 ── */
+  ok('단말마 = 쓰면 글에서 사라짐', /단말마/.test(R.글전)&&R.글후==='(빔)',
+     `쓰기 전 "${R.글전}" → 쓴 뒤 "${R.글후}"`);
+  /* 덩어리만 지우고 나머지 키워드는 남는다 */
+  ok('나머지 키워드는 남는다', R.맘모스글==='육중', `"${R.맘모스글}"`);
+  /* 본드래곤은 '(1회)' 가 아니라 반복이므로 그대로 남는다 */
+  ok('반복 단말마는 안 지운다', /단말마/.test(R.용글)&&/줄일 능력치가 없으면/.test(R.용글), `"${R.용글}"`);
+  ok('환류도 쓰면 사라짐', R.환류글[0]==='환류'&&R.환류글[1]==='(빔)',
+     `"${R.환류글[0]}" → "${R.환류글[1]}"`);
+  /* 손패는 개체가 아니다 — 인쇄 그대로여야 한다 */
+  ok('손패는 인쇄 그대로', /단말마/.test(R.손글), `"${R.손글}"`);
+  ok('부여된 면역은 금색으로', /class="gr">면역/.test(R.아우라글[0])&&/면역/.test(R.아우라글[1]),
+     `"${R.아우라글[1]}"`);
 
   /* ── 3단계 — 덱 조작 ── */
   ok('듀라한 = 덱에 머리를 심는다', R.심기[0]===1&&R.심기[1]===4,
