@@ -1,7 +1,9 @@
 const path=require('path');
 const {chromium}=require('/opt/node-tools/node_modules/playwright');
 const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
-(async()=>{const b=await chromium.launch();
+(async()=>{
+let BAD2=0; const ok2=(k,v,d)=>{ if(!v)BAD2++; console.log((v?'✅':'❌')+' '+String(k).padEnd(22)+' '+d); };
+const b=await chromium.launch();
 const p=await b.newPage({viewport:{width:1020,height:1400}});
 const errs=[];p.on('pageerror',e=>errs.push('ERR: '+e.message));
 await p.goto(FILE+'?dev=1');await p.waitForTimeout(700);
@@ -47,4 +49,41 @@ const hps=await p.evaluate(()=>[0,3,6,9].map(f=>`${f}층 일반${foeHpFor('norma
 const bhp=await p.evaluate(()=>foeHpFor('boss',10));
 console.log('층별 적 체력:',hps,'| 보스(10층)',bhp);
 console.log('ERRORS:',errs.slice(0,4));
+/* ── 고정 적 덱 10종(불·물) ─────────────────────────────────
+   ⚠ 카드를 지우면 고정 덱이 **조용히 빈 덱**이 된다. 실제로 불 전면 교체 때 그래서 5종을
+     통째로 내렸다. 여기서 '쓰는 카드가 전부 POOL 에 있는가' 를 매번 확인한다. */
+const FX=await p.evaluate(()=>{
+  const out=[];
+  FOES.filter(e=>e.fixed).forEach(e=>{
+    e.decks.forEach((d,band)=>{
+      const miss=d.filter(([n])=>!POOL[n]).map(([n])=>n);
+      const cards=d.reduce((a,[,c])=>a+c,0);
+      const lands=(e.lands||[]).reduce((a,[,c])=>a+c,0);
+      const badLand=(e.lands||[]).filter(([n])=>!LANDS[n]).map(([n])=>n);
+      const kind={cr:0,sp:0,en:0};
+      d.forEach(([n,c])=>{ const g=POOL[n]; if(g)kind[g.k]=(kind[g.k]||0)+c; });
+      out.push({이름:e.name,단계:band+1,카드:cards,지형:lands,없는카드:miss,없는지형:badLand,
+                크:kind.cr,스:kind.sp,인:kind.en});
+    });
+  });
+  return out;
+});
+const missCard=FX.filter(x=>x.없는카드.length);
+const missLand=FX.filter(x=>x.없는지형.length);
+const badN=FX.filter(x=>x.카드!==23||x.지형!==17);
+/* 크리처만 23장인 덱은 '덱' 이 아니라 그냥 몸 더미다 — 스펠이 최소 둘은 있어야 한다 */
+const noSpell=FX.filter(x=>x.스<2);
+ok2('고정 덱 10종 · 3단계', FX.length===30, `${FX.length}개 (적 ${FX.length/3}종 × 3단계)`);
+ok2('없는 카드 안 씀', missCard.length===0,
+    missCard.map(x=>`${x.이름}${x.단계} ${x.없는카드.join(',')}`).join(' · ')||'전부 POOL 에 있다');
+ok2('없는 지형 안 씀', missLand.length===0,
+    missLand.map(x=>`${x.이름} ${x.없는지형.join(',')}`).join(' · ')||'전부 lands.csv 에 있다');
+ok2('전부 카드23 + 지형17', badN.length===0,
+    badN.map(x=>`${x.이름}${x.단계} 카드${x.카드}/지형${x.지형}`).join(' · ')||'30개 모두 40장');
+ok2('스펠이 최소 2장', noSpell.length===0,
+    noSpell.map(x=>`${x.이름}${x.단계} 스펠${x.스}`).join(' · ')||'전부 2장 이상');
+console.log('  고정 덱 비율(1단계):');
+FX.filter(x=>x.단계===1).forEach(x=>console.log(`    ${x.이름.padEnd(14)} 크${x.크} 스${x.스} 인${x.인}`));
+
+if(BAD2)console.log(`❌ 고정 덱 ${BAD2}건 실패`);
 await b.close();})();
