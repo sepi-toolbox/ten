@@ -23,7 +23,11 @@ const SIZES=[[390,844,'iPhone 앱'],[390,745,'iPhone 브라우저'],[360,640,'�
     await p.evaluate(()=>{const k=document.getElementById('keepBtn');k&&k.click();}); await p.waitForTimeout(250);
     await p.evaluate(()=>{
       /* 손패에 지형이 모자랄 수 있으니 직접 채운다 — 마나 부족으로 테스트가 흔들리지 않게 */
-      while(S.me.lands.length<6){S.me.landPlayed=false;playLand('me',BASICLAND.fire);}
+      /* ⚠ BASICLAND 는 이제 **배열**이다(속성마다 기본 지형이 여러 종). 배열을 그대로
+         넘기면 playLand 가 실패만 하고 while 이 **영원히 돈다** — 검사가 통째로 멈췄다.
+         ⚠ 어떤 이유로든 안 깔리면 빠져나오도록 횟수 제한도 둔다. */
+      const base=(BASICLAND.fire||['불지옥'])[0];
+      for(let g=0;S.me.lands.length<6&&g<30;g++){S.me.landPlayed=false;playLand('me',base);}
       S.me.lands.forEach(l=>{l.used=false;l.entering=false;});
       while(S.me.hand.length<7)draw('me');
       const cr=Object.keys(POOL).filter(n=>POOL[n].k==='cr'&&POOL[n].el==='fire');

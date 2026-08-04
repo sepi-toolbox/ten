@@ -17,9 +17,13 @@ const RARS=['common','uncommon','rare','legendary'];
   ok('네 등급 모두 존재', RARS.every(r=>cnt[r]>0),
      RARS.map(r=>`${r} ${cnt[r]}`).join(' · '));
   const rogue=JSON.parse(fs.readFileSync(path.join(ROOT,'data','rogue.json'),'utf8'));
+  /* ⚠ 카드 이름을 박아 두지 않는다 — '강화 겁화룡' 을 박아 뒀다가 겁화룡이 지워지면서
+     **크래시**했다(빨간불이 아니라 크래시라 오래 안 보였다). 아무거나 하나 집어서 본다. */
+  const anyOver=Object.keys(rogue.over)[0];
+  const base=anyOver?anyOver.replace(/^강화 /,''):null;
   ok('강화 카드도 희귀도 상속', Object.values(rogue.over).every(c=>!!c.r)
-     && rogue.over['강화 겁화룡'].r===(pool['겁화룡'].r||'common'),
-     `강화 겁화룡 = ${rogue.over['강화 겁화룡'].r}`);
+     && !!base && rogue.over[anyOver].r===(pool[base].r||'common'),
+     `${anyOver} = ${anyOver?rogue.over[anyOver].r:'(없음)'} (원본 ${base?(pool[base].r||'common'):'?'})`);
   ok('보상 가중치 데이터', !!(rogue.config.rarityWeights&&rogue.config.rarityWeights.elite),
      JSON.stringify(rogue.config.rarityWeights.elite));
 

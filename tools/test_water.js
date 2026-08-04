@@ -175,10 +175,13 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
     endStep('me');
     o.서펜트={상대판:names('ai'), 상대손:S.ai.hand.slice()};
 
-    /* 세이렌 — 양쪽 스펠 모두 안 통한다 */
+    /* 세이렌 — 양쪽 스펠 모두 안 통한다.
+       ⚠ 예전엔 '파이어볼' 의 자해 조항으로 쟀는데 그 카드는 불 개편 때 지웠다 →
+         아무 일도 안 일어나서 **둘 다 안 깎이는 걸 통과로 읽고 있었다.**
+         이제 상대가 광역을 쏘는 실제 경로(aoeSpread)로 잰다. */
     reset(); put('me','세이렌'); put('me','바다 공룡');
     const h0=[S.me.board[0].insts[0].hp,S.me.board[1].insts[0].hp];
-    spellSelfDmg('me','파이어볼');
+    aoeSpread('ai','메테오',['me'],4);
     o.세이렌={전:h0, 후:[S.me.board[0].insts[0].hp,S.me.board[1].insts[0].hp]};
 
     /* 인어 마술사 = 주문마다 +1/+1 · 리자드 마술사 = 지형 1장 되돌림 */
@@ -192,8 +195,13 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
     const m0=manaLeft('me'); onCast('me','조류 읽기');
     o.리자드={전:m0, 후:manaLeft('me')};
 
-    /* 소환체가 토큰이 아니라 진짜 카드로 나온다 */
-    reset(); resolveSummon('me','불의 군단',0);
+    /* 소환체가 토큰이 아니라 진짜 카드로 나온다.
+       ⚠ 예전엔 '불의 군단' 을 썼는데 불 전면 교체 때 지운 카드다 → POOL 에 없어
+         resolveSummon 이 통째로 **크래시**하고 있었다(❌ 가 안 찍혀 오래 안 보였다).
+         지금 살아 있는 카드로 바꾼다 — 지옥문 소환은 헬시온을 부른다. */
+    reset();
+    placeCreature('me','헬하운드',0); placeCreature('me','하피',1);
+    resolveSummon('me','지옥문 소환',0);
     o.군단=S.me.board.filter(Boolean).map(u=>`${u.name}${u.token?'(토큰)':''}`);
     return o;
   });
@@ -221,8 +229,9 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
   ok('인어 마술사 = 주문마다 +1/+1', W.인어.후==='3/3', `${W.인어.전} → ${W.인어.후}`);
   ok('리자드 마술사 = 지형 회수', W.리자드.전===0&&W.리자드.후===1,
      `뒤집힌 지형 4장 · 주문 한 번에 ${W.리자드.후}장 되돌아왔다`);
-  ok('소환체는 토큰이 아니다', W.군단.join()==='불꽃 병사,불꽃 병사,불꽃 병사,불꽃 병사',
-     W.군단.join(' · '));
+  /* 아군 둘을 갈아 헬시온 둘이 나온다 — **진짜 카드**라 토큰 표시가 안 붙는다 */
+  ok('소환체는 토큰이 아니다', W.군단.length>0&&W.군단.every(n=>!/토큰/.test(n))
+     &&W.군단.every(n=>n==='헬시온'), W.군단.join(' · ')||'(안 나옴)');
 
   /* ── 2단계: 스펠 13종 · 인챈트 5종 ──────────────────────────
      ⚠ 옛 물 스펠/인챈트 9종(잔물결·환수·조류 읽기·역류·밀물의 부름·대해일·심연으로·

@@ -146,23 +146,33 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
     ok('가호 = 첫 피해 무효', d1===0&&kept&&d2===2,
        `${nWard} — 99 피해 무효(HP ${h0} 유지) → 다음 2 피해는 그대로`);
 
-    // 12) 대가 N — 소환 시 내 HP 지불 / 축복 N — 회복
+    // 12) 제물 N — 소환 시 내 HP 지불 / 축복 N — 회복
+    //  ⚠ 2026-08 '대가' → **제물** 개명. 이 검사가 옛 이름으로 카드를 찾다가 undefined 를
+    //    집어 `POOL[undefined].kw` 에서 **통째로 크래시**하고 있었다(빨간불이 아니라 크래시라
+    //    로그에 ❌ 가 안 찍혀서 오래 눈에 안 띄었다).
     reset();
-    const nCost=kw('대가'), nBless=kw('축복');
-    const c0=S.me.hp; put('me',nCost,0);
-    const paid=c0-S.me.hp;
-    S.me.hp=30; put('me',nBless,1);
-    ok('대가·축복', paid===+((POOL[nCost].kw.match(/대가 (\d+)/)||[])[1])&&S.me.hp>30,
-       `${nCost} HP −${paid} · ${nBless} HP 30 → ${S.me.hp}`);
+    const nCost=kw('제물'), nBless=kw('축복');
+    if(!nCost||!nBless){
+      ok('제물·축복', false, `카드를 못 찾았다 (제물=${nCost} 축복=${nBless})`);
+    }else{
+      const c0=S.me.hp; put('me',nCost,0);
+      const paid=c0-S.me.hp;
+      S.me.hp=30; put('me',nBless,1);
+      ok('제물·축복', paid===+((POOL[nCost].kw.match(/제물 (\d+)/)||[])[1])&&S.me.hp>30,
+         `${nCost} HP −${paid} · ${nBless} HP 30 → ${S.me.hp}`);
+    }
 
-    // 13) 흡혈 — 고정값이 아니라 **입힌 피해만큼** 회복
+    // 13) 흡혈 — 입힌 피해의 **절반**만큼, 본체가 아니라 **그 크리처 자신**이 회복
+    //  ⚠ 2026-08 회복 대상이 본체 → 자기 자신으로 바뀌었다. 최대 체력을 넘지 않는다.
     reset();
     const nDrain=kw('흡혈'); put('me',nDrain,0);
-    S.me.board[0].sick=false;
-    S.me.hp=20; const atk=S.me.board[0].a;
+    const du=S.me.board[0]; du.sick=false;
+    du.insts[0].mh=20; du.insts[0].hp=4;      /* 회복할 여지를 만들어 둔다 */
+    S.me.hp=20; const atk=du.a, hp0=du.insts[0].hp;
     await resolveAttacks('me');
-    ok('흡혈 = 입힌 만큼', S.me.hp===20+atk,
-       `${nDrain} ATK ${atk} → HP 20 → ${S.me.hp}`);
+    const gain=(S.me.board[0]?S.me.board[0].insts[0].hp:0)-hp0;
+    ok('흡혈 = 제 몸이 회복', S.me.hp===20&&gain===Math.round(atk/2),
+       `${nDrain} ATK ${atk} → 제 HP ${hp0}→${hp0+gain} (본체는 ${S.me.hp} 그대로)`);
 
     /* 13-b) 막히면 회복도 없다 — 가호가 흡수하면 입힌 피해가 0.
        ⚠ 공격자는 **비행이 아닌** 흡혈 크리처를 써야 한다. 비행은 지상 수호를 무시하고
@@ -170,9 +180,12 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
     const nDrainG=find(c=>(c.kw||'').includes('흡혈')&&!c.f)||nDrain;
     reset(); put('me',nDrainG,0); S.me.board[0].sick=false;
     const wallName=find(c=>c.g&&!c.f&&(c.kw||'').includes('가호'));
-    if(wallName){ put('ai',wallName,0); S.me.hp=20; await resolveAttacks('me');
-      ok('흡혈 = 0 피해면 0 회복', S.me.hp===20,
-         `${nDrainG} 공격을 ${wallName} 가호가 흡수 → HP 20 그대로`); }
+    if(wallName){ put('ai',wallName,0);
+      const g=S.me.board[0]; g.insts[0].mh=20; g.insts[0].hp=4;
+      S.me.hp=20; await resolveAttacks('me');
+      const still=S.me.board[0]?S.me.board[0].insts[0].hp:0;
+      ok('흡혈 = 0 피해면 0 회복', still===4,
+         `${nDrainG} 공격을 ${wallName} 가호가 흡수 → 제 HP 4 그대로 (${still})`); }
     else ok('흡혈 = 0 피해면 0 회복', true, '(가호 수호 크리처 없음 — 건너뜀)');
 
     /* 14) 용어집이 **키워드**를 전부 설명한다 (카드에 찍히는데 설명이 없으면 안 된다)
@@ -198,5 +211,59 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
   console.log('─'.repeat(78));
   console.log(bad?`❌ ${bad}건 실패`:`✅ ${R.length}건 전부 통과`);
   if(errs.length){ console.log('ERRORS:',errs.slice(0,3)); bad++; }
-  await b.close(); process.exit(bad?1:0);
+  
+/* ── 부여받은 능력이 **카드 설명란**에 뜨는가 (2026-08) ────────────
+   ⚠ 뱃지는 작아서 확대해도 규칙을 못 읽는다. 카드 효과로 붙은 것은 설명란에 금색으로
+     찍히고, 잃은 것(환류를 이미 쓴 몸)은 아예 빠져야 한다. */
+let KB=0; const kok=(k,v,d)=>{ if(!v)KB++; console.log((v?'\u2705':'\u274c')+' '+String(k).padEnd(24)+' '+d); };
+const LK=await p.evaluate(()=>{
+  const strip=h=>h.replace(/<b class="gr">/g,'[').replace(/<\/b>/g,']')
+    .replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim();
+  const eff=(nm,u,o)=>{ const d=document.createElement('div');
+    d.innerHTML=tcardHTML(nm,Object.assign({size:'md',unit:u},o||{}));
+    return strip(d.querySelector('.teff').innerHTML); };
+  S.gen=(S.gen||0)+1; S.me.board=[]; S.ai.board=[]; S.me.noecho={};
+  placeCreature('me','헬하운드',0);                    /* 바닐라 4/4 */
+  const u=S.me.board[0];
+  const before=eff('헬하운드',u);
+  u.g=true; u.burn=2; u.drain=true; u.echo=true; u.veil=true; u.multi=3; u.rage=true;
+  const after=eff('헬하운드',u);
+  /* 인쇄된 것과 부여받은 것이 구분되는가 — 헬시온은 폭발·연소 1 이 인쇄돼 있다 */
+  placeCreature('me','헬시온',1);
+  const h=S.me.board[1]; h.hard=2;
+  const mix=eff('헬시온',h);
+  /* 환류를 이미 쓴 몸 · 돌아온 장 */
+  placeCreature('me','전기 해파리',2);
+  const e=S.me.board[2]; const on=eff('전기 해파리',e); e.echo=false; const off=eff('전기 해파리',e);
+  S.me.noecho={'전기 해파리':1};
+  const hand=eff('전기 해파리',null,{noecho:echoSpent('me','전기 해파리')});
+  const hand0=eff('전기 해파리',null,{noecho:false});
+  return {before,after,mix,on,off,hand,hand0};
+});
+kok('바닐라는 빈칸 그대로', LK.before==='', `"${LK.before}"`);
+/* 부여받은 것은 전부 [대괄호] = 금색 표시 */
+kok('부여받은 능력이 붙는다',
+    /연소 2/.test(LK.after)&&/흡혈/.test(LK.after)&&/환류/.test(LK.after)
+    &&/면역/.test(LK.after)&&/연격 3/.test(LK.after)&&/광분/.test(LK.after)
+    &&/수호/.test(LK.after), LK.after);
+kok('부여는 표시가 다르다', (LK.after.match(/\[/g)||[]).length>=5, LK.after);
+/* 인쇄된 폭발·연소 1 은 표시 없이, 부여받은 경화 2 만 표시 */
+kok('인쇄된 것과 구분된다', /\[경화 2\]/.test(LK.mix)&&!/\[폭발\]/.test(LK.mix), LK.mix);
+kok('환류를 쓰면 빠진다', /환류/.test(LK.on)&&!/환류/.test(LK.off), `있음 "${LK.on}" → 소진 "${LK.off}"`);
+kok('돌아온 장도 빠진다', /환류/.test(LK.hand0)&&!/환류/.test(LK.hand),
+    `원본 "${LK.hand0}" → 돌아온 장 "${LK.hand}"`);
+
+/* ── 원정에는 장수·동명 제한이 없다 ───────────────────────────── */
+const RGL=await p.evaluate(()=>{
+  RG.el='fire'; RG.deck=[]; RG.lands=['화염의 원천','화염의 원천'];
+  const dup=landOffers('fire').includes('화염의 원천');
+  for(let i=0;i<60;i++)RG.deck.push('헬하운드');
+  RG.lands=['화염의 원천','화염의 원천','지하 감옥'];
+  return {dup, 덱:RG.deck.length, 지형:runLands().reduce((s,[,c])=>s+c,0)};
+});
+kok('원정 — 동명 지형 제한 없음', RGL.dup===true, `이미 둘을 가져도 또 나온다: ${RGL.dup}`);
+kok('원정 — 덱 장수 제한 없음', RGL.덱===60&&RGL.지형>17, `덱 ${RGL.덱}장 · 지형 ${RGL.지형}장`);
+if(KB)console.log(`\u274c 설명란 ${KB}건 실패`);
+
+await b.close(); process.exit(bad?1:0);
 })();

@@ -154,7 +154,7 @@ const PROTO='file://'+path.join(ROOT,'prototype','index.html');
   ok('태그 목록 = 용어집', tg.칩.filter(k=>tg.정본.includes(k)).every((k,i,a)=>
         tg.정본.indexOf(k)>(i?tg.정본.indexOf(a[i-1]):-1)) && tg.설명일치,
      `${tg.칩.length}종 — ${tg.칩.join(' · ')}`);
-  for(const [t,chk] of [['비행',n=>POOL[n].f],['대가',n=>/대가/.test(POOL[n].kw||'')],
+  for(const [t,chk] of [['비행',n=>POOL[n].f],['제물',n=>/제물/.test(POOL[n].kw||'')],
                         /* '고유' = kw 의 머리 낱말이 용어집에 없는 것. 뷰어와 **같은 판정**을 쓴다
                            — 예전엔 여기에 /(소환|소멸) 시/ 라고 따로 적어 뒀는데, 그 틀에서
                            벗어난 고유 효과("내가 스펠을 쓸 때마다 …")가 생기자마자 어긋났다. */

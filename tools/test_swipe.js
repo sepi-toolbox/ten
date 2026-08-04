@@ -47,14 +47,16 @@ async function swipe(p,sel,dx){
     .map(n=>`${n}→${grownPeer(n)}`));
   ok('겹쳐 볼 짝이 있다', pairs.length>=10, `${pairs.length}종 — ${pairs.slice(0,3).join(' · ')}…`);
 
-  await g.evaluate(()=>{ showZoom('작열 좀비',null,null,false); });
+  /* ⚠ '작열 좀비' 는 불 전면 교체 때 지운 카드다 → showZoom 이 null 을 만나 크래시했다.
+     겹쳐 볼 짝이 있는 카드 중 지금 살아 있는 것으로 바꾼다 — 묘목(성장 → 성장한 묘목). */
+  await g.evaluate(()=>{ showZoom('묘목',null,null,false); });
   await g.waitForTimeout(200);
   const g0=await g.evaluate(()=>({on:document.getElementById('zoom').classList.contains('on'),
     stack:!!document.querySelector('.zstack'),
     앞:document.querySelector('.zfront .tname').textContent,
     뒤:document.querySelector('.zback .tname').textContent,
     안내:document.querySelector('.zswipe').textContent.trim()}));
-  ok('게임 — 뒤에 겹친다', g0.on&&g0.stack&&g0.앞==='작열 좀비'&&g0.뒤==='잿더미 좀비',
+  ok('게임 — 뒤에 겹친다', g0.on&&g0.stack&&g0.앞==='묘목'&&g0.뒤==='성장한 묘목',
      `${g0.앞} ↔ ${g0.뒤} · "${g0.안내}"`);
 
   await g.waitForTimeout(400);                 /* 닫기 감시가 붙는 60ms 를 확실히 지난다 */
@@ -88,11 +90,11 @@ async function swipe(p,sel,dx){
   const v=await ctx.newPage();
   const verr=[]; v.on('pageerror',e=>verr.push(e.message));
   await v.goto('http://localhost:8746/cards/'); await v.waitForTimeout(1200);
-  await v.evaluate(()=>openZoom('작열 좀비')); await v.waitForTimeout(250);
+  await v.evaluate(()=>openZoom('묘목')); await v.waitForTimeout(250);
   const v0=await v.evaluate(()=>({on:document.getElementById('zoom').classList.contains('on'),
     앞:document.querySelector('.zfront .tname')&&document.querySelector('.zfront .tname').textContent,
     뒤:document.querySelector('.zback .tname')&&document.querySelector('.zback .tname').textContent}));
-  ok('뷰어 — 뒤에 겹친다', v0.on&&v0.앞==='작열 좀비'&&v0.뒤==='잿더미 좀비',
+  ok('뷰어 — 뒤에 겹친다', v0.on&&v0.앞==='묘목'&&v0.뒤==='성장한 묘목',
      `${v0.앞} ↔ ${v0.뒤}`);
   await swipe(v,'.zstack',60);
   const v1=await v.evaluate(()=>({on:document.getElementById('zoom').classList.contains('on'),

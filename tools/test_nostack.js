@@ -44,9 +44,12 @@ const R=await p.evaluate(()=>{
   /* 8) 소환물도 **각각 한 칸씩** 차지한다.
      ⚠ 예전에는 토큰(POOL 밖 임시 개체)이었는데, 이제 소환 스펠은 **진짜 카드**를 부른다
         (그래야 크라켄 같은 바운스로 손에 잡힌다). 그래서 `u.token` 이 아니라 개체 수로 본다. */
-  reset(); S.me.board[0]=null;
-  const sp='불의 군단';
-  if(sp){ resolveSummon('me',sp,0);
+  /* ⚠ '불의 군단' 은 불 전면 교체 때 지운 카드다 → POOL 에 없어 크래시했다.
+     지금 여럿을 부르는 카드는 **지옥문 소환**(아군을 갈아 그 수만큼 헬시온). */
+  reset(); S.me.board=[];
+  placeCreature('me','헬하운드',0); placeCreature('me','하피',1);
+  const sp='지옥문 소환';
+  if(POOL[sp]){ resolveSummon('me',sp,0);
     ok('소환물 다중 소환', S.me.board.filter(Boolean).length>=2&&S.me.board.every(u=>!u||u.insts.length===1),
        `${sp} → 토큰 ${S.me.board.filter(x=>x&&x.token).length}칸`); }
   return out;

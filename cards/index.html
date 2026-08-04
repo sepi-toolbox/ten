@@ -148,6 +148,8 @@ body.sideon .gear{opacity:0;pointer-events:none}
 .slot.fxhit{animation:fxhit .38s ease both}
 @keyframes fxhit{0%{filter:none}35%{filter:brightness(1.5) saturate(1.5) drop-shadow(0 0 10px #ff5a2b)}
   100%{filter:none}}
+/* 카드 효과로 **붙은** 능력은 설명란에서 금색으로 뜬다 — 인쇄된 것과 구분이 돼야 한다 */
+.teff .gr{color:#f2d488;text-shadow:0 0 6px rgba(242,212,136,.55)}
 .hitpop.big{font-size:21px}
 .hitpop{position:fixed;z-index:93;pointer-events:none;font-family:'Cinzel',serif;
   font-size:15px;font-weight:700;color:#ffd9c2;text-shadow:0 0 8px #ff5a2b,0 1px 2px #000;
@@ -1458,8 +1460,13 @@ function frameCardHTML(name,opt,c,el,ec,key){
   const inline=hasCostBand?'':`<span class="fcin">${orbs}</span>`;
   let eff='';
   if(c.k==='cr'){
-    const tag=(c.g&&c.f)?'비행·수호':c.g?'수호':c.f?'비행':(c.p?'관통':'');
-    const kw=(c.kw&&c.kw!=='—')?c.kw:'';
+    /* ⚠ 판 위 카드는 **인쇄된 글이 아니라 지금 그 개체의 상태**를 보여 준다.
+       카드 효과로 얻은 수호·면역·환류·흡혈 …이 설명란에 안 뜨면, 무엇이 붙었는지
+       알 방법이 없다(뱃지는 작아서 확대해도 규칙을 읽을 수가 없었다). */
+    const u0=opt.unit;
+    const tag=u0?((u0.g&&u0.f)?'비행·수호':u0.g?'수호':u0.f?'비행':(u0.p?'관통':''))
+                :((c.g&&c.f)?'비행·수호':c.g?'수호':c.f?'비행':(c.p?'관통':''));
+    const kw=liveKw(name,u0,opt);
     eff=(tag?`<b>${tag}</b>`:'')+((tag&&kw)?' · ':'')+kw;
   } else eff=c.d||'';
   let stat='';
@@ -1479,6 +1486,44 @@ function frameCardHTML(name,opt,c,el,ec,key){
     ${pips?`<div class="fcost">${pips}</div>`:''}
     <div class="feff">${eff}</div>${stat}
   </div>`;
+}
+/* ── 카드 설명란에 찍히는 키워드 줄 ────────────────────────────
+   개체가 있으면 **그 개체의 지금 상태**로 다시 만든다. 카드 효과로 붙은 것은 표시를 달고,
+   잃은 것(환류를 이미 쓴 몸)은 아예 빼 준다.
+   ⚠ **되만들 수 있는 것만 인쇄 글에서 떼어 낸다.** 밀물·제물·축복·성장·개전은 개체 필드가
+     없으므로 글 그대로 남긴다 — 떼어 내면 정보가 사라진다. */
+const KWRE=/^(연소\s*\d+|폭발|환류|흡혈|경화\s*\d+|가호|면역|연격\s*\d+|광분|육중|속공|증식|연마|진형|연합)$/;
+function liveKw(name,u,opt){
+  const c=POOL[name]||{};
+  const printed=(c.kw&&c.kw!=='—')?c.kw:'';
+  const parts=printed.split('·').map(t=>t.trim()).filter(Boolean);
+  const prose=parts.filter(t=>!KWRE.test(t));       /* 고유 문구는 그대로 둔다 */
+  const had=t=>parts.some(x=>x.replace(/\s+/g,'')===t.replace(/\s+/g,''));
+  const live=[];
+  const add=t=>{ if(!t)return; live.push(had(t)?t:`<b class="gr">${t}</b>`); };
+  if(u){
+    if(u.burn)add(`연소 ${u.burn}`);
+    if(u.boom)add('폭발');
+    if(u.veil)add('면역');
+    if(u.ward)add('가호');
+    if(u.hard)add(`경화 ${u.hard}`);
+    if(u.drain)add('흡혈');
+    if(u.echo)add('환류');
+    if((u.multi||1)>1)add(`연격 ${u.multi}`);
+    if(u.rage)add('광분');
+    if(u.heavy)add('육중');
+    if(u.rush)add('속공');
+    if(u.breed)add('증식');
+    if(u.hone)add('연마');
+    if(u.awake)add('진형');
+    if(u.ally)add('연합');
+  }else{
+    /* 손패·목록 — 개체가 없다. 인쇄 그대로 두되, **환류를 이미 쓴 이름**이면 뺀다. */
+    parts.forEach(t=>{ if(!KWRE.test(t)){return;} 
+      if(t==='환류'&&opt&&opt.noecho)return;        /* 돌아온 장 — 이제 발동 안 한다 */
+      live.push(t); });
+  }
+  return live.concat(prose).join(' · ');
 }
 function tcardHTML(name,opt){
   opt=opt||{};
@@ -1508,8 +1553,12 @@ function tcardHTML(name,opt){
   if(c.r&&c.r!=='common')cls+=' r-'+c.r;
   let eff='';
   if(c.k==='cr'){
-    const tag=(c.g&&c.f)?'비행·수호':c.g?'수호':c.f?'비행':(c.p?'관통':'');
-    const kw=(c.kw&&c.kw!=='—')?c.kw:'';
+    /* ⚠ 판 위 카드는 **인쇄된 글이 아니라 지금 그 개체의 상태**를 보여 준다.
+       카드 효과로 얻은 수호·면역·환류·흡혈 …이 설명란에 안 뜨면 무엇이 붙었는지 알 수 없다. */
+    const u0=opt.unit;
+    const tag=u0?((u0.g&&u0.f)?'비행·수호':u0.g?'수호':u0.f?'비행':(u0.p?'관통':''))
+                :((c.g&&c.f)?'비행·수호':c.g?'수호':c.f?'비행':(c.p?'관통':''));
+    const kw=liveKw(name,u0,opt);
     eff=(tag?`<b>${tag}</b>`:'')+((tag&&kw)?' · ':'')+kw;
   } else eff=c.d||'';
   /* 강화 카드는 자기 일러스트가 없다 — 원본(base)의 것을 빌려 쓴다 */

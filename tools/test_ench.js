@@ -46,11 +46,14 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
 
     // ── 턴 종료 트리거 8종
     reset(); S.me.hp=30; en('me','성화'); fireEnch('me','end'); o.성화=S.me.hp-30;
-    reset(); en('me','조수의 인장'); fireEnch('me','end'); o.인장=60-S.ai.hp;
-    reset(); put('ai','검사'); put('ai','창병'); en('me','불의 제단'); fireEnch('me','end');
-    o.제단=[hp('ai',0),hp('ai',1)];
-    reset(); put('ai','창병'); const a0=S.ai.board[0].a; en('me','해무'); fireEnch('me','end');
-    o.해무=[a0,S.ai.board[0].a];
+    /* ⚠ 조수의 인장·불의 제단·해무는 물/불 전면 교체 때 지운 카드다. 지금 살아 있는
+       인챈트로 같은 트리거를 잰다 — 폭풍의 구슬(드로우) · 인어의 하프(전체 ATK −1). */
+    reset(); S.me.deck=['검사','창병','석벽']; en('me','폭풍의 구슬');
+    const hd0=S.me.hand.length; fireEnch('me','end'); o.구슬=S.me.hand.length-hd0;
+    reset(); put('me','검사'); put('me','창병'); en('me','소원 거울'); fireEnch('me','end');
+    o.거울=S.me.board.filter(u=>u&&u.kind==='cr').map(u=>u.name).join(',');
+    reset(); put('ai','창병'); const a0=S.ai.board[0].a; en('me','인어의 하프'); fireEnch('me','end');
+    o.하프=[a0,S.ai.board[0].a];
     reset(); put('me','검사'); en('me','생명의 샘'); fireEnch('me','end');
     o.생명의샘=[S.me.board[0].a,hp('me',0)];
     reset(); put('me','검사'); en('me','병기고'); fireEnch('me','end'); o.병기고=S.me.board[0].hard;
@@ -58,7 +61,7 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
     // ── 조건 트리거
     reset(); put('me','검사'); en('me','흡혈 의식'); S.me.hp=30;
     S.me.board[0].insts[0].hp=0; cleanup('me'); o.흡혈의식=S.me.hp-30;
-    reset(); put('me','검사'); put('ai','창병'); en('me','연쇄 발화');
+    reset(); put('me','검사'); put('ai','창병'); en('me','흡혈 의식');
     S.me.board[0].insts[0].hp=0; cleanup('me'); o.연쇄발화=hp('ai',0);
     reset(); en('me','대지의 축복'); put('me','검사');
     const nu=S.me.board.find(u=>u.kind==='cr'); o.축복=[nu.a,nu.insts[0].hp];
@@ -73,8 +76,9 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
     reset(); mana(6); pay('me','금단의 지식'); o.금단=60-S.me.hp;
     reset(); put('ai','창병'); S.me.hp=40; resolveOnFoe('me','심판',0); o.심판=S.me.hp-40;
     /* 소이탄 — 즉시 파괴가 아니라 **상대 몸에 연소 5를 심는다**(대상이 반대편으로 뒤집혔다) */
-    reset(); put('ai','창병'); resolveOnFoe('me','소이탄',0);
-    o.소이탄=[S.ai.board[0].burn, modeOf('소이탄')];
+    /* 소이탄은 지웠다 — 지금 같은 일을 하는 카드는 **작열 감옥**(2코, 상대에게 연소 5) */
+    reset(); put('ai','창병'); resolveOnFoe('me','작열 감옥',0);
+    o.감옥=[S.ai.board[0].burn, modeOf('작열 감옥')];
     reset(); put('ai','창병'); put('me','검사'); resolveOnFoe('me','포식',0);
     o.포식=[S.me.board[0].a,hp('me',0)];
     reset(); put('ai','강철수호'); const s0=hp('ai',0); resolveOnFoe('me','쐐기',0);
@@ -87,17 +91,22 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
     o.발굴1=S.me.hand.length-h0;
     reset(); put('me','기사'); h0=S.me.hand.length; resolveOnMine('me','용해',0);
     o.용해=[hp('me',0),S.me.hand.length-h0];
-    reset(); put('me','기사'); const ka=S.me.board[0].a; o.분신=[ka,aoeVal('me','분신')];
-    reset(); put('me','불씨정령'); put('me','화염정령'); o.연쇄폭발=aoeVal('me','연쇄 폭발');
-    reset(); put('ai','창병'); resolveSummon('me','밀물의 부름',0); o.부름=!!S.tide;
+    /* 분신·연쇄 폭발·밀물의 부름은 전부 지운 카드다. 지금 살아 있는 것으로 잰다:
+       화산 폭발(내 지형 하나를 부수고 연소 없는 몸에 12 나눠) · 지옥문 소환(아군을 갈아 소환) */
+    reset(); put('me','헬하운드'); put('me','아제르');
+    aoeSpread('me','화산 폭발',['me'],0);
+    o.화산=[hp('me',0),hp('me',1)];              /* 아제르는 연소가 있어 안 맞는다 */
+    reset(); put('me','검사'); put('me','창병'); resolveSummon('me','지옥문 소환',0);
+    o.지옥문=S.me.board.filter(u=>u&&u.kind==='cr').map(u=>u.name).join(',');
     return o;
   });
 
-  ok('턴 종료 트리거 7종', R.성화===4&&R.인장===4&&R.제단[0]===2&&R.해무[1]===R.해무[0]-2
+  ok('턴 종료 트리거 7종', R.성화===4&&R.구슬===1&&/검사,검사|창병,창병/.test(R.거울)
+     &&R.하프[1]===R.하프[0]-1
      &&R.생명의샘[0]===3&&R.병기고===1&&R.고대제단===2,
-     `성화 +${R.성화} · 인장 ${R.인장} · 제단 ${R.제단} · 해무 ATK ${R.해무[0]}→${R.해무[1]}`
+     `성화 +${R.성화} · 구슬 드로우 ${R.구슬} · 거울 [${R.거울}] · 하프 ATK ${R.하프[0]}→${R.하프[1]}`
      +` · 샘 ${R.생명의샘} · 병기고 경화${R.병기고} · 고대제단 ${R.고대제단}`);
-  ok('소멸 트리거', R.흡혈의식===3&&R.연쇄발화===1, `흡혈 의식 +${R.흡혈의식} · 연쇄 발화 → 창병 ${R.연쇄발화}`);
+  ok('소멸 트리거', R.흡혈의식===3, `흡혈 의식 +${R.흡혈의식}`);
   ok('소환 트리거', R.축복[0]===3&&R.축복[1]===6&&R.장막===3,
      `대지의 축복 ${R.축복.join('/')} · 빛의 장막 +${R.장막}`);
   ok('상대 소환 트리거', R.전열===1, `전열 구축 → 상대 창병 ${R.전열}`);
@@ -107,15 +116,15 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
   ok('HP 지불 스펠', R.피의못===8&&R.금단===14, `피의 못 −${R.피의못} · 금단의 지식 −${R.금단}`);
   ok('요격 뒤 조항', R.심판===8&&R.포식[0]===4,
      `심판 +${R.심판} 회복 · 포식 버프 ${R.포식.join('/')}`);
-  ok('상대에게 심는 부여', R.소이탄[0]===5&&R.소이탄[1]==='target',
-     `소이탄 → 창병 연소 ${R.소이탄[0]} · modeOf ${R.소이탄[1]} (내 편이 아니라 상대를 겨눈다)`);
+  ok('상대에게 심는 부여', R.감옥[0]===5&&R.감옥[1]==='target',
+     `작열 감옥 → 창병 연소 ${R.감옥[0]} · modeOf ${R.감옥[1]} (내 편이 아니라 상대를 겨눈다)`);
   ok('경화 무시', R.쐐기[1]===R.쐐기[0]-2, `강철수호(경화 1)에 ${R.쐐기[0]}→${R.쐐기[1]} — 2 그대로 들어갔다`);
   ok('조건부 피해', R.덩쿨3<R.덩쿨1, `가시덩쿨 — 내 개체 0일 때 ${R.덩쿨1} · 3개체일 때 ${R.덩쿨3}`);
   ok('조건부 드로우', R.발굴0===3&&R.발굴1===1, `폐허 발굴 — 크리처 0 → ${R.발굴0}장 · 1 → ${R.발굴1}장`);
   ok('자해 드로우', R.용해[1]===2&&R.용해[0]>0, `용해 — 기사 HP ${R.용해[0]} · ${R.용해[1]}장`);
-  ok('분신 = 제물 ATK', R.분신[1]===R.분신[0], `기사 ATK ${R.분신[0]} → 광역 ${R.분신[1]}`);
-  ok('연쇄 폭발 = 3+연소수', R.연쇄폭발===5, `연소 2종 → ${R.연쇄폭발}`);
-  ok('밀물의 부름 바운스', R.부름, '소환 뒤 되돌릴 대상을 고르게 한다');
+  /* 화산 폭발 — '연소가 없는 모든 크리처' 만 맞는다. 아제르(연소 2)는 멀쩡해야 한다 */
+  ok('화산 폭발 = 연소는 건너뜀', R.화산[0]<4&&R.화산[1]===5, `헬하운드 ${R.화산[0]} · 아제르 ${R.화산[1]}`);
+  ok('지옥문 소환 = 아군을 간다', R.지옥문==='헬시온,헬시온', R.지옥문||'(안 나옴)');
 
   if(errs.length){bad++;console.log('   ERR',errs.slice(0,2));}
   console.log(bad?`❌ ${bad}건 실패`:'✅ 전부 통과');
