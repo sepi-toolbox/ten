@@ -2901,8 +2901,19 @@ function onDeath(p,u,idx,cnt){
 }
 /* 내 턴 종료 시 — 연마·증식·변신이 먼저, **연소 자해가 마지막**.
    ⚠ 연소를 먼저 태우면 그 턴에 성장할 개체가 타 죽어 변신을 못 본다. */
-function endStep(p){
+/* 턴 종료 처리 — **왼쪽부터 한 개체씩 순서대로** 돈다.
+   ⚠⚠ 예전에는 전부 동기로 한꺼번에 처리하고 연출만 나중에 몰아 띄웠다. 그러면 무엇이
+     무엇을 죽였는지 순서가 안 읽힌다(연소로 죽은 몸의 폭발이 옆 몸의 연소와 뭉쳤다).
+     이제 **한 개체의 일이 끝까지 끝난 뒤에 다음 개체로 간다** — 연소로 깎이고, 죽고,
+     폭발이 터지고, 그게 눈에 보이고 나서야 오른쪽 칸으로 넘어간다.
+   ⚠ 그래서 async 다. 호출부는 endTurn 하나뿐이라 번지는 범위가 없다
+     (cleanup 은 27곳에서 부르므로 **동기 그대로** 둔다 — 여기서 개체마다 불러 준다).
+   ⚠ 슬롯 번호가 아니라 **개체 목록을 미리 떠서** 돈다. 죽으면 판이 당겨져 번호가 어긋난다.
+     앞선 폭발에 이미 죽은 개체는 건너뛴다. */
+async function endStep(p){
   const B=S[p].board, who=p==='me'?'나':'상대';
+  const gen=S.gen;
+  const beat=async(ms)=>{ render(); await flushFx(150); if(ms)await sleep(ms); };
   for(let i=0;i<SLOTS;i++){
     const u=B[i]; if(!u||u.kind!=='cr')continue;
     if(u.hone){                             /* 연마 — 상한 없이 ATK +1 */
@@ -2946,12 +2957,18 @@ function endStep(p){
     toHand(foe,j);
     log(`  ${who} ${u.name} — 상대 ${nm} 을(를) 손으로`,'t');
   });
-  for(let i=0;i<SLOTS;i++){                 /* 연소 — 자기 자신이 N 피해 */
-    const u=B[i]; if(!u||u.kind!=='cr'||!u.burn)continue;
+  /* ── 연소 — **왼쪽부터 한 개체씩.** 한 몸이 타고, 죽고, 폭발까지 끝난 뒤 다음으로 간다 */
+  const burners=B.filter(u=>u&&u.kind==='cr'&&u.burn>0);
+  for(const u of burners){
+    if(S.gen!==gen)return;                  /* 판이 갈렸다 — 지난 판의 연출을 이어 그리지 않는다 */
+    if(!S[p].board.includes(u)||!u.insts.length)continue;   /* 앞선 폭발에 이미 죽었다 */
     const d=hurtAll(u,u.burn);
     log(`  ${who} ${u.name} 연소 ${u.burn} — 자신이 ${d} 피해`,'a');
+    cleanup(p);                             /* 이 몸의 죽음과 그 폭발 연쇄를 여기서 마무리 */
+    await beat();                           /* 그리고 눈으로 보여 준 뒤에 다음 칸으로 */
   }
   cleanup(p);
+  render();
 }
 
 /* ── 피해 연출 큐 ──────────────────────────────────────────────
@@ -3000,7 +3017,9 @@ async function flushFx(gap){
     drawFx(e);
     await sleep(g);
   }
-  await sleep(140);
+  /* 마지막 한 발이 뜬 것을 눈이 따라잡을 여유. 간격에 비례시킨다 —
+     고정 140 으로 두면 짧은 간격(공격 한 번마다)에서 상대적으로 길게 느껴진다. */
+  await sleep(Math.round(g*0.6));
   return q.length;
 }
 /* ============ 전투 ============ */
@@ -3405,10 +3424,9 @@ async function endTurn(){
   await drainEnchants(p);            // 인챈트 발동
   render(); await flushFx();
   if(checkEnd()){S.busy=false;return;}
-  endStep(p); render();              // 성장·연마·증식·연소는 턴 종료 마지막에
-  /* ⚠ 연소는 여기서 한꺼번에 깎인다 — 그냥 두면 숫자만 툭 바뀌고 지나간다.
-     쌓인 피해를 한 발씩 띄우고 그만큼 기다린다(피해가 없으면 시간을 안 쓴다). */
-  await flushFx(); render();
+  /* 성장·연마·증식·연소는 턴 종료 마지막에. **왼쪽부터 한 개체씩** 돌며 스스로 보여 준다. */
+  await endStep(p);
+  await flushFx(); render();         /* 마지막에 남은 연출이 있으면 마저 흘려보낸다 */
   /* ⚠ 뇌관은 **endStep 뒤**에 본다 — 연소로 내 판이 비는 것도 '비었다' 로 쳐야 한다 */
   if(fuseEnchants(p)){ render(); await sleep(700); }
   if(checkEnd()){S.busy=false;return;}
@@ -4944,7 +4962,7 @@ document.getElementById('restart').onclick=()=>{
      시작 → 모드 선택 → 덱 선택 → (배틀: 상대 덱 선택 | 원정: 지도) → 게임
      패배 → 다시 도전하기(덱 선택으로) · 초기 화면(모드 선택으로)
    ⚠ ?dev=1 로 열면 페이지를 건너뛰고 바로 배틀로 들어간다(자동 테스트용). */
-const VERSION='0.32.1', BUILD='2026-08-04';
+const VERSION='0.33.0', BUILD='2026-08-04';
 const DEV=/[?&]dev=1/.test(location.search);
 let PAGE=null, FLOW={mode:'battle', my:null, foe:null};
 function pageOpen(html){

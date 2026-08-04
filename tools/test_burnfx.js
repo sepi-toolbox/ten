@@ -16,22 +16,38 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
   await p.evaluate(()=>{SPEED=1;setDeck('fire');}); await p.waitForTimeout(300);
   await p.evaluate(()=>{const k=document.getElementById('keepBtn');k&&k.click();}); await p.waitForTimeout(300);
 
-  /* 큐가 쌓이는가 — 상태는 즉시, 연출은 나중 */
-  const q=await p.evaluate(()=>{
-    S.gen=(S.gen||0)+1; S.me.board=[]; S.ai.board=[]; FXQ=[];
-    ['\ud5e4\ub808\uc2a4','\ud5ec\ucea3','\uc544\uc81c\ub974'].forEach((n,i)=>placeCreature('me',n,i));
-    const hp0=S.me.board.map(u=>u.insts[0].hp);
-    endStep('me');                    /* 연소 자해 — 동기 */
-    return {큐:FXQ.length, hp:hp0.join(',')+' → '+S.me.board.map(u=>u.insts[0].hp).join(',')};
+  /* ── 연소는 **왼쪽부터 한 개체씩** 순서대로 끝난다 ─────────────
+     ⚠ 한 몸이 타고·죽고·폭발까지 끝난 뒤에 다음 칸으로 간다. 예전에는 전부 한꺼번에
+       처리하고 연출만 몰아 띄워서, 무엇이 무엇을 죽였는지 순서가 안 읽혔다. */
+  const SEQ=await p.evaluate(async()=>{
+    S.gen=(S.gen||0)+1; S.me.board=[]; S.ai.board=[]; S.ai.hp=60; FXQ=[];
+    LOGSEQ=[];
+    placeCreature('me','\ud5e4\ub808\uc2a4',0);   /* 연소1 */
+    placeCreature('me','\ud5ec\uc2dc\uc628',1);   /* 연소1 + 폭발 — 여기서 죽는다 */
+    placeCreature('me','\uc544\uc81c\ub974',2);   /* 연소2 */
+    S.me.board[1].insts[0].hp=1;
+    const t=performance.now();
+    await endStep('me');
+    const ms=Math.round(performance.now()-t);
+    const line=[...document.querySelectorAll('#log div')].map(e=>e.textContent.trim())
+      .filter(t=>/연소|폭발/.test(t));
+    return {ms, 순서:line.slice(-4), 상대HP:S.ai.hp};
   });
-  ok('연소가 연출 큐에 쌓인다', q.큐>=3, `큐 ${q.큐}발 · HP ${q.hp}`);
+  /* 헤레스(0번) → 헬시온(1번, 죽고 폭발) → 아제르(2번). 폭발이 아제르보다 **앞**이어야 한다 */
+  const ord=SEQ.순서.join(' | ');
+  ok('왼쪽부터 차례로', /헤레스[^|]*연소/.test(SEQ.순서[0]||'')
+     &&/헬시온[^|]*연소/.test(SEQ.순서[1]||'')
+     &&/헬시온[^|]*폭발/.test(SEQ.순서[2]||'')
+     &&/아제르[^|]*연소/.test(SEQ.순서[3]||''), ord);
+  ok('죽음·폭발이 그 자리에서', SEQ.상대HP===58, `상대 HP 60→${SEQ.상대HP} (헬시온 폭발 2)`);
+  ok('한 개체씩 시간을 쓴다', SEQ.ms>=500, `endStep ${SEQ.ms}ms`);
 
-  /* 실제로 띄우고 그만큼 기다리는가 */
-  const t0=Date.now();
-  const n=await p.evaluate(()=>flushFx());
-  const dt=Date.now()-t0;
-  ok('한 발씩 띄우고 기다린다', n>=3&&dt>=400, `${n}발 · ${dt}ms`);
-  ok('띄우고 나면 큐가 빈다', (await p.evaluate(()=>FXQ.length))===0, '');
+  /* 피해가 없으면 시간을 안 쓴다 */
+  const idle0=await p.evaluate(async()=>{
+    S.gen=(S.gen||0)+1; S.me.board=[]; FXQ=[];
+    const t=performance.now(); await endStep('me'); return Math.round(performance.now()-t);
+  });
+  ok('빈 판이면 안 기다린다', idle0<120, `${idle0}ms`);
 
   /* 턴을 넘기면 저절로 흘러간다 — 숫자 팝업과 칸 번쩍임이 실제로 화면에 뜬다 */
   await p.evaluate(()=>{
