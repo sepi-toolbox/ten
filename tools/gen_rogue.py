@@ -43,9 +43,17 @@ def scale_stats(tag, a, h, mult):
 
 
 def make_over(el, deck):
-    """이 속성 카드들의 강화판. 이름 앞에 '강화 '를 붙인다."""
+    """이 속성 카드들의 강화판. 이름 앞에 '강화 '를 붙인다.
+
+    ⚠ **토큰·적 전용은 강화판을 안 만든다.** 부모 카드가 만들어 내기만 하는 것들이라
+      손에 들어올 일이 없고, 정예 보상(overOf)에 뜨면 0코 토큰이 상품으로 나온다
+      (해그의 시약이 실제로 보상에 떴다).
+    """
+    skip = G.NOBUDGET                      # FOEONLY | LANDBORN | TOKENBORN
     out = {}
     for (nm, c, tag, a, h, cp, keys) in deck["creatures"]:
+        if nm in skip:
+            continue
         na, nh = scale_stats(tag, a, h, OVER)
         if (na, nh) == (a, h):
             nh += 1
@@ -61,6 +69,8 @@ def make_over(el, deck):
             e["p"] = 1
         out[PREFIX + nm] = e
     for (nm, c, kind, val, ref, adj, cp, rule) in deck["spells"]:
+        if nm in skip:
+            continue
         mode = P.MODE_EN[kind]
         if mode in ("kill", "bounce"):
             nc, nv = max(1, c - 1), val          # 값이 없는 효과는 코스트를 깎는다
@@ -70,6 +80,8 @@ def make_over(el, deck):
                             "v": nv, "el": el, "d": rule, "over": 1, "base": nm,
                             "r": G.rar(nm)}
     for (nm, c, dr, E, C, scope, cp, rule) in deck["enchants"]:
+        if nm in skip:
+            continue
         e = {"c": c, "k": "en", "cc": G.color_req(c),
              "v": math.ceil(E * OVER), "ch": C, "el": el,
              "d": rule, "over": 1, "base": nm, "r": G.rar(nm)}

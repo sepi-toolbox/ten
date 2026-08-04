@@ -103,9 +103,11 @@ const FILE='file://'+path.join(ROOT,'index.html');
   await p.mouse.move(bx.x+bx.width/2,bx.y-60,{steps:4});
   await p.mouse.move(bd.x+bd.width/2,bd.y-30,{steps:6}); await p.mouse.up(); await p.waitForTimeout(350);
   const st=await p.evaluate(()=>{
-    const c=document.querySelector('.tgtcard'); const r=c?c.getBoundingClientRect():null;
+    /* ⚠ 겨누는 동안 **가운데에 카드를 띄우지 않는다**(폐기). 판을 가려서 대상이 안 보였다.
+       화살표가 뽑히는 자리만 내 판 가운데면 된다. */
     const b=document.getElementById('myBoard').getBoundingClientRect();
-    return {on:!!TGT, 판위:r?Math.abs((r.top+r.bottom)/2-(b.top+b.height/2))<b.height:false,
+    return {on:!!TGT, 카드없음:!document.querySelector('.tgtcard'),
+      판위:!!TGT&&Math.abs(TGT.oy-(b.top+b.height/2))<b.height,
       빛나는대상:document.querySelectorAll('#foeBoard .slot.pick').length,
       어두운것:document.querySelectorAll('#myBoard .slot:not(.pick)').length,
       /* 화면 전체를 덮는 딤이 떠 있고, 고를 수 있는 슬롯만 그 위로 올라와 있어야 한다.
@@ -123,8 +125,9 @@ const FILE='file://'+path.join(ROOT,'index.html');
         const e=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
         return e?(e.id||e.className||e.tagName):'null';})};});
   await p.evaluate(()=>{const d=document.getElementById('tgtdim');d.style.pointerEvents='';});
-  ok('판으로 나가 대상 지정', st.on&&st.판위&&st.빛나는대상===2,
-     `카드가 판 위 ${st.판위} · 빛나는 대상 ${st.빛나는대상}종`);
+  ok('판으로 나가 대상 지정', st.on&&st.판위&&st.카드없음&&st.빛나는대상===2,
+     `화살표 시작점이 판 위 ${st.판위} · 가운데 카드 없음 ${st.카드없음}`
+     +` · 빛나는 대상 ${st.빛나는대상}종`);
   ok('딤이 화면을 덮는다', st.딤&&st.위로&&st.덮임.every(x=>x==='tgtdim'),
      `딤 ${st.딤} · 대상은 딤 위 ${st.위로} · 나머지 ${JSON.stringify(st.덮임)}`);
   // 빈 곳 탭 → 손으로

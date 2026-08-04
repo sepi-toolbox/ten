@@ -20,9 +20,12 @@ const P='file://'+path.join(__dirname,'..','prototype','index.html')+'?dev=1';
       rgEnter(f,i<0?0:i); });
     await w(400);
     if(await p.evaluate(()=>!!document.getElementById('rgGo')))await p.click('#rgGo');
-    await w(900);
+    /* ⚠ **시간으로 기다리지 않는다.** 느린 판에서 전투가 아직 안 열렸는데 HP 를 읽어
+       "회복분이 이월 안 됐다" 로 읽혔다(전체 검사에서 두 번 잡혔다).
+       전투가 실제로 열릴 때까지 기다린다. */
+    await p.waitForFunction(()=>RG.fighting&&S.me&&S.me.hp>0,null,{timeout:9000}).catch(()=>{});
     await p.evaluate(()=>{ const k=document.getElementById('keepBtn'); k&&k.click(); });
-    await w(500);
+    await w(400);
   }
   const st=()=>p.evaluate(()=>({me:S.me.hp, rg:RG.hp, max:RG.maxhp, f:RG.fighting}));
 

@@ -141,6 +141,18 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
   ok('제물 = 내 체력줄로', !!sb&&sb.n===1&&sb.아래로, sb?`${sb.n}개 · 내 정보줄 쪽`:'(안 뜸)');
   await sac; await p.waitForTimeout(500);
 
+  /* ── 7) 토큰은 원정 보상·상점에 안 나온다 ── */
+  const tok=await p.evaluate(()=>{
+    const bad=[];
+    Object.keys(EL).forEach(el=>{
+      poolOf(el).forEach(n=>{ if(POOL[n].tok)bad.push(n); });
+      overOf(el).forEach(n=>{ const b=POOL[n].base; if(b&&POOL[b]&&POOL[b].tok)bad.push(n); });
+    });
+    return {샘:Object.keys(POOL).filter(n=>POOL[n].tok), 샌것:bad};});
+  /* ⚠ 해그의 시약 같은 0코 토큰이 보상으로 떴다 — 손에 넣어도 낼 수가 없다 */
+  ok('토큰이 표시돼 있다', tok.샘.length>=7, `${tok.샘.length}종`);
+  ok('보상·상점에 안 샌다', tok.샌것.length===0, tok.샌것.join(', ')||'0종');
+
   if(errs.length){bad++;console.log('   ERR',errs.slice(0,3));}
   console.log(bad?`❌ ${bad}건 실패`:'✅ 전부 통과');
   await b.close(); process.exit(bad?1:0);
