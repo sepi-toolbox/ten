@@ -49,14 +49,21 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
   // 원정 흐름
   await p.click('#page .chsi[data-m="rogue"]'); await p.waitForTimeout(700);
   ok('원정 → 덱 선택', await pg()==='deck', '');
-  await p.click('#page .chsi[data-e="nature"]'); await p.waitForTimeout(900);
-  /* ⚠ 원정은 이제 **튜토리얼 전투**로 시작한다(지도가 아니다). 안내판이 떠야 정상이고,
-     '건너뛰기' 를 눌러야 지도가 나온다 — 사람이 밟는 길 그대로 확인한다. */
+  /* ⚠ 원정은 **대본이 있는 속성**(불·물)만 튜토리얼 전투로 시작한다. 안내판이 떠야 정상이고,
+     '건너뛰기' 를 눌러야 지도가 나온다 — 사람이 밟는 길 그대로 확인한다.
+     ⚠ 속성 이름을 여기에 박지 않는다 — tutHas 에게 물어본다. 대본이 늘고 줄 때마다
+       검사가 조용히 틀린 걸 보게 되면 안 된다. */
+  await p.click('#page .chsi[data-e="fire"]'); await p.waitForTimeout(900);
   ok('원정 → 튜토리얼 전투', await p.evaluate(()=>TUT.on&&!!document.getElementById('tutbox')),
      `튜토 ${await p.evaluate(()=>TUT.on)}`);
   await p.click('#tutSkip'); await p.waitForTimeout(1100);
   ok('건너뛰면 지도', await p.evaluate(()=>RG.on&&document.getElementById('rg').classList.contains('on')),
      `층 ${await p.evaluate(()=>RG.map?RG.map.length:0)}개`);
+  /* 대본이 없는 속성은 튜토리얼을 건너뛰고 곧장 지도로 */
+  await p.evaluate(()=>{RG.on=false;rgStart(Object.keys(EL).find(e=>!tutHas(e)));});
+  await p.waitForTimeout(1000);
+  ok('대본 없는 속성은 바로 지도',
+     await p.evaluate(()=>!TUT.on&&document.getElementById('rg').classList.contains('on')), '');
 
   // 설정 팝업 — 가운데 사각 + 버전
   await p.evaluate(()=>{rgClose();}); await p.waitForTimeout(200);
