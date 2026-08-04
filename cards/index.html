@@ -144,6 +144,11 @@ body.sideon .gear{opacity:0;pointer-events:none}
   70%{opacity:1}
   100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.5)}}
 /* 흩뿌리는 피해 — 맞은 칸 위로 '1' 이 한 발씩 떠오른다(고블린 미치광이) */
+/* 피해를 받은 칸을 잠깐 붉게 흔든다 — 숫자만으로는 어디가 맞았는지 눈이 못 따라간다 */
+.slot.fxhit{animation:fxhit .38s ease both}
+@keyframes fxhit{0%{filter:none}35%{filter:brightness(1.5) saturate(1.5) drop-shadow(0 0 10px #ff5a2b)}
+  100%{filter:none}}
+.hitpop.big{font-size:21px}
 .hitpop{position:fixed;z-index:93;pointer-events:none;font-family:'Cinzel',serif;
   font-size:15px;font-weight:700;color:#ffd9c2;text-shadow:0 0 8px #ff5a2b,0 1px 2px #000;
   animation:hitpop .7s cubic-bezier(.25,.7,.3,1) both}

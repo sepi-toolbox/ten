@@ -144,6 +144,11 @@ body.sideon .gear{opacity:0;pointer-events:none}
   70%{opacity:1}
   100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.5)}}
 /* 흩뿌리는 피해 — 맞은 칸 위로 '1' 이 한 발씩 떠오른다(고블린 미치광이) */
+/* 피해를 받은 칸을 잠깐 붉게 흔든다 — 숫자만으로는 어디가 맞았는지 눈이 못 따라간다 */
+.slot.fxhit{animation:fxhit .38s ease both}
+@keyframes fxhit{0%{filter:none}35%{filter:brightness(1.5) saturate(1.5) drop-shadow(0 0 10px #ff5a2b)}
+  100%{filter:none}}
+.hitpop.big{font-size:21px}
 .hitpop{position:fixed;z-index:93;pointer-events:none;font-family:'Cinzel',serif;
   font-size:15px;font-weight:700;color:#ffd9c2;text-shadow:0 0 8px #ff5a2b,0 1px 2px #000;
   animation:hitpop .7s cubic-bezier(.25,.7,.3,1) both}
@@ -1430,6 +1435,7 @@ function newGame(){
   S.gen=(S.gen||0)+1;
   if(typeof endTargeting==='function')endTargeting();
   S.dead=0;                          /* 이번 판에서 소멸한 크리처 개체 수(용암거인이 본다) */
+  FXQ=[];   /* ⚠ 지난 판에 못 흘려보낸 연출이 새 판으로 새지 않게 */
   S.turn=1; S.active='me'; S.over=false; S.sel=null; S.mode=null; S.busy=false; S.fx=null; S.aoeFx=null; S.spawn=null; S.reveal=null; S.tide=null; S.rush=null; S.mind=null;
   ['me','ai'].forEach(p=>{
     /* burned = 이번 판에서 **써 버리거나 버린 주문** 더미. 화염 광신도가 여기서 하나 되찾는다.
@@ -2475,6 +2481,7 @@ function faceDmg(p,v,why){
   const w=S[p].board.find(u=>u&&u.kind==='cr'&&u.aegis&&u.insts.length);
   if(w){ log(`  ${p==='me'?'나':'상대'} ${w.name} — 피해 ${v} 무효`,'g'); return 0; }
   S[p].hp-=v;
+  faceFx(p,v);                               /* 폭발·광분·직격 — 얼굴에도 한 발 */
   return v;
 }
 /* 모든 피해는 여기를 지난다 — **가호와 경화를 한 곳에서만** 적용하기 위해서다.
@@ -2527,6 +2534,7 @@ function hurtAll(u,v){
   if(u.ward){ u.ward=false; return 0; }
   const d=Math.max(0,v-(u.hard||0));
   u.insts.forEach(i=>{i.hp-=d;});
+  hitFx(sideOf(u),u,d);                      /* 연소·광역 — 눈에 보이게 한 발 */
   rageHit(u,d);                              /* 광역·연소도 '줄면' 이다 */
   return d;
 }
@@ -2946,6 +2954,55 @@ function endStep(p){
   cleanup(p);
 }
 
+/* ── 피해 연출 큐 ──────────────────────────────────────────────
+   ⚠⚠ 연소·폭발·광분은 **동기 코드**에서 한꺼번에 처리된다(endStep · onDeath · hurt).
+     그래서 예전에는 숫자만 툭 바뀌고 아무 일도 안 일어난 것처럼 스쳐 지나갔다.
+     상태는 그대로 즉시 바꾸고, **눈에 보이는 것만** 여기에 쌓아 뒀다가 나중에 한 발씩 띄운다
+     (splashHit 이 쓰던 수법과 같다). 로직을 async 로 바꾸면 소환·사망 경로를 전부
+     뜯어고쳐야 하는데 그럴 값어치가 없다.
+   ⚠ 개체는 죽으면 판에서 빠진다 → **자리 번호가 아니라 개체를 들고 있다가** 띄울 때
+     현재 자리를 다시 찾는다. 이미 사라졌으면 쌓을 때의 자리로 띄운다. */
+let FXQ=[];
+function hitFx(side,u,v,tone){
+  if(!(v>0)||!u)return;
+  const B=(S[side]||{}).board||[];
+  FXQ.push({side,u,idx:B.indexOf(u),v,tone:tone||'dmg'});
+  if(FXQ.length>40)FXQ.shift();            /* 흘려보내지 못한 것이 쌓이지 않게 */
+}
+function faceFx(side,v){ if(v>0)FXQ.push({side,face:1,v,tone:'dmg'}); }
+function drawFx(e){
+  if(typeof document==='undefined')return;
+  let r=null;
+  if(e.face){ const b=document.getElementById(e.side==='me'?'myBar':'foeBar');
+    if(b){ r=b.getBoundingClientRect(); b.classList.add('struck');
+      setTimeout(()=>b.classList.remove('struck'),420); } }
+  else{
+    const B=(S[e.side]||{}).board||[];
+    const at=B.indexOf(e.u)>=0?B.indexOf(e.u):e.idx;
+    const el=at>=0?slotEl(e.side,at):null;
+    if(el){ r=el.getBoundingClientRect(); el.classList.add('fxhit');
+      setTimeout(()=>el.classList.remove('fxhit'),420); }
+  }
+  if(!r)return;
+  const d=document.createElement('i');
+  d.className='hitpop big'; d.textContent='-'+e.v;
+  d.style.cssText=`left:${Math.round(r.left+r.width/2)}px;top:${Math.round(r.top+r.height*.4)}px`;
+  document.body.appendChild(d);
+  setTimeout(()=>d.remove(),760);
+}
+/* 쌓인 연출을 한 발씩 띄우고, 그만큼 기다린다. 피해가 없었으면 시간을 안 쓴다. */
+async function flushFx(gap){
+  if(!FXQ.length)return 0;
+  const q=FXQ; FXQ=[];
+  const gen=S.gen, g=gap||170;
+  for(const e of q){
+    if(S.gen!==gen)return 0;
+    drawFx(e);
+    await sleep(g);
+  }
+  await sleep(140);
+  return q.length;
+}
 /* ============ 전투 ============ */
 const sleep=ms=>new Promise(r=>setTimeout(r,ms/SPEED));
 let SPEED=1;
@@ -3045,6 +3102,9 @@ async function strike(p,u,gen,tag){
   await sleep(560);
   if(S.gen!==gen)return false;
   S.fx=null;
+  /* 이 공격으로 터진 폭발·광분을 **그 자리에서** 보여 준다. 다음 공격과 뭉치면
+     누가 왜 아팠는지 읽을 수가 없다. */
+  render(); await flushFx(150);
   return true;
 }
 
@@ -3339,11 +3399,16 @@ async function endTurn(){
   S.busy=true;S.sel=null;S.mode=null;render();
   const p=S.active;
   await resolveAttacks(p);           // 크리처 공격 먼저
+  render(); await flushFx();         // 공격 중 터진 폭발·광분을 한 발씩 보여 준다
   if(checkEnd()){S.busy=false;return;}
   landEnd(p);                        // 특수 지형(호수 유적·바닷속 풍경·불지옥의 계곡)
   await drainEnchants(p);            // 인챈트 발동
+  render(); await flushFx();
   if(checkEnd()){S.busy=false;return;}
   endStep(p); render();              // 성장·연마·증식·연소는 턴 종료 마지막에
+  /* ⚠ 연소는 여기서 한꺼번에 깎인다 — 그냥 두면 숫자만 툭 바뀌고 지나간다.
+     쌓인 피해를 한 발씩 띄우고 그만큼 기다린다(피해가 없으면 시간을 안 쓴다). */
+  await flushFx(); render();
   /* ⚠ 뇌관은 **endStep 뒤**에 본다 — 연소로 내 판이 비는 것도 '비었다' 로 쳐야 한다 */
   if(fuseEnchants(p)){ render(); await sleep(700); }
   if(checkEnd()){S.busy=false;return;}
@@ -4869,7 +4934,7 @@ document.getElementById('restart').onclick=()=>{
      시작 → 모드 선택 → 덱 선택 → (배틀: 상대 덱 선택 | 원정: 지도) → 게임
      패배 → 다시 도전하기(덱 선택으로) · 초기 화면(모드 선택으로)
    ⚠ ?dev=1 로 열면 페이지를 건너뛰고 바로 배틀로 들어간다(자동 테스트용). */
-const VERSION='0.31.0', BUILD='2026-08-04';
+const VERSION='0.32.0', BUILD='2026-08-04';
 const DEV=/[?&]dev=1/.test(location.search);
 let PAGE=null, FLOW={mode:'battle', my:null, foe:null};
 function pageOpen(html){
