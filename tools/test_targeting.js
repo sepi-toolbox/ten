@@ -171,5 +171,27 @@ await p.waitForTimeout(150);
 /* 본체를 못 때리는 주문은 정보줄이 켜지지 않는다 */
 const NF=await p.evaluate(()=>({벽:canFace('불꽃의 벽'), 구:canFace('화염구'), 애로우:canFace('파이어 애로우')}));
 tok('canFace 판정', NF.구&&NF.애로우&&!NF.벽, `화염구 ${NF.구} · 애로우 ${NF.애로우} · 불꽃의 벽 ${NF.벽}`);
+/* ── ⚠⚠ 모든 스펠이 제 모드로 흘러가는가 (일반 검사) ──────────────
+   modeOf 는 맨 끝이 `return 'target'` 이다. 새 mode 를 만들고 INSTANT 나 분기에 등록하는 걸
+   빠뜨리면 **대상이 필요 없는 카드에 대상 선택 창이 뜬다** — 산불·수정구의 힘(ritual)이
+   실제로 그랬다. 카드 하나가 아니라 **모드 전체**를 훑어서 그 실수를 막는다. */
+const MODES=await p.evaluate(()=>{
+  const bad=[], seen={};
+  Object.entries(POOL).forEach(([n,c])=>{
+    if(c.k!=='sp')return;
+    const m=modeOf(n);
+    (seen[c.mode]=seen[c.mode]||[]).push(m);
+    /* 상대를 겨누는 모드가 아닌데 target 으로 흘러갔으면 등록을 빠뜨린 것이다.
+       ⚠ '상대를 겨눈다' 는 NEEDS_FOE 만이 아니다 — 상대에게 심는 부여(작열 감옥)도
+         정당한 target 이다. 엔진이 쓰는 판정(isFoeGrant)을 그대로 쓴다. */
+    if(m==='target'&&!NEEDS_FOE.includes(c.mode)&&!isFoeGrant(n))bad.push(`${n}(${c.mode})`);
+  });
+  return {bad, ritual:[modeOf('산불'),modeOf('수정구의 힘')].join(','),
+          모드수:Object.keys(seen).length};
+});
+tok('모드가 전부 등록돼 있다', MODES.bad.length===0,
+    MODES.bad.join(' ')||`스펠 모드 ${MODES.모드수}종 전부 제 길로`);
+tok('지형 생성은 즉시 발동', MODES.ritual==='instant,instant', `산불·수정구의 힘 → ${MODES.ritual}`);
+
 if(TB)console.log(`❌ 대상 지정 ${TB}건 실패`); else console.log('✅ 대상 지정 전부 통과');
 await b.close();})();
