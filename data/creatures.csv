@@ -108,7 +108,7 @@ CR106,듀라한,4,normal,6,4,0,2,2,dark,sword,출진 — 내 덱에 듀라한의
 CR107,스컬 기마병,4,guard,3,3,2,2,2,dark,shield,단말마 — 죽은 자리에 다시 소환된다 (1회),,common,12,적정,
 CR108,나이트메어,4,normal,2,2,1,2,2,dark,sword,출진 — 카드 2장을 뽑는다,,common,6,적정,
 CR109,네크로맨서,4,normal,4,4,0,2,2,dark,sword,출진 — 단말마를 가진 내 크리처를 모두 복제한다,,rare,12,적정,
-CR110,미이라,4,normal,2,4,0,2,2,dark,sword,출진 — 내 덱에 관 3장을 넣는다,,uncommon,8,적정,
+CR110,미이라,4,normal,2,4,0,2,2,dark,sword,관 3장이 모두 내 판에 서면 미이라 군주로 변한다 · 출진 — 내 덱에 관 3장을 넣는다,,uncommon,8,적정,
 CR111,리치,5,normal,6,6,0,2,3,dark,sword,출진 — 판 위의 인챈트 1장을 골라 내 쪽에 복제한다,,uncommon,18,적정,
 CR112,가고일,5,fly,5,4,1,2,3,dark,wings,—,,common,24,적정,
 CR113,뱀파이어,5,normal,8,8,1,2,3,dark,sword,제물 8 · 흡혈,,common,24,적정,

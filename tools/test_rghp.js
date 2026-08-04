@@ -58,7 +58,10 @@ const P='file://'+path.join(__dirname,'..','prototype','index.html')+'?dev=1';
   await p.evaluate(()=>document.getElementById('restart').click()); await w(900);
 
   // 3) 이벤트 회복은 그대로 산다 — 지도 렌더가 낡은 S.me.hp 로 도로 깎지 않는다
-  await p.evaluate(()=>runEffects([['heal',30]],()=>{})); await w(300);
+  /* ⚠ 회복은 연출(veilRun)을 타고 끝난다 — 시간으로 기다리면 느린 판에서 **가끔** 어긋난다.
+     실제로 전체 검사에서 한 번 '전투 진입 HP 22' 로 떨어졌다. 값이 찍힐 때까지 기다린다. */
+  await p.evaluate(()=>runEffects([['heal',30]],()=>{}));
+  await p.waitForFunction(()=>RG.hp>=52,null,{timeout:8000}).catch(()=>{});
   await p.evaluate(()=>{ rgMap(); render(); }); await w(400);
   const s3=await st();
   ok('이벤트 회복은 유효', s3.rg===52, `22 + 회복 30 = RG.hp ${s3.rg}`);

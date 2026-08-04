@@ -1,4 +1,4 @@
-/* 어둠 2단계 — 단말마 · 출진 · 탈취 · 면역 아우라 · 무덤 · 어둠 주문
+/* 어둠 2·3단계 — 단말마 · 출진 · 탈취 · 면역 아우라 · 무덤 · 어둠 주문
  *   node tools/test_dark.js
  *
  * 왜 이 파일이 있나 — 어둠의 정체성이 **죽는 것**에 걸려 있다. 단말마·부활·무덤은
@@ -181,6 +181,55 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
     o.무덤=S.me.grave.slice();
     resolveSummon('me','혼령 부활',0);
     o.부활=names('me')||'(빔)';
+    /* ══════ 3단계 — 덱 조작 ══════ */
+    /* 듀라한 — 출진으로 덱에 머리를 심고, 뽑으면 판 위 듀라한이 커지고 머리는 덱으로 */
+    reset(); S.me.deck=['구울','좀비','고스트'];
+    const du=put('me','듀라한');
+    o.심기=[S.me.deck.filter(n=>n==='듀라한의 머리').length, S.me.deck.length];
+    const da0=du.a, dh0=du.insts[0].hp;
+    /* 맨 위에 올려 두고 뽑는다 — 손을 거치지 않아야 한다 */
+    S.me.deck.splice(S.me.deck.indexOf('듀라한의 머리'),1);
+    S.me.deck.push('듀라한의 머리');
+    const hd0=S.me.hand.length; draw('me');
+    o.머리=[da0,dh0,du.a,du.insts[0].hp, S.me.hand.length-hd0,
+            S.me.deck.filter(n=>n==='듀라한의 머리').length];
+    /* 듀라한이 없으면 머리는 소멸한다(덱으로 안 돌아간다) */
+    reset(); S.me.deck=['구울','듀라한의 머리']; draw('me');
+    o.머리소멸=[S.me.hand.length, S.me.deck.filter(n=>n==='듀라한의 머리').length];
+
+    /* 미이라 — 관 3장을 심고, 뽑으면 즉시 판에. 셋이 다 서면 군주로 */
+    reset(); S.me.deck=['구울','좀비'];
+    put('me','미이라');
+    o.관심기=S.me.deck.filter(n=>n==='관').length;
+    S.me.deck=['관','관','관'];
+    const hb=S.me.hand.length;
+    draw('me'); o.관1=[names('me'), S.me.hand.length-hb];
+    draw('me'); draw('me');
+    o.군주=names('me');
+
+    /* 호박 머리 — 턴 시작에 덱 맨 위 5장 중 하나를 고른다 */
+    reset(); S.me.deck=['구울','좀비','고스트','가고일','데스핸드','레이스'];
+    const pk=POOL[need('호박 머리')];
+    S.me.board.push({name:'호박 머리',kind:'en',v:pk.v,charge:pk.ch});
+    turnDraw('me');
+    o.호박=[S.cpick?S.cpick.list.slice():null, S.cpick?S.cpick.need:0];
+    if(S.cpick){ const act=S.cpick.act, got=S.cpick.list[2]; S.cpick=null; act([2]);
+      o.호박뽑음=[got, S.me.hand.join(','), S.me.deck.length]; }
+
+    /* 불길한 예감 — 맨 위 5장 중 하나를 손으로 */
+    reset(); S.me.deck=['구울','좀비','고스트','가고일','데스핸드','레이스'];
+    resolveInstant('me','불길한 예감');
+    o.예감=[S.cpick?S.cpick.list.length:0, S.cpick?S.cpick.list[0]:''];
+    if(S.cpick){ const act=S.cpick.act; S.cpick=null; act([0]);
+      o.예감뽑음=[S.me.hand.join(','), S.me.deck.length]; }
+
+    /* 사신의 시간 — 4장 뽑고 손에서 2장 버린다(순증 2) */
+    reset(); S.me.deck=['구울','좀비','고스트','가고일','데스핸드','레이스'];
+    resolveInstant('me','사신의 시간');
+    o.수확전=[S.me.hand.length, S.cpick?S.cpick.need:0];
+    if(S.cpick){ const act=S.cpick.act; S.cpick=null; act([0,1]); }
+    o.수확후=S.me.hand.length;
+
     /* 해골쌓기 — 죽은 수가 곧 HP */
     reset();
     ['구울','좀비','고스트'].forEach(n=>{ const u=put('me',n); kill(u); });
@@ -244,6 +293,31 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
   ok('혼령 부활 = 무덤에서', R.무덤.join()==='구울'&&R.부활==='구울',
      `무덤 [${R.무덤}] → 판 [${R.부활}]`);
   ok('해골쌓기 = 죽은 수가 HP', R.해골탑==='0/3 수호 true', R.해골탑);
+
+  /* ── 3단계 — 덱 조작 ── */
+  ok('듀라한 = 덱에 머리를 심는다', R.심기[0]===1&&R.심기[1]===4,
+     `머리 ${R.심기[0]}장 · 덱 ${R.심기[1]}장`);
+  /* ⚠ 손을 거치지 않는다 — 손이 가득 차면 조용히 갈려 나가기 때문이다 */
+  ok('머리 = 듀라한을 키우고 덱으로', R.머리[2]===R.머리[0]+4&&R.머리[3]===R.머리[1]+4
+     &&R.머리[4]===0&&R.머리[5]===1,
+     `듀라한 ${R.머리[0]}/${R.머리[1]} → ${R.머리[2]}/${R.머리[3]} · 손 +${R.머리[4]} · 덱의 머리 ${R.머리[5]}장`);
+  ok('듀라한이 없으면 머리 소멸', R.머리소멸[0]===0&&R.머리소멸[1]===0,
+     `손 ${R.머리소멸[0]}장 · 덱의 머리 ${R.머리소멸[1]}장`);
+  ok('미이라 = 덱에 관 3장', R.관심기===3, `${R.관심기}장`);
+  ok('관 = 뽑으면 바로 판에', /관/.test(R.관1[0])&&R.관1[1]===0,
+     `판 [${R.관1[0]}] · 손 +${R.관1[1]}`);
+  ok('관 셋 = 미이라 군주로', /미이라 군주/.test(R.군주), R.군주);
+  ok('호박 머리 = 맨 위 5장', !!R.호박[0]&&R.호박[0].length===5&&R.호박[1]===1,
+     R.호박[0]?`[${R.호박[0]}] 중 ${R.호박[1]}장`:'(창이 안 떴다)');
+  /* 고른 한 장만 손으로, 나머지는 덱에 그대로 남는다 */
+  ok('호박 머리 = 고른 장만 뽑는다',
+     !!R.호박뽑음&&R.호박뽑음[1]===R.호박뽑음[0]&&R.호박뽑음[2]===5,
+     R.호박뽑음?`${R.호박뽑음[0]} → 손 [${R.호박뽑음[1]}] · 덱 ${R.호박뽑음[2]}장`:'(창이 안 떴다)');
+  ok('불길한 예감 = 5장 중 1장', R.예감[0]===5&&!!R.예감뽑음&&R.예감뽑음[0]===R.예감[1]
+     &&R.예감뽑음[1]===5,
+     R.예감뽑음?`[5장] → 손 [${R.예감뽑음[0]}] · 덱 ${R.예감뽑음[1]}장`:'(창이 안 떴다)');
+  ok('사신의 시간 = 4장 뽑고 2장 버린다', R.수확전[0]===4&&R.수확전[1]===2&&R.수확후===2,
+     `뽑은 뒤 ${R.수확전[0]}장 → ${R.수확전[1]}장 버림 → ${R.수확후}장 (순증 2)`);
 
   if(errs.length){bad++;console.log('   ERR',errs.slice(0,3));}
   console.log(bad?`❌ ${bad}건 실패`:'✅ 전부 통과');

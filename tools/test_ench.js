@@ -36,8 +36,10 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
   ok('fx 키가 엔진에 있다', fxs.miss.length===0,
      fxs.miss.length?`엔진에 없음: ${fxs.miss}`:'전부 짝이 맞는다');
   /* ⚠ '없음' 과 '아직 안 만듦' 을 갈라 본다. 미구현은 FXPEND 에 **선언**해야 하고,
-     선언된 것은 충전을 쓰지 않는다 — 반쯤 돌다 충전만 태우는 게 제일 나쁘다. */
-  ok('미구현 fx 는 선언돼 있다', fxs.pend.join()==='scry', fxs.pend.join()||'없음');
+     선언된 것은 충전을 쓰지 않는다 — 반쯤 돌다 충전만 태우는 게 제일 나쁘다.
+     ⚠ 지금은 미구현이 하나도 없다(호박 머리는 어둠 3단계에서 만들었다).
+       **목록을 비워 두는 것도 선언**이다 — 여기 이름이 늘면 그때 눈에 띈다. */
+  ok('미구현 fx 목록', fxs.pend.length===0, fxs.pend.join()||'없음 — 전부 구현됐다');
 
   // ── 어둠 인챈트 3종 (호박 머리는 3단계)
   const dk=await p.evaluate(()=>{
