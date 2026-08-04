@@ -1,4 +1,4 @@
-/* 연출 — 단말마 부활 오오라 · 환류 손패 생성 · 주문 발사체
+/* 연출 — 부활 오오라 · 환류 손패 생성 · 주문 발사체 · 파괴 · 수확 표식 · 제물
  *   node tools/test_castfx.js
  *
  * 왜 이 파일이 있나 — 연출은 **틀려도 검사가 안 죽는다.** 오오라가 안 뜨고 발사체가
@@ -89,6 +89,57 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
   await p.waitForTimeout(140);
   ok('본체도 겨눈다', (await p.evaluate(()=>document.querySelectorAll('.bolt').length))===1, '');
   await face;
+
+  /* ── 4) 파괴 연출 ── */
+  await reset();
+  await p.evaluate(()=>{ placeCreature('ai','오아네스',0); placeCreature('ai','구울',1); render(); });
+  await p.waitForTimeout(100);
+  await p.evaluate(()=>{ S.ai.board[0].insts.forEach(i=>{i.hp=0;}); cleanup('ai'); render(); });
+  await p.waitForTimeout(100);
+  const dead=await p.evaluate(()=>{ const e=document.querySelector('.deadfx');
+    if(!e)return null; const r=e.getBoundingClientRect();
+    return {n:document.querySelectorAll('.deadfx').length,
+            이름:(e.querySelector('.tname')||{}).textContent||'',
+            /* ⚠ 슬롯을 통째로 복제해야 한다 — innerHTML 만 옮기면 카드 속 글자가
+               container query 를 잃고 화면만 하게 부푼다(실제로 그랬다). */
+            폭:Math.round(r.width), 클릭막힘:getComputedStyle(e).pointerEvents}; });
+  ok('파괴 = 부서지는 연출', !!dead&&dead.n===1&&dead.이름==='오아네스',
+     dead?`${dead.n}장 · "${dead.이름}"`:'(안 뜸)');
+  ok('크기가 안 부푼다', !!dead&&dead.폭>20&&dead.폭<200, dead?`폭 ${dead.폭}px`:'');
+  ok('클릭을 안 먹는다', !!dead&&dead.클릭막힘==='none', dead?dead.클릭막힘:'');
+  /* 판을 다시 그려도 남은 슬롯은 그대로여야 한다 — 잔상이 진짜 슬롯으로 세어지면 안 된다 */
+  ok('판에는 안 섞인다',
+     (await p.evaluate(()=>document.querySelectorAll('#foeBoard > .slot').length))===1, '');
+  await p.waitForTimeout(800);
+  ok('잔상은 걷힌다', (await p.evaluate(()=>document.querySelectorAll('.deadfx').length))===0, '');
+
+  /* ── 5) 사신의 수확 표식 ── */
+  await reset();
+  await p.evaluate(()=>{ placeCreature('ai','오아네스',0); placeCreature('ai','구울',1);
+    resolveOnFoe('me','사신의 수확',1); render(); });
+  await p.waitForTimeout(100);
+  const dm=await p.evaluate(()=>({
+    표식:[...document.querySelectorAll('.slot.doomed')].map(e=>e.dataset.idx),
+    뱃지:[...document.querySelectorAll('.kb.doom')].map(e=>e.textContent)}));
+  ok('수확 표식이 남는다', dm.표식.join()==='1'&&dm.뱃지.join()==='수확',
+     `슬롯 [${dm.표식}] · 뱃지 [${dm.뱃지}]`);
+  /* 거두고 나면 표식도 사라진다 */
+  await p.evaluate(()=>{ S.turn=2; startTurn('me'); render(); });
+  await p.waitForTimeout(120);
+  ok('거두면 표식도 사라짐',
+     (await p.evaluate(()=>document.querySelectorAll('.slot.doomed').length))===0, '');
+
+  /* ── 6) 제물 — 내 체력줄로 피값이 날아간다 ── */
+  await reset();
+  const sac=p.evaluate(()=>{ const i=S.me.board.length;
+    placeCreature('me','데스핸드',i); onSummon('me','데스핸드',i); render(); });
+  await p.waitForTimeout(140);
+  const sb=await p.evaluate(()=>{ const e=document.querySelector('.bolt');
+    if(!e)return null; const r=e.getBoundingClientRect();
+    const bar=document.getElementById('myBar').getBoundingClientRect();
+    return {n:document.querySelectorAll('.bolt').length, 아래로:r.top>bar.top-260}; });
+  ok('제물 = 내 체력줄로', !!sb&&sb.n===1&&sb.아래로, sb?`${sb.n}개 · 내 정보줄 쪽`:'(안 뜸)');
+  await sac; await p.waitForTimeout(500);
 
   if(errs.length){bad++;console.log('   ERR',errs.slice(0,3));}
   console.log(bad?`❌ ${bad}건 실패`:'✅ 전부 통과');

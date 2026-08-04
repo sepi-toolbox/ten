@@ -469,6 +469,30 @@ body.sideon::after{content:'';position:fixed;inset:0;z-index:155;
 .bolt::after{content:'';position:absolute;inset:-3px;border-radius:50%;
   background:radial-gradient(circle,var(--bc),transparent 70%);opacity:.55;filter:blur(4px)}
 .bolt.burst{animation:boltburst .24s ease-out both}
+/* 파괴 — **사라지기 직전의 그 자리**에서 카드가 금이 가며 부서져 내린다.
+   render() 가 슬롯을 지워 버리므로 그 모습을 떠서 body 위에 띄운다. */
+.deadfx{position:fixed;z-index:128;pointer-events:none;overflow:hidden;border-radius:6px;
+  animation:deadout .56s cubic-bezier(.3,.1,.7,1) both;transform-origin:50% 62%}
+.deadfx::before{content:'';position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:linear-gradient(103deg,transparent 46%,rgba(255,236,200,.95) 48.4%,transparent 51%),
+             linear-gradient(64deg,transparent 58%,rgba(255,236,200,.8) 60%,transparent 62.4%);
+  opacity:0;animation:deadcrack .56s ease-out both}
+.deadfx::after{content:'';position:absolute;inset:-30%;z-index:1;pointer-events:none;
+  background:radial-gradient(circle at 50% 60%,rgba(20,12,8,.9),transparent 62%);
+  opacity:0;animation:deadsmoke .56s ease-out both}
+@keyframes deadout{
+  0%{opacity:1;transform:scale(1) rotate(0deg);filter:none}
+  22%{opacity:1;transform:scale(1.07) rotate(-2deg);filter:brightness(1.7) contrast(1.2)}
+  100%{opacity:0;transform:scale(.72) rotate(7deg) translateY(16px);filter:brightness(.35) blur(2px)}}
+@keyframes deadcrack{0%{opacity:0}18%{opacity:1}55%{opacity:.8}100%{opacity:0}}
+@keyframes deadsmoke{0%{opacity:0}35%{opacity:.85}100%{opacity:0}}
+/* 사신의 수확 — 다음 내 턴 시작에 죽는다. **표식이 남아 있는 동안** 계속 보여야 한다. */
+.slot.doomed{filter:saturate(.7)}
+.slot.doomed::after{content:'';position:absolute;inset:-5px;border-radius:10px;pointer-events:none;z-index:3;
+  border:1.5px solid rgba(154,114,216,.85);
+  box-shadow:0 0 14px 2px rgba(120,70,190,.75),inset 0 0 22px rgba(40,10,70,.75);
+  animation:doompulse 1.4s ease-in-out infinite}
+@keyframes doompulse{0%,100%{opacity:.45;transform:scale(1)}50%{opacity:1;transform:scale(1.03)}}
 @keyframes boltburst{0%{transform:scale(1);opacity:1}100%{transform:scale(3.2);opacity:0}}
 @keyframes spawn{
   0%{opacity:0;transform:translateY(-14px) scale(.7)}
@@ -1231,6 +1255,7 @@ body{padding:0;height:100dvh;overflow:hidden;
   line-height:1;padding:2px 3px;border-radius:3px;white-space:nowrap;
   border:1px solid rgba(0,0,0,.4);background:rgba(16,11,5,.94);color:#f2d488}
 .kb.burn{color:#ffb27a;border-color:#a04a22}
+.kb.doom{color:#d8b6ff;border-color:#6b3fa0;background:rgba(24,10,38,.96)}
 .kb.grow{color:#9ce29a;border-color:#2f6d2c}
 .kb.hard{color:#cfd8e6;border-color:#5d6a7d}
 .kb.ward{color:#ffe9a8;border-color:#a8862c}
@@ -3198,6 +3223,10 @@ function onSummon(p,name,idx){
   /* ⚠ 2026-08 '대가' → **제물** 로 개명. 같은 규칙에 이름이 둘이면 용어표부터 갈라진다. */
   const cost=kwNum(kw,'제물'), bless=kwNum(kw,'축복');
   if(cost){ S[p].hp-=cost; log(`  ${who} 제물 ${cost} — HP ${S[p].hp+cost}→${S[p].hp}`,'a');
+    /* 제물은 **내 체력을 내는 값**이다 — 그게 어디로 가는지 보여 준다(성권 요청).
+       ⚠ 기다리지 않는다. onSummon 은 동기라 await 를 걸 수 없고, 순수 연출이라 걸 이유도 없다. */
+    flyBolt(slotEl(p,idx)||document.getElementById(p==='me'?'myBar':'foeBar'),
+            document.getElementById(p==='me'?'myBar':'foeBar'),'#c0392b');
     fireEnch(p,'paid',{}); }
   if(bless){ S[p].hp=Math.min(S[p].maxhp||MAXHP,S[p].hp+bless); log(`  ${who} 축복 ${bless} — HP 회복`,'g'); }
   if(kwHas(kw,'밀물')){
@@ -3455,7 +3484,7 @@ function cleanup(p){
     u.insts.forEach(inst=>{ if(inst.hp>0)alive.push(inst); else died++; });
     u.insts=alive;
     if(died){ deaths.push({u,i,died}); S.dead=(S.dead||0)+died; }
-    if(!u.insts.length)B[i]=null;
+    if(!u.insts.length){ deathFx(p,i); B[i]=null; }
   }
   deaths.forEach(d=>onDeath(p,d.u,d.i,d.died));
   const packed=B.filter(Boolean);                 /* 구멍을 남기지 않는다 */
@@ -3674,6 +3703,31 @@ function drawTrace(aEl,tEl,cls){
   setTimeout(()=>el.remove(),420/SPEED);
 }
 function slotEl(side,idx){return document.querySelector(`.slot[data-side="${side}"][data-idx="${idx}"]`);}
+/* 파괴 연출 — **사라지기 직전의 그 자리**에서 카드가 금이 가며 부서진다.
+   ⚠ render() 가 슬롯을 통째로 다시 그리므로, 지워지기 전에 지금 모습과 화면 좌표를 떠서
+     body 위에 얹는다. 슬롯 자체에 애니메이션을 걸면 다음 render 에 그냥 사라진다.
+   ⚠ 부르는 곳은 cleanup 하나다 — 몸이 판에서 빠지는 통로가 거기뿐이다. */
+function deathFx(side,idx){
+  if(typeof document==='undefined')return;
+  const el=slotEl(side,idx); if(!el)return;
+  const r=el.getBoundingClientRect();
+  if(!r.width)return;
+  /* ⚠⚠ **슬롯을 통째로 복제한다.** 처음엔 innerHTML 만 새 div 에 옮겼는데, 카드 속 글자
+     크기가 `container-type:inline-size` 위에서 cqw 로 잡혀 있어서 컨테이너 밖으로 나가는
+     순간 **글자가 화면만 하게 부풀었다**(파괴될 때마다 파란 거인 'A' 가 떴다).
+     복제하면 .slot 의 컨테이너 성질이 같이 따라온다. */
+  const d=el.cloneNode(true);
+  d.classList.add('deadfx');
+  /* ⚠ **상태 클래스를 떼어 낸다.** 안 떼면 잔상이 `.slot.doomed` 같은 선택자에 계속 걸려서
+     "표식이 안 걷혔다" 로 읽힌다(검사에서 잡혔다). 화면에도 죽는 카드가 표식을 물고 있다. */
+  d.classList.remove('doomed','revived','spawned','pick','struck','fxhit',
+                     'echoon','breedon','wardon');
+  d.removeAttribute('data-side'); d.removeAttribute('data-idx');
+  d.style.cssText+=`;position:fixed;margin:0;left:${r.left}px;top:${r.top}px;`
+    +`width:${r.width}px;height:${r.height}px;transition:none`;
+  document.body.appendChild(d);
+  setTimeout(()=>d.remove(),Math.round(620/SPEED));
+}
 /* ── 주문 발사체 ────────────────────────────────────────────
    시전자 쪽에서 구슬 하나가 날아가 대상에 터진다. **피해 주는 주문(mode dmg)** 만 쓴다.
    ⚠ 부르는 곳을 늘리지 않는다 — 대상을 겨누는 주문은 사람·AI·튜토리얼이 전부
@@ -3681,12 +3735,15 @@ function slotEl(side,idx){return document.querySelector(`.slot[data-side="${side
    ⚠ 연출뿐이다. 실제 피해는 부르는 쪽이 이 함수 **뒤에** 준다 — 순서를 뒤집으면
      맞고 나서 날아가는 것처럼 보인다. */
 async function castBolt(p,tEl,name){
-  if(typeof document==='undefined'||!tEl)return;
   if(((POOL[name]||{}).mode)!=='dmg')return;
-  const src=document.getElementById(p==='me'?'myBar':'foeBar');
-  if(!src)return;
+  return flyBolt(document.getElementById(p==='me'?'myBar':'foeBar'),tEl,
+                 (EL[(POOL[name]||{}).el]||EL.fire).c);
+}
+/* 구슬 하나를 A 에서 B 로 날린다. 주문 발사체도, 제물의 피값도 이 한 함수를 쓴다.
+   ⚠ 연출뿐이라 **기다리지 않고 불러도 된다**(제물은 동기 처리 안에서 쏜다). */
+async function flyBolt(src,tEl,col){
+  if(typeof document==='undefined'||!tEl||!src)return;
   const a=src.getBoundingClientRect(), b=tEl.getBoundingClientRect();
-  const col=(EL[(POOL[name]||{}).el]||EL.fire).c;
   const d=document.createElement('i');
   d.className='bolt';
   d.style.cssText=`left:${a.left+a.width/2}px;top:${a.top+a.height/2}px;--bc:${col}`;
@@ -5732,6 +5789,7 @@ function kwBadges(u){
   if(u.rage)b.push('<i class="kb burn">광분</i>');
   if(u.sick)b.push('<i class="kb heavy">육중</i>');
   if(u.ate)b.push(`<i class="kb echo">삼킴</i>`);
+  if(u.doom)b.push('<i class="kb doom">수확</i>');   /* 다음 그 턴 시작에 죽는다 */
   return b.length?`<div class="kbs">${b.join('')}</div>`:'';
 }
 function slotHTML(u,side,i){
@@ -5746,6 +5804,7 @@ function slotHTML(u,side,i){
   if(u.echo)cls+=' echoon';
   if(u.breed)cls+=' breedon';
   if(u.ward)cls+=' wardon';
+  if(u.doom)cls+=' doomed';                 /* 사신의 수확 — 표식이 남아 있는 동안 계속 */
   const tim=(u.grow&&u.grow.left>0)?`<i class="gtim" title="성장까지 ${u.grow.left}턴">${u.grow.left}</i>`:'';
   return `<div class="${cls}" data-side="${side}" data-idx="${i}">`
     +`${tcardHTML(u.name,{size:'sm',unit:u})}${kwBadges(u)}${tim}</div>`;
@@ -5978,7 +6037,7 @@ document.getElementById('restart').onclick=()=>{
      시작 → 모드 선택 → 덱 선택 → (배틀: 상대 덱 선택 | 원정: 지도) → 게임
      패배 → 다시 도전하기(덱 선택으로) · 초기 화면(모드 선택으로)
    ⚠ ?dev=1 로 열면 페이지를 건너뛰고 바로 배틀로 들어간다(자동 테스트용). */
-const VERSION='0.41.0', BUILD='2026-08-04';
+const VERSION='0.42.0', BUILD='2026-08-04';
 const DEV=/[?&]dev=1/.test(location.search);
 let PAGE=null, FLOW={mode:'battle', my:null, foe:null};
 function pageOpen(html){
