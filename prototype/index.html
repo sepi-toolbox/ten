@@ -486,6 +486,21 @@ body.sideon::after{content:'';position:fixed;inset:0;z-index:155;
   100%{opacity:0;transform:scale(.72) rotate(7deg) translateY(16px);filter:brightness(.35) blur(2px)}}
 @keyframes deadcrack{0%{opacity:0}18%{opacity:1}55%{opacity:.8}100%{opacity:0}}
 @keyframes deadsmoke{0%{opacity:0}35%{opacity:.85}100%{opacity:0}}
+/* 되돌리기 — **그 자리에서 속성이 터진다.** 날아갈 것이 없는 주문이라 발사체를 안 쓴다. */
+.burstfx{position:fixed;z-index:144;pointer-events:none;border-radius:50%;
+  margin:-6px 0 0 -6px;width:12px;height:12px;
+  background:radial-gradient(circle,#fff 8%,var(--bc) 42%,transparent 72%);
+  animation:burstpop .46s cubic-bezier(.2,.75,.35,1) both}
+.burstfx::after{content:'';position:absolute;inset:0;border-radius:50%;
+  border:2.5px solid var(--bc);animation:burstring .46s cubic-bezier(.15,.85,.3,1) both}
+@keyframes burstpop{0%{transform:scale(.4);opacity:1;filter:brightness(2)}
+  100%{transform:scale(9);opacity:0;filter:brightness(1)}}
+@keyframes burstring{0%{transform:scale(.6);opacity:.95}
+  100%{transform:scale(13);opacity:0}}
+/* 되돌아가는 카드 — **그 카드가 실제로 손으로 날아간다.** 그냥 사라지면 어디로 갔는지 모른다. */
+.tohandfx{position:fixed;z-index:129;pointer-events:none;
+  transition:left .42s cubic-bezier(.4,0,.3,1),top .42s cubic-bezier(.4,0,.3,1),
+             transform .42s cubic-bezier(.4,0,.3,1),opacity .42s ease-in}
 /* 사신의 수확 — 다음 내 턴 시작에 죽는다. **표식이 남아 있는 동안** 계속 보여야 한다. */
 .slot.doomed{filter:saturate(.7)}
 .slot.doomed::after{content:'';position:absolute;inset:-5px;border-radius:10px;pointer-events:none;z-index:3;
@@ -3188,11 +3203,21 @@ function tideTargets(p,cost){
     out.push(i); }
   return out;
 }
-function tideBounce(p,idx){
+function tideBounce(p,idx,el){
   const foe=p==='me'?'ai':'me', D=S[foe].board, u=D[idx];
   if(!u)return false;
+  /* ⚠ 빼앗은 몸은 **원래 주인**에게 돌아간다 — 예전엔 상대 손에 그냥 밀어 넣었다.
+     되돌아가는 곳을 정하는 규칙은 toHand 와 같아야 한다(ownerOf 하나만 본다). */
+  const own=ownerOf(foe,u);
+  /* 연출은 지우기 전에 — 슬롯이 사라지면 뜰 모습이 없다.
+     ⚠ 색은 **밀물을 부른 쪽의 속성**이다. 못 받았으면 되돌아가는 카드 색으로 떨어진다. */
+  toHandFx(foe,idx,own);
+  burstFx(slotEl(foe,idx),(EL[el||(POOL[u.name]||{}).el]||EL.water).c);
   D[idx]=null;
-  if(!u.token)S[foe].hand.push(u.name);
+  if(!u.token){ S[own].hand.push(u.name);
+    /* 되돌아간 카드는 상대 손에서도 앞면 — 판에서 보고 있던 몸이다 */
+    S[own].shown=S[own].shown||{};
+    S[own].shown[u.name]=(S[own].shown[u.name]||0)+1; }
   const packed=D.filter(Boolean); D.length=0; packed.forEach(x=>D.push(x));
   log(`  ${p==='me'?'나':'상대'} 밀물 — 상대 ${u.name} 손으로`,'g');
   S.tide=null; render();
@@ -3241,11 +3266,11 @@ function onSummon(p,name,idx){
     else if(p==='ai'){                        /* 상대는 가장 값나가는 것을 고른다 */
       let best=t[0],bv=-1;
       t.forEach(i=>{ const u=S.me.board[i]; const v=u.a*10+u.insts[0].hp; if(v>bv){bv=v;best=i;} });
-      tideBounce(p,best);
+      tideBounce(p,best,c.el);
     }else{
       /* ⚠ 내 밀물은 **반드시 고르게** 한다 — 자동으로 골라 주면 어느 카드가 왜 돌아갔는지 안 보인다.
          S.tide 가 켜져 있는 동안 턴 종료가 막힌다(endTurn 이 본다). */
-      S.tide={p,idx,cost:c.c||0,list:t};
+      S.tide={p,idx,cost:c.c||0,list:t,el:c.el};
       toast(`밀물 — ${c.c}코 이하 상대 크리처를 고르세요`);
     }
   }
@@ -3741,9 +3766,11 @@ function deathFx(side,idx){
    ⚠ 연출뿐이다. 실제 피해는 부르는 쪽이 이 함수 **뒤에** 준다 — 순서를 뒤집으면
      맞고 나서 날아가는 것처럼 보인다. */
 async function castBolt(p,tEl,name){
-  if(((POOL[name]||{}).mode)!=='dmg')return;
-  return flyBolt(document.getElementById(p==='me'?'myBar':'foeBar'),tEl,
-                 (EL[(POOL[name]||{}).el]||EL.fire).c);
+  const c=POOL[name]||{}, col=(EL[c.el]||EL.fire).c;
+  /* 되돌리기는 **쏘는 게 아니다** — 대상 자리에서 그 주문의 속성이 터진다(성권 요청). */
+  if(c.mode==='bounce')return burstFx(tEl,col);
+  if(c.mode!=='dmg')return;
+  return flyBolt(document.getElementById(p==='me'?'myBar':'foeBar'),tEl,col);
 }
 /* 구슬 하나를 A 에서 B 로 날린다. 주문 발사체도, 제물의 피값도 이 한 함수를 쓴다.
    ⚠ 연출뿐이라 **기다리지 않고 불러도 된다**(제물은 동기 처리 안에서 쏜다). */
@@ -3763,6 +3790,43 @@ async function flyBolt(src,tEl,col){
   await new Promise(r=>setTimeout(r,ms+30));
   d.classList.add('burst');
   setTimeout(()=>d.remove(),300);
+}
+/* 그 자리에서 속성이 터진다 — 되돌리기처럼 **날아갈 것이 없는** 주문에 쓴다.
+   ⚠ 색은 **쏜 주문의 속성**이다(정신분열은 물). 맞은 카드의 속성이 아니다. */
+async function burstFx(tEl,col){
+  if(typeof document==='undefined'||!tEl)return;
+  const r=tEl.getBoundingClientRect();
+  const d=document.createElement('i');
+  d.className='burstfx';
+  d.style.cssText=`left:${r.left+r.width/2}px;top:${r.top+r.height/2}px;--bc:${col}`;
+  document.body.appendChild(d);
+  await new Promise(x=>setTimeout(x,Math.max(80,Math.round(300/SPEED))));
+  setTimeout(()=>d.remove(),240);
+}
+/* 되돌아가는 카드가 **주인의 손패로 날아간다.** 그냥 사라지면 어디로 갔는지 모른다.
+   ⚠ 파괴 연출과 같은 수 — 슬롯을 통째로 복제한다(innerHTML 만 옮기면 글자가 부푼다).
+   ⚠ 상태 클래스를 떼어 낸다 — 잔상이 `.slot.doomed` 같은 선택자에 걸리면 안 된다. */
+function toHandFx(side,idx,owner){
+  if(typeof document==='undefined')return;
+  const el=slotEl(side,idx); if(!el)return;
+  const r=el.getBoundingClientRect(); if(!r.width)return;
+  const dst=document.getElementById(owner==='me'?'hand':'foeHand');
+  const b=dst?dst.getBoundingClientRect():null;
+  const d=el.cloneNode(true);
+  d.classList.add('tohandfx');
+  d.classList.remove('doomed','revived','spawned','pick','struck','fxhit',
+                     'echoon','breedon','wardon');
+  d.removeAttribute('data-side'); d.removeAttribute('data-idx');
+  d.style.cssText+=`;position:fixed;margin:0;left:${r.left}px;top:${r.top}px;`
+    +`width:${r.width}px;height:${r.height}px`;
+  document.body.appendChild(d);
+  requestAnimationFrame(()=>{
+    if(b){ d.style.left=(b.left+b.width/2-r.width/2)+'px';
+           d.style.top=(b.top+b.height/2-r.height/2)+'px'; }
+    d.style.transform='scale(.45) rotate(-8deg)';
+    d.style.opacity='0';
+  });
+  setTimeout(()=>d.remove(),Math.round(520/SPEED));
 }
 /* 대상이 슬롯이면 그 슬롯, 본체면 그쪽 정보줄로 날아간다. */
 const boltTarget=(side,idx)=>idx===FACE||idx==null
@@ -4964,10 +5028,18 @@ function resolveInstant(p,name){
    (POOL 에 없는 토큰만 그냥 사라진다 — 이름뿐인 유령 카드를 손에 넣지 않기 위해서다). */
 function toHand(side,idx){
   const u=S[side].board[idx]; if(!u||u.kind!=='cr'||!u.insts.length)return false;
-  u.insts.shift();
   /* ⚠ 빼앗은 몸은 **원래 주인의 손**으로 간다(성권 결정) — 되돌리는 통로도 여기 하나다 */
   const own=ownerOf(side,u);
-  if(POOL[u.name]&&S[own].hand.length<8)S[own].hand.push(u.name);
+  /* 연출은 **지우기 전에** 뜬다 — 슬롯이 사라지면 뜰 모습이 없다 */
+  toHandFx(side,idx,own);
+  u.insts.shift();
+  if(POOL[u.name]&&S[own].hand.length<8){
+    S[own].hand.push(u.name);
+    /* 되돌아간 카드는 **상대 손에서도 앞면**이다(성권 결정) — 판에서 보고 있던 몸이라
+       어느 카드가 손으로 갔는지는 원래 양쪽이 다 안다. 환류와 같은 장치를 쓴다. */
+    S[own].shown=S[own].shown||{};
+    S[own].shown[u.name]=(S[own].shown[u.name]||0)+1;
+  }
   if(!u.insts.length){
     S[side].board.splice(idx,1);
   }
@@ -5261,8 +5333,9 @@ function resolveSummon(p,name,idx){
     else if(p==='ai'){
       let best=list[0],bv=-1;
       list.forEach(i=>{ const x=S.me.board[i]; const v=x.a*10+x.insts[0].hp; if(v>bv){bv=v;best=i;} });
-      tideBounce(p,best);
-    }else{ S.tide={p,idx:null,cost:99,list}; toast('손으로 되돌릴 상대 크리처를 고르세요'); }
+      tideBounce(p,best,(POOL[name]||{}).el);
+    }else{ S.tide={p,idx:null,cost:99,list,el:(POOL[name]||{}).el};
+      toast('손으로 되돌릴 상대 크리처를 고르세요'); }
   }
   /* 패를 버리는 카드는 **버린 것 자체가 발동**이다 — 자리가 없어 0개체여도 무르지 않는다 */
   return made>0||t.n===null;
@@ -5289,7 +5362,7 @@ async function clickSlot(side,idx){
   }
   /* 밀물 — 소환 직후 대상 지정. 다른 어떤 조작보다 먼저 잡는다. */
   if(S.tide){
-    if(side==='ai'&&S.tide.list.includes(idx))tideBounce('me',idx);
+    if(side==='ai'&&S.tide.list.includes(idx))tideBounce('me',idx,S.tide.el);
     else toast(`${S.tide.cost}코 이하 상대 크리처만 고를 수 있습니다`);
     return;
   }
@@ -6043,7 +6116,7 @@ document.getElementById('restart').onclick=()=>{
      시작 → 모드 선택 → 덱 선택 → (배틀: 상대 덱 선택 | 원정: 지도) → 게임
      패배 → 다시 도전하기(덱 선택으로) · 초기 화면(모드 선택으로)
    ⚠ ?dev=1 로 열면 페이지를 건너뛰고 바로 배틀로 들어간다(자동 테스트용). */
-const VERSION='0.42.1', BUILD='2026-08-04';
+const VERSION='0.43.0', BUILD='2026-08-04';
 const DEV=/[?&]dev=1/.test(location.search);
 let PAGE=null, FLOW={mode:'battle', my:null, foe:null};
 function pageOpen(html){

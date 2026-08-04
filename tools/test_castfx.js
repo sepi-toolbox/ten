@@ -18,6 +18,7 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
   await p.evaluate(()=>{SPEED=1;setDeck('dark');}); await p.waitForTimeout(300);
   await p.evaluate(()=>{const k=document.getElementById('keepBtn');k&&k.click();});
   await p.waitForTimeout(350);
+  const EL_WATER=await p.evaluate(()=>EL.water.c);
   const reset=()=>p.evaluate(()=>{S.gen=(S.gen||0)+1;S.me.board=[];S.ai.board=[];
     S.me.hand=[];S.ai.hand=[];S.me.shown={};S.ai.shown={};S.me.echoAt=-1;S.ai.echoAt=-1;
     S.me.noecho={};S.ai.noecho={};S.busy=false;render();});
@@ -141,7 +142,50 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
   ok('제물 = 내 체력줄로', !!sb&&sb.n===1&&sb.아래로, sb?`${sb.n}개 · 내 정보줄 쪽`:'(안 뜸)');
   await sac; await p.waitForTimeout(500);
 
-  /* ── 7) 토큰은 원정 보상·상점에 안 나온다 ── */
+  /* ── 7) 되돌리기 — 발사체가 아니라 **그 자리에서 속성이 터진다** ── */
+  await reset();
+  await p.evaluate(()=>{ placeCreature('ai','오아네스',0); render(); });
+  await p.waitForTimeout(80);
+  const bs=p.evaluate(()=>castBolt('me',boltTarget('ai',0),'정신분열'));
+  await p.waitForTimeout(90);
+  const burst=await p.evaluate(()=>{ const e=document.querySelector('.burstfx');
+    if(!e)return null; const t=document.querySelector('.slot[data-side="ai"][data-idx="0"]')
+      .getBoundingClientRect(); const r=e.getBoundingClientRect();
+    return {n:document.querySelectorAll('.burstfx').length,
+            발사체:document.querySelectorAll('.bolt').length,
+            색:getComputedStyle(e).getPropertyValue('--bc').trim(),
+            그자리:Math.abs((r.left+r.right)/2-(t.left+t.right)/2)<40}; });
+  /* ⚠ 색은 **쏜 주문의 속성**이다 — 정신분열은 물이므로 물색이어야 한다(맞은 카드 색이 아니다) */
+  ok('되돌리기 = 그 자리 폭발', !!burst&&burst.n===1&&burst.발사체===0&&burst.그자리,
+     burst?`폭발 ${burst.n} · 발사체 ${burst.발사체} · 대상 위 ${burst.그자리}`:'(안 뜸)');
+  ok('폭발 색 = 주문 속성', !!burst&&burst.색===EL_WATER, burst?burst.색:'');
+  await bs; await p.waitForTimeout(400);
+
+  /* ── 8) 되돌아가는 카드가 손으로 날아가고, 상대 것도 앞면이 된다 ── */
+  await reset();
+  await p.evaluate(()=>{ placeCreature('ai','오아네스',0); placeCreature('ai','가고일',1);
+    S.ai.hand=['올렝']; render(); });
+  await p.waitForTimeout(80);
+  await p.evaluate(()=>{ toHand('ai',0); render(); });
+  await p.waitForTimeout(80);
+  const th=await p.evaluate(()=>{ const e=document.querySelector('.tohandfx');
+    return {n:document.querySelectorAll('.tohandfx').length,
+            이름:e?(e.querySelector('.tname')||{}).textContent:'',
+            폭:e?Math.round(e.getBoundingClientRect().width):0,
+            손:S.ai.hand.slice(), shown:JSON.stringify(S.ai.shown)}; });
+  ok('되돌아가며 손으로 날아감', th.n===1&&th.이름==='오아네스'&&th.폭>20&&th.폭<200,
+     `${th.n}장 "${th.이름}" 폭 ${th.폭}px`);
+  await p.waitForTimeout(120);
+  const open=await p.evaluate(()=>[...document.querySelectorAll('#foeHand .hcw.open .tname')]
+    .map(e=>e.textContent));
+  /* 판에서 보고 있던 몸이라 어느 카드가 손으로 갔는지는 원래 양쪽이 다 안다 */
+  ok('상대 손에서도 앞면', open.join()==='오아네스'&&/"오아네스":1/.test(th.shown),
+     `앞면 [${open}] · shown ${th.shown}`);
+  await p.waitForTimeout(700);
+  ok('날아간 잔상은 걷힌다',
+     (await p.evaluate(()=>document.querySelectorAll('.tohandfx').length))===0, '');
+
+  /* ── 9) 토큰은 원정 보상·상점에 안 나온다 ── */
   const tok=await p.evaluate(()=>{
     const bad=[];
     Object.keys(EL).forEach(el=>{

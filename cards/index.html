@@ -486,6 +486,21 @@ body.sideon::after{content:'';position:fixed;inset:0;z-index:155;
   100%{opacity:0;transform:scale(.72) rotate(7deg) translateY(16px);filter:brightness(.35) blur(2px)}}
 @keyframes deadcrack{0%{opacity:0}18%{opacity:1}55%{opacity:.8}100%{opacity:0}}
 @keyframes deadsmoke{0%{opacity:0}35%{opacity:.85}100%{opacity:0}}
+/* 되돌리기 — **그 자리에서 속성이 터진다.** 날아갈 것이 없는 주문이라 발사체를 안 쓴다. */
+.burstfx{position:fixed;z-index:144;pointer-events:none;border-radius:50%;
+  margin:-6px 0 0 -6px;width:12px;height:12px;
+  background:radial-gradient(circle,#fff 8%,var(--bc) 42%,transparent 72%);
+  animation:burstpop .46s cubic-bezier(.2,.75,.35,1) both}
+.burstfx::after{content:'';position:absolute;inset:0;border-radius:50%;
+  border:2.5px solid var(--bc);animation:burstring .46s cubic-bezier(.15,.85,.3,1) both}
+@keyframes burstpop{0%{transform:scale(.4);opacity:1;filter:brightness(2)}
+  100%{transform:scale(9);opacity:0;filter:brightness(1)}}
+@keyframes burstring{0%{transform:scale(.6);opacity:.95}
+  100%{transform:scale(13);opacity:0}}
+/* 되돌아가는 카드 — **그 카드가 실제로 손으로 날아간다.** 그냥 사라지면 어디로 갔는지 모른다. */
+.tohandfx{position:fixed;z-index:129;pointer-events:none;
+  transition:left .42s cubic-bezier(.4,0,.3,1),top .42s cubic-bezier(.4,0,.3,1),
+             transform .42s cubic-bezier(.4,0,.3,1),opacity .42s ease-in}
 /* 사신의 수확 — 다음 내 턴 시작에 죽는다. **표식이 남아 있는 동안** 계속 보여야 한다. */
 .slot.doomed{filter:saturate(.7)}
 .slot.doomed::after{content:'';position:absolute;inset:-5px;border-radius:10px;pointer-events:none;z-index:3;
