@@ -103,4 +103,73 @@ if(i>=0){ await dragOut(i, board.x+board.width/2, board.y-60);
   console.log('7) 타게팅 해제 | 진입',on,'→ 타게팅',await p.evaluate(()=>!!TGT),'· 잔여 SVG',await p.$$eval('#tgtsvg',e=>e.length));
 } else console.log('7) 대상 스펠 없음');
 console.log('ERRORS:',errs.slice(0,4));
+
+/* ── 2026-08 대상 지정 개편 ─────────────────────────────────
+   ① 소환 카드(메두사)가 실제로 소환하는가
+   ② 상대 카드 **위에 떨궈도** 바로 발동하지 않는다(항상 대상 선택을 거친다)
+   ③ 본체를 겨눌 수 있는 주문은 상대 정보줄을 눌러 쏠 수 있다 */
+let TB=0; const tok=(k,v,d)=>{ if(!v)TB++; console.log((v?'✅':'❌')+' '+String(k).padEnd(24)+' '+d); };
+await p.evaluate(()=>{SPEED=30;setDeck('fire');}); await p.waitForTimeout(300);
+await p.evaluate(()=>{const k=document.getElementById('keepBtn');k&&k.click();}); await p.waitForTimeout(300);
+
+/* ⚠ 메두사는 "소환 시 뱀 2개체를 양옆에" 인데, 예전 정규식이 스킬라의 "1/4 수호 여왕의 가신"
+   앞머리를 요구해서 **통째로 안 걸렸다** — 카드가 조용히 아무것도 안 했다. */
+const SM=await p.evaluate(()=>{
+  const put=n=>{ S.gen=(S.gen||0)+1; S.me.board=[];
+    placeCreature('me',n,0); onSummon('me',n,0);
+    return S.me.board.map(u=>u.name).join('|'); };
+  return {메두사:put('메두사'), 스킬라:put('스킬라')};
+});
+tok('메두사 = 뱀 양옆', SM.메두사==='뱀|메두사|뱀', SM.메두사);
+tok('스킬라도 그대로', SM.스킬라==='여왕의 가신|스킬라|여왕의 가신', SM.스킬라);
+
+await p.evaluate(()=>{
+  S.gen=(S.gen||0)+1; S.me.board=[]; S.ai.board=[]; S.ai.hp=60; S.over=false; S.busy=false;
+  S.active='me'; S.sel=null; S.mode=null;
+  placeCreature('ai','헬하운드',0);
+  S.me.hand=['화염구'];
+  S.me.lands=[]; for(let i=0;i<10;i++){S.me.landPlayed=false;playLand('me','불지옥');}
+  S.me.lands.forEach(l=>{l.used=false;l.entering=false;}); render();
+});
+await p.waitForTimeout(300);
+/* ⚠ 앞선 검사들이 남긴 드래그 상태를 푼다. dg/DR 이 남아 있으면 새 pointerdown 이 씹혀서
+   '드래그가 아예 안 되는' 것처럼 보인다 — 카드 탓으로 오해하기 쉬운 실패다. */
+await p.mouse.up().catch(()=>{});
+/* ⚠ 열려 있는 창(.mull — 멀리건·원정)이 손패를 통째로 덮는다. 남아 있으면 pointerdown 이
+   카드가 아니라 창에 꽂혀서 **드래그가 아예 안 되는** 것처럼 보인다. */
+await p.evaluate(()=>{ document.querySelectorAll('.mull.on').forEach(e=>e.classList.remove('on'));
+  try{DR=null;dg=null;lpFired=false;}catch(e){} });
+await p.waitForTimeout(150);
+{
+  const hc=await p.$('#hand .hcw'), bx=await hc.boundingBox();
+  const fs=await p.$('#foeBoard .slot'), fb=await fs.boundingBox();
+  const hp0=await p.evaluate(()=>S.ai.board[0].insts[0].hp);
+  await p.mouse.move(bx.x+bx.width/2,bx.y+bx.height/2); await p.mouse.down();
+  await p.mouse.move(bx.x+bx.width/2,bx.y-60,{steps:4});
+  await p.mouse.move(fb.x+fb.width/2,fb.y+fb.height/2,{steps:6});
+  await p.mouse.up(); await p.waitForTimeout(350);
+  const st=await p.evaluate(h=>({타게팅:document.body.classList.contains('tgtmode'),
+    손패:S.me.hand.length, 적HP:h+'→'+S.ai.board[0].insts[0].hp,
+    본체켜짐:document.getElementById('foeBar').classList.contains('pick')}),hp0);
+  /* 떨군 자리로 대상을 정하던 지름길은 없앴다 — 겹쳐 떨궈도 **대상 선택이 떠야** 한다 */
+  tok('적 위에 떨궈도 안 나감', st.타게팅&&st.손패===1&&/^(\d+)→\1$/.test(st.적HP),
+      `타게팅 ${st.타게팅} · 손패 ${st.손패} · 적 HP ${st.적HP}`);
+  tok('본체도 대상으로 켜진다', st.본체켜짐===true, `#foeBar.pick = ${st.본체켜짐}`);
+  /* 상대 정보줄(이름·HP·체력바) 아무 데나 눌러 본체에 쏜다 */
+  const bar=await p.$('#foeBar'), br=await bar.boundingBox();
+  const ai0=await p.evaluate(()=>S.ai.hp);
+  await p.mouse.move(br.x+br.width/2,br.y+br.height/2);
+  await p.mouse.down(); await p.mouse.up(); await p.waitForTimeout(900);
+  const af=await p.evaluate(a=>({HP:a+'→'+S.ai.hp, 손패:S.me.hand.length,
+    타게팅:document.body.classList.contains('tgtmode'),
+    표시남음:document.getElementById('foeBar').classList.contains('pick')}),ai0);
+  tok('본체를 눌러 쏜다', af.HP==='60→55'&&af.손패===0, `${af.HP} · 손패 ${af.손패}`);
+  /* 켠 표시는 슬롯과 달리 다시 그려지지 않는다 — 손으로 지워야 남지 않는다 */
+  tok('본체 표시가 남지 않는다', af.타게팅===false&&af.표시남음===false,
+      `타게팅 ${af.타게팅} · 표시 ${af.표시남음}`);
+}
+/* 본체를 못 때리는 주문은 정보줄이 켜지지 않는다 */
+const NF=await p.evaluate(()=>({벽:canFace('불꽃의 벽'), 구:canFace('화염구'), 애로우:canFace('파이어 애로우')}));
+tok('canFace 판정', NF.구&&NF.애로우&&!NF.벽, `화염구 ${NF.구} · 애로우 ${NF.애로우} · 불꽃의 벽 ${NF.벽}`);
+if(TB)console.log(`❌ 대상 지정 ${TB}건 실패`); else console.log('✅ 대상 지정 전부 통과');
 await b.close();})();

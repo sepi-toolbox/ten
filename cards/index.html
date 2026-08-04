@@ -982,6 +982,10 @@ body.tgtmode .ctl{position:relative;z-index:41}
 #tgtsvg.bad .ln{stroke:#c8603c;filter:drop-shadow(0 0 5px #c8603c)}
 #tgtsvg.bad .hd{fill:#e88b62;filter:drop-shadow(0 0 6px #c8603c)}
 body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
+/* 본체 조준 — 상대 정보줄 전체가 하나의 큰 대상이 된다(이름·HP·체력바 어디든).
+   ⚠ 슬롯과 같은 z-index 로 딤 위에 올려야 '고를 수 있다' 는 게 눈에 보인다. */
+body.tgtmode #foeBar.pick{position:relative;z-index:41;border-radius:8px;
+  outline:2px solid var(--gold-bright);animation:tgtpulse 1.05s ease-in-out infinite;cursor:pointer}
 @keyframes tgtpulse{0%,100%{box-shadow:0 0 0 1px var(--gold-bright)}
   50%{box-shadow:0 0 0 2px var(--gold-bright),0 0 16px rgba(242,212,136,.75)}}
 /* ══════════════════════════════════════════════════════════

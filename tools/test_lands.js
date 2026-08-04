@@ -127,8 +127,11 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
     S.me.lands=[]; for(let i=0;i<10;i++){S.me.landPlayed=false;playLand('me','불지옥');}
     S.me.lands.forEach(l=>{l.used=false;l.entering=false;});
     S.ai.board=[]; S.me.board=[];
+    /* ⚠ **본체를 때릴 수 있는 주문은 고르면 안 된다.** 상대 판이 비어도 본체가 대상이라
+       영영 안 흐려진다 — 파이어 애로우·화염구를 집어서 이 검사가 빨간불이 났었다. */
     const tsp=Object.keys(POOL).find(n=>POOL[n].k==='sp'&&POOL[n].el==='fire'&&POOL[n].c<=3
-      &&!INSTANT.includes(POOL[n].mode)&&POOL[n].mode!=='summon'&&!NEEDS_MINE.includes(POOL[n].mode));
+      &&!INSTANT.includes(POOL[n].mode)&&POOL[n].mode!=='summon'
+      &&modeOf(n)==='target'&&!canFace(n));
     const cr=Object.keys(POOL).find(n=>POOL[n].k==='cr'&&POOL[n].el==='fire'&&POOL[n].c<=3);
     S.me.hand=[tsp,cr]; render();
     const before=[...document.querySelectorAll('#hand .hcw')].map(e=>e.classList.contains('no'));
