@@ -57,7 +57,7 @@ SP055,블랙홀,2,aoe,10,0,1,1,dark,firerain,모든 크리처를 파괴하고 �
 SP056,해골쌓기,2,summon,8,0,1,1,dark,flag,이번 판에서 소멸한 크리처 수만큼 HP 를 가진 수호 크리처 1개체를 소환,,uncommon,
 SP057,생명 흡수,2,heal,8,1,1,1,dark,star,내 크리처 1개체를 파괴하고 그 HP 만큼 내 HP 회복,,common,
 SP058,불길한 예감,2,draw,2,0,1,1,dark,awaken,내 덱 맨 위 5장을 보고 그중 1장을 손으로,,common,
-SP059,노화,2,aoe,2,1,1,1,dark,firerain,크리처 1개체의 ATK 을 1 로 만든다,,common,
+SP059,노화,2,dmg,2,1,1,1,dark,thrust,크리처 1개체의 ATK 을 1 로 만든다,,common,
 SP060,해골 던지기,3,dmg,8,1,1,2,dark,thrust,내 크리처 1개체를 무작위로 파괴하고 그 HP 의 2배만큼 크리처 1개체에 피해,,common,
 SP061,사신의 수확,3,kill,0,1,1,2,dark,exec,크리처 1개체를 다음 내 턴 시작 시 파괴한다,,common,
 SP062,전염병,4,aoe,8,1,2,2,dark,firerain,모든 크리처의 HP 를 1 로 만든다,,common,
