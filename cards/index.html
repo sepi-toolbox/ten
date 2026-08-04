@@ -150,6 +150,23 @@ body.sideon .gear{opacity:0;pointer-events:none}
   100%{filter:none}}
 /* 카드 효과로 **붙은** 능력은 설명란에서 금색으로 뜬다 — 인쇄된 것과 구분이 돼야 한다 */
 .teff .gr{color:#f2d488;text-shadow:0 0 6px rgba(242,212,136,.55)}
+/* 튜토리얼 안내판 — 손패를 가리면 안 되므로 **위쪽**에 띄우고, 판 자체는 계속 만질 수 있게
+   상자 밖은 클릭이 통과한다(pointer-events:none → 버튼만 auto). */
+#tutbox{position:fixed;left:50%;top:calc(6px + env(safe-area-inset-top));transform:translateX(-50%);
+  z-index:150;width:min(94vw,430px);pointer-events:none;
+  background:linear-gradient(180deg,rgba(30,22,12,.97),rgba(16,11,6,.97));
+  border:1px solid var(--bronze);border-radius:10px;padding:9px 12px 8px;
+  box-shadow:0 6px 22px rgba(0,0,0,.6);animation:zfade .18s ease both}
+#tutbox .tutn{font-family:'Cinzel',serif;font-size:9px;letter-spacing:.18em;color:var(--gold);opacity:.8}
+#tutbox .tutt{font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:var(--gold-bright);margin:1px 0 4px}
+#tutbox .tutd{font-size:12px;line-height:1.5;color:var(--ink-soft)}
+#tutbox .tutd b{color:#f2d488}
+#tutbox .tutb{display:flex;gap:7px;justify-content:flex-end;margin-top:8px;pointer-events:auto}
+#tutbox button{font-size:11px;padding:5px 12px}
+/* ⚠ 안내판 높이는 글 길이에 따라 달라진다. 고정값으로 밀면 긴 안내에서 **상대 손패가
+   가려진다** — 실제로 그랬다. 그래서 판을 그린 뒤 실제 높이를 재어 변수로 넣는다. */
+body.tutmode .main{padding-top:calc(var(--tuth,96px) + 8px)}
+@media (max-height:760px){ #tutbox .tutd{font-size:11px} #tutbox{padding:7px 10px 6px} }
 .hitpop.big{font-size:21px}
 .hitpop{position:fixed;z-index:93;pointer-events:none;font-family:'Cinzel',serif;
   font-size:15px;font-weight:700;color:#ffd9c2;text-shadow:0 0 8px #ff5a2b,0 1px 2px #000;

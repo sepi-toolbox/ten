@@ -11,6 +11,9 @@ await p.click('#keepBtn').catch(()=>{});await p.waitForTimeout(150);
 await p.evaluate(()=>{SPEED=40;});
 await p.evaluate(()=>{FLOW.mode='rogue';pgDeck();});await p.waitForTimeout(300);
 await p.click('#page .chsi[data-e="nature"]');await p.waitForTimeout(500);
+/* ⚠ 원정은 이제 **튜토리얼 전투**로 시작한다. 이 검사는 지도와 적 명단을 보는 것이므로
+   사람이 '건너뛰기' 를 누르는 것과 같은 길로 넘긴다. */
+await p.evaluate(()=>{ if(TUT.on)tutEnd(); }); await p.waitForTimeout(900);
 console.log('적 명단:',await p.evaluate(()=>FOES.length),'명 · 내 속성 제외 후보',
   await p.evaluate(()=>FOES.filter(e=>e.el!=='nature').length));
 // 지도에 적 이름이 붙었나

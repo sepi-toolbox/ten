@@ -26,7 +26,10 @@ const P='file://'+path.join(__dirname,'..','prototype','index.html')+'?dev=1';
   }
   const st=()=>p.evaluate(()=>({me:S.me.hp, rg:RG.hp, max:RG.maxhp, f:RG.fighting}));
 
-  await p.evaluate(()=>{ SPEED=8; rgStart('fire'); }); await w(700);
+  /* ⚠ 원정은 이제 **튜토리얼 전투**로 시작한다. 이 검사는 튜토리얼이 아니라 지도·보상을
+     보는 것이므로, 사람이 '건너뛰기' 를 누르는 것과 **같은 길**로 넘긴다. */
+  await p.evaluate(()=>{ SPEED=8; rgStart('fire'); }); await w(400);
+  await p.evaluate(()=>{ if(TUT.on)tutEnd(); }); await w(800);
   const s0=await st();
   ok('원정 시작 만피', s0.rg===s0.max, `HP ${s0.rg}/${s0.max}`);
 

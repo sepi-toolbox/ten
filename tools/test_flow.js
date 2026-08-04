@@ -50,7 +50,12 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
   await p.click('#page .chsi[data-m="rogue"]'); await p.waitForTimeout(700);
   ok('원정 → 덱 선택', await pg()==='deck', '');
   await p.click('#page .chsi[data-e="nature"]'); await p.waitForTimeout(900);
-  ok('원정 → 지도', await p.evaluate(()=>RG.on&&document.getElementById('rg').classList.contains('on')),
+  /* ⚠ 원정은 이제 **튜토리얼 전투**로 시작한다(지도가 아니다). 안내판이 떠야 정상이고,
+     '건너뛰기' 를 눌러야 지도가 나온다 — 사람이 밟는 길 그대로 확인한다. */
+  ok('원정 → 튜토리얼 전투', await p.evaluate(()=>TUT.on&&!!document.getElementById('tutbox')),
+     `튜토 ${await p.evaluate(()=>TUT.on)}`);
+  await p.click('#tutSkip'); await p.waitForTimeout(1100);
+  ok('건너뛰면 지도', await p.evaluate(()=>RG.on&&document.getElementById('rg').classList.contains('on')),
      `층 ${await p.evaluate(()=>RG.map?RG.map.length:0)}개`);
 
   // 설정 팝업 — 가운데 사각 + 버전

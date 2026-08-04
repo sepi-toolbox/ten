@@ -73,7 +73,10 @@ let dbad=0; const dok=(k,v,d)=>{ if(!v)dbad++; console.log((v?'✅':'❌')+' '+k
      위를 덮어 **카드를 누를 수 없는 채로 멈췄다.** 창은 보이는데 죽어 있어서 더 헷갈렸다.
    고친 것 둘: busy 는 checkEnd 가 직접 끈다 · 가리개 z-index 를 창들 아래로 내렸다.
    ⚠ 이 검사는 hp 를 0 으로 **직접 넣지 않는다** — 실제로 공격해서 이겨야 그 경로를 지난다. */
+/* ⚠ 원정은 이제 **튜토리얼 전투**로 시작한다. 이 검사는 튜토리얼이 아니라 지도·보상을
+   보는 것이므로, 사람이 '건너뛰기' 를 누르는 것과 **같은 길**로 넘긴다. */
 await p.evaluate(()=>{SPEED=60;RG.on=false;rgStart('fire');}); await p.waitForTimeout(400);
+await p.evaluate(()=>{ if(TUT.on)tutEnd(); }); await p.waitForTimeout(800);
 await p.evaluate(()=>{RG.floor=0;RG.at=0;rgFight('normal');}); await p.waitForTimeout(600);
 await p.evaluate(()=>{const k=document.getElementById('keepBtn');k&&k.click();}); await p.waitForTimeout(300);
 await p.evaluate(()=>{ S.ai.hp=1; S.ai.board=[]; S.me.board=[];

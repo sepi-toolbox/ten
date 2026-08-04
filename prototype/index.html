@@ -150,6 +150,23 @@ body.sideon .gear{opacity:0;pointer-events:none}
   100%{filter:none}}
 /* 카드 효과로 **붙은** 능력은 설명란에서 금색으로 뜬다 — 인쇄된 것과 구분이 돼야 한다 */
 .teff .gr{color:#f2d488;text-shadow:0 0 6px rgba(242,212,136,.55)}
+/* 튜토리얼 안내판 — 손패를 가리면 안 되므로 **위쪽**에 띄우고, 판 자체는 계속 만질 수 있게
+   상자 밖은 클릭이 통과한다(pointer-events:none → 버튼만 auto). */
+#tutbox{position:fixed;left:50%;top:calc(6px + env(safe-area-inset-top));transform:translateX(-50%);
+  z-index:150;width:min(94vw,430px);pointer-events:none;
+  background:linear-gradient(180deg,rgba(30,22,12,.97),rgba(16,11,6,.97));
+  border:1px solid var(--bronze);border-radius:10px;padding:9px 12px 8px;
+  box-shadow:0 6px 22px rgba(0,0,0,.6);animation:zfade .18s ease both}
+#tutbox .tutn{font-family:'Cinzel',serif;font-size:9px;letter-spacing:.18em;color:var(--gold);opacity:.8}
+#tutbox .tutt{font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:var(--gold-bright);margin:1px 0 4px}
+#tutbox .tutd{font-size:12px;line-height:1.5;color:var(--ink-soft)}
+#tutbox .tutd b{color:#f2d488}
+#tutbox .tutb{display:flex;gap:7px;justify-content:flex-end;margin-top:8px;pointer-events:auto}
+#tutbox button{font-size:11px;padding:5px 12px}
+/* ⚠ 안내판 높이는 글 길이에 따라 달라진다. 고정값으로 밀면 긴 안내에서 **상대 손패가
+   가려진다** — 실제로 그랬다. 그래서 판을 그린 뒤 실제 높이를 재어 변수로 넣는다. */
+body.tutmode .main{padding-top:calc(var(--tuth,96px) + 8px)}
+@media (max-height:760px){ #tutbox .tutd{font-size:11px} #tutbox{padding:7px 10px 6px} }
 .hitpop.big{font-size:21px}
 .hitpop{position:fixed;z-index:93;pointer-events:none;font-family:'Cinzel',serif;
   font-size:15px;font-weight:700;color:#ffd9c2;text-shadow:0 0 8px #ff5a2b,0 1px 2px #000;
@@ -1941,6 +1958,144 @@ function rgShop(){
 /* ── 원정 시작 ─────────────────────────────────────────── */
 /* 속성 선택은 덱 선택 페이지가 대신한다 — 옛 호출부 호환용으로만 남긴다 */
 function rgPickEl(){ FLOW.mode='rogue'; pgDeck(); }
+/* ══════════════════════════════════════════════════════════
+   튜토리얼 — 원정의 **첫 전투**가 곧 규칙 안내다.
+   ⚠ 손패도 상대 행동도 **전부 대본**이다. 무작위가 하나라도 섞이면 "이 카드를 내세요" 를
+     시킬 수가 없다(그 카드가 손에 없을 수 있다).
+   ⚠ 원정을 시작할 때마다 뜬다. 건너뛰기 버튼 하나로 바로 지도로 간다 —
+     저장소를 안 쓰기로 했으므로 '한 번만 보기' 는 없다.
+   ══════════════════════════════════════════════════════════ */
+const TUT={on:false,step:0,shown:-1};
+/* 양쪽 덱 — 대본이 도는 데 필요한 만큼만. 지형을 넉넉히 넣어 마나가 막히지 않게 한다. */
+const TUTDECK={
+  me:[['불지옥',14],['헤레스',2],['헬하운드',2],['파이어 애로우',2],['화염구',2],['헬시온',2]],
+  ai:[['불지옥',14],['하피',2],['홉고블린',2],['헬캣',2]],
+};
+/* 첫 손패 — 순서까지 고정한다(맨 오른쪽이 부채꼴에서 제일 잘 보인다) */
+const TUTHAND={
+  me:['헬시온','화염구','파이어 애로우','헤레스','불지옥','불지옥','불지옥'],
+  ai:['홉고블린','헬캣','하피','불지옥','불지옥','불지옥','불지옥'],
+};
+/* 상대가 그 턴에 낼 것 — 턴 번호별 대본. 없는 턴은 지형만 놓고 넘긴다. */
+/* ⚠ 턴 번호는 **내 턴 기준**이다 — 상대 차례에도 S.turn 은 그대로다.
+   그래서 1 = 내 첫 턴이 끝난 직후의 상대 차례다. */
+const TUTFOE={1:['홉고블린'],2:['헬캣'],3:['하피']};
+/* 안내 단계. ok() 가 참이 되면 다음으로 넘어간다. info 는 '다음' 버튼으로 넘긴다. */
+const TUTSTEP=[
+ {t:'지형이 곧 마나다',
+  d:'아래 손패에서 <b>불지옥</b>(지형)을 판으로 <b>끌어</b> 놓으세요.<br>'
+    +'지형은 <b>한 턴에 한 장</b>만 놓을 수 있고, 깔린 지형 수가 그 턴에 쓸 수 있는 마나입니다.',
+  ok:()=>S.me.lands.length>=1},
+ {t:'크리처를 소환한다',
+  d:'<b>헤레스</b>를 판으로 끌어 놓으세요.<br>카드 왼쪽 위의 구슬이 그 카드에 드는 마나입니다.',
+  ok:()=>S.me.board.some(u=>u&&u.kind==='cr')},
+ {t:'공격은 턴이 끝날 때 한꺼번에',
+  d:'<b>턴 종료</b>를 누르세요.<br>이 게임은 공격을 따로 지시하지 않습니다 — 턴을 넘기면 '
+    +'내 크리처가 <b>왼쪽부터 차례로</b> 알아서 공격합니다.',
+  ok:()=>S.turn>=2},
+ /* ⚠ 아래 둘은 **방금 눈으로 본 것**을 설명하는 단계다. 순서를 바꾸면 안 된다 —
+    연소는 첫 턴 종료에 이미 한 번 탔고, 수호는 상대의 첫 차례에 이미 깔렸다. */
+ {t:'연소 — 스스로 타는 몸',
+  d:'방금 턴이 끝날 때 <b>헤레스</b>가 스스로 1 피해를 받았습니다.<br>'
+    +'연소가 붙은 몸은 <b>내 턴이 끝날 때마다</b> 자기 체력을 깎습니다. '
+    +'대신 같은 값에 몸이 큽니다 — 꺼지기 전에 끝내야 합니다.',
+  info:true, need:()=>S.me.board.some(u=>u&&u.burn>0)},
+ {t:'수호 — 앞을 막는 몸',
+  d:'상대가 <b>홉고블린</b>(수호)을 냈습니다.<br>수호가 살아 있는 동안 내 공격은 '
+    +'<b>그 몸이 대신 받습니다</b> — 상대 본체에는 들어가지 않습니다. 먼저 치워야 합니다.',
+  info:true, need:()=>S.ai.board.some(u=>u&&u.g)},
+ {t:'대상을 고르는 주문',
+  d:'<b>파이어 애로우</b>를 판으로 끌어 놓으세요.<br>대상이 필요한 주문은 <b>화살표</b>가 뜹니다. '
+    +'빛나는 대상을 눌러 쏘세요(빈 곳을 누르면 취소).',
+  ok:()=>!S.me.hand.includes('파이어 애로우')},
+ {t:'본체도 겨눌 수 있다',
+  d:'<b>화염구</b>를 끌어 놓고, 이번엔 <b>상대 정보줄</b>(이름·체력바)을 누르세요.<br>'
+    +'"또는 상대에게" 라고 적힌 주문은 크리처 대신 <b>본체</b>를 때릴 수 있습니다.',
+  ok:()=>!S.me.hand.includes('화염구')},
+ {t:'여기까지가 기본입니다',
+  d:'남은 규칙은 카드를 <b>길게 눌러</b> 확대하면 옆에 설명이 붙습니다.<br>'
+    +'이제 지도로 나가 원정을 시작하세요.',
+  info:true, last:true},
+];
+function tutStart(){
+  TUT.on=true; TUT.step=0; TUT.shown=-1;
+  PDECK=TUTDECK.me.map(x=>x.slice()); EDECK=TUTDECK.ai.map(x=>x.slice());
+  EHP=null; EOPEN=null; RG.foe=null; RG.fighting=true;
+  newGame();
+  /* ⚠ newGame 이 돌린 무작위 손패를 **대본으로 덮는다.** 멀리건 창도 닫는다 —
+     "이 카드를 내세요" 를 시키려면 그 카드가 반드시 손에 있어야 한다. */
+  ['me','ai'].forEach(q=>{
+    S[q].hand.forEach(n=>S[q].deck.push(n));
+    S[q].hand=TUTHAND[q].slice();
+    TUTHAND[q].forEach(n=>{ const i=S[q].deck.indexOf(n); if(i>=0)S[q].deck.splice(i,1); });
+  });
+  S.mull={back:[],done:true};
+  /* ⚠ 훈련 상대에게 지형 셋을 미리 깔아 준다. 안 그러면 3코 수호(홉고블린)가 세 턴 뒤에나
+     나와서 '수호' 안내가 한참 뒤로 밀린다 — 대본이 가르치려는 순서가 무너진다. */
+  for(let i=0;i<3;i++){ S.ai.landPlayed=false; playLand('ai','불지옥'); }
+  S.ai.lands.forEach(l=>{l.used=false;l.entering=false;}); S.ai.landPlayed=false;
+  document.getElementById('mull').classList.remove('on');
+  document.querySelector('#foeBar .who').textContent='훈련 상대';
+  log('튜토리얼 — 안내를 따라가 보세요','t');
+  render(); tutSync();
+}
+function tutEnd(){
+  TUT.on=false; RG.fighting=false; tutPanel(null);
+  PDECK=EDECK=null;
+  veilRun('지도로 나가는 중…',()=>rgMap());
+}
+/* 안내판 — 지금 단계의 글과 버튼. null 이면 걷는다. */
+function tutPanel(st){
+  let el=document.getElementById('tutbox');
+  if(!st){ if(el)el.remove(); document.body.classList.remove('tutmode');
+    document.documentElement.style.removeProperty('--tuth'); return; }
+  if(!el){ el=document.createElement('div'); el.id='tutbox'; document.body.appendChild(el); }
+  document.body.classList.add('tutmode');
+  const n=TUT.step+1, tot=TUTSTEP.length;
+  el.innerHTML=`<div class="tutn">${n}/${tot}</div><div class="tutt">${st.t}</div>`
+    +`<div class="tutd">${st.d}</div>`
+    +`<div class="tutb">${st.info?`<button class="go" id="tutNext">${st.last?'지도로':'다음'}</button>`:''}`
+    +`<button id="tutSkip">건너뛰기</button></div>`;
+  const nx=document.getElementById('tutNext');
+  if(nx)nx.onclick=()=>{ if(st.last)tutEnd(); else{ TUT.step++; tutSync(); } };
+  document.getElementById('tutSkip').onclick=tutEnd;
+  /* 실제 높이를 재어 본문 여백에 반영한다(글이 길어지면 그만큼 더 민다) */
+  requestAnimationFrame(()=>{ const h=el.offsetHeight;
+    if(h)document.documentElement.style.setProperty('--tuth',h+'px'); });
+}
+/* 지금 단계를 보고 안내판을 맞춘다. render() 가 매번 부른다(상태가 바뀌면 저절로 넘어간다). */
+function tutSync(){
+  if(!TUT.on)return;
+  let st=TUTSTEP[TUT.step];
+  /* 조건이 이미 채워진 단계는 건너뛴다(정보 단계는 '다음' 을 눌러야 넘어간다) */
+  let guard=0;
+  while(st&&!st.info&&st.ok&&st.ok()&&guard++<20){ TUT.step++; st=TUTSTEP[TUT.step]; }
+  if(!st){ tutEnd(); return; }
+  /* 아직 조건이 안 된 정보 단계는 기다린다(수호가 나올 때까지) */
+  if(st.info&&st.need&&!st.need()){ tutPanel({t:'상대 차례',d:'상대가 무엇을 하는지 지켜보세요.',info:false}); return; }
+  if(TUT.shown!==TUT.step){ TUT.shown=TUT.step; }
+  tutPanel(st);
+}
+/* 상대 차례 — AI 가 아니라 **대본**이 움직인다. 지형 한 장 + 그 턴에 낼 카드. */
+async function tutFoeTurn(){
+  if(!TUT.on)return endTurn();
+  S.busy=true; render();
+  await sleep(500);
+  const P=S.ai;
+  const li=P.hand.findIndex(isLand);
+  if(li>=0&&!P.landPlayed){ playLand('ai',P.hand[li]); P.hand.splice(li,1); render(); await sleep(450); }
+  for(const nm of (TUTFOE[S.turn]||[])){
+    const i=P.hand.indexOf(nm);
+    if(i<0||!canPay('ai',nm)||!boardRoom('ai'))continue;
+    await reveal('ai',nm);
+    const at=P.board.length;
+    pay('ai',nm); P.hand.splice(i,1);
+    placeCreature('ai',nm,at); onSummon('ai',nm,at);
+    log(`상대 ${nm} 소환`,'a'); render(); await sleep(500);
+  }
+  S.busy=false; render();
+  if(!S.over)endTurn();
+}
 function rgStart(el){
   RG.on=true; RG.el=el;
   RG.gold=RC.startGold; RG.hp=RC.startHp; RG.maxhp=RC.startHp;
@@ -1952,7 +2107,8 @@ function rgStart(el){
   DECKEL=el; DECKLIST=DECKS[el].list; renderDeckPick();
   document.getElementById('log').innerHTML='';
   log(`원정 시작 — ${(EL[el]||{}).ko} · ${DECKS[el].name}`,'t');
-  rgMap();
+  /* ⚠ 지도가 아니라 **전투로 시작한다.** 첫 전투가 곧 튜토리얼이다(건너뛰면 바로 지도로). */
+  tutStart();
 }
 
 /* ============ 첫 턴 멀리건 (하스스톤식 · 단 한 번, 손해 없음) ============
@@ -3412,7 +3568,8 @@ function startTurn(p){
   log(`— 턴 ${S.turn} · ${p==='me'?'내 턴':'상대 턴'} (지형 ${P.lands.length})`,'t');
   turnBanner(p);
   render();
-  if(p==='ai')setTimeout(aiTurn,760/SPEED);
+  /* 튜토리얼에서는 AI 가 아니라 **대본**이 상대를 움직인다 */
+  if(p==='ai')setTimeout(TUT.on?tutFoeTurn:aiTurn,760/SPEED);
 }
 async function endTurn(){
   if(S.busy)return;
@@ -3449,6 +3606,13 @@ function checkEnd(){
     S.busy=false;
     S.over=true;render();
     const win=S.ai.hp<=0&&S.me.hp>0;
+    /* ⚠ 튜토리얼은 원정 전투가 아니다 — 보상·패배 화면으로 새면 안 된다. 안내만 닫고 지도로. */
+    if(TUT.on){ tutPanel(null);
+      rgOpen(`<h2>${win?'훈련 완료':'훈련 종료'}</h2>`
+        +`<div class="msub">이제 지도로 나가 원정을 시작하세요.</div>`
+        +`<div class="mbtns"><button class="go" id="tutGo">지도로</button></div>`);
+      document.getElementById('tutGo').onclick=()=>{rgClose();tutEnd();};
+      return true; }
     if(RG.on){ RG.hp=Math.max(0,S.me.hp); RG.fighting=false; return rgAfterBattle(win); }
     document.getElementById('overT').textContent=win?'승리':(S.me.hp<=0&&S.ai.hp<=0?'무승부':'패배');
     document.getElementById('overS').textContent=`${S.turn}턴 종료 · 내 HP ${Math.max(0,S.me.hp)} / 상대 HP ${Math.max(0,S.ai.hp)}`;
@@ -4871,6 +5035,7 @@ function render(){
   if(RG.on&&RG.fighting&&S.me)RG.hp=Math.max(0,S.me.hp);
   const mine=S.active==='me'&&!S.over&&!S.busy;
   /* 처리 중에는 화면을 가리지 않고 조작만 막는다(위쪽 얇은 진행 막대) */
+  if(TUT.on)tutSync();               /* 튜토리얼 — 상태가 바뀌면 저절로 다음 단계로 */
   /* ⚠ 판이 끝났으면 **무슨 일이 있어도** 가리개를 걷는다. busy 를 누가 안 껐더라도
      승패 화면·보상 창이 눌리지 않는 상태로 갇히면 안 된다(실제로 그렇게 멈췄다). */
   if(S.busy&&!S.over)busyOn(S.active==='me'?'전투 처리 중…':'상대 턴 진행 중…'); else busyOff();
@@ -5049,7 +5214,7 @@ document.getElementById('restart').onclick=()=>{
      시작 → 모드 선택 → 덱 선택 → (배틀: 상대 덱 선택 | 원정: 지도) → 게임
      패배 → 다시 도전하기(덱 선택으로) · 초기 화면(모드 선택으로)
    ⚠ ?dev=1 로 열면 페이지를 건너뛰고 바로 배틀로 들어간다(자동 테스트용). */
-const VERSION='0.34.0', BUILD='2026-08-04';
+const VERSION='0.35.0', BUILD='2026-08-04';
 const DEV=/[?&]dev=1/.test(location.search);
 let PAGE=null, FLOW={mode:'battle', my:null, foe:null};
 function pageOpen(html){
