@@ -3686,7 +3686,14 @@ async function strike(p,u,gen,tag){
     log(`${me?'나':'상대'} ${label}(${u.a}${dealt!==u.a?`→${dealt}${dealt===0?' 가호':' 경화'}`:''}) → ${d.name} ${before}→${Math.max(0,inst.hp)}`,u.f?'f':'g');
     if(dead){
       log(`  ${d.name} 1개체 파괴${waste>0?` · 초과 ${waste} 소멸(이월 없음)`:''}`,'a');
-      d.insts.shift();
+      /* ⚠⚠⚠ 예전엔 여기서 `d.insts.shift()` 로 **죽은 개체를 직접 지웠다.**
+         그러면 cleanup 이 볼 시체가 남지 않는다 → `onDeath` 가 아예 안 불린다 →
+         **전투로 죽은 몸은 폭발도 환류도 단말마도 안 돌았다.** 무덤·묘지 지형·
+         소멸 트리거 인챈트(불사조의 깃털·악마의 석상)까지 통째로 조용히 죽어 있었다.
+         (스켈톤이 맞아 죽었는데 안 되살아나는 것으로 성권이 잡았다.)
+         죽음은 **한 통로(cleanup → onDeath)** 로만 지나가야 한다 — 여기서 지름길을
+         내면 그 통로에 매달린 것들이 전부 새 나간다. */
+      cleanup(foe);
     }
     DEALT=dealt;
     render();
@@ -5861,7 +5868,7 @@ document.getElementById('restart').onclick=()=>{
      시작 → 모드 선택 → 덱 선택 → (배틀: 상대 덱 선택 | 원정: 지도) → 게임
      패배 → 다시 도전하기(덱 선택으로) · 초기 화면(모드 선택으로)
    ⚠ ?dev=1 로 열면 페이지를 건너뛰고 바로 배틀로 들어간다(자동 테스트용). */
-const VERSION='0.40.0', BUILD='2026-08-04';
+const VERSION='0.40.1', BUILD='2026-08-04';
 const DEV=/[?&]dev=1/.test(location.search);
 let PAGE=null, FLOW={mode:'battle', my:null, foe:null};
 function pageOpen(html){

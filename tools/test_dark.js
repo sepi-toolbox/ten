@@ -21,8 +21,8 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
   await p.evaluate(()=>{const k=document.getElementById('keepBtn');k&&k.click();});
   await p.waitForTimeout(350);
 
-  const R=await p.evaluate(()=>{
-    SPEED=60; const o={};
+  const R=await p.evaluate(async()=>{
+    SPEED=99; const o={};
     const need=n=>{ if(!POOL[n])throw new Error('POOL 에 없는 카드: '+n); return n; };
     const reset=()=>{S.gen=(S.gen||0)+1;S.me.board=[];S.ai.board=[];S.me.hp=60;S.ai.hp=60;
       S.me.hand=[];S.ai.hand=[];S.me.deck=[];S.ai.deck=[];S.me.grave=[];S.ai.grave=[];
@@ -181,6 +181,29 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
     o.무덤=S.me.grave.slice();
     resolveSummon('me','혼령 부활',0);
     o.부활=names('me')||'(빔)';
+    /* ══════ 전투로 죽어도 사망 처리가 돈다 ══════
+       ⚠⚠ 이건 어둠만의 문제가 아니었다. strike() 가 죽은 개체를 `insts.shift()` 로
+         **직접 지워서** cleanup 이 볼 시체가 안 남았고, 그래서 onDeath 가 아예 안 불렸다 —
+         전투로 죽은 몸은 폭발도 환류도 단말마도 안 돌았다(무덤·묘지·소멸 인챈트까지).
+       ⚠ 공격은 **수호에만** 간다. 그리고 비행 공격은 지상 수호를 지나친다.
+         그래서 이 검사는 반드시 **지상 공격자 vs 지상 수호**여야 한다 —
+         처음에 비행(가고일)으로 짰다가 얼굴만 때려서 '고쳤는데도 안 된다' 로 헛봤다. */
+    const hitGuard=async(pl,nm)=>{                 /* nm 에 수호를 붙여 상대가 때리게 한다 */
+      const foe=pl==='me'?'ai':'me';
+      const t=put(pl,nm); t.g=true;
+      const a=put(foe,'오아네스');                 /* 4/4 지상 */
+      await strike(foe,a,S.gen,'');
+      return t;
+    };
+    reset(); await hitGuard('me','스컬 기마병');
+    o.전투단말마=[names('me'), S.me.grave.slice(), S.dead];
+    reset(); await hitGuard('me','전기 해파리');
+    o.전투환류=[S.me.hand.join(',')||'(빔)', names('me')||'(빔)'];
+    reset(); const hp0=S.ai.hp; await hitGuard('me','파이어버그');   /* 폭발 */
+    o.전투폭발=[hp0, S.ai.hp];
+    reset(); playLand('me','묘지'); await hitGuard('me','구울');
+    o.전투묘지=names('me');
+
     /* ══════ 3단계 — 덱 조작 ══════ */
     /* 듀라한 — 출진으로 덱에 머리를 심고, 뽑으면 판 위 듀라한이 커지고 머리는 덱으로 */
     reset(); S.me.deck=['구울','좀비','고스트'];
@@ -293,6 +316,16 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
   ok('혼령 부활 = 무덤에서', R.무덤.join()==='구울'&&R.부활==='구울',
      `무덤 [${R.무덤}] → 판 [${R.부활}]`);
   ok('해골쌓기 = 죽은 수가 HP', R.해골탑==='0/3 수호 true', R.해골탑);
+
+  /* ── 전투 사망도 같은 통로를 지난다 ── */
+  ok('전투 사망 = 단말마', /스컬 기마병/.test(R.전투단말마[0])&&R.전투단말마[1].join()==='스컬 기마병'
+     &&R.전투단말마[2]===1,
+     `판 [${R.전투단말마[0]}] · 무덤 [${R.전투단말마[1]}] · 소멸 ${R.전투단말마[2]}`);
+  ok('전투 사망 = 환류', R.전투환류[0]==='전기 해파리'&&R.전투환류[1]==='(빔)',
+     `손 [${R.전투환류[0]}] · 판 [${R.전투환류[1]}]`);
+  ok('전투 사망 = 폭발', R.전투폭발[1]<R.전투폭발[0],
+     `상대 HP ${R.전투폭발[0]}→${R.전투폭발[1]}`);
+  ok('전투 사망 = 묘지', /좀비랫/.test(R.전투묘지), `판 [${R.전투묘지}]`);
 
   /* ── 3단계 — 덱 조작 ── */
   ok('듀라한 = 덱에 머리를 심는다', R.심기[0]===1&&R.심기[1]===4,
