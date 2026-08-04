@@ -522,6 +522,10 @@ html,body{touch-action:pan-x pan-y}
 .vtxt{font-family:'Gowun Batang',serif;font-size:13px;color:var(--gold-bright);letter-spacing:.04em}
 
 /* 가리지 않는 로딩 — 화면은 그대로 보이고 조작만 막는다 */
+/* ⚠ 가리개는 흐름 페이지(.pg 120)까지 덮어야 조작이 실제로 막힌다 → 그보다 위에 둔다.
+   ⚠⚠ 그래서 **가리개가 켜진 채로 남으면 보상 창(.mull 80)을 덮어 눌리지 않는다.**
+      한 번 그렇게 멈췄다. 막는 방법은 z-index 가 아니라 **제때 끄는 것**이다 —
+      checkEnd() 가 직접 끄고, render() 는 판이 끝났으면(S.over) 아예 안 띄운다. */
 .busy{position:fixed;inset:0;z-index:140;display:none}
 .busy.on{display:block}
 .busy .bar{position:absolute;left:0;right:0;top:0;height:3px;overflow:hidden;

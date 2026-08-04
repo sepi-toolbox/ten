@@ -66,6 +66,41 @@ const DV=await p.evaluate(()=>{
           구획:lbl.join(' | '), 지형칸:지형칸.join(','), 전투값:pd.join(' ')};
 });
 let dbad=0; const dok=(k,v,d)=>{ if(!v)dbad++; console.log((v?'✅':'❌')+' '+k.padEnd(24)+' '+d); };
+
+/* ── 이겼는데 '전투 처리 중…' 에서 안 넘어가던 것 ─────────────────
+   ⚠⚠ checkEnd() 가 **busy 를 켠 채로** render() 를 했고, 부르는 쪽은 그 뒤에 S.busy=false 만
+     하고 다시 안 그렸다. 그래서 가리개가 화면에 남았고, 가리개(z-index 140)가 보상 창(80)
+     위를 덮어 **카드를 누를 수 없는 채로 멈췄다.** 창은 보이는데 죽어 있어서 더 헷갈렸다.
+   고친 것 둘: busy 는 checkEnd 가 직접 끈다 · 가리개 z-index 를 창들 아래로 내렸다.
+   ⚠ 이 검사는 hp 를 0 으로 **직접 넣지 않는다** — 실제로 공격해서 이겨야 그 경로를 지난다. */
+await p.evaluate(()=>{SPEED=60;RG.on=false;rgStart('fire');}); await p.waitForTimeout(400);
+await p.evaluate(()=>{RG.floor=0;RG.at=0;rgFight('normal');}); await p.waitForTimeout(600);
+await p.evaluate(()=>{const k=document.getElementById('keepBtn');k&&k.click();}); await p.waitForTimeout(300);
+await p.evaluate(()=>{ S.ai.hp=1; S.ai.board=[]; S.me.board=[];
+  placeCreature('me','헬하운드',0); S.me.board[0].sick=false; render(); });
+await p.waitForTimeout(200);
+await p.evaluate(()=>{ const e=document.getElementById('end'); if(!e.disabled)e.click(); });
+await p.waitForTimeout(2200);
+const W=await p.evaluate(()=>({
+  끝남:S.over, busy:S.busy,
+  가리개:document.getElementById('busy').classList.contains('on'),
+  가리개z:+getComputedStyle(document.getElementById('busy')).zIndex,
+  모달z:+getComputedStyle(document.getElementById('rg')).zIndex,
+  창:document.getElementById('rg').classList.contains('on'),
+  보상칸:document.querySelectorAll('#rg .rgc').length}));
+const deck0=await p.evaluate(()=>RG.deck.length);
+let clicked=true;
+await p.click('#rg .rgc',{timeout:3000}).catch(()=>{clicked=false;});
+await p.waitForTimeout(500);
+const deck1=await p.evaluate(()=>RG.deck.length);
+dok('이기면 판이 끝난다', W.끝남&&W.busy===false, `over=${W.끝남} busy=${W.busy}`);
+dok('가리개가 걷힌다', W.가리개===false, `'전투 처리 중' 가리개 ${W.가리개?'남아 있음':'걷힘'}`);
+/* ⚠ 가리개는 흐름 페이지까지 덮어야 하므로 창(z 80)보다 **위**에 있는 게 맞다(z 140).
+   그래서 안전장치는 z-index 가 아니라 **제때 끄는 것** — 켜진 채 남으면 창이 죽는다. */
+dok('가리개가 창 위다(정상)', W.가리개z>W.모달z, `가리개 z${W.가리개z} > 창 z${W.모달z} — 그래서 반드시 꺼야 한다`);
+dok('보상 창이 뜬다', W.창&&W.보상칸===3, `창 ${W.창} · 카드 ${W.보상칸}장`);
+dok('보상 카드가 눌린다', clicked&&deck1===deck0+1, `덱 ${deck0}→${deck1}${clicked?'':' (클릭이 막혔다)'}`);
+
 /* ⚠ 기본 지형이 **여러 종**이다(불 = 불지옥·용암 폭포·용암 동굴). 17장을 고르게 나눠 담고,
    나머지는 앞쪽부터 한 장씩 간다 → 6/6/5. */
 dok('기본 지형 3종 고르게', DV.기본만==='불지옥x6 용암 폭포x6 용암 동굴x5', DV.기본만);
