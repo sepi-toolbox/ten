@@ -107,6 +107,7 @@ def main():
         if "twin" in kinds:
             e["extra"] = 1
             e["pay"] = 0
+            e["r"] = "rare"          # 성권 지정 — 턴 제한을 깨는 지형은 보상 지형이다
             e["note"] = r.get("note", "")
         # temp = 소멸 지형. 스펠이 만들어 내고, 내 턴 시작마다 수명이 하나씩 준다.
         if "temp" in kinds:

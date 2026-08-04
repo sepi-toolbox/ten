@@ -158,9 +158,13 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
     resolveOnFoe('me','노화',0);
     o.노화=S.ai.board[0].a;
     /* 해골 던지기 */
-    reset(); put('me','구울'); put('ai','가고일');   /* 구울 HP 3 → 6 피해 */
+    /* ⚠ 숫자를 박지 않는다 — 희귀도가 바뀌면 카드의 공/체가 통째로 바뀐다(실제로 겪었다).
+       던질 몸의 HP 를 **재 두고** 그 2배가 들어갔는지를 본다. */
+    reset(); const tg=put('me','구울'); put('ai','가고일');
+    o.던짐HP=tg.insts[0].hp;
+    const gh0=S.ai.board[0].insts[0].hp;
     resolveOnFoe('me','해골 던지기',0);
-    o.던지기=[names('me')||'(빔)', S.ai.board[0]?S.ai.board[0].insts[0].hp:'(파괴)'];
+    o.던지기=[names('me')||'(빔)', gh0, S.ai.board[0]?S.ai.board[0].insts[0].hp:0];
     /* 사신의 수확 — 지금이 아니라 다음 내 턴 시작에 */
     reset(); put('ai','가고일');
     resolveOnFoe('me','사신의 수확',0);
@@ -168,9 +172,10 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
     S.turn=2; startTurn('me');
     o.수확=names('ai')||'(빔)';
     /* 생명 흡수 */
-    reset(); S.me.hp=40; const lv=put('me','가고일');   /* HP 6 */
+    reset(); S.me.hp=40; const lv=put('me','가고일');
+    const lh=lv.insts[0].hp;
     resolveOnMine('me','생명 흡수',S.me.board.indexOf(lv));
-    o.흡수=[S.me.hp, names('me')||'(빔)'];
+    o.흡수=[40, lh, S.me.hp, names('me')||'(빔)'];
     /* 혼령 부활 — 무덤에서 */
     reset(); const dz=put('me','구울'); kill(dz); cleanup('me');
     o.무덤=S.me.grave.slice();
@@ -229,12 +234,13 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
   ok('그림자야수 = 판 위 수만큼', R.야수값===3, `${R.야수값} (내 2 + 상대 1)`);
   /* ⚠ 분류가 '광역' 이면 대상 없이 즉시 터진다 — 노화는 한 개체를 겨눈다 */
   ok('노화 = 대상을 고른다', R.노화모드==='target'&&R.노화===1, `${R.노화모드} · ATK ${R.노화}`);
-  ok('해골 던지기 = 던진 몸의 2배', R.던지기[0]==='(빔)'&&R.던지기[1]===0,
-     `내 ${R.던지기[0]} · 가고일 HP ${R.던지기[1]} (구울 HP 3 × 2 = 6)`);
+  ok('해골 던지기 = 던진 몸의 2배',
+     R.던지기[0]==='(빔)'&&R.던지기[2]===R.던지기[1]-R.던짐HP*2,
+     `던진 몸 HP ${R.던짐HP} × 2 = ${R.던짐HP*2} → 대상 ${R.던지기[1]}→${R.던지기[2]} · 내 판 ${R.던지기[0]}`);
   ok('사신의 수확 = 다음 턴에', R.표식[0]===true&&R.표식[1]==='가고일'&&R.수확==='(빔)',
      `표식 ${R.표식[0]} · 그 자리엔 [${R.표식[1]}] · 내 턴 시작 뒤 [${R.수확}]`);
-  ok('생명 흡수 = 그 HP 만큼', R.흡수[0]===46&&R.흡수[1]==='(빔)',
-     `HP 40→${R.흡수[0]} · 판 ${R.흡수[1]}`);
+  ok('생명 흡수 = 그 HP 만큼', R.흡수[2]===R.흡수[0]+R.흡수[1]&&R.흡수[3]==='(빔)',
+     `HP ${R.흡수[0]}→${R.흡수[2]} (갈아 넣은 몸 HP ${R.흡수[1]}) · 판 ${R.흡수[3]}`);
   ok('혼령 부활 = 무덤에서', R.무덤.join()==='구울'&&R.부활==='구울',
      `무덤 [${R.무덤}] → 판 [${R.부활}]`);
   ok('해골쌓기 = 죽은 수가 HP', R.해골탑==='0/3 수호 true', R.해골탑);
