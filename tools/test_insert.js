@@ -13,7 +13,7 @@ await p.evaluate(()=>{const k=document.getElementById('keepBtn');k&&k.click();})
 async function setup(nBoard){
   await p.evaluate(k=>{
     S.me.board=[]; S.me.lands=[];
-    for(let i=0;i<8;i++){S.me.landPlayed=false;playLand('me','화산');}
+    for(let i=0;i<8;i++){S.me.landPlayed=false;playLand('me','불지옥');}
     S.me.lands.forEach(l=>{l.used=false;l.entering=false;});
     const cr=Object.keys(POOL).filter(n=>POOL[n].k==='cr'&&POOL[n].el==='fire'&&!POOL[n].over);
     /* 손에 쥘 카드를 먼저 정하고, 판은 그것과 다른 이름으로 채운다(indexOf 로 위치 확인) */

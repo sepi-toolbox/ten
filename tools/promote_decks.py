@@ -34,10 +34,21 @@ MODE_EN = {"단일": "dmg", "광역": "aoe", "직접": "direct", "요격": "kill
            "지형": "ritual"}
 DRAIN_EN = {"지속형": "persistent", "발동형": "triggered", "사용형": "active"}
 
-# 속성별 기본 지형 (단색 덱은 기본 지형 17장)
-BASIC_LAND = {"fire": "화산", "water": "심해", "nature": "수림", "steel": "대장간",
-              "earth": "고원", "dark": "심연", "light": "성소"}
+# 속성별 기본 지형. **여러 종류일 수 있다** — 17장을 그 종류들에 고르게 나눠 담는다.
+# ⚠ 2026-08 불·물은 성권이 기본 지형을 새로 세 종씩 지정했다(옛 화산·심해는 목록에 없어서
+#   카드째 지웠다). 아직 개편 안 한 속성은 한 종뿐이라 예전과 똑같이 17장이 된다.
+BASIC_LAND = {"fire":  ["불지옥", "용암 폭포", "용암 동굴"],
+              "water": ["파도 지대", "폭포", "설원 지대"],
+              "nature": ["수림"], "steel": ["대장간"],
+              "earth": ["고원"], "dark": ["심연"], "light": ["성소"]}
 LAND_COUNT = 17
+
+
+def split_lands(el, total=LAND_COUNT):
+    """기본 지형 종류들에 total 장을 고르게 나눈다. 나머지는 앞쪽부터 한 장씩."""
+    ks = BASIC_LAND[el]
+    q, r = divmod(total, len(ks))
+    return [[n, q + (1 if i < r else 0)] for i, n in enumerate(ks)]
 
 # 아트 모티프 — 이름 우선, 없으면 태그/분류로 폴백
 ART_BY_NAME = {
@@ -206,7 +217,7 @@ def main():
         cards = sum(cp for _, cp in entries)
         decks[el] = {
             "name": G.MECH[el][0], "core": G.MECH[el][1], "flow": G.MECH[el][2],
-            "lands": [[BASIC_LAND[el], LAND_COUNT]],
+            "lands": split_lands(el),
             "cards": entries,
             "total": cards + LAND_COUNT,
         }

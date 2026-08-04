@@ -319,7 +319,8 @@ def main():
     out = []
     for el, rows in ROSTER.items():
         kinds = [n for n, _ in decks[el]["cards"]]
-        land = next(n for n, _ in decks[el]["lands"])
+        # ⚠ 기본 지형이 여러 종일 수 있다(불·물은 세 종). 덱에 적힌 구성을 그대로 쓴다.
+        base_lands = [list(x) for x in decks[el]["lands"]]
         for (sid, name, tier, arch, art, desc) in rows:
             eid = f"{el}_{sid}"
             fx = FIXED.get(eid)
@@ -335,7 +336,7 @@ def main():
             ent = {
                 "id": eid, "el": el, "tier": tier, "name": name,
                 "style": ARCH_KO[arch], "arch": arch, "art": art, "desc": desc,
-                "land": land, "decks": variants,
+                "lands": base_lands, "decks": variants,
             }
             if fx:
                 ent["lands"] = [list(x) for x in fx["lands"]]

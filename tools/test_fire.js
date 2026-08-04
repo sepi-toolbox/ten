@@ -19,7 +19,7 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
     const setup=()=>{S.gen=(S.gen||0)+1;S.me.board=[];S.ai.board=[];S.me.hand=[];
       S.me.hp=60;S.ai.hp=60;
       S.me.deck=[];for(let i=0;i<30;i++)S.me.deck.push('헬하운드');
-      S.me.lands=[];for(let i=0;i<10;i++){S.me.landPlayed=false;playLand('me','화산');}
+      S.me.lands=[];for(let i=0;i<10;i++){S.me.landPlayed=false;playLand('me','불지옥');}
       S.me.lands.forEach(l=>{l.used=false;l.entering=false;});};
     const ench=(nm,i)=>{const c=POOL[nm];S.me.board[i]={name:nm,kind:'en',v:c.v,charge:c.ch};};
 

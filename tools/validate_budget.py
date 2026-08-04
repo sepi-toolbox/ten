@@ -162,7 +162,8 @@ def main():
     print("\n[3] 덱")
     if decks:
         cap = rules.get("constants", {}).get("copies_max", 2)
-        basics = set(P.BASIC_LAND.values())
+        # ⚠ 기본 지형은 속성마다 **여러 종**일 수 있다(불·물은 세 종) → 목록을 펼친다.
+        basics = {n for ns in P.BASIC_LAND.values() for n in ns}
         for el, d in decks.items():
             nc = sum(cp for _, cp in d["cards"])
             nl = sum(cp for _, cp in d["lands"])
@@ -174,7 +175,7 @@ def main():
                 problems.append(f"{G.KO[el]} 덱 {nc+nl}장 ≠ {target}")
             if bad:
                 problems.append(f"{G.KO[el]} 동명 {cap}장 초과: {', '.join(bad)}")
-        print(f"    (기본 지형은 동명 상한 예외 — 단색 덱은 같은 지형 {P.LAND_COUNT}장)")
+        print(f"    (기본 지형은 동명 상한 예외 — 단색 덱은 기본 지형 {P.LAND_COUNT}장)")
 
     print("\n" + "=" * 72)
     if problems:

@@ -695,6 +695,19 @@ python3 tools/check_published.py        # 게시본 == 작업본 인지 확인 (
     **빨강·보라 오브까지 배경으로 먹어 까맣게 뭉갠다**. 자르기는 격자 분할(기본 4열×2행)로 한다.
 - 3차 프롬프트는 위 결함을 고쳐 뒀다(`gen_art_prompts.py`의 `BANDS`·`CLEARANCE`) — 다시 뽑을 때 쓴다.
 
+### 기본 지형은 속성마다 **여러 종**일 수 있다 (2026-08)
+
+- 정본은 `tools/promote_decks.py` 의 `BASIC_LAND` — **값이 문자열이 아니라 목록**이다.
+  `split_lands(el)` 이 17장을 그 종류들에 고르게 나눈다(3종이면 6/6/5, 나머지는 앞쪽부터).
+- 불 = 불지옥 · 용암 폭포 · 용암 동굴 / 물 = 파도 지대 · 폭포 · 설원 지대.
+  **옛 화산·심해는 카드째 지웠다** — 성권이 준 지형 목록에 없었다.
+- 프로토타입 쪽 짝은 `BASICLAND` + `splitBasics(el,n)`. 원정 지형(`runLands`)과
+  생성 적 덱(`rgFight`)이 둘 다 이걸 쓴다.
+- ⚠ 같은 표가 세 군데(promote_decks · 프로토타입 · validate_budget)에 걸린다. 한 곳만 고치면
+  덱과 화면이 갈린다 — `validate_budget` 의 `basics` 는 목록을 **펼쳐서** 집합으로 만든다.
+- ⚠ 검사에 종류 수를 박지 말 것. 뷰어 머리말의 'N종' 은 **지형 종류 + 카드 종류**라
+  기본 지형이 3종이 되면서 21 → 23 이 됐다. `test_cards` 는 이제 `data/decks.json` 에서 센다.
+
 ## 게시 (GitHub Pages)
 
 - **주소: https://sepi-toolbox.github.io/ten/** — 아이패드 사파리 북마크용. 랜딩에서 프로토타입·갤러리·에디터·설계문서 8종으로 이동한다.

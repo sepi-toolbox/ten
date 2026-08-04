@@ -60,7 +60,7 @@ const R=await p.evaluate(()=>{
   ok('놓은 것만 · 가운데', cards.length===2&&Math.abs(mid-bd.offsetWidth/2)<3,
      `${cards.length}장 · 중심차 ${Math.round(mid-bd.offsetWidth/2)}px · 카드폭 ${cards[0].offsetWidth}px`);
   // 6) 지형존도 겹쳐 쌓임
-  reset(); for(let i=0;i<8;i++){S.me.landPlayed=false;playLand('me','화산');} render();
+  reset(); for(let i=0;i<8;i++){S.me.landPlayed=false;playLand('me','불지옥');} render();
   const lz=[...document.getElementById('myLz').querySelectorAll(':scope > .slot')];
   const step=lz.length>1?lz[1].offsetLeft-lz[0].offsetLeft:0;
   ok('지형 겹쳐 쌓임', lz.length===8&&step<lz[0].offsetWidth-2,

@@ -1,6 +1,4 @@
 id,name,kind,produces,produces2,tapped,copies,element,note
-LD01,화산,basic,fire,,0,0,fire,불 자원 1 생성 · 즉시 사용
-LD02,심해,basic,water,,0,0,water,물 자원 1 생성 · 즉시 사용
 LD03,수림,basic,nature,,0,0,nature,자연 자원 1 생성 · 즉시 사용
 LD04,대장간,basic,steel,,0,0,steel,강철 자원 1 생성 · 즉시 사용
 LD05,고원,basic,earth,,0,0,earth,대지 자원 1 생성 · 즉시 사용

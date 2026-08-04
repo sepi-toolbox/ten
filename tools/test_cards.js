@@ -20,6 +20,8 @@ const PROTO='file://'+path.join(ROOT,'prototype','index.html');
   const p=await b.newPage({viewport:{width:1240,height:1000},deviceScaleFactor:2});
   const errs=[]; p.on('pageerror',e=>errs.push(e.message));
   await p.goto(VIEW); await p.waitForTimeout(800);
+  const DECKS_JSON=JSON.parse(require('fs').readFileSync(
+    path.join(__dirname,'..','data','decks.json'),'utf8'));
 
   /* 1) 덱별로 묶여 있고, 각 덱이 40장이다.
      ⚠ 셀 수는 **덱 장수와 다를 수 있다** — gen_decks 의 매수 0(덱 미수록) 카드도 그 속성 칸에
@@ -28,8 +30,13 @@ const PROTO='file://'+path.join(ROOT,'prototype','index.html');
     제목:s.querySelector('h2 .ko').textContent,
     수:s.querySelector('h2 .cnt').textContent,
     셀:s.querySelectorAll('.cell').length})));
-  ok('덱 7종으로 묶임', secs.length===7&&secs.every(s=>/21종 · 40장/.test(s.수)),
-     secs.map(s=>`${s.제목}(${s.셀})`).join(' '));
+  /* ⚠ '종' 수를 **박아 두지 않는다.** 지형 종류 + 카드 종류인데, 기본 지형이 여러 종인 속성이
+     생기면서(불·물 = 3종) 21 이 아니게 됐다. data/decks.json 에서 그때그때 계산한다 —
+     숫자를 박으면 카드를 손댈 때마다 이 검사가 애먼 이유로 빨간불이 된다. */
+  const want=Object.values(DECKS_JSON).map(d=>d.lands.length+d.cards.length);
+  const bad7=secs.filter((s,i)=>!new RegExp(`${want[i]}종 · 40장`).test(s.수));
+  ok('덱 7종으로 묶임', secs.length===7&&bad7.length===0,
+     secs.map((s,i)=>`${s.제목} ${s.수.trim()}(기대 ${want[i]}종)`).join(' · '));
 
   // 2) 카드가 게임 규격(5:7)으로 그려진다
   const sz=await p.evaluate(()=>{

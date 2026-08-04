@@ -86,7 +86,7 @@ const FILE='file://'+path.join(ROOT,'index.html');
 
   // 4) 대상 지정 — 판으로 나가고, 고를 수 있는 것만 빛나고, 빈 곳을 누르면 손으로 돌아온다
   await p.evaluate(()=>{
-    S.me.lands=[]; for(let i=0;i<8;i++){S.me.landPlayed=false;playLand('me','화산');}
+    S.me.lands=[]; for(let i=0;i<8;i++){S.me.landPlayed=false;playLand('me','불지옥');}
     S.me.lands.forEach(l=>{l.used=false;l.entering=false;});
     const cr=Object.keys(POOL).filter(n=>POOL[n].k==='cr'&&POOL[n].el==='fire'&&!POOL[n].over);
     S.ai.board=[]; placeCreature('ai',cr[0]); placeCreature('ai',cr[1]);

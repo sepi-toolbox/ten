@@ -127,11 +127,11 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
   const W=await p.evaluate(async()=>{
     SPEED=60; const o={};
     const reset=()=>{S.me.board=[];S.ai.board=[];S.me.hp=60;S.ai.hp=60;S.me.hand=[];S.ai.hand=[];
-      S.me.lands=[];S.ai.lands=[];S.me.deck=['심해','검사','창병'];S.ai.deck=[];
+      S.me.lands=[];S.ai.lands=[];S.me.deck=['파도 지대','검사','창병'];S.ai.deck=[];
       S.dead=0;S.tide=null;S.mind=null;S.over=false;S.busy=false;S.sel=null;S.mode=null;};
     const put=(pl,n)=>{const i=S[pl].board.length;placeCreature(pl,n,i);onSummon(pl,n,i);};
     const mana=n=>{S.me.lands=Array(n).fill(0)
-      .map(()=>({name:'심해',els:['water'],used:false,entering:false}));};
+      .map(()=>({name:'파도 지대',els:['water'],used:false,entering:false}));};
     const names=pl=>S[pl].board.filter(Boolean).map(u=>u.name);
 
     reset(); put('me','운디네'); o.운디네=S.me.hand.slice();
@@ -187,7 +187,7 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
     onCast('me','조류 읽기');
     o.인어={전:b0, 후:`${im.a}/${im.insts[0].hp}`};
     reset(); S.me.lands=Array(4).fill(0)
-      .map(()=>({name:'심해',els:['water'],used:true,entering:false}));
+      .map(()=>({name:'파도 지대',els:['water'],used:true,entering:false}));
     put('me','리자드 마술사');
     const m0=manaLeft('me'); onCast('me','조류 읽기');
     o.리자드={전:m0, 후:manaLeft('me')};
@@ -198,7 +198,7 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
     return o;
   });
 
-  ok('운디네 = 지형 드로우', W.운디네.join()==='심해', `덱에서 ${W.운디네.join()} 을(를) 손으로`);
+  ok('운디네 = 지형 드로우', W.운디네.join()==='파도 지대', `덱에서 ${W.운디네.join()} 을(를) 손으로`);
   ok('상어 인간 = 비용 환급', W.상어.지불후===0&&W.상어.환급후===3
      &&W.상어.수호없음.지불후===0&&W.상어.수호없음.뒤===0,
      `상대 수호 O: ${W.상어.지불후}→${W.상어.환급후} · X: ${W.상어.수호없음.지불후}→${W.상어.수호없음.뒤}`);
@@ -234,7 +234,7 @@ const P='file://'+path.join(ROOT,'prototype','index.html')+'?dev=1';
     const setup=()=>{S.gen=(S.gen||0)+1;S.me.board=[];S.ai.board=[];S.me.hand=[];
       S.me.nospell={};S.me.noecho={};
       S.me.deck=[]; for(let i=0;i<30;i++)S.me.deck.push('피라냐');
-      S.me.lands=[];for(let i=0;i<10;i++){S.me.landPlayed=false;playLand('me','심해');}
+      S.me.lands=[];for(let i=0;i<10;i++){S.me.landPlayed=false;playLand('me','파도 지대');}
       S.me.lands.forEach(l=>{l.used=false;l.entering=false;});};
     const ench=(nm,i)=>{const c=POOL[nm];S.me.board[i]={name:nm,kind:'en',v:c.v,charge:c.ch};};
     o.옛카드=['잔물결','환수','조류 읽기','역류','밀물의 부름','대해일','심연으로','해무','조수의 인장']

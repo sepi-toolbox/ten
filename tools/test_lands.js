@@ -41,7 +41,7 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
   await p.evaluate(()=>{SPEED=6; setDeck('fire');}); await p.waitForTimeout(250);
   await p.evaluate(()=>{const k=document.getElementById('keepBtn');k&&k.click();}); await p.waitForTimeout(300);
   await p.evaluate(()=>{
-    S.me.lands=[]; for(let i=0;i<6;i++){S.me.landPlayed=false;playLand('me','화산');}
+    S.me.lands=[]; for(let i=0;i<6;i++){S.me.landPlayed=false;playLand('me','불지옥');}
     S.me.lands.forEach(l=>{l.used=false;l.entering=false;});
     while(S.me.hand.length<7)draw('me');
     const cr=Object.keys(POOL).filter(n=>POOL[n].k==='cr'&&POOL[n].el==='fire'&&POOL[n].c>=2&&POOL[n].c<=3)
@@ -88,7 +88,7 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
   const z=await p.evaluate(()=>({on:document.getElementById('zoom').classList.contains('on'),
     nm:(document.querySelector('#zoom .tname')||{}).textContent||''}));
   await p.mouse.up(); await p.evaluate(()=>{hideZoom();lpFired=false;}); await p.waitForTimeout(200);
-  ok('뒤집힌 지형도 확대', z.on&&z.nm==='화산', `"${z.nm}"`);
+  ok('뒤집힌 지형도 확대', z.on&&z.nm==='불지옥', `"${z.nm}"`);
   // 앞면 지형도 마찬가지
   const rd=await p.$('#myLz .slot:not(.used)'); const rb=await rd.boundingBox();
   await p.mouse.move(rb.x+rb.width/2,rb.y+rb.height/2); await p.mouse.down(); await p.waitForTimeout(620);
@@ -124,7 +124,7 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
 
   // 8) 대상이 없어 못 쓰는 카드도 손패에서 흐려진다
   const dim=await p.evaluate(()=>{
-    S.me.lands=[]; for(let i=0;i<10;i++){S.me.landPlayed=false;playLand('me','화산');}
+    S.me.lands=[]; for(let i=0;i<10;i++){S.me.landPlayed=false;playLand('me','불지옥');}
     S.me.lands.forEach(l=>{l.used=false;l.entering=false;});
     S.ai.board=[]; S.me.board=[];
     const tsp=Object.keys(POOL).find(n=>POOL[n].k==='sp'&&POOL[n].el==='fire'&&POOL[n].c<=3
@@ -165,14 +165,14 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
     r.만석=S.me.board.length; r.칸=SLOTS;
     // 지하 감옥 — 이번 턴 지형을 이미 놓았어도 추가로 놓인다. 대신 자원 2.
     S.me.lands=[];S.me.board=[];
-    ['화산','화산','화산'].forEach(n=>{S.me.landPlayed=false;playLand('me',n);});
+    ['불지옥','불지옥','불지옥'].forEach(n=>{S.me.landPlayed=false;playLand('me',n);});
     S.me.landPlayed=true;                     // 이번 턴 지형은 이미 놓았다
     const before=manaLeft('me');
     r.추가배치=playLand('me','지하 감옥');
     r.마나=`${before}→${manaLeft('me')}`;      // 2 내고 제 몫 1 을 도로 내니 -1
     r.지형수=S.me.lands.length;
     // 자원이 모자라면 못 놓는다
-    S.me.lands=[];S.me.landPlayed=false;playLand('me','화산');   // 자원 1뿐
+    S.me.lands=[];S.me.landPlayed=false;playLand('me','불지옥');   // 자원 1뿐
     r.자원부족=playLand('me','지하 감옥');
     r.부족후지형수=S.me.lands.length;
     // 보통 지형은 여전히 턴당 1장
@@ -204,7 +204,7 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
     RG.el='nature'; r.자연=landOffers('nature');           // 아직 특수 지형이 없는 속성
     RG.el='fire'; RG.lands=['화염의 원천']; r.중복=landOffers('fire').includes('화염의 원천');
     RG.lands=[];
-    r.기본=['불지옥','용암 폭포','용암 동굴','화산'].filter(n=>landOffers('fire').includes(n));
+    r.기본=['불지옥','용암 폭포','용암 동굴','불지옥'].filter(n=>landOffers('fire').includes(n));
     RG.el='water'; r.소멸=landOffers('water').includes('수정구');
     r.희귀도=[rarOf('화염의 원천'),rarOf('지하 감옥'),rarOf('불지옥')].join('/');
     return r;
@@ -213,7 +213,7 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
   ok('보상 지형 — 물', off.물.join(' ')==='바닷속 풍경 인어 기둥 호수 유적', off.물.join(' '));
   ok('특수 지형 없는 속성', off.자연.length===0, `자연 ${off.자연.length}종`);
   ok('이미 가진 지형은 제외', off.중복===false, `화염의 원천 재등장 ${off.중복}`);
-  ok('기본 지형은 보상 아님', off.기본.length===0, off.기본.join(' ')||'0종 (화산과 똑같아 함정 선택지다)');
+  ok('기본 지형은 보상 아님', off.기본.length===0, off.기본.join(' ')||'0종 (기본 지형끼리 똑같아 함정 선택지다)');
   ok('소멸 지형은 보상 아님', off.소멸===false, `수정구 ${off.소멸}`);
   /* 지형은 POOL 이 아니라 LANDS 에 희귀도가 있다 — 여기서 못 읽으면 전부 커먼으로 잡힌다 */
   ok('지형 희귀도를 읽는다', off.희귀도==='legendary/rare/common', off.희귀도);
