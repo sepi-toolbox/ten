@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""엘리멘츠 원정 모드 — 카드 데이터 생성기
+"""엘리멘츠 대전 모드 — 카드 데이터 생성기
 
   python3 tools/gen_etg.py        →  data/etg_cards.json
 

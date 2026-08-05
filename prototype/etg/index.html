@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
 <meta name="color-scheme" content="light only">
-<title>엘리멘츠 원정 — TEN</title>
+<title>엘리멘츠 대전 — TEN</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Gothic+A1:wght@700&family=Gowun+Batang:wght@400;700&family=Noto+Serif+KR:wght@400;700&display=swap" rel="stylesheet">
 <!--
-  엘리멘츠 원정 모드 — Elements the Game 의 카드와 규칙을 그대로 옮긴 별도 모드.
+  엘리멘츠 대전 모드 — Elements the Game 의 카드와 규칙을 그대로 옮긴 별도 모드.
 
   ⚠⚠ 이 파일은 **생성물이다.** 고치지 말고 prototype/etg/etg.template.html 을 고친 뒤
       `python3 tools/build_etg_page.py` 를 다시 돌릴 것.
@@ -589,6 +589,11 @@ html,body{touch-action:pan-x pan-y}
   color:var(--gold);opacity:.6;text-align:center}
 .chs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;margin-top:4px}
 .chs.two{grid-template-columns:1fr 1fr}
+/* 세 갈래(원정·대전·엘리멘츠 대전) — 폰에서는 세로로 쌓아야 글이 안 뭉갠다 */
+.chs.three{grid-template-columns:1fr}
+@media(min-width:640px){.chs.three{grid-template-columns:repeat(3,1fr)}}
+.chs.three .chsi.big{padding:16px 18px}
+.chs.three .chsi.big b{font-size:19px;margin-bottom:4px}
 .chsi{text-align:left;padding:13px 15px;border-radius:8px;cursor:pointer;transition:.15s;
   border:1px solid var(--rule);border-left:5px solid var(--c,var(--gold));
   background:linear-gradient(150deg,rgba(46,33,22,.92),rgba(28,20,13,.92));
@@ -1426,7 +1431,7 @@ h1.tt small{font-family:'Gowun Batang',serif;letter-spacing:0;font-size:10px;col
 </head>
 <body>
 <div class="wrap">
-  <h1 class="tt">ELEMENTS<br><small>엘리멘츠 원정 — Elements the Game 이식 · TEN 카드는 나오지 않습니다</small></h1>
+  <h1 class="tt">ELEMENTS<br><small>엘리멘츠 대전 — Elements the Game 이식 · TEN 카드는 나오지 않습니다</small></h1>
   <div id="screen"></div>
 </div>
 <div class="zoom" id="zoom"></div>
@@ -1434,7 +1439,7 @@ h1.tt small{font-family:'Gowun Batang',serif;letter-spacing:0;font-size:10px;col
 <script src="data.js"></script>
 <script>
 'use strict';
-const VERSION='0.2.0', BUILD='2026-08-05';
+const VERSION='0.3.0', BUILD='2026-08-05';
 /* 판 번호는 제목줄에 붙인다 — 아래 h1.tt 안 small */
 document.addEventListener('DOMContentLoaded',()=>{const t=document.querySelector('h1.tt small');
   if(t)t.insertAdjacentHTML('beforeend',` · v${VERSION}`);});
@@ -2386,6 +2391,7 @@ function render(){
       ${G.over?'<button id="again">다시</button>'
               :`<button id="end"${G.turn!==m?' disabled':''}>턴 종료 →</button>`}
       <button class="ghost" id="quit">덱으로</button>
+      <button class="ghost" id="home">← TEN</button>
     </div>
     <div class="logbox" id="log">${G.log.slice(-30).map(l=>`<div class="${l.cls||''}">${esc(l.t)}</div>`).join('')}</div>
   </div>`;
@@ -2398,6 +2404,7 @@ function render(){
 function bind(){
   const e=$('#end'); if(e) e.onclick=()=>{ if(G.turn===G.me&&!G.over){ SEL=null;TGT=null; endTurn(); render(); } };
   const q=$('#quit'); if(q) q.onclick=()=>{ G=null; screenBuild(); };
+  const hm=$('#home'); if(hm) hm.onclick=()=>{ location.href='../index.html';   /* ⚠ '../' 는 file:// 에서 목록이 뜬다 */ };
   const ag=$('#again'); if(ag) ag.onclick=()=>{ G=null; screenBuild(); };
   SCR.querySelectorAll('[data-h]').forEach(el=>el.onclick=()=>{
     if(lpFired){lpFired=false;return;}
@@ -2532,6 +2539,7 @@ function screenBuild(){
         <button class="ghost" id="auto">자동 구성</button>
         <button class="ghost" id="clr">비우기</button>
         <button id="go"${(n<DECKMIN||n>DECKMAX)?' disabled':''}>싸우러 간다 →</button>
+        <button class="ghost" id="home">← TEN</button>
       </span>
     </div>
   </div>
@@ -2551,6 +2559,7 @@ function screenBuild(){
   SCR.querySelectorAll('[data-m]').forEach(b=>b.onclick=ev=>{ev.stopPropagation();
     const c=+b.dataset.m; if(DKB[c]){DKB[c]--;if(!DKB[c])delete DKB[c];screenBuild();}});
   $('#clr').onclick=()=>{DKB={};screenBuild();};
+  $('#home').onclick=()=>{ location.href='../index.html';   /* ⚠ '../' 는 file:// 에서 목록이 뜬다 */ };
   $('#auto').onclick=()=>{DKB=autoDeck(BUILD_EL);screenBuild();};
   $('#go').onclick=()=>{ startGame(deckList(DKB),BUILD_MARK); };
 }
@@ -2575,7 +2584,7 @@ function startGame(deck,mark){
   G={me:newPlayer(deck,mark,'나'),ai:newPlayer(aiDeck,aiEl,'상대'),turn:null,log:[],over:false};
   for(let i=0;i<7;i++){ draw(G.me); draw(G.ai); }
   G.turn=G.me;
-  log(`엘리멘츠 원정 시작 — 문장 ${ELKO[mark]} / 상대 ${ELKO[aiEl]}`,'b');
+  log(`엘리멘츠 대전 시작 — 문장 ${ELKO[mark]} / 상대 ${ELKO[aiEl]}`,'b');
   SEL=null;TGT=null;
   render();
 }

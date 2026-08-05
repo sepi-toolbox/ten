@@ -13,9 +13,13 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
   const txt=()=>p.$eval('#page .pgh',e=>e.textContent).catch(()=>'-');
 
   ok('시작 = 모드 선택', await pg()==='mode', `제목 "${await txt()}"`);
-  ok('모드 2개', (await p.$$eval('#page .chsi',e=>e.length))===2, '배틀 · 원정');
+  /* ⚠ 세 갈래다 — 원정 · 대전 · **엘리멘츠 대전**.
+     엘리멘츠는 규칙이 다른 게임이라 이 흐름을 안 타고 etg/ 페이지로 나간다.
+     그래서 여기서는 '단추가 있고 그 주소를 가리키는가' 까지만 본다. */
+  const modes=await p.$$eval('#page .chsi',e=>e.map(x=>x.dataset.m));
+  ok('모드 3개', modes.length===3&&modes.includes('etg'), modes.join(' · '));
 
-  // 배틀 흐름
+  // 대전 흐름
   await p.click('#page .chsi[data-m="battle"]'); await p.waitForTimeout(700);
   ok('→ 덱 선택', await pg()==='deck', `제목 "${await txt()}" · 후보 ${await p.$$eval('#page .chsi',e=>e.length)}종`);
   await p.click('#page .chsi[data-e="fire"]'); await p.waitForTimeout(700);

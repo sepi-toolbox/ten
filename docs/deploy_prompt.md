@@ -45,7 +45,7 @@ sepi-toolbox/ten 저장소로 작업한다. 아래를 그대로 지켜라. 순�
   python3 tools/build_cards_page.py     # 카드 뷰어(cards/index.html)
   python3 tools/dump_over.py            # 예산 초과 기록(고치지 말고 기록만)
 
-  엘리멘츠 원정 모드(prototype/etg/)를 건드렸다면 이 둘도 함께:
+  엘리멘츠 대전 모드(prototype/etg/)를 건드렸다면 이 둘도 함께:
   python3 tools/gen_etg.py              # 카드 데이터 → data/etg_cards.json · prototype/etg/data.js
   python3 tools/build_etg_page.py       # 틀 + **본편 카드 CSS** → prototype/etg/index.html
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""엘리멘츠 원정 페이지를 만든다. (멱등)
+"""엘리멘츠 대전 페이지를 만든다. (멱등)
 
   python3 tools/build_etg_page.py     →  prototype/etg/index.html
 
@@ -56,7 +56,7 @@ def main():
     ver = re.search(r"const VERSION='([\d.]+)'", tpl)
     with open(OUT, "w", encoding="utf-8") as f:
         f.write(out)
-    print(f"엘리멘츠 원정 페이지 생성: prototype/etg/index.html "
+    print(f"엘리멘츠 대전 페이지 생성: prototype/etg/index.html "
           f"({len(out)//1024} KB · 본편 CSS {len(css)//1024} KB · v{ver.group(1) if ver else '?'})")
 
 

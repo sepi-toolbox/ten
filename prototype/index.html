@@ -572,6 +572,11 @@ html,body{touch-action:pan-x pan-y}
   color:var(--gold);opacity:.6;text-align:center}
 .chs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;margin-top:4px}
 .chs.two{grid-template-columns:1fr 1fr}
+/* 세 갈래(원정·대전·엘리멘츠 대전) — 폰에서는 세로로 쌓아야 글이 안 뭉갠다 */
+.chs.three{grid-template-columns:1fr}
+@media(min-width:640px){.chs.three{grid-template-columns:repeat(3,1fr)}}
+.chs.three .chsi.big{padding:16px 18px}
+.chs.three .chsi.big b{font-size:19px;margin-bottom:4px}
 .chsi{text-align:left;padding:13px 15px;border-radius:8px;cursor:pointer;transition:.15s;
   border:1px solid var(--rule);border-left:5px solid var(--c,var(--gold));
   background:linear-gradient(150deg,rgba(46,33,22,.92),rgba(28,20,13,.92));
@@ -1591,7 +1596,7 @@ function newGame(){
 }
 
 /* ============ 로그라이크 모드 ============
-   배틀 모드와 엔진을 공유한다. RG.on 이 켜지면 전투 종료가 rgAfterBattle()로 빠진다.
+   대전 모드와 엔진을 공유한다. RG.on 이 켜지면 전투 종료가 rgAfterBattle()로 빠진다.
    플레이어 덱(RG.deck)은 런 동안 계속 쌓이고, 보상·상점·이벤트로 바뀐다.
    ⚠ 카드 풀은 시작할 때 고른 속성 하나로 고정된다(속성이 섞이지 않게). */
 /* ⚠ `fighting` — 지금 원정 **전투 중**인가. 전투 중에만 S.me.hp 를 RG.hp 로 흘려보낸다.
@@ -6237,10 +6242,12 @@ document.getElementById('restart').onclick=()=>{
 };
 
 /* ============ 앱 흐름 — 각 단계는 팝업이 아니라 '페이지' ============
-     시작 → 모드 선택 → 덱 선택 → (배틀: 상대 덱 선택 | 원정: 지도) → 게임
+     시작 → 모드 선택 → 덱 선택 → (대전: 상대 덱 선택 | 원정: 지도) → 게임
+     ⚠ 화면에는 '대전' 이라 적지만 **코드 이름은 그대로 `battle`** 이다(FLOW.mode).
+       엘리멘츠 대전은 규칙이 다른 게임이라 여기 흐름을 안 타고 etg/ 페이지로 나간다.
      패배 → 다시 도전하기(덱 선택으로) · 초기 화면(모드 선택으로)
-   ⚠ ?dev=1 로 열면 페이지를 건너뛰고 바로 배틀로 들어간다(자동 테스트용). */
-const VERSION='0.44.0', BUILD='2026-08-05';
+   ⚠ ?dev=1 로 열면 페이지를 건너뛰고 바로 대전으로 들어간다(자동 테스트용). */
+const VERSION='0.45.0', BUILD='2026-08-05';
 const DEV=/[?&]dev=1/.test(location.search);
 let PAGE=null, FLOW={mode:'battle', my:null, foe:null};
 function pageOpen(html){
@@ -6265,13 +6272,21 @@ function pgMode(){
   pageOpen(`<div class="pgstep">STEP 1 / 3</div>
     <div class="pgh">TE<span>N</span></div>
     <div class="pgs">무엇을 할지 고르세요.</div>
-    <div class="chs two">
-      <button class="chsi big" data-m="battle" style="--c:var(--gold)">
-        <b>배틀</b><s>덱 하나로 한 판.<br>상대 덱도 직접 고릅니다.</s></button>
+    <div class="chs three">
       <button class="chsi big" data-m="rogue" style="--c:var(--emerald)">
         <b>원정</b><s>지도를 따라 올라가며<br>덱을 키우는 로그라이크.</s></button>
+      <button class="chsi big" data-m="battle" style="--c:var(--gold)">
+        <b>대전</b><s>덱 하나로 한 판.<br>상대 덱도 직접 고릅니다.</s></button>
+      <button class="chsi big" data-m="etg" style="--c:var(--sapphire)">
+        <b>엘리멘츠 대전</b><s>Elements the Game 의 카드와 규칙.<br>퀀텀이 쌓이고 막기가 없습니다.</s></button>
     </div>`);
   document.querySelectorAll('#page .chsi').forEach(b=>b.onclick=()=>{
+    /* ⚠ 엘리멘츠는 **규칙이 다른 게임**이라 엔진을 공유하지 않는다(별도 페이지).
+       같은 scope 안이라 앱에서 눌러도 앱 안에서 열린다 — 브라우저로 튕기지 않는다.
+       sw.js SHELL 에 etg/ 를 넣어 둬야 오프라인에서도 열린다. */
+    /* ⚠ 'etg/' 로만 쓰면 안 된다 — file:// 로 열었을 때(검사와 로컬 확인이 그렇다)
+       디렉터리 목록이 뜨고 페이지가 통째로 안 뜬다. 파일 이름까지 적는다. */
+    if(b.dataset.m==='etg'){ veilRun('엘리멘츠로 가는 중…',()=>{location.href='etg/index.html';}); return; }
     FLOW.mode=b.dataset.m; veilRun('덱을 고르러 가는 중…',()=>pgDeck());
   });
 }
@@ -6279,7 +6294,7 @@ function pgMode(){
 function pgDeck(){
   PAGE='deck';
   const rogue=FLOW.mode==='rogue';
-  pageOpen(`<div class="pgstep">STEP 2 / 3 · ${rogue?'원정':'배틀'}</div>
+  pageOpen(`<div class="pgstep">STEP 2 / 3 · ${rogue?'원정':'대전'}</div>
     <div class="pgh">덱 선택</div>
     <div class="pgs">${rogue
       ? '고른 속성 카드만 원정 내내 나옵니다. 이기면 카드가 늘어납니다.'
@@ -6293,11 +6308,11 @@ function pgDeck(){
   });
   document.getElementById('pgBack').onclick=()=>veilRun('',()=>pgMode(),220);
 }
-/* 3단계(배틀) — 상대 덱 선택 */
+/* 3단계(대전) — 상대 덱 선택 */
 function pgFoe(){
   PAGE='foedeck';
   const others=Object.keys(DECKS);
-  pageOpen(`<div class="pgstep">STEP 3 / 3 · 배틀</div>
+  pageOpen(`<div class="pgstep">STEP 3 / 3 · 대전</div>
     <div class="pgh">상대 덱</div>
     <div class="pgs">내 덱 — <b style="color:var(--gold-bright)">${(EL[FLOW.my]||{}).ko} · ${DECKS[FLOW.my].name}</b></div>
     <div class="chs">
@@ -6313,13 +6328,13 @@ function pgFoe(){
   });
   document.getElementById('pgBack').onclick=()=>veilRun('',()=>pgDeck(),220);
 }
-/* 고른 두 덱으로 배틀 시작 */
+/* 고른 두 덱으로 대전 시작 */
 function startBattle(){
   RG.on=false; RG.fighting=false; EHP=null; EOPEN=null; RG.foe=null;
   DECKEL=FLOW.my; DECKLIST=DECKS[FLOW.my].list;
   PDECK=DECKS[FLOW.my].list; EDECK=DECKS[FLOW.foe||FLOW.my].list;
   document.getElementById('log').innerHTML='';
-  log(`배틀 — 나 ${(EL[FLOW.my]||{}).ko} vs 상대 ${(EL[FLOW.foe]||{}).ko}`,'t');
+  log(`대전 — 나 ${(EL[FLOW.my]||{}).ko} vs 상대 ${(EL[FLOW.foe]||{}).ko}`,'t');
   newGame();
 }
 /* 패배·승리 뒤 이동 */
@@ -6847,7 +6862,7 @@ document.addEventListener('pointercancel',()=>{
   setTimeout(bootDone,MAX+400);
 })();
 
-/* 시작 — 모드 선택 페이지부터. ?dev=1 이면 바로 배틀(자동 테스트용). */
+/* 시작 — 모드 선택 페이지부터. ?dev=1 이면 바로 대전(자동 테스트용). */
 if(DEV){ FLOW={mode:'battle',my:'steel',foe:'steel'}; startBattle(); }
 else { newGame(); pgMode(); }
 document.getElementById('verTag').textContent=`TEN v${VERSION} · ${BUILD}`;
