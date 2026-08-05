@@ -49,6 +49,10 @@ FILES = [
     ("cards/apple-touch-icon.png", "cards/apple-touch-icon.png"),
     ("tools/card_gallery.html",    "gallery.html"),
     ("tools/card_editor.html",     "editor.html"),
+    # 엘리멘츠 원정 — 본편과 규칙이 다른 별도 모드. data.js 는 gen_etg.py 가 만든다.
+    # ⚠ 본편 index.html 과 파일을 하나도 공유하지 않는다. 둘 다 올려야 모드가 뜬다.
+    ("prototype/etg/index.html",   "prototype/etg/index.html"),
+    ("prototype/etg/data.js",      "prototype/etg/data.js"),
 ]
 DOCS = ["sample_decks", "land_system", "meta_design", "element_design",
         "keywords", "spells", "effects_table", "design_deck", "art_prompts"]

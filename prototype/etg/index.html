@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>엘리멘츠 원정</title>
+<!--
+  엘리멘츠 원정 모드 — Elements the Game 의 카드와 규칙을 그대로 옮긴 별도 모드.
+
+  ■ 왜 파일이 따로인가
+    TEN 본편(../index.html)과 **한 줄도 공유하지 않는다.** 자원 모델도, 전투도,
+    승패 조건도 다른 게임이기 때문이다. 본편에 끼워 넣었다면 manaLeft·strike·
+    cleanup 같은 단일 통로를 전부 '모드에 따라 갈라지는' 함수로 만들어야 했고,
+    그 순간 본편의 40개 검사가 전부 이 모드의 인질이 된다. 그래서 나눴다.
+
+  ■ 카드
+    data.js (tools/gen_etg.py 가 만든다) 만 읽는다. TEN 의 POOL 은 쳐다보지 않는다.
+    반대로 TEN 쪽 build_proto_data.py 도 etg_cards.json 을 읽지 않는다. 양방향으로 막혀 있다.
+
+  ■ 원작 규칙 중 여기서 지킨 것
+    · 콴타는 **속성별로 쌓인다**(최대 75). 턴마다 초기화되지 않는다. ← TEN 과 가장 큰 차이
+    · 기둥/탑/진자와 문장은 **자기 턴이 끝날 때** 콴타를 만든다 (openEtG v_endturn 순서 그대로)
+    · **막기가 없다.** 크리처는 언제나 상대 얼굴을 때리고, 방패만 그 피해를 깎는다
+    · 소환 멀미가 없다 — 낸 턴에 바로 때리고 능력도 쓴다
+    · 체력 100, 덱 30~60장, 같은 카드 6장까지, 손패 8장 상한, 덱이 마르면 패배
+    · 크리처 23칸 · 기물 16칸 · 무기 1 · 방패 1
+-->
+<style>
+:root{
+  --bg:#0b0d12; --pane:#161a24; --line:#2a3142; --ink:#e8ecf5; --dim:#8b93a7;
+  --e0:#998866; --e1:#aa5599; --e2:#778899; --e3:#996633; --e4:#776655; --e5:#448800;
+  --e6:#aa3311; --e7:#2255aa; --e8:#bbaa55; --e9:#3388dd; --e10:#aa8800; --e11:#443355;
+  --e12:#66ccdd;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+  font:14px/1.45 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+  overscroll-behavior:none;user-select:none}
+body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+#app{max-width:520px;margin:0 auto;padding:6px 8px 8px}
+h1{font-size:17px;margin:6px 0 2px}
+.sub{color:var(--dim);font-size:12px;margin:0 0 10px}
+button{font:inherit;color:var(--ink);background:#222839;border:1px solid var(--line);
+  border-radius:9px;padding:9px 13px;cursor:pointer}
+button:active{transform:translateY(1px)}
+button[disabled]{opacity:.4}
+button.go{background:#2c5fa8;border-color:#3f7fd6}
+button.warn{background:#7a2d2d;border-color:#a04747}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.pane{background:var(--pane);border:1px solid var(--line);border-radius:12px;padding:8px;margin:6px 0}
+
+/* ── 콴타 막대 ── */
+.qbar{display:grid;grid-template-columns:repeat(12,1fr);gap:2px;margin:4px 0}
+.q{text-align:center;font-size:10px;padding:2px 0;border-radius:4px;background:#11141c;
+  border:1px solid #232838;line-height:1.1}
+.q b{display:block;font-size:12px}
+.q.z{opacity:.32}
+
+/* ── 판 ── */
+.slots{display:grid;gap:3px;margin:3px 0}
+.slots.cr{grid-template-columns:repeat(6,1fr)}
+.slots.pm{grid-template-columns:repeat(8,1fr)}
+.cell{min-height:38px;border:1px solid #222838;border-radius:6px;background:#10131a;
+  font-size:9px;line-height:1.12;padding:2px;overflow:hidden;position:relative;text-align:center}
+.cell.on{cursor:pointer}
+.cell .nm{display:block;font-size:8.5px;color:#cfd6e6;word-break:keep-all}
+.cell .st{display:block;font-size:10px;font-weight:700}
+.cell.tgt{outline:2px solid #ffcc44;outline-offset:-2px}
+.cell.rdy{box-shadow:inset 0 0 0 1px #5ec27a}
+.cell.frz{filter:hue-rotate(160deg) saturate(1.6)}
+.cell.pois::after{content:'☠';position:absolute;right:1px;top:0;font-size:8px;color:#9f6}
+.tag{position:absolute;left:1px;top:0;font-size:7px;color:#ffd}
+.fixed{display:flex;gap:4px}
+.fixed .cell{flex:1}
+
+/* ── 손패 ── */
+.hand{display:flex;gap:4px;overflow-x:auto;padding:2px 0 6px}
+.hc{flex:0 0 72px;min-height:78px;border:1px solid #2a3142;border-radius:8px;background:#141824;
+  padding:16px 4px 4px;font-size:9.5px;line-height:1.2;cursor:pointer;position:relative;
+  word-break:keep-all;overflow-wrap:anywhere}
+.hc .cost{position:absolute;right:4px;top:3px;font-size:10px;font-weight:700;
+  background:#0d1018;border-radius:6px;padding:0 4px}
+.hc.no{opacity:.4}
+.hc.sel{outline:2px solid #ffcc44}
+.hc .kd{color:var(--dim);font-size:8px}
+
+.log{height:96px;overflow-y:auto;font-size:11.5px;line-height:1.5;background:#0e1119;
+  border:1px solid var(--line);border-radius:8px;padding:6px}
+.log div{border-bottom:1px solid #171b26;padding:1px 0}
+.log .a{color:#ffd68a}.log .b{color:#8ad2ff}.log .c{color:#ff9a9a}
+.hpbar{height:8px;background:#20242f;border-radius:4px;overflow:hidden;margin:3px 0}
+.hpbar i{display:block;height:100%;background:linear-gradient(90deg,#4caf50,#8bc34a)}
+.hpbar.foe i{background:linear-gradient(90deg,#e05252,#f08a5d)}
+.side{display:flex;justify-content:space-between;font-size:12px;align-items:center}
+.mk{font-size:11px;padding:1px 6px;border-radius:10px;border:1px solid var(--line)}
+#tip{position:fixed;left:8px;right:8px;bottom:8px;max-width:504px;margin:0 auto;z-index:9;
+  background:#1b2131;border:1px solid #39415a;border-radius:10px;padding:8px 10px;font-size:12px;
+  display:none;box-shadow:0 6px 20px rgba(0,0,0,.55)}
+#tip b{color:#ffd68a}
+.small{font-size:11px;color:var(--dim)}
+.deckrow{display:flex;justify-content:space-between;gap:6px;padding:4px 2px;border-bottom:1px solid #1b2030;
+  font-size:12px;align-items:center}
+.deckrow .cnt{font-variant-numeric:tabular-nums;color:#ffd68a}
+.pill{display:inline-block;padding:1px 7px;border-radius:9px;border:1px solid var(--line);font-size:11px}
+.scroll{max-height:46vh;overflow-y:auto}
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>엘리멘츠 원정 <span class="small" id="ver"></span></h1>
+  <p class="sub">Elements the Game 의 카드와 규칙을 그대로 옮긴 별도 모드입니다. TEN 본편 카드는 한 장도 나오지 않습니다.</p>
+  <div id="screen"></div>
+</div>
+<div id="tip"></div>
+
+<script src="data.js"></script>
+<script>
+'use strict';
+const VERSION='0.1.0', BUILD='2026-08-05';
+document.getElementById('ver').textContent='v'+VERSION;
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   0. 원작 상수
+   ═══════════════════════════════════════════════════════════════════════════ */
+const ELS=ETG.els, ELKO=ETG.elko;
+const QCAP=75;              /* 원작(Original)의 속성별 콴타 상한 */
+const HANDMAX=8;            /* 손패 상한 — 넘치면 뽑은 카드가 버려진다 */
+const MAXCR=23, MAXPM=16;   /* 크리처 23칸 · 기물 16칸 */
+const STARTHP=100;
+const DECKMIN=30, DECKMAX=60, COPYMAX=6;
+
+const CARD={};              /* code → 카드 */
+ETG.cards.forEach(c=>{CARD[c.code]=c;});
+const BYNAME={};
+ETG.cards.forEach(c=>{ if(!c.up) BYNAME[c.en]=c; });
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   1. 능력 — 구현한 것만 여기 있다
+   ───────────────────────────────────────────────────────────────────────────
+   ⚠⚠ 여기 없는 능력을 가진 카드는 **덱에 들어가지 않는다**(playable() 참조).
+      "카드는 있는데 조용히 아무 일도 안 일어난다" 를 만들지 않기 위해서다.
+      빠진 목록은 docs/etg_import.md 에 그대로 적어 뒀다.
+
+   각 항목: {t:대상종류, f:함수(g,me,src,tgt,arg), d:'한국어 설명'}
+     대상종류 — null(대상없음) · 'cr'(아무 크리처) · 'foecr' · 'mycr'
+                · 'pm'(아무 기물) · 'foepm' · 'any'(크리처+무기+방패+기물)
+                · 'crw'(크리처 또는 무기)
+   ═══════════════════════════════════════════════════════════════════════════ */
+const SK={};
+const def=(id,t,d,f)=>{SK[id]={t,d,f};};
+
+/* ── 콴타 생산 ─────────────────────────────────────────────────────────── */
+def('pillar',null,'매 턴 끝에 자기 속성 콴타 1을 만든다 (무색이면 무작위 3)',(g,me,s)=>{
+  const n=s.charges||1, e=s.c.el;
+  if(e===0) for(let i=0;i<3*n;i++) gain(me,1+rnd(12),1); else gain(me,e,n);
+});
+def('pend',null,'매 턴 끝에 자기 속성과 문장 속성을 번갈아 만든다',(g,me,s)=>{
+  s.pendstate=!s.pendstate;
+  const e=s.pendstate?(me.mark||s.c.el):s.c.el, n=s.charges||1;
+  if(e===0) for(let i=0;i<3*n;i++) gain(me,1+rnd(12),1); else gain(me,e,n);
+});
+def('pillar1',null,'낼 때 자기 속성 콴타 1을 더 준다',(g,me,s)=>{
+  const e=s.c.el; if(e===0) for(let i=0;i<3;i++) gain(me,1+rnd(12),1); else gain(me,e,1);
+});
+def('quanta',null,'문장 — 매 턴 끝에 콴타를 만든다',(g,me,s)=>{ gain(me,s.c.el||1+rnd(12),1); });
+def('nova',null,'12속성 콴타를 1씩 얻는다. 한 턴에 3장 이상 쓰면 특이점이 나온다',(g,me)=>{
+  for(let e=1;e<=12;e++) gain(me,e,1);
+  me.nova=(me.nova||0)+1;
+  if(me.nova>=3&&BYNAME['Singularity']) summon(me,BYNAME['Singularity'].code);
+});
+def('v_relic',null,'아무 일도 하지 않는다 (팔아서 값을 받는 카드)',()=>{});
+def('photosynthesis',null,'생명 콴타 2를 얻고, 이 능력을 다시 쓸 수 있게 된다',(g,me,s)=>{
+  gain(me,5,2); s.used=false;
+});
+def('soulcatch',null,'크리처가 죽을 때마다 죽음 콴타를 얻는다',(g,me,s)=>{ gain(me,2,s.up?3:2); });
+def('empathy',null,'턴 끝에 자기 크리처 수만큼 회복한다',(g,me)=>{ heal(me,me.cr.filter(Boolean).length); });
+def('v_gratitude',null,'턴 끝에 생명 콴타 1과 체력 5를 얻는다',(g,me,s)=>{ gain(me,5,1); heal(me,s.up?5:3); });
+def('v_divinity',null,'최대 체력이 늘고 그만큼 회복한다',(g,me,s)=>{ me.maxhp+=s.up?24:16; heal(me,s.up?24:16); });
+def('siphon',null,'상대 콴타 1을 빼앗아 어둠 콴타로 바꾼다',(g,me,s)=>{
+  const f=foe(me); const es=[]; for(let e=1;e<=12;e++) if(f.q[e]>0) es.push(e);
+  if(!es.length)return; const e=es[rnd(es.length)]; f.q[e]--; gain(me,11,1);
+});
+
+/* ── 피해 ──────────────────────────────────────────────────────────────── */
+def('v_firebolt','any','불 콴타 10마다 피해 3씩. 기본 3',(g,me,s,t)=>{
+  spellDmg(me,t,3+3*Math.floor(me.q[6]/10));
+});
+def('v_icebolt','any','물 콴타 10마다 피해 2씩. 기본 2 · 확률로 얼린다',(g,me,s,t)=>{
+  const d=2+2*Math.floor(me.q[7]/10); spellDmg(me,t,d);
+  if(t&&t.kind==='creature'&&Math.random()<0.25+0.05*d) freeze(t,3);
+});
+def('v_drainlife','any','시간… 어둠 콴타 10마다 2씩 흡수한다. 기본 2',(g,me,s,t)=>{
+  const d=2+2*Math.floor(me.q[11]/10); heal(me,spellDmg(me,t,d));
+});
+def('lightning','any','피해 5',(g,me,s,t)=>{ spellDmg(me,t,5); });
+def('v_holylight','any','대상을 10 회복시킨다. 야행성이면 대신 10 피해',(g,me,s,t)=>{
+  if(t&&t.flags&&t.flags.includes('nocturnal')) spellDmg(me,t,10); else healThing(t,10);
+});
+def('v_storm',null,'상대 크리처 전부에게 피해',(g,me,s,t,a)=>{
+  foe(me).cr.forEach(u=>{ if(u) spellDmg(me,u,a||3); });
+});
+def('v_thorn',null,'때린 크리처에게 피해 2 · 확률로 독',(g,me,s,t)=>{
+  if(!t)return; spellDmg(me,t,2); if(Math.random()<0.75) t.poison=(t.poison||0)+1;
+});
+def('v_firewall',null,'때린 크리처에게 피해 1',(g,me,s,t)=>{ if(t) spellDmg(me,t,1); });
+def('snipe','foecr','대상 크리처에게 피해 3',(g,me,s,t)=>{ spellDmg(me,t,3); });
+def('v_swarm',null,'공격력이 같은 편 반딧불 수만큼이다',()=>{});
+def('catapult','mycr','자기 크리처를 던진다. 체력이 클수록 큰 피해',(g,me,s,t)=>{
+  const hp=t.hp, d=Math.ceil(hp*100/(hp+100));
+  spellDmg(me,foe(me),d); if(t.frozen) spellDmg(me,foe(me),d);
+  kill(t);
+});
+def('v_blackhole',null,'상대 콴타를 최대 3씩 빨아들여 회복한다',(g,me)=>{
+  const f=foe(me); let tot=0;
+  for(let e=1;e<=12;e++){ const n=Math.min(3,f.q[e]); f.q[e]-=n; tot+=n; }
+  heal(me,tot);
+});
+def('v_plague',null,'상대 크리처 전부에게 독 1',(g,me)=>{
+  foe(me).cr.forEach(u=>{ if(u) u.poison=(u.poison||0)+1; });
+});
+def('poison','cr','대상에게 독을 준다',(g,me,s,t,a)=>{ addPoison(t,a||1); });
+def('poisonfoe',null,'상대에게 독을 준다',(g,me,s,t,a)=>{ foe(me).poison+=(a||1); });
+def('aflatoxin','cr','대상에게 독 2. 그 몸이 죽으면 악성 세포가 된다',(g,me,s,t)=>{
+  addPoison(t,2); t.afla=true;
+});
+def('virusinfect',null,'자신을 희생해 대상에게 독을 준다',(g,me,s,t)=>{ addPoison(t,1); kill(s); });
+def('v_pandemonium',null,'모든 크리처에게 무작위 효과',(g,me)=>{
+  all().forEach(u=>{ if(u&&u.kind==='creature') randomEffect(owner(u),u); });
+});
+def('v_cseed','cr','대상에게 무작위 효과',(g,me,s,t)=>{ randomEffect(me,t); });
+
+/* ── 파괴·제거 ─────────────────────────────────────────────────────────── */
+def('destroy','pm','대상 기물을 파괴한다',(g,me,s,t)=>{ destroyPerm(t); });
+def('v_steal','pm','대상 기물을 빼앗는다',(g,me,s,t)=>{ stealPerm(me,t); });
+def('earthquake',null,'가장 많이 쌓인 기둥 더미에서 3장을 부순다',(g,me,s,t,a)=>{
+  const f=foe(me); let best=null;
+  f.pm.forEach(p=>{ if(p&&p.charges&&(!best||p.charges>best.charges)) best=p; });
+  if(best){ best.charges-=(a||3); if(best.charges<=0) destroyPerm(best); }
+});
+def('v_scramble',null,'상대 콴타를 뒤섞는다',(g,me)=>{
+  const f=foe(me); let n=0;
+  for(let e=1;e<=12;e++){ const k=Math.min(f.q[e],rnd(3)); f.q[e]-=k; n+=k; }
+  for(let i=0;i<n;i++) gain(f,1+rnd(12),1);
+});
+def('void',null,'상대 최대 체력을 3 깎는다',(g,me)=>{ const f=foe(me); f.maxhp-=3; if(f.hp>f.maxhp)f.hp=f.maxhp; });
+def('lobotomize','cr','대상의 능력을 지운다',(g,me,s,t)=>{ t.sk=[]; t.silenced=true; });
+def('v_silence',null,'상대는 이번 턴에 카드를 낼 수 없다',(g,me)=>{ foe(me).sabbath=true; });
+def('appease','mycr','자기 크리처를 희생하고 +1|+1 을 얻는다',(g,me,s,t)=>{ kill(t); buff(s,1,1); });
+def('devour','foecr','체력이 자기보다 작은 크리처를 먹고 +1|+1',(g,me,s,t)=>{
+  if(t.hp>=s.hp)return; kill(t); buff(s,1,1);
+});
+
+/* ── 강화·약화 ─────────────────────────────────────────────────────────── */
+def('bless','cr','대상에게 +3|+3',(g,me,s,t)=>{ buff(t,3,3); });
+def('rage','cr','대상에게 +5|-5. 얼어붙은 상태를 푼다',(g,me,s,t)=>{
+  const n=s.up?6:5; buff(t,n,-n); if(t)t.frozen=0;
+});
+def('platearmor','cr','대상에게 +0|+N',(g,me,s,t,a)=>{ buff(t,0,a||4); });
+def('v_stoneform',null,'+0|+20 을 얻고 능력을 잃는다',(g,me,s)=>{ buff(s,0,20); s.sk=[]; });
+def('growth',null,'공격할 때마다 커진다',(g,me,s,t,a)=>{ buff(s,a||2,a||2); });
+def('v_bblood','cr','대상에게 +0|+20, 5턴 동안 못 움직인다',(g,me,s,t)=>{ buff(t,0,20); t.delayed=5; });
+def('v_slow','cr','대상을 2턴 동안 못 움직이게 한다',(g,me,s,t)=>{ t.delayed=(t.delayed||0)+2; });
+def('freeze','crw','대상을 얼린다',(g,me,s,t,a)=>{ freeze(t,a||3); });
+def('v_cold',null,'때린 크리처를 확률로 3턴 얼린다',(g,me,s,t)=>{ if(t&&Math.random()<0.3) freeze(t,3); });
+def('purify','cr','독을 씻어내고 오히려 -2 를 준다',(g,me,s,t)=>{ t.poison=Math.min((t.poison||0)-2,-2); });
+def('acceleration','cr','공격할 때마다 +N|-1',(g,me,s,t,a)=>{ t.sk=[{ev:'ownattack',id:'accel',arg:(a||2)}]; });
+def('accel',null,'공격할 때마다 +N|-1',(g,me,s,t,a)=>{ buff(s,a||2,-1); });
+def('adrenaline','cr','대상이 한 턴에 여러 번 공격한다. 약할수록 더 많이',(g,me,s,t)=>{ t.adren=1; });
+def('momentum','cr','대상이 방패를 무시한다',(g,me,s,t)=>{ if(!t.flags.includes('momentum'))t.flags.push('momentum'); });
+def('quint','cr','대상이 실체를 잃는다 (겨눌 수 없고 얼지 않는다)',(g,me,s,t)=>{
+  if(!t.flags.includes('immaterial'))t.flags.push('immaterial'); t.frozen=0; t.delayed=0;
+});
+def('liquid','foecr','대상의 능력을 흡혈로 바꾸고 독 1을 준다',(g,me,s,t)=>{
+  t.sk=[{ev:'hit',id:'vampire',arg:null}]; addPoison(t,1);
+});
+def('antimatter','cr','대상의 공격력 부호를 뒤집는다',(g,me,s,t)=>{ t.atk=-t.atk; });
+def('gpullspell','foecr','대상이 그 편의 모든 공격을 대신 맞는다',(g,me,s,t)=>{ owner(t).gpull=t; });
+def('gpull',null,'그 편의 모든 공격을 대신 맞는다',(g,me,s)=>{ me.gpull=s; });
+def('nightmare','foecr','상대 손패를 그 카드로 채우고, 채운 만큼 피해를 준다',(g,me,s,t)=>{
+  const f=foe(me), n=HANDMAX-f.hand.length;
+  for(let i=0;i<n;i++) f.hand.push(mk(t.c.code,f));
+  spellDmg(me,f,n*2); heal(me,n*2);
+});
+def('v_obsession',null,'손패가 넘쳐 버려지면 그 주인이 피해를 받는다',(g,me)=>{ dmgP(me,10); });
+def('v_integrity',null,'파편을 합쳐 골렘을 만든다 (여기서는 4|4 골렘 한 몸)',(g,me)=>{
+  const c=BYNAME['Shard Golem']; if(!c)return;
+  const u=summon(me,c.code); if(u){u.atk=4;u.hp=u.maxhp=4;}
+});
+
+/* ── 회복 ──────────────────────────────────────────────────────────────── */
+def('mend','cr','대상 크리처를 5 회복시킨다',(g,me,s,t)=>{ healThing(t,s.up?10:5); });
+def('v_heal',null,'체력을 20 회복한다',(g,me,s)=>{ heal(me,s.up?24:20); });
+def('miracle',null,'체력을 최대치보다 1 낮게 채운다. 빛 콴타를 모두 잃는다',(g,me)=>{
+  me.q[8]=0; me.hp=Math.max(me.hp,me.maxhp-1);
+});
+def('regenerate',null,'턴 끝에 5 회복한다',(g,me)=>{ heal(me,5); });
+def('v_hope',null,'빛을 내는 크리처 수만큼 피해를 막는다',()=>{});
+def('vampire',null,'준 피해만큼 주인이 회복한다',(g,me,s,t,a)=>{ heal(me,a||0); });
+
+/* ── 소환·복제 ─────────────────────────────────────────────────────────── */
+def('summon',null,'몸을 하나 부른다',(g,me,s,t,a)=>{ const c=BYNAME[a]; if(c) summon(me,s.up&&c.upcode?c.upcode:c.code); });
+def('v_hatch',null,'무작위 크리처로 변한다',(g,me,s)=>{
+  const pool=ETG.cards.filter(c=>c.kind==='creature'&&!c.up&&playable(c));
+  const c=pool[rnd(pool.length)]; morph(s,c.code);
+});
+def('deja',null,'자신을 한 번 복제하고 이 능력을 잃는다',(g,me,s)=>{
+  const u=summon(me,s.c.code); if(u) u.sk=u.sk.filter(k=>k.id!=='deja'); s.sk=s.sk.filter(k=>k.id!=='deja');
+});
+def('mitosis',null,'자기 자신을 하나 더 소환한다',(g,me,s)=>{ summon(me,s.c.code); });
+def('mitosisspell','mycr','대상이 유사분열 능력을 얻는다',(g,me,s,t)=>{
+  t.sk=t.sk.concat([{ev:'cast',id:'mitosis',arg:null}]); t.cast=t.c.cost; t.castel=t.c.costel;
+});
+def('parallel','cr','대상을 그대로 복제해 자기 편에 놓는다',(g,me,s,t)=>{
+  const u=summon(me,t.c.code); if(u){ u.atk=t.atk; u.hp=u.maxhp=t.hp; u.flags=t.flags.slice(); }
+});
+def('fractal','foecr','손패를 그 크리처로 채운다',(g,me,s,t)=>{
+  me.q[12]=0; while(me.hand.length<HANDMAX) me.hand.push(mk(t.c.code,me));
+});
+def('phoenix',null,'죽으면 잿더미가 남는다',(g,me,s)=>{
+  const c=BYNAME['Ash']; if(c) summonAt(me,s.up&&c.upcode?c.upcode:c.code,s.slot);
+});
+def('rebirth',null,'불사조로 되돌아간다',(g,me,s)=>{ const c=BYNAME['Phoenix']; if(c) morph(s,c.code); });
+def('v_nymph',null,'무작위 님프를 손에 넣는다',(g,me)=>{
+  const ns=ETG.cards.filter(c=>!c.up&&/Nymph$/.test(c.en)&&c.kind==='creature'&&playable(c));
+  if(ns.length&&me.hand.length<HANDMAX) me.hand.push(mk(ns[rnd(ns.length)].code,me));
+});
+def('v_serendipity',null,'무작위 카드 3장을 손에 넣는다',(g,me)=>{
+  const pool=ETG.cards.filter(c=>!c.up&&playable(c)&&c.kind!=='perm');
+  for(let i=0;i<3&&me.hand.length<HANDMAX;i++) me.hand.push(mk(pool[rnd(pool.length)].code,me));
+});
+def('boneyard',null,'크리처가 죽을 때마다 해골이 나온다',(g,me,s)=>{
+  const c=BYNAME['Skeleton']; if(c) summon(me,s.up&&c.upcode?c.upcode:c.code);
+});
+def('v_flyingweapon','pm','무기가 크리처가 되어 날아오른다',(g,me,s,t)=>{
+  if(!t||t.kind!=='weapon')return;
+  const u=summon(me,t.c.code); if(u){ u.kind='creature'; u.flags=u.flags.concat(['airborne']); }
+  me.weapon=null;
+});
+def('v_endow',null,'상대 무기의 능력치를 흉내 낸다',(g,me,s)=>{
+  const w=foe(me).weapon; if(!w)return; buff(s,w.atk,0);
+});
+
+/* ── 뽑기 ──────────────────────────────────────────────────────────────── */
+def('precognition',null,'카드를 1장 뽑고 상대 손패를 본다',(g,me)=>{ draw(me); me.seefoe=true; });
+def('hasten',null,'카드를 1장 뽑는다',(g,me)=>{ draw(me); });
+def('v_readiness','mycr','대상의 능력을 즉시 다시 쓸 수 있게 한다',(g,me,s,t)=>{ t.used=false; });
+def('salvage',null,'상대가 버린 카드를 손에 넣는다',()=>{});
+def('duality',null,'상대 덱 맨 위 카드를 복사해 손에 넣는다',(g,me)=>{
+  const f=foe(me); if(!f.deck.length||me.hand.length>=HANDMAX)return;
+  me.hand.push(mk(f.deck[f.deck.length-1],me));
+});
+
+/* ── 방패 ──────────────────────────────────────────────────────────────── */
+def('v_dshield',null,'엔트로피 콴타 1로 피해 3을 막는다',()=>{});
+def('skull',null,'때린 크리처가 확률로 해골이 된다',(g,me,s,t)=>{
+  if(!t||t.kind!=='creature')return;
+  if(Math.random()<0.5/Math.max(1,t.hp)){ const c=BYNAME['Skeleton']; if(c) morph(t,c.code); }
+});
+def('wings',null,'날지 않는 공격을 전부 막는다',()=>{});
+def('evade',null,'확률로 공격을 흘린다',()=>{});
+def('v_freeevade',null,'확률로 공격을 흘린다',()=>{});
+def('disshield',null,'에테르 콴타를 쓰는 동안 모든 피해를 막는다',()=>{});
+def('blockwithcharge',null,'뼈 하나로 공격 하나를 통째로 막는다',()=>{});
+def('gaincharge',null,'크리처가 죽을 때마다 뼈가 2 늘어난다',(g,me,s,t,a)=>{ s.charges=(s.charges||0)+(a||2); });
+def('losecharge',null,'턴마다 한 번씩 닳고, 다 닳으면 사라진다',(g,me,s)=>{
+  s.charges=(s.charges||0)-1; if(s.charges<=0) destroyPerm(s);
+});
+def('weight',null,'체력 5 이상인 크리처의 공격을 막는다',()=>{});
+def('solar',null,'막을 때마다 빛 콴타를 얻는다',(g,me)=>{ gain(me,8,1); });
+def('bow',null,'바람 문장이면 공격력이 1 오른다',()=>{});
+def('hammer',null,'중력·대지 문장이면 공격력이 1 오른다',()=>{});
+def('v_dagger',null,'죽음·어둠 문장이면 공격력이 1 오른다',()=>{});
+def('v_noluci',null,'방패를 무시한다',()=>{});
+
+/* ── 기타 지속 ─────────────────────────────────────────────────────────── */
+def('nightfall',null,'모든 야행성 크리처가 +1|+1',()=>{});
+def('sanctuary',null,'상대가 이 편의 것을 겨눌 수 없다. 턴마다 1 회복',(g,me)=>{ heal(me,1); });
+def('stasis',null,'모든 공격을 막는다 (해시계)',()=>{});
+def('upkeep',null,'유지 비용을 못 내면 사라진다',(g,me,s)=>{
+  if(!pay(me,s.c.costel,1)) destroyPerm(s);
+});
+def('sskin',null,'대지 콴타 수만큼 +0|+1',(g,me,s)=>{ buff(s,0,me.q[4]); });
+def('dive',null,'다음 공격의 공격력이 두 배가 된다',(g,me,s)=>{ s.dive=true; });
+def('bravery',null,'용기 — 카드를 2장 뽑고 공격력을 올린다',(g,me,s)=>{ draw(me); draw(me); });
+def('v_freedom',null,'확률로 공격이 방패를 무시하고 1.5배가 된다',()=>{});
+def('evolve',null,'비명벌레로 자란다',(g,me,s)=>{ const c=BYNAME['Shrieker']; if(c) morph(s,s.up&&c.upcode?c.upcode:c.code); });
+def('burrow',null,'땅에 숨는다 (공격력 절반, 겨눌 수 없다)',(g,me,s)=>{
+  s.burrowed=!s.burrowed;
+});
+def('guard',null,'대상 크리처를 막고 피해를 준다',(g,me,s,t)=>{ if(t){t.delayed=(t.delayed||0)+1; spellDmg(me,t,s.atk);} });
+def('paradox','foecr','공격력이 체력보다 큰 크리처를 죽인다',(g,me,s,t)=>{ if(t.atk>t.hp) kill(t); });
+def('deadalive',null,'죽었다가 살아난다 — 죽음 효과가 터진다',(g,me,s)=>{ trig(s,'death'); });
+def('web','foecr','대상이 비행을 잃는다',(g,me,s,t)=>{ t.flags=t.flags.filter(f=>f!=='airborne'); });
+def('ignite',null,'터져서 상대에게 20, 모든 크리처에게 1',(g,me,s)=>{
+  spellDmg(me,foe(me),20); all().forEach(u=>{ if(u&&u.kind==='creature') spellDmg(me,u,1); });
+  destroyPerm(s);
+});
+def('gas',null,'불안정한 기체를 놓는다',(g,me)=>{ const c=BYNAME['Unstable Gas']; if(c) playPerm(me,mk(c.code,me)); });
+def('steam',null,'+5 공격력을 얻고 매 턴 1씩 잃는다',(g,me,s)=>{ s.steam=(s.steam||0)+5; buff(s,5,0); });
+def('immolate',null,'자기 크리처를 태워 콴타를 얻는다',(g,me,s,t)=>{
+  if(!t)return; for(let e=1;e<=12;e++) gain(me,e,1); gain(me,6,t.hp+(s.up?7:5)); kill(t);
+});
+def('fiery',null,'불 콴타 5마다 공격력 1',()=>{});
+def('lycanthropy',null,'+5|+5 를 얻는다',(g,me,s)=>{ buff(s,5,5); s.sk=s.sk.filter(k=>k.id!=='lycanthropy'); });
+def('luciferin',null,'체력을 10 채우고 능력 없는 크리처에게 능력을 준다',(g,me)=>{ heal(me,10); });
+def('neuro',null,'때린 대상에게 신경독을 준다',(g,me,s,t)=>{ addPoison(t,1); });
+def('singularity',null,'특이점 — 매 턴 주인에게 나쁜 일이 일어난다',(g,me,s)=>{
+  const r=rnd(4);
+  if(r===0) buff(s,-1,0); else if(r===1) spellDmg(me,me,2);
+  else if(r===2) gain(me,1+rnd(12),2); else s.atk=-s.atk;
+});
+def('chimera',null,'자기 크리처를 전부 합친다',(g,me)=>{
+  let a=0,h=0; me.cr.forEach(u=>{ if(u){a+=u.atk;h+=u.hp;} });
+  me.cr=new Array(MAXCR).fill(null);
+  const c=BYNAME['Chimera']; const u=mk(c.code,me);
+  u.kind='creature'; u.atk=a; u.hp=u.maxhp=h; u.flags=['momentum']; u.slot=0; me.cr[0]=u;
+});
+def('skyblitz',null,'바람 콴타를 모두 쓰고 비행 크리처가 급강하한다',(g,me)=>{
+  me.q[9]=0; me.cr.forEach(u=>{ if(u&&u.flags.includes('airborne')) u.dive=true; });
+});
+def('phaseshield',null,'',()=>{});
+def('butterfly','cr','대상이 기물 파괴 능력을 얻는다',(g,me,s,t)=>{
+  if(t.atk<3||t.hp<3){ t.sk=[{ev:'cast',id:'destroy',arg:null}]; t.cast=3; t.castel=1; }
+});
+def('v_mutation','foecr','대상이 흉물이 되거나 죽는다',(g,me,s,t)=>{
+  const r=Math.random();
+  if(r<0.5) kill(t);
+  else { const c=BYNAME['Abomination']; if(c) morph(t,c.code); }
+});
+def('v_swarmhp',null,'같은 편 반딧불 수만큼 체력을 가진다',()=>{});
+def('dryspell',null,'모든 크리처에게 피해 2',(g,me)=>{ all().forEach(u=>{ if(u&&u.kind==='creature') spellDmg(me,u,2); });});
+def('v_swarm',null,'같은 편 반딧불 수만큼 공격한다',()=>{});
+
+/* ── 마지막 아홉 — 여기까지 넣어야 기본 239장이 전부 논다 ─────────────── */
+def('swave','any','대상에게 주문 피해 4. 얼어붙은 크리처는 그대로 죽는다',(g,me,s,t)=>{
+  if(t&&t.c&&t.frozen>0){ kill(t); return; }
+  spellDmg(me,t,4);
+});
+def('enchant','pm','대상 기물이 실체를 잃는다 (겨눌 수 없다)',(g,me,s,t)=>{
+  if(t&&!t.flags.includes('immaterial')) t.flags.push('immaterial');
+});
+def('v_rewind','foecr','대상 크리처를 주인의 덱 맨 위로 되돌린다',(g,me,s,t)=>{
+  if(!t||t.kind!=='creature')return;
+  const p=t.own;
+  /* 원작의 특수 처리 — 해골은 아무 크리처로, 미이라는 파라오로 되돌아간다 */
+  let code=t.c.code;
+  if(/^(Skeleton|Elite Skeleton)$/.test(t.c.en)){
+    const pool=ETG.cards.filter(c=>c.kind==='creature'&&!c.up&&playable(c));
+    code=pool[rnd(pool.length)].code;
+  } else if(/Mummy$/.test(t.c.en)){ const ph=BYNAME['Pharaoh']; if(ph) code=ph.code; }
+  const i=p.cr.indexOf(t); if(i>=0)p.cr[i]=null;
+  if(p.gpull===t)p.gpull=null;
+  t.dead=true;                    /* 죽은 게 아니라 치운 것 — death 는 안 돈다 */
+  p.deck.push(code);
+});
+def('wisdom','any','대상에게 +3|+0. 실체 없는 대상은 염동을 얻어 방패를 무시한다',(g,me,s,t)=>{
+  if(!t||!t.c)return;
+  buff(t,s.up?4:3,0);
+  if(t.flags.includes('immaterial')&&!t.flags.includes('psionic')) t.flags.push('psionic');
+});
+def('die',null,'이 카드를 희생한다',(g,me,s)=>{ destroyPerm(s); });
+def('sosa',null,'체력 48을 바치고 죽음 외 콴타를 모두 잃는다. 두 턴 동안 피해와 회복이 뒤바뀐다',
+  (g,me,s)=>{
+    dmgP(me,s.up?40:48);
+    for(let e=1;e<=12;e++) if(e!==2) me.q[e]=0;
+    me.sosa=2;
+  });
+def('accretion','pm','대상 기물을 부수고 +0|+15. 체력이 45를 넘으면 스스로 무너져 블랙홀이 손에 들어온다',
+  (g,me,s,t)=>{
+    destroyPerm(t); buff(s,0,15);
+    if(s.hp>45){ kill(s); const c=BYNAME['Black Hole'];
+      if(c&&me.hand.length<HANDMAX) me.hand.push(mk(c.code,me)); }
+  });
+def('evade100',null,'상대 공격을 통째로 막는다',()=>{});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   2. 카드가 놀 수 있는가 — 능력이 하나라도 없으면 덱에 안 넣는다
+   ═══════════════════════════════════════════════════════════════════════════ */
+const MISS=new Set();
+function playable(c){
+  if(c.kind==='perm'&&c.flags.includes('token')) return false;
+  for(const s of c.sk){ if(!SK[s.id]){ MISS.add(s.id); return false; } }
+  return true;
+}
+const POOLS={};   /* 속성 → 놀 수 있는 기본 카드 */
+ELS.forEach((e,i)=>{POOLS[i]=[];});
+ETG.cards.forEach(c=>{ if(!c.up&&playable(c)) POOLS[c.el].push(c); });
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   3. 판 상태
+   ═══════════════════════════════════════════════════════════════════════════ */
+let G=null, SEL=null, TGT=null;
+const rnd=n=>Math.floor(Math.random()*n);
+const foe=p=>p===G.me?G.ai:G.me;
+const owner=u=>u&&u.own?u.own:G.me;
+const all=()=>[].concat(G.me.cr,G.ai.cr,G.me.pm,G.ai.pm,[G.me.weapon,G.ai.weapon,G.me.shield,G.ai.shield]);
+
+function newPlayer(deck,mark,name){
+  return {name,hp:STARTHP,maxhp:STARTHP,q:new Array(13).fill(0),mark,
+    deck:shuffle(deck.slice()),hand:[],cr:new Array(MAXCR).fill(null),
+    pm:new Array(MAXPM).fill(null),weapon:null,shield:null,
+    poison:0,gpull:null,sabbath:false,nova:0,out:false,seefoe:false};
+}
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+/* 카드 한 장의 몸 */
+function mk(code,own){
+  const c=CARD[code];
+  return {c,code,kind:c.kind,own,atk:c.atk,hp:c.hp,maxhp:c.hp,
+    flags:c.flags.slice(),sk:c.sk.map(s=>({...s})),cast:c.cast,castel:c.castel,
+    charges:c.stats.charges||0,used:false,frozen:0,delayed:0,poison:0,
+    slot:-1,up:c.up,pendstate:false};
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   4. 기본 동작
+   ═══════════════════════════════════════════════════════════════════════════ */
+function gain(p,e,n){ p.q[e]=Math.min(QCAP,p.q[e]+n); }
+function canPay(p,e,n){ if(n<=0)return true;
+  if(e===0){ let t=0; for(let i=1;i<=12;i++)t+=p.q[i]; return t>=n; }
+  return p.q[e]>=n; }
+function pay(p,e,n){
+  if(!canPay(p,e,n))return false;
+  if(n<=0)return true;
+  if(e===0){ for(let i=0;i<n;i++){ let t=0; for(let k=1;k<=12;k++)t+=p.q[k];
+      let pick=rnd(t); for(let k=1;k<=12;k++){ if(pick<p.q[k]){p.q[k]--;break;} pick-=p.q[k]; } } }
+  else p.q[e]-=n;
+  return true;
+}
+/* ⚠ 희생의 파편(sosa)이 걸린 동안은 **피해와 회복이 서로 바뀐다.**
+   그래서 회복·피해가 이 두 함수를 반드시 거쳐야 한다. 어딘가에서 p.hp 를
+   직접 만지면 그 자리만 규칙이 안 먹는다. */
+function heal(p,n){
+  if(n<=0)return;
+  if(p.sosa>0){ p.hp-=n; if(p.hp<=0){p.hp=0;p.out=true;} return; }
+  p.hp=Math.min(p.maxhp,p.hp+n);
+}
+function healThing(t,n){ if(!t)return; if(t.hp!==undefined&&t.c){ t.hp=Math.min(t.maxhp,t.hp+n); } else heal(t,n); }
+function buff(u,a,h){ if(!u)return; u.atk+=a; u.maxhp+=h; u.hp+=h; if(u.hp<=0) kill(u); }
+function freeze(u,n){ if(!u||u.flags&&u.flags.includes('immaterial'))return; u.frozen=Math.max(u.frozen||0,n); }
+function addPoison(u,n){ if(!u)return; if(u.c) u.poison=(u.poison||0)+n; else u.poison+=n; }
+
+function log(t,cls){ G.log.push({t,cls}); if(G.log.length>200)G.log.shift(); }
+
+/* 피해 — 얼굴이면 방패를 안 탄다(주문 피해). 몸이면 체력을 깎는다 */
+function spellDmg(me,t,n){
+  if(!t)return 0;
+  if(t.c) return dmgThing(t,n);
+  return dmgP(t,n);
+}
+function dmgThing(u,n){
+  if(!u||!u.c)return 0;
+  u.hp-=n; if(u.hp<=0) kill(u);
+  return n;
+}
+function dmgP(p,n){
+  if(n<=0){ heal(p,-n); return 0; }
+  if(p.sosa>0){ p.hp=Math.min(p.maxhp,p.hp+n); return n; }
+  p.hp-=n; if(p.hp<=0){ p.hp=0; p.out=true; }
+  return n;
+}
+
+/* ── 죽음 — 한 통로로만 지나간다 ─────────────────────────────────────────
+   ⚠ 이 함수를 건너뛰고 배열에서 직접 지우면 death 유발이 통째로 사라진다.
+     TEN 본편에서 정확히 그 사고를 냈다(strike 의 insts.shift()). 되풀이하지 않는다. */
+function kill(u){
+  if(!u||!u.c||u.dead)return;
+  u.dead=true;
+  const p=u.own;
+  if(u.kind==='creature'){
+    const i=p.cr.indexOf(u); if(i>=0) p.cr[i]=null;
+    if(p.gpull===u) p.gpull=null;
+    log(`${u.c.ko} 파괴`,'c');
+    trig(u,'death');
+    if(u.afla){ const c=BYNAME['Malignant Cell']; if(c) summonAt(p,c.code,i); }
+    /* 아군 몸이 죽었다 — 무덤·영혼 포집기 같은 것들 */
+    [p,foe(p)].forEach(q=>{ q.pm.forEach(pm=>{ if(pm) trig(pm,'owndeath',u); }); });
+  } else destroyPerm(u);
+}
+function destroyPerm(u){
+  if(!u||!u.c)return;
+  const p=u.own;
+  if(p.weapon===u) p.weapon=null;
+  else if(p.shield===u) p.shield=null;
+  else { const i=p.pm.indexOf(u); if(i>=0) p.pm[i]=null; }
+  log(`${u.c.ko} 파괴`,'c');
+}
+function stealPerm(me,u){
+  const p=u.own;
+  if(p.weapon===u) p.weapon=null;
+  else if(p.shield===u) p.shield=null;
+  else { const i=p.pm.indexOf(u); if(i>=0) p.pm[i]=null; }
+  u.own=me; placePerm(me,u);
+  log(`${u.c.ko} 을(를) 빼앗았다`,'a');
+}
+function morph(u,code){
+  const c=CARD[code];
+  u.c=c; u.code=code; u.atk=c.atk; u.hp=u.maxhp=c.hp;
+  u.flags=c.flags.slice(); u.sk=c.sk.map(s=>({...s})); u.cast=c.cast; u.castel=c.castel;
+}
+function summon(p,code){ return summonAt(p,code,-1); }
+function summonAt(p,code,slot){
+  let i=(slot>=0&&!p.cr[slot])?slot:p.cr.indexOf(null);
+  if(i<0)return null;
+  const u=mk(code,p); u.slot=i; p.cr[i]=u;
+  trig(u,'play');
+  return u;
+}
+function placePerm(p,u){
+  if(u.kind==='weapon'){ p.weapon=u; return true; }
+  if(u.kind==='shield'){ p.shield=u; return true; }
+  /* 기둥은 쌓인다 — 같은 카드가 이미 있으면 charges 만 늘린다 */
+  if(u.c.flags.includes('stackable')){
+    const s=p.pm.find(x=>x&&x.code===u.code);
+    if(s){ s.charges+=(u.charges||1); return true; }
+  }
+  const i=p.pm.indexOf(null); if(i<0)return false;
+  u.slot=i; p.pm[i]=u; return true;
+}
+function playPerm(p,u){ return placePerm(p,u); }
+
+/* ── 능력 발동 ─────────────────────────────────────────────────────────── */
+function trig(u,ev,tgt,extra){
+  if(!u||!u.sk)return;
+  u.sk.forEach(s=>{
+    if(s.ev!==ev)return;
+    const h=SK[s.id]; if(!h)return;
+    h.f(G,u.own,u,tgt,typeof s.arg==='number'?s.arg:(extra!==undefined?extra:s.arg));
+  });
+}
+function hasSk(u,ev){ return u&&u.sk&&u.sk.some(s=>s.ev===ev&&SK[s.id]); }
+function activeSk(u){ return u&&u.sk?u.sk.find(s=>s.ev==='cast'&&SK[s.id]):null; }
+
+function randomEffect(me,u){
+  const opts=['bless','v_rage','freeze','v_slow','poison','antimatter','quint','platearmor'];
+  const id=opts[rnd(opts.length)];
+  SK[id].f(G,me,u,u,id==='freeze'?3:(id==='platearmor'?4:1));
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   5. 턴
+   ═══════════════════════════════════════════════════════════════════════════ */
+function draw(p){
+  if(!p.deck.length){ p.out=true; log(`${p.name} — 덱이 말랐다`,'c'); return; }
+  const code=p.deck.pop();
+  if(p.hand.length>=HANDMAX){ log(`${p.name} 손패가 넘쳐 카드가 버려졌다`,'c');
+    p.hand.forEach(h=>trig(h,'owndiscard')); return; }
+  p.hand.push(mk(code,p));
+}
+
+/* ⚠ 순서가 규칙이다 — openEtG v_endturn 그대로:
+     문장 → 상대 독 → 기물(기둥) → 크리처 공격 → 무기 공격 */
+function endTurn(){
+  const p=G.turn, f=foe(p);
+  /* 1) 문장 */
+  if(p.mark===0){ for(let i=0;i<3;i++) gain(p,1+rnd(12),1); } else gain(p,p.mark,1);
+  /* 2) 독 — 내 턴이 끝날 때 **상대**가 자기 독만큼 맞는다 */
+  if(f.poison>0){ dmgP(f,f.poison); log(`${f.name} 독 ${f.poison}`,'c'); }
+  /* 3) 기물 */
+  p.pm.forEach(pm=>{ if(pm){ trig(pm,'ownattack'); pm.used=false; if(pm.frozen>0)pm.frozen--; } });
+  /* 4) 크리처 */
+  p.cr.forEach(u=>{ if(u) attack(u); });
+  /* 5) 방패·무기 */
+  if(p.shield){ trig(p.shield,'ownattack'); p.shield.used=false; }
+  if(p.weapon) attack(p.weapon);
+  p.sabbath=false; p.nova=0; p.seefoe=false;
+
+  if(checkEnd())return;
+  /* 다음 사람 */
+  G.turn=f; f.sabbath=false; f.nova=0;
+  if(f.sosa>0) f.sosa--;
+  f.cr.forEach(u=>{ if(u) u.used=false; });
+  f.pm.forEach(u=>{ if(u) u.used=false; });
+  draw(f);
+  if(checkEnd())return;
+  log(`── ${f.name} 의 턴 ──`,'b');
+  if(f===G.ai) setTimeout(aiTurn,420);
+}
+
+function attack(u){
+  if(!u)return;
+  let loops=0;
+  do{
+    loops++;
+    if(u.kind==='creature'&&u.poison>0){ dmgThing(u,u.poison); if(u.dead)return; }
+    const p=u.own, f=foe(p);
+    trig(u,'ownattack');
+    if(u.dead)return;
+    if(u.frozen>0||u.delayed>0){ if(u.frozen>0)u.frozen--; if(u.delayed>0)u.delayed--; return; }
+    if(stasisOn(f)){ return; }
+    let atk=trueAtk(u);
+    if(u.dive){ atk*=2; u.dive=false; }
+    if(atk!==0){
+      if(u.flags.includes('psionic')) spellDmg(p,f,atk);
+      else if(u.flags.includes('momentum')||atk<0){ dmgP(f,atk); trig(u,'hit',f,atk); }
+      else if(f.gpull&&u.kind==='creature'){ const d=dmgThing(f.gpull,atk); trig(u,'hit',f.gpull,d); }
+      else {
+        const sh=f.shield;
+        let dmg=atk, blocked=0;
+        if(sh){ const r=shieldReduce(sh,u,atk); dmg=r.dmg; blocked=r.blocked;
+          if(dmg>0||blocked>0) trig(sh,'shield',u,dmg); }
+        if(dmg>0){ dmgP(f,dmg); trig(u,'hit',f,dmg); }
+      }
+    }
+    if(u.frozen>0)u.frozen--; if(u.delayed>0)u.delayed--;
+    u.used=false;
+    if(u.kind==='creature'&&u.hp<=0){ kill(u); return; }
+    trig(u,'postauto');
+  } while(u.adren&&loops<adrenCount(u));
+}
+function adrenCount(u){ const a=Math.abs(trueAtk(u)); return a<=1?4:a<=2?3:a<=4?2:1; }
+function trueAtk(u){
+  let a=u.atk;
+  if(u.burrowed) a=Math.ceil(a/2);
+  if(u.flags.includes('nocturnal')&&nightfallOn(u.own)) a+=1;
+  if(hasSk(u,'ownattack')&&u.sk.some(s=>s.id==='fiery')) a+=Math.floor(u.own.q[6]/5);
+  if(u.sk.some(s=>s.id==='v_swarm')) a=u.own.cr.filter(x=>x&&/Firefly$/.test(x.c.en)).length;
+  return a;
+}
+function nightfallOn(p){ return [G.me,G.ai].some(q=>q.pm.some(x=>x&&x.sk.some(s=>s.id==='nightfall'))); }
+function stasisOn(f){ return f.pm.some(x=>x&&x.sk.some(s=>s.id==='stasis')&&x.charges>0); }
+
+/* 방패 — 원작의 특수 방패를 이름이 아니라 **능력 id** 로 가른다 */
+function shieldReduce(sh,atk,dmg){
+  const s0=sh.sk.find(s=>s.ev==='shield')||{};
+  const id=s0.id, arg=s0.arg;
+  let dr=sh.hp||0;      /* 평범한 방패는 체력칸이 곧 감소량이다 */
+  const p=sh.own;
+  if(id==='wings') return atk.flags.includes('airborne')?{dmg,blocked:0}:{dmg:0,blocked:dmg};
+  /* ⚠ 회피 확률은 카드마다 다르다 — 안개 방패는 40. 값을 무시하고 반반으로 굴리면 안 된다 */
+  if(id==='evade'||id==='v_freeevade')
+    return Math.random()<((typeof arg==='number'?arg:50)/100)?{dmg:0,blocked:dmg}:{dmg,blocked:0};
+  if(id==='evade100') return {dmg:0,blocked:dmg};
+  if(id==='weight') return (atk.hp>=5&&atk.kind==='creature')?{dmg:0,blocked:dmg}:{dmg,blocked:0};
+  if(id==='disshield'){ if(pay(p,12,1)) return {dmg:0,blocked:dmg}; return {dmg,blocked:0}; }
+  if(id==='v_dshield'){ if(pay(p,1,Math.ceil(dmg/3))) return {dmg:0,blocked:dmg}; return {dmg,blocked:0}; }
+  if(id==='blockwithcharge'){ if(sh.charges>0){ sh.charges--; return {dmg:0,blocked:dmg}; } return {dmg,blocked:0}; }
+  /* 희망은 shield 가 아니라 ownattack 으로 걸려 있다 — id 로만 찾으면 0 이 된다 */
+  if(sh.sk.some(s=>s.id==='v_hope'))
+    dr=p.cr.filter(x=>x&&x.sk.some(s=>s.id==='solar'||s.id==='luciferin')).length;
+  const b=Math.min(dr,dmg);
+  return {dmg:dmg-b,blocked:b};
+}
+
+function checkEnd(){
+  if(G.over)return true;
+  if(G.me.out||G.ai.out){
+    G.over=true; G.win=G.ai.out&&!G.me.out;
+    log(G.win?'★ 이겼다':'☠ 졌다',G.win?'a':'c');
+    render(); return true;
+  }
+  return false;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   6. 카드 내기
+   ═══════════════════════════════════════════════════════════════════════════ */
+function costOf(u){ return {n:u.c.cost,e:u.c.costel}; }
+function canPlay(p,u){
+  if(p.sabbath)return false;
+  const c=costOf(u);
+  if(!canPay(p,c.e,c.n))return false;
+  if(u.kind==='creature'&&p.cr.indexOf(null)<0)return false;
+  if(u.kind==='perm'&&!u.c.flags.includes('stackable')&&p.pm.indexOf(null)<0)return false;
+  return true;
+}
+function needsTarget(u){
+  if(u.kind!=='spell')return null;
+  const s=u.sk.find(k=>k.ev==='cast');
+  return s&&SK[s.id]?SK[s.id].t:null;
+}
+function playCard(p,u,tgt){
+  const c=costOf(u);
+  if(!pay(p,c.e,c.n))return false;
+  const i=p.hand.indexOf(u); if(i>=0)p.hand.splice(i,1);
+  log(`${p.name} — ${u.c.ko}`,p===G.me?'b':'a');
+  if(u.kind==='spell'){ trig(u,'cast',tgt); }
+  else if(u.kind==='creature'){
+    const k=p.cr.indexOf(null); if(k<0)return false;
+    u.slot=k; p.cr[k]=u; trig(u,'play');
+  } else {
+    if(u.kind==='weapon'&&p.weapon) p.weapon=null;
+    if(u.kind==='shield'&&p.shield) p.shield=null;
+    if(!u.charges&&u.c.stats.charges) u.charges=u.c.stats.charges;
+    if(u.c.flags.includes('stackable')&&!u.charges) u.charges=1;
+    if(!placePerm(p,u))return false;
+    trig(u,'ownplay');
+  }
+  checkEnd();
+  return true;
+}
+function useAbility(p,u,tgt){
+  const s=activeSk(u); if(!s)return false;
+  if(u.used||u.frozen>0)return false;
+  if(!pay(p,u.castel,u.cast))return false;
+  u.used=true;
+  log(`${u.c.ko} — ${SK[s.id].d.split('.')[0]}`,p===G.me?'b':'a');
+  SK[s.id].f(G,p,u,tgt,typeof s.arg==='number'?s.arg:s.arg);
+  checkEnd();
+  return true;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   7. 아주 단순한 상대 — 낼 수 있는 걸 싼 것부터 낸다
+   ═══════════════════════════════════════════════════════════════════════════ */
+function aiTurn(){
+  if(G.over||G.turn!==G.ai)return;
+  const p=G.ai;
+  let guard=0;
+  while(guard++<40){
+    const opts=p.hand.filter(u=>canPlay(p,u));
+    if(!opts.length)break;
+    /* 기둥이 적으면 기둥부터, 아니면 싼 것부터 */
+    const pillars=opts.filter(u=>u.sk.some(s=>s.id==='pillar'||s.id==='pend'));
+    const pick=(pillars.length&&p.pm.filter(Boolean).length<6)?pillars[0]
+              :opts.sort((a,b)=>a.c.cost-b.c.cost)[0];
+    const t=needsTarget(pick);
+    if(!playCard(p,pick,t?aiTarget(t,p):null))break;
+    if(G.over)return;
+  }
+  p.cr.concat(p.pm).forEach(u=>{
+    if(u&&activeSk(u)&&!u.used){
+      const t=SK[activeSk(u).id].t;
+      useAbility(p,u,t?aiTarget(t,p):null);
+    }
+  });
+  if(G.over)return;
+  endTurn(); render();
+}
+function aiTarget(kind,p){
+  const f=foe(p);
+  const pool=kind==='mycr'?p.cr.filter(Boolean)
+    :kind==='foecr'?f.cr.filter(Boolean)
+    :kind==='cr'?p.cr.concat(f.cr).filter(Boolean)
+    :kind==='pm'||kind==='foepm'?f.pm.concat([f.weapon,f.shield]).filter(Boolean)
+    :kind==='crw'?f.cr.concat([f.weapon]).filter(Boolean)
+    :[f].concat(f.cr.filter(Boolean));
+  return pool.length?pool[rnd(pool.length)]:(kind==='any'?f:null);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   8. 화면
+   ═══════════════════════════════════════════════════════════════════════════ */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+const SCR=$('#screen');
+
+function elc(e){ return `var(--e${e})`; }
+
+/* ── 덱 만들기 ── */
+let BUILD_EL=6, BUILD_MARK=6, DKB={};
+function screenBuild(){
+  const pool=POOLS[BUILD_EL].concat(POOLS[0]);
+  const n=Object.values(DKB).reduce((a,b)=>a+b,0);
+  SCR.innerHTML=`
+  <div class="pane">
+    <div class="row">
+      <b>속성</b>
+      ${ELS.map((e,i)=>i?`<button data-el="${i}" style="padding:5px 8px;font-size:12px;${i===BUILD_EL?'background:'+elc(i)+';':''}">${ELKO[i]}</button>`:'').join('')}
+    </div>
+    <div class="row" style="margin-top:6px">
+      <b>문장</b>
+      ${ELS.map((e,i)=>i?`<button data-mk="${i}" style="padding:5px 8px;font-size:12px;${i===BUILD_MARK?'background:'+elc(i)+';':''}">${ELKO[i]}</button>`:'').join('')}
+    </div>
+    <p class="small" style="margin:6px 0 0">문장은 매 턴 끝에 그 속성 콴타 1을 공짜로 준다. 덱은 30~60장, 같은 카드는 6장까지.</p>
+  </div>
+  <div class="pane">
+    <div class="row" style="justify-content:space-between">
+      <b>덱 ${n}장</b>
+      <span>
+        <button id="auto">자동 구성</button>
+        <button id="clr">비우기</button>
+        <button id="go" class="go" ${n<DECKMIN||n>DECKMAX?'disabled':''}>싸우러 간다</button>
+      </span>
+    </div>
+    <p class="small" id="warn"></p>
+  </div>
+  <div class="pane scroll">
+    ${pool.map(c=>{
+      const k=DKB[c.code]||0;
+      return `<div class="deckrow">
+        <span><span class="pill" style="border-color:${elc(c.el)}">${ELKO[c.el]}</span>
+          ${esc(c.ko)} <span class="small">${esc(c.en)} · ${kindKo(c.kind)} ${c.cost?('·'+c.cost+ELKO[c.costel]):''}${c.kind==='creature'?' · '+c.atk+'|'+c.hp:''}</span></span>
+        <span class="row"><button data-m="${c.code}" style="padding:2px 9px">−</button>
+        <span class="cnt">${k}</span>
+        <button data-p="${c.code}" style="padding:2px 9px">+</button></span>
+      </div>`;}).join('')}
+  </div>`;
+  $('#warn').textContent = n<DECKMIN?`${DECKMIN-n}장 더 필요하다`:n>DECKMAX?`${n-DECKMAX}장 많다`:'';
+  SCR.querySelectorAll('[data-el]').forEach(b=>b.onclick=()=>{BUILD_EL=+b.dataset.el;screenBuild();});
+  SCR.querySelectorAll('[data-mk]').forEach(b=>b.onclick=()=>{BUILD_MARK=+b.dataset.mk;screenBuild();});
+  SCR.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{
+    const c=+b.dataset.p; const t=Object.values(DKB).reduce((a,x)=>a+x,0);
+    if((DKB[c]||0)<COPYMAX&&t<DECKMAX){DKB[c]=(DKB[c]||0)+1;screenBuild();}});
+  SCR.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{
+    const c=+b.dataset.m; if(DKB[c]){DKB[c]--;if(!DKB[c])delete DKB[c];screenBuild();}});
+  $('#clr').onclick=()=>{DKB={};screenBuild();};
+  $('#auto').onclick=()=>{DKB=autoDeck(BUILD_EL);screenBuild();};
+  $('#go').onclick=()=>{ startGame(deckList(DKB),BUILD_MARK); };
+}
+function kindKo(k){ return {creature:'크리처',spell:'주문',perm:'기물',weapon:'무기',shield:'방패'}[k]||k; }
+function deckList(b){ const a=[]; Object.keys(b).forEach(c=>{ for(let i=0;i<b[c];i++)a.push(+c); }); return a; }
+
+/* 자동 구성 — 기둥 12 + 싼 것 위주 */
+function autoDeck(el){
+  const d={};
+  const pool=POOLS[el].filter(c=>c.kind!=='perm'||!c.sk.some(s=>s.id==='pillar'||s.id==='pend'));
+  const pillar=POOLS[el].find(c=>c.sk.some(s=>s.id==='pillar'));
+  if(pillar) d[pillar.code]=6;
+  const qp=BYNAME['Quantum Pillar']; if(qp&&playable(qp)) d[qp.code]=6;
+  const sorted=pool.slice().sort((a,b)=>a.cost-b.cost);
+  let n=12;
+  for(const c of sorted){ if(n>=DECKMIN+6)break; const k=Math.min(COPYMAX,DECKMIN+6-n);
+    d[c.code]=k; n+=k; }
+  return d;
+}
+
+/* ── 전투 화면 ── */
+function startGame(deck,mark){
+  const aiEl=1+rnd(12);
+  const aiDeck=deckList(autoDeck(aiEl));
+  G={me:newPlayer(deck,mark,'나'),ai:newPlayer(aiDeck,aiEl,'상대'),turn:null,log:[],over:false};
+  G.me.foe=G.ai; G.ai.foe=G.me;
+  for(let i=0;i<7;i++){ draw(G.me); draw(G.ai); }
+  G.turn=G.me;
+  log(`엘리멘츠 원정 시작 — 문장 ${ELKO[mark]} / 상대 ${ELKO[aiEl]}`,'b');
+  SEL=null;TGT=null;
+  render();
+}
+
+function render(){
+  if(!G){ screenBuild(); return; }
+  const m=G.me,a=G.ai;
+  SCR.innerHTML=`
+  ${sideHtml(a,true)}
+  <div class="pane" style="border-color:#3a2530">
+    <div class="small" style="opacity:.6">상대 판</div>
+    ${slotsHtml(a,'pm')}
+    ${slotsHtml(a,'cr')}
+    <hr style="border:0;border-top:1px dashed #333c50;margin:8px 0 6px">
+    <div class="small" style="opacity:.6">내 판</div>
+    ${slotsHtml(m,'cr')}
+    ${slotsHtml(m,'pm')}
+  </div>
+  ${sideHtml(m,false)}
+  <div class="row" style="justify-content:space-between;margin:4px 0">
+    <span class="small">${G.over?(G.win?'이겼다':'졌다'):(G.turn===m?'내 턴':'상대 턴')} · 덱 ${m.deck.length}</span>
+    <span>
+      ${G.over?'<button id="again" class="go">다시</button>':''}
+      <button id="end" class="go" ${G.turn!==m||G.over?'disabled':''}>턴 종료</button>
+      <button id="quit" class="warn">덱으로</button>
+    </span>
+  </div>
+  <div class="hand" id="hand">${m.hand.map((u,i)=>handHtml(m,u,i)).join('')}</div>
+  <div class="log" id="log">${G.log.slice(-40).map(l=>`<div class="${l.cls||''}">${esc(l.t)}</div>`).join('')}</div>`;
+  const lg=$('#log'); if(lg) lg.scrollTop=lg.scrollHeight;
+  bind();
+}
+function sideHtml(p,foeSide){
+  return `<div class="pane" style="padding:6px 8px">
+    <div class="side"><b>${p.name}</b>
+      <span><span class="mk" style="border-color:${elc(p.mark)}">문장 ${ELKO[p.mark]}</span>
+      ${p.poison?`<span class="mk" style="border-color:#7c3">독 ${p.poison}</span>`:''}
+      <b>${p.hp}</b><span class="small">/${p.maxhp}</span></span></div>
+    <div class="hpbar ${foeSide?'foe':''}"><i style="width:${Math.max(0,p.hp/p.maxhp*100)}%"></i></div>
+    <div class="fixed">
+      ${fixedHtml(p,'weapon')}${fixedHtml(p,'shield')}
+    </div>
+    <div class="qbar">${[...Array(12)].map((_,i)=>{const e=i+1;
+      return `<div class="q ${p.q[e]?'':'z'}" style="border-color:${elc(e)}">
+        <b>${p.q[e]}</b>${ELKO[e].slice(0,2)}</div>`;}).join('')}</div>
+  </div>`;
+}
+function fixedHtml(p,k){
+  const u=p[k];
+  if(!u) return `<div class="cell"><span class="nm">${k==='weapon'?'무기':'방패'}</span></div>`;
+  return cellHtml(u,p);
+}
+/* 빈 칸을 23개·16개 다 그리면 화면이 빈 상자로 덮인다. 찬 것 + 한 줄 여백만 그린다.
+   대신 남은 칸 수를 글로 적어 준다 — 원작의 23/16 칸 제한이 규칙이기 때문이다. */
+function slotsHtml(p,k){
+  const arr=k==='cr'?p.cr:p.pm;
+  const used=arr.map(u=>u?cellHtml(u,p):null).filter(Boolean);
+  const n=k==='cr'?6:8, cap=k==='cr'?MAXCR:MAXPM;
+  if(!used.length) return `<div class="small" style="padding:1px 2px;opacity:.5">${k==='cr'?'크리처':'기물'} 없음</div>`;
+  const pad=(n-used.length%n)%n;
+  return `<div class="slots ${k}">${used.join('')}${'<div class="cell"></div>'.repeat(pad)}</div>
+    <div class="small" style="opacity:.45;padding:0 2px">${used.length}/${cap}</div>`;
+}
+function cellHtml(u,p){
+  const mine=p===G.me;
+  const act=activeSk(u);
+  const ready=mine&&act&&!u.used&&!u.frozen&&canPay(p,u.castel,u.cast)&&G.turn===G.me&&!G.over;
+  const tgtable=TGT&&isTarget(u);
+  return `<div class="cell on ${ready?'rdy':''} ${u.frozen?'frz':''} ${u.poison>0?'pois':''} ${tgtable?'tgt':''}"
+    data-uid="${uid(u)}" style="border-color:${elc(u.c.el)}">
+    ${u.charges?`<span class="tag">×${u.charges}</span>`:''}
+    <span class="nm">${esc(u.c.ko)}</span>
+    ${u.kind==='creature'||u.kind==='weapon'?`<span class="st">${trueAtk(u)}|${u.hp}</span>`:''}
+    ${u.kind==='shield'&&u.hp?`<span class="st">-${u.hp}</span>`:''}
+  </div>`;
+}
+function handHtml(p,u,i){
+  const ok=canPlay(p,u)&&G.turn===G.me&&!G.over;
+  return `<div class="hc ${ok?'':'no'} ${SEL===u?'sel':''}" data-hi="${i}" style="border-color:${elc(u.c.el)}">
+    <span class="cost">${u.c.cost||''}</span>
+    <b style="font-size:10px;display:block">${esc(u.c.ko)}</b>
+    <span class="kd" style="display:block">${kindKo(u.kind)}${u.kind==='creature'||u.kind==='weapon'?` ${u.atk}|${u.hp}`:''}</span>
+  </div>`;
+}
+const UIDS=new Map(); let UN=0;
+function uid(u){ if(!UIDS.has(u))UIDS.set(u,++UN); return UIDS.get(u); }
+function byUid(n){ for(const [u,v] of UIDS) if(v===n) return u; return null; }
+
+function isTarget(u){
+  if(!TGT)return false;
+  const k=TGT.kind, mine=u.own===G.me;
+  if(u.flags&&u.flags.includes('immaterial')&&k!=='any')return false;
+  if(k==='cr')return u.kind==='creature';
+  if(k==='mycr')return u.kind==='creature'&&mine;
+  if(k==='foecr')return u.kind==='creature'&&!mine;
+  if(k==='pm')return u.kind!=='creature';
+  if(k==='foepm')return u.kind!=='creature'&&!mine;
+  if(k==='crw')return u.kind==='creature'||u.kind==='weapon';
+  if(k==='any')return true;
+  return false;
+}
+
+function bind(){
+  const e=$('#end'); if(e) e.onclick=()=>{ if(G.turn===G.me&&!G.over){ SEL=null;TGT=null; endTurn(); render(); } };
+  const q=$('#quit'); if(q) q.onclick=()=>{ G=null; screenBuild(); };
+  const ag=$('#again'); if(ag) ag.onclick=()=>{ G=null; screenBuild(); };
+  SCR.querySelectorAll('[data-hi]').forEach(el=>el.onclick=()=>{
+    if(G.turn!==G.me||G.over)return;
+    const u=G.me.hand[+el.dataset.hi]; if(!u||!canPlay(G.me,u))return;
+    const t=needsTarget(u);
+    if(t){ SEL=u; TGT={kind:t,src:u,mode:'play'}; showTip(`${u.c.ko} — 대상을 고르세요`); }
+    else { playCard(G.me,u,null); SEL=null;TGT=null; hideTip(); }
+    render();
+  });
+  SCR.querySelectorAll('[data-uid]').forEach(el=>el.onclick=()=>{
+    const u=byUid(+el.dataset.uid); if(!u)return;
+    if(TGT&&isTarget(u)){
+      if(TGT.mode==='play') playCard(G.me,TGT.src,u);
+      else useAbility(G.me,TGT.src,u);
+      SEL=null;TGT=null;hideTip();render();return;
+    }
+    if(u.own===G.me&&G.turn===G.me&&!G.over){
+      const s=activeSk(u);
+      if(s&&!u.used&&!u.frozen&&canPay(G.me,u.castel,u.cast)){
+        const t=SK[s.id].t;
+        if(t){ TGT={kind:t,src:u,mode:'skill'}; showTip(`${u.c.ko} — 대상을 고르세요`); render(); return; }
+        useAbility(G.me,u,null); render(); return;
+      }
+    }
+    showTip(cardTip(u));
+  });
+  /* 얼굴을 겨눌 수 있어야 하는 주문(any) — 체력 막대를 누른다 */
+  SCR.querySelectorAll('.hpbar').forEach((el,i)=>el.onclick=()=>{
+    if(!TGT||TGT.kind!=='any')return;
+    const p=i===0?G.ai:G.me;
+    if(TGT.mode==='play') playCard(G.me,TGT.src,p); else useAbility(G.me,TGT.src,p);
+    SEL=null;TGT=null;hideTip();render();
+  });
+}
+function cardTip(u){
+  const c=u.c, ls=[];
+  ls.push(`<b>${esc(c.ko)}</b> <span class="small">${esc(c.en)} · ${ELKO[c.el]} ${kindKo(c.kind)}</span>`);
+  if(c.kind==='creature'||c.kind==='weapon') ls.push(`${trueAtk(u)}|${u.hp}`);
+  u.sk.forEach(s=>{ const h=SK[s.id]; if(h) ls.push((s.ev==='cast'&&u.cast?`[${u.cast}${ELKO[u.castel]}] `:'')+h.d); });
+  if(u.flags.length) ls.push(`<span class="small">${u.flags.map(f=>FLAGKO[f]||f).join(' · ')}</span>`);
+  if(u.frozen) ls.push(`얼어붙음 ${u.frozen}턴`);
+  if(u.poison) ls.push(`독 ${u.poison}`);
+  return ls.join('<br>');
+}
+const FLAGKO={airborne:'비행',momentum:'관성(방패 무시)',immaterial:'실체 없음',poisonous:'유독',
+  aquatic:'수생',ranged:'원거리',nocturnal:'야행성',burrowed:'굴속',reflective:'반사',
+  voodoo:'부두',psionic:'염동(방패 무시 주문 피해)',token:'토큰',stackable:'쌓임'};
+function showTip(h){ const t=$('#tip'); t.innerHTML=h; t.style.display='block';
+  clearTimeout(showTip.t); showTip.t=setTimeout(hideTip,4200); }
+function hideTip(){ $('#tip').style.display='none'; }
+$('#tip').onclick=hideTip;
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+window.ETGDBG={get G(){return G;},SK,MISS,POOLS,CARD,BYNAME,playable,startGame,autoDeck,
+  deckList,endTurn,render,attack,kill,summon,mk,playCard,useAbility,draw,canPlay,VERSION};
+screenBuild();
+</script>
+</body>
+</html>
