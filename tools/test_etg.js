@@ -441,6 +441,113 @@ const TEN =path.join(__dirname,'..','data','cards.json');
   ok('못 내는 카드도 끌리고 이유를 말한다', badtip.bad&&/퀀텀/.test(said),
      `끌 때 "${badtip.t}" · 놓을 때 "${said}"`);
 
+  /* ── 20) 비용이 **정확히** 나간다 — 전 카드·전 능력 ────────────────── */
+  /* ⚠ 이건 눈으로 못 잡는다. 한 장씩 내 보고 통에서 빠진 양을 센다.
+     퀀텀을 만들어 내는 카드(신성·분신)와 통을 비우는 카드(기적·창공 강습·프랙탈·
+     희생의 파편)는 규칙이 그래서 그런 것이므로 따로 뺀다. */
+  const EXEMPT=['Nova','Immolation','Miracle','Sky Blitz','Fractal','Shard of Sacrifice',
+                'Supernova','Cremation','Improved Miracle'];
+  const pay1=await p.evaluate(ex=>{
+    const D=window.ETGDBG; const out={ok:0,bad:[]};
+    for(const c of ETG.cards.filter(x=>!x.up&&D.playable(x)&&!ex.includes(x.en))){
+      D.startGame(D.deckList(D.autoDeck(6)),6);
+      const G=D.G; G.me.hand=[];G.ai.hand=[];
+      G.me.cr=new Array(23).fill(null);G.ai.cr=new Array(23).fill(null);G.me.pm=new Array(16).fill(null);
+      D.summon(G.ai,D.BYNAME['Armagio'].code); D.summon(G.me,D.BYNAME['Photon'].code);
+      G.me.pm[0]=D.mk(D.BYNAME['Bone Pillar'].code,G.me); G.ai.weapon=D.mk(D.BYNAME['Dagger'].code,G.ai);
+      G.me.q=new Array(13).fill(30);
+      const before=G.me.q.slice();
+      const u=D.mk(c.code,G.me); G.me.hand=[u];
+      const s=u.sk.find(x=>x.ev==='cast');
+      const k=(c.kind==='spell'&&s&&D.SK[s.id])?D.SK[s.id].t:null;
+      const pool=[].concat(G.me.cr,G.ai.cr,G.me.pm,[G.ai.weapon]).filter(Boolean);
+      if(!D.playCard(G.me,u,k?(k==='any'?G.ai:pool[0]):null)) continue;
+      let spent=0,per={},gen=false;
+      for(let e=1;e<=12;e++){const d=before[e]-G.me.q[e];
+        if(d>0){spent+=d;per[e]=d;} else if(d<0)gen=true;}
+      if(gen) continue;
+      if(spent!==c.cost||(c.costel>0&&per[c.costel]!==c.cost))
+        out.bad.push(`${c.ko}(${c.en}) 비용 ${c.cost}:${c.costel} → 쓴 ${spent} ${JSON.stringify(per)}`);
+      else out.ok++;
+    }
+    return out;},EXEMPT);
+  ok('카드 비용이 정확히 나간다', pay1.bad.length===0,
+     `${pay1.ok}장 확인${pay1.bad.length?' · '+pay1.bad.slice(0,3).join(' / '):''}`);
+
+  const pay2=await p.evaluate(()=>{
+    const D=window.ETGDBG; const out={ok:0,bad:[]};
+    for(const c of ETG.cards.filter(x=>!x.up&&D.playable(x)&&x.kind!=='spell'
+        &&x.sk.some(s=>s.ev==='cast'))){
+      D.startGame(D.deckList(D.autoDeck(6)),6);
+      const G=D.G; G.me.hand=[];G.ai.hand=[];
+      G.me.cr=new Array(23).fill(null);G.ai.cr=new Array(23).fill(null);G.me.pm=new Array(16).fill(null);
+      D.summon(G.ai,D.BYNAME['Armagio'].code); D.summon(G.me,D.BYNAME['Photon'].code);
+      G.me.pm[0]=D.mk(D.BYNAME['Bone Pillar'].code,G.me); G.ai.weapon=D.mk(D.BYNAME['Dagger'].code,G.ai);
+      let u;
+      if(c.kind==='creature') u=D.summon(G.me,c.code);
+      else { u=D.mk(c.code,G.me);
+        if(c.kind==='weapon')G.me.weapon=u; else if(c.kind==='shield')G.me.shield=u;
+        else {u.slot=1;G.me.pm[1]=u;} }
+      if(!u)continue;
+      G.me.q=new Array(13).fill(30);
+      const before=G.me.q.slice();
+      /* ⚠ 비용은 능력이 돌기 **전에** 읽는다 — 변신하는 카드(그래보이드·잿더미·운명의 알)는
+         능력이 끝나면 u.cast 가 이미 **다른 카드의 것**이다. 이걸 모르고 뒤에서 읽었다가
+         멀쩡한 셋을 '비용 어긋남' 으로 잘못 짚었다. */
+      const want=u.cast, wel=u.castel;
+      const s=u.sk.find(x=>x.ev==='cast'); const k=D.SK[s.id].t;
+      const pool=[].concat(G.me.cr,G.ai.cr,G.me.pm,[G.ai.weapon]).filter(Boolean);
+      if(!D.useAbility(G.me,u,k?(k==='any'?G.ai:pool.find(x=>x!==u)):null)) continue;
+      let spent=0,per={},gen=false;
+      for(let e=1;e<=12;e++){const d=before[e]-G.me.q[e];
+        if(d>0){spent+=d;per[e]=d;} else if(d<0)gen=true;}
+      if(gen) continue;
+      if(spent!==want||(wel>0&&per[wel]!==want))
+        out.bad.push(`${c.ko} 능력 ${want}:${wel} → 쓴 ${spent} ${JSON.stringify(per)}`);
+      else out.ok++;
+    }
+    return out;});
+  ok('능력 비용도 정확히 나간다', pay2.bad.length===0,
+     `${pay2.ok}종 확인${pay2.bad.length?' · '+pay2.bad.slice(0,3).join(' / '):''}`);
+
+  /* ── 21) 비용 표시가 헷갈리지 않는다 ───────────────────────────────── */
+  /* ⚠ 예전엔 비용 0 에 빈 구슬을 하나 그려 '무색 1' 로 읽혔고, 10 을 구슬 6개 + "10" 으로
+     그려 **6+10=16 으로 읽혔다.** 0 은 아무것도 안 그리고, 7 이상은 구슬 하나에 ×N 으로 적는다. */
+  const pip=await p.evaluate(()=>{
+    const D=window.ETGDBG;
+    const g=n=>{const d=document.createElement('div');
+      d.innerHTML=D.etgCardHTML(D.BYNAME[n],{size:'md'});
+      const t=d.querySelector('.tcost');
+      return {pips:t.querySelectorAll('.cp').length, num:(t.querySelector('.cpn')||{}).textContent||'',
+        gray:t.querySelectorAll('.cp.g').length};};
+    return {free:g('Photon'), three:g('Fire Bolt'), ten:g('Crimson Dragon'),
+      fifteen:g('Miracle'), generic:g('Luciferin')};});
+  ok('공짜는 구슬이 없다', pip.free.pips===0&&!pip.free.num, JSON.stringify(pip.free));
+  ok('3 은 구슬 셋', pip.three.pips===3&&!pip.three.num, JSON.stringify(pip.three));
+  ok('10·15 는 구슬 하나 + ×N', pip.ten.pips===1&&pip.ten.num==='×10'
+     &&pip.fifteen.pips===1&&pip.fifteen.num==='×15',
+     `${pip.ten.num} · ${pip.fifteen.num}`);
+  ok('무색 비용은 빈 구슬', pip.generic.gray===2, JSON.stringify(pip.generic));
+
+  /* ── 22) 끌면 어느 통을 먹는지 퀀텀줄이 알려 준다 ──────────────────── */
+  const need=async(name,q6)=>{
+    await p.evaluate(([n,q])=>{const D=window.ETGDBG;D.startGame(D.deckList(D.autoDeck(6)),6);
+      const G=D.G;G.me.hand=[D.mk(D.BYNAME[n].code,G.me)];
+      G.me.q=new Array(13).fill(2); G.me.q[6]=q; D.render();},[name,q6]);
+    await p.waitForTimeout(160);
+    const bb=await (await p.$('#hand .hcw[data-h="0"]')).boundingBox();
+    await p.mouse.move(bb.x+bb.width/2,bb.y+bb.height/2); await p.mouse.down();
+    await p.mouse.move(bb.x+bb.width/2,bb.y-45,{steps:5}); await p.waitForTimeout(130);
+    const r=await p.evaluate(()=>({n:document.querySelectorAll('#myBar .qp.need').length,
+      s:document.querySelectorAll('#myBar .qp.short').length}));
+    await p.mouse.up(); await p.waitForTimeout(180);
+    return r;};
+  const n1=await need('Ash Eater',4), n2=await need('Crimson Dragon',4);
+  ok('낼 수 있으면 그 통이 초록', n1.n===1&&n1.s===0, JSON.stringify(n1));
+  ok('모자라면 그 통이 붉게', n2.s===1&&n2.n===0, JSON.stringify(n2));
+  const left=await p.evaluate(()=>document.querySelectorAll('.qp.need,.qp.short').length);
+  ok('놓으면 표시가 지워진다', left===0, `${left}개 남음`);
+
   if(errs.length){ bad++; console.log('   ERR',errs.slice(0,4)); }
   console.log(`\n미구현 능력 ${cov.miss.length}종: ${cov.miss.join(' ')}`);
   console.log(bad?`❌ ${bad}건 실패`:'✅ 전부 통과');

@@ -67,6 +67,12 @@ h1.tt small{font-family:'Gowun Batang',serif;letter-spacing:0;font-size:10px;col
 .qp b{font-family:'Cinzel',serif;font-size:9px;font-weight:700;color:var(--qc)}
 .qp.z{opacity:.28}
 .qp.mk{box-shadow:0 0 0 1px var(--gold-bright),0 0 6px rgba(242,212,136,.7)}
+/* 지금 내려는 카드가 먹는 통 — 낼 수 있으면 초록, 모자라면 붉게 */
+.qp.need{opacity:1;background:rgba(20,60,30,.85);box-shadow:0 0 0 1.5px #6ee08a,0 0 9px rgba(110,224,138,.8)}
+.qp.short{opacity:1;background:rgba(70,18,14,.9);box-shadow:0 0 0 1.5px #ff8a7a,0 0 9px rgba(255,120,100,.8);
+  animation:qshort .9s ease-in-out infinite}
+@keyframes qshort{50%{box-shadow:0 0 0 1.5px #ffb0a4,0 0 14px rgba(255,120,100,1)}}
+@media (prefers-reduced-motion:reduce){.qp.short{animation:none}}
 .mkl{font-style:normal;font-family:'Gowun Batang',serif;font-size:9px;margin-left:4px;opacity:.9}
 
 /* 기물줄은 크리처줄보다 낮게 — 세로 예산을 아끼려고 */
@@ -123,7 +129,7 @@ h1.tt small{font-family:'Gowun Batang',serif;letter-spacing:0;font-size:10px;col
 <script src="data.js"></script>
 <script>
 'use strict';
-const VERSION='0.7.0', BUILD='2026-08-05';
+const VERSION='0.8.0', BUILD='2026-08-05';
 /* 판 번호는 제목줄에 붙인다 — 아래 h1.tt 안 small */
 document.addEventListener('DOMContentLoaded',()=>{const t=document.querySelector('h1.tt small');
   if(t)t.insertAdjacentHTML('beforeend',` · v${VERSION}`);});
@@ -969,15 +975,15 @@ const FLAGDEF={
 
 /* ── 카드 한 장 — 본편 .tcard 규격 그대로 ─────────────────────────────── */
 function pipsHTML(c){
-  if(!c.cost) return '<i class="cp g"></i>';
+  /* ⚠⚠ 비용 0 은 **구슬을 하나도 안 그린다.** 예전엔 빈 구슬 하나를 그렸는데
+     그게 '무색 1' 로 읽혔다(광자·신성이 공짜인데 1처럼 보였다). */
+  if(!c.cost) return '';
   const col=c.costel?ELC[c.costel]:null;
-  const n=Math.min(c.cost,6);
-  let h=col?`<i class="cp c" style="background:${col}"></i>`.repeat(n)
-           :'<i class="cp g"></i>'.repeat(n);
-  /* ⚠ EtG 는 비용이 15까지 간다. 구슬을 15개 그리면 머리줄을 넘쳐 이름을 밀어낸다 —
-     6개까지만 그리고 그 위는 숫자로 적는다. */
-  if(c.cost>6) h+=`<b class="cpn">${c.cost}</b>`;
-  return h;
+  const pip=col?`<i class="cp c" style="background:${col}"></i>`:'<i class="cp g"></i>';
+  /* ⚠⚠ EtG 는 비용이 15까지 간다. 구슬 6개를 그리고 옆에 10 을 적었더니
+     **6 + 10 = 16 으로 읽혔다.** 7 이상은 구슬 하나에 `×10` 으로 적는다 — 곱하기라 헷갈릴 수 없다. */
+  if(c.cost>6) return pip+`<b class="cpn">×${c.cost}</b>`;
+  return pip.repeat(c.cost);
 }
 function cardCls(c,u){
   if(c.kind==='creature'){
@@ -1084,13 +1090,32 @@ function boardHTML(p,k){
   return arr.filter(Boolean).map(u=>slotHTML(u,p)).join('');
 }
 /* 퀀텀 — 본편 마나줄과 같은 자리, 같은 눈높이. 0 인 속성은 흐리게 둔다. */
+/* 지금 손에 쥔 카드가 **어느 퀀텀을 얼마나** 먹는지 내 줄에 표시한다.
+   ⚠ 이게 없으면 "왜 안 나가지" 를 손패 회색만 보고 짐작해야 한다 —
+     12속성이라 어느 통이 빈 건지 눈으로 세는 게 일이다. */
 function qbarHTML(p){
+  const need=(p===G.me&&NEED)?NEED:null;
   return [...Array(12)].map((_,i)=>{const e=i+1;
-    return `<i class="qp${p.q[e]?'':' z'}${p.mark===e?' mk':''}" style="--qc:${ELC[e]}"
-      title="${ELKO[e]}"><b>${p.q[e]}</b></i>`;}).join('');
+    let cls=p.q[e]?'':' z';
+    if(p.mark===e)cls+=' mk';
+    if(need&&need.el===e) cls+=(p.q[e]>=need.n)?' need':' short';
+    return `<i class="qp${cls}" style="--qc:${ELC[e]}"
+      title="${ELKO[e]}${need&&need.el===e?` · ${need.n} 필요`:''}"><b>${p.q[e]}</b></i>`;}).join('');
+}
+/* 무색 비용은 어느 통에서든 나간다 — 특정 칸을 짚을 수 없으니 표시하지 않는다 */
+let NEED=null;
+function setNeed(u){
+  NEED=(u&&u.c.cost&&u.c.costel)?{el:u.c.costel,n:u.c.cost}:null;
 }
 /* ⚠ 퀀텀은 12칸이라 본편 마나 자리에 그냥 넣으면 **체력 막대를 실오라기로 만든다.**
    `.bar` 를 줄바꿈시키고 퀀텀줄에 100% 폭을 줘서 아래 한 줄을 통째로 쓴다. */
+/* 판을 통째로 다시 그리지 않고 퀀텀줄만 갈아 끼운다(드래그 중에 쓴다) */
+function refreshQbars(){
+  if(!G)return;
+  [['#myBar',G.me],['#foeBar',G.ai]].forEach(([id,p])=>{
+    const el=document.querySelector(id+' .qrow'); if(el)el.innerHTML=qbarHTML(p);
+  });
+}
 function barHTML(p,foeSide){
   return `<div class="bar ${foeSide?'':'me'}" id="${foeSide?'foeBar':'myBar'}">
     <div class="who">${p.name}${p.mark?`<i class="mkl" style="color:${ELC[p.mark]}">${ELKO[p.mark]}</i>`:''}</div>
@@ -1162,8 +1187,8 @@ function bind(){
     if(G.turn!==G.me||G.over)return;
     const u=G.me.hand[+el.dataset.h]; if(!u||!canPlay(G.me,u))return;
     const t=needsTarget(u);
-    if(t){ SEL=u; TGT={kind:t,src:u,mode:'play'}; render(); startTargeting(); return; }
-    playCard(G.me,u,null); SEL=null;TGT=null;
+    if(t){ SEL=u; TGT={kind:t,src:u,mode:'play'}; setNeed(u); render(); startTargeting(); return; }
+    playCard(G.me,u,null); SEL=null;TGT=null; NEED=null;
     render();
   });
   SCR.querySelectorAll('[data-uid]').forEach(el=>el.onclick=()=>{
@@ -1328,6 +1353,9 @@ function dragStart(i,x,y,pid){
   /* ⚠ 손패를 다시 그리면 지금 손가락이 잡고 있는 노드가 사라진다. 다시 그리지 않는다. */
   const src=document.querySelector(`.hcw[data-h="${i}"]`);
   if(src)src.classList.add('dragging');
+  /* 퀀텀줄에 '이 카드가 먹는 통' 을 표시한다. 손패는 다시 그리지 않고 줄만 갈아 끼운다 —
+     지금 손가락이 잡고 있는 노드를 지우면 드래그가 끊긴다. */
+  setNeed(u); refreshQbars();
   const g=document.createElement('div'); g.className='dgh';
   g.innerHTML=etgCardHTML(u.c,{size:'md'});
   document.body.appendChild(g);
@@ -1353,6 +1381,7 @@ function dragEnd(x,y,cancel){
   if(d.pid!=null){ try{document.body.releasePointerCapture(d.pid);}catch(_){} }
   document.body.classList.remove('dragmode','armed');
   document.querySelectorAll('.hcw.dragging').forEach(e=>e.classList.remove('dragging'));
+  NEED=null;
   if(cancel||inHand(x,y)){ render(); return; }
   if(!d.ok){ toast(`${d.u.c.ko} — ${d.why}`); render(); return; }
   const t=needsTarget(d.u);
@@ -1401,7 +1430,7 @@ function endTargeting(){
 }
 function fireAt(hit){
   const t=TGT, tgt=hit.unit||hit.face;
-  endTargeting(); SEL=null; TGT=null;
+  endTargeting(); SEL=null; TGT=null; NEED=null;
   if(t.mode==='play') playCard(G.me,t.src,tgt); else useAbility(G.me,t.src,tgt);
   render();
 }
@@ -1411,7 +1440,7 @@ document.addEventListener('pointerdown',e=>{
   const hit=arrowValid(e.clientX,e.clientY);
   e.stopPropagation(); e.preventDefault();
   if(hit) { lpFired=true; fireAt(hit); }
-  else { endTargeting(); SEL=null; TGT=null; render(); toast('취소 — 카드가 손으로 돌아왔다'); }
+  else { endTargeting(); SEL=null; TGT=null; NEED=null; render(); toast('취소 — 카드가 손으로 돌아왔다'); }
 },true);
 document.addEventListener('pointermove',e=>{ if(ARR)arrowDraw(e.clientX,e.clientY); },{passive:true});
 /* ── 제스처 가르기 — 가로는 손패 넘기기, 위로는 카드 끌어내기 ── */

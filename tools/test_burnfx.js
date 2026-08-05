@@ -47,7 +47,10 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
     S.gen=(S.gen||0)+1; S.me.board=[]; FXQ=[];
     const t=performance.now(); await endStep('me'); return Math.round(performance.now()-t);
   });
-  ok('빈 판이면 안 기다린다', idle0<120, `${idle0}ms`);
+  /* ⚠ **절대 시간으로 재지 않는다.** 120ms 로 못 박아 뒀더니 기계가 바쁠 때
+     (전체 검사를 연달아 돌릴 때) 69ms → 넘어가며 이따금 터졌다. 재려는 것은
+     '빠른가' 가 아니라 **'연출을 건너뛰었는가'** 다 → 바로 위에서 잰 연출 시간과 견준다. */
+  ok('빈 판이면 안 기다린다', idle0<Math.max(150,SEQ.ms/4), `${idle0}ms (연출은 ${SEQ.ms}ms)`);
 
   /* 턴을 넘기면 저절로 흘러간다 — 숫자 팝업과 칸 번쩍임이 실제로 화면에 뜬다 */
   await p.evaluate(()=>{
@@ -88,7 +91,7 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
   /* 피해가 없으면 시간을 안 쓴다 — 아무 일도 없는 턴이 느려지면 안 된다 */
   await p.evaluate(()=>{FXQ=[];});
   const t1=Date.now(); await p.evaluate(()=>flushFx()); const idle=Date.now()-t1;
-  ok('피해 없으면 안 기다린다', idle<120, `${idle}ms`);
+  ok('피해 없으면 안 기다린다', idle<Math.max(150,SEQ.ms/4), `${idle}ms (연출은 ${SEQ.ms}ms)`);
 
   if(errs.length){bad++;console.log('   ERR',errs.slice(0,3));}
   console.log(bad?`\u274c ${bad}건 실패`:'\u2705 전부 통과');
