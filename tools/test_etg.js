@@ -1,7 +1,7 @@
 /* 엘리멘츠 원정 모드 — 원작 규칙이 실제로 그렇게 도는지 본다
  *   node tools/test_etg.js
  *
- * 왜 이 파일이 있나 — 이 모드는 **본편과 규칙이 다르다.** 콴타가 쌓이고, 막기가
+ * 왜 이 파일이 있나 — 이 모드는 **본편과 규칙이 다르다.** 퀀텀이 쌓이고, 막기가
  * 없고, 문장이 있다. 본편 검사 40개는 이 중 한 줄도 안 지켜 준다. 그리고 이 모드가
  * 조용히 망가지는 방식은 딱 둘이다:
  *   ① 본편 카드가 새어 들어온다 (POOL 을 섞어 쓰면 바로 그렇게 된다)
@@ -49,7 +49,7 @@ const TEN =path.join(__dirname,'..','data','cards.json');
      `${cov.play}/${cov.base}장 · 미구현 능력 ${cov.miss.length}종`);
   ok('12속성 전부 카드가 있다', cov.pools.slice(1).every(n=>n>=6), cov.pools.slice(1).join(','));
 
-  /* ── 3) 콴타는 쌓인다 — 본편과 가장 크게 갈리는 지점 ────────────────── */
+  /* ── 3) 퀀텀은 쌓인다 — 본편과 가장 크게 갈리는 지점 ────────────────── */
   /* ⚠ endTurn 은 턴을 **넘긴다.** 세 번 부르면 내 턴은 두 번뿐이다 —
      그걸 모르고 매번 늘기를 기대했다가 헛짚었다. 내 턴만 골라 잰다. */
   const acc=await p.evaluate(()=>{
@@ -63,7 +63,7 @@ const TEN =path.join(__dirname,'..','data','cards.json');
     }
     return snap;
   });
-  ok('콴타가 턴을 넘겨 쌓인다', acc.length>=3&&acc[1]>acc[0]&&acc[2]>acc[1], acc.join(' → '));
+  ok('퀀텀이 턴을 넘겨 쌓인다', acc.length>=3&&acc[1]>acc[0]&&acc[2]>acc[1], acc.join(' → '));
 
   /* ── 4) 문장은 매 턴 끝에 1을 준다 ──────────────────────────────────── */
   const mk=await p.evaluate(()=>{
@@ -155,14 +155,14 @@ const TEN =path.join(__dirname,'..','data','cards.json');
   ok('같은 기둥은 한 칸에 쌓인다', st.slots===1&&st.charges===3,
      `칸 ${st.slots}개 · ×${st.charges}`);
 
-  /* ── 11b) 쌓인 기둥은 쌓인 수만큼 콴타를 만든다 ─────────────────────── */
+  /* ── 11b) 쌓인 기둥은 쌓인 수만큼 퀀텀을 만든다 ─────────────────────── */
   const stq=await p.evaluate(()=>{
     const D=window.ETGDBG; const G=D.G;
     G.me.hand=[]; G.ai.hand=[]; G.me.q=new Array(13).fill(0); G.me.mark=6;
     D.endTurn();
     return G.me.q[6];    /* 기둥 ×3 + 문장 1 */
   });
-  ok('쌓인 만큼 콴타가 나온다', stq===4, `불 콴타 ${stq} (기둥 ×3 + 문장 1)`);
+  ok('쌓인 만큼 퀀텀이 나온다', stq===4, `불 퀀텀 ${stq} (기둥 ×3 + 문장 1)`);
 
   /* ── 12) 실제로 한 판이 끝까지 돌아간다 ─────────────────────────────── */
   const run=await p.evaluate(async()=>{
@@ -190,7 +190,7 @@ const TEN =path.join(__dirname,'..','data','cards.json');
       board:G.me.cr.filter(Boolean).length, q:G.me.q.slice(1).reduce((a,b)=>a+b,0)};
   });
   ok('한 판이 끝까지 돈다', run.board>0||run.over||run.q>0,
-     `내 ${run.myhp} · 상대 ${run.aihp} · 내 몸 ${run.board} · 콴타 ${run.q}${run.over?' · 승부남':''}`);
+     `내 ${run.myhp} · 상대 ${run.aihp} · 내 몸 ${run.board} · 퀀텀 ${run.q}${run.over?' · 승부남':''}`);
 
   /* ── 13) 카드가 본편 규격으로 그려진다 ─────────────────────────────── */
   /* ⚠ 여기서 '보이냐' 가 아니라 **본편 클래스로 그려졌냐** 를 본다. 규격을 이 모드에서

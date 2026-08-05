@@ -173,7 +173,7 @@ def parse_skills(raw, kind, ele):
     """`3=freeze 3+hit=poison 1` → [{ev,id,arg,cast,castel}]
 
     ⚠ 규칙: 숫자로 시작하는 event 는 event 가 아니라 **발동 비용**이다.
-      `1=mend` = 1콴타 내고 쓰는 능력. openEtG build.rs 와 같은 해석."""
+      `1=mend` = 1퀀텀 내고 쓰는 능력. openEtG build.rs 와 같은 해석."""
     out, cast, castel = [], 0, 0
     if not raw:
         return out, cast, castel

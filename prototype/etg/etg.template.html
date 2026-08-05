@@ -27,8 +27,8 @@
     data.js (tools/gen_etg.py 가 만든다) 만 읽는다. TEN 의 POOL 은 쳐다보지 않는다.
 
   ■ 원작 규칙 중 여기서 지킨 것
-    · 콴타는 **속성별로 쌓인다**(최대 75). 턴마다 초기화되지 않는다. ← TEN 과 가장 큰 차이
-    · 기둥/탑/진자와 문장은 **자기 턴이 끝날 때** 콴타를 만든다 (openEtG v_endturn 순서 그대로)
+    · 퀀텀은 **속성별로 쌓인다**(최대 75). 턴마다 초기화되지 않는다. ← TEN 과 가장 큰 차이
+    · 기둥/탑/진자와 문장은 **자기 턴이 끝날 때** 퀀텀을 만든다 (openEtG v_endturn 순서 그대로)
     · **막기가 없다.** 크리처는 언제나 상대 얼굴을 때리고, 방패만 그 피해를 깎는다
     · 소환 멀미가 없다 — 낸 턴에 바로 때리고 능력도 쓴다
     · 체력 100, 덱 30~60장, 같은 카드 6장까지, 손패 8장 상한, 덱이 마르면 패배
@@ -58,7 +58,7 @@ h1.tt small{font-family:'Gowun Batang',serif;letter-spacing:0;font-size:10px;col
 .cpn{font-family:'Cinzel',serif;font-weight:700;font-size:calc(var(--cw)*.095);
   color:var(--ink);margin-left:calc(var(--cw)*.03);line-height:1}
 
-/* 콴타줄 — 본편 마나줄 자리를 그대로 쓴다(.bar .mana) */
+/* 퀀텀줄 — 본편 마나줄 자리를 그대로 쓴다(.bar .mana) */
 .bar{flex-wrap:wrap;row-gap:6px}
 .qrow{display:flex;gap:2px;flex-wrap:nowrap;flex-basis:100%;justify-content:space-between}
 .qp{width:15px;height:17px;border-radius:3px;border:1px solid var(--qc);
@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded',()=>{const t=document.querySelector
    0. 원작 상수
    ═══════════════════════════════════════════════════════════════════════════ */
 const ELS=ETG.els, ELKO=ETG.elko;
-const QCAP=75;              /* 원작(Original)의 속성별 콴타 상한 */
+const QCAP=75;              /* 원작(Original)의 속성별 퀀텀 상한 */
 const HANDMAX=8;            /* 손패 상한 — 넘치면 뽑은 카드가 버려진다 */
 const MAXCR=23, MAXPM=16;   /* 크리처 23칸 · 기물 16칸 */
 const STARTHP=100;
@@ -143,8 +143,8 @@ ETG.cards.forEach(c=>{ if(!c.up) BYNAME[c.en]=c; });
 const SK={};
 const def=(id,t,d,f)=>{SK[id]={t,d,f};};
 
-/* ── 콴타 생산 ─────────────────────────────────────────────────────────── */
-def('pillar',null,'매 턴 끝에 자기 속성 콴타 1을 만든다 (무색이면 무작위 3)',(g,me,s)=>{
+/* ── 퀀텀 생산 ─────────────────────────────────────────────────────────── */
+def('pillar',null,'매 턴 끝에 자기 속성 퀀텀 1을 만든다 (무색이면 무작위 3)',(g,me,s)=>{
   const n=s.charges||1, e=s.c.el;
   if(e===0) for(let i=0;i<3*n;i++) gain(me,1+rnd(12),1); else gain(me,e,n);
 });
@@ -153,37 +153,37 @@ def('pend',null,'매 턴 끝에 자기 속성과 문장 속성을 번갈아 만�
   const e=s.pendstate?(me.mark||s.c.el):s.c.el, n=s.charges||1;
   if(e===0) for(let i=0;i<3*n;i++) gain(me,1+rnd(12),1); else gain(me,e,n);
 });
-def('pillar1',null,'낼 때 자기 속성 콴타 1을 더 준다',(g,me,s)=>{
+def('pillar1',null,'낼 때 자기 속성 퀀텀 1을 더 준다',(g,me,s)=>{
   const e=s.c.el; if(e===0) for(let i=0;i<3;i++) gain(me,1+rnd(12),1); else gain(me,e,1);
 });
-def('quanta',null,'문장 — 매 턴 끝에 콴타를 만든다',(g,me,s)=>{ gain(me,s.c.el||1+rnd(12),1); });
-def('nova',null,'12속성 콴타를 1씩 얻는다. 한 턴에 3장 이상 쓰면 특이점이 나온다',(g,me)=>{
+def('quanta',null,'문장 — 매 턴 끝에 퀀텀을 만든다',(g,me,s)=>{ gain(me,s.c.el||1+rnd(12),1); });
+def('nova',null,'12속성 퀀텀을 1씩 얻는다. 한 턴에 3장 이상 쓰면 특이점이 나온다',(g,me)=>{
   for(let e=1;e<=12;e++) gain(me,e,1);
   me.nova=(me.nova||0)+1;
   if(me.nova>=3&&BYNAME['Singularity']) summon(me,BYNAME['Singularity'].code);
 });
 def('v_relic',null,'아무 일도 하지 않는다 (팔아서 값을 받는 카드)',()=>{});
-def('photosynthesis',null,'생명 콴타 2를 얻고, 이 능력을 다시 쓸 수 있게 된다',(g,me,s)=>{
+def('photosynthesis',null,'생명 퀀텀 2를 얻고, 이 능력을 다시 쓸 수 있게 된다',(g,me,s)=>{
   gain(me,5,2); s.used=false;
 });
-def('soulcatch',null,'크리처가 죽을 때마다 죽음 콴타를 얻는다',(g,me,s)=>{ gain(me,2,s.up?3:2); });
+def('soulcatch',null,'크리처가 죽을 때마다 죽음 퀀텀을 얻는다',(g,me,s)=>{ gain(me,2,s.up?3:2); });
 def('empathy',null,'턴 끝에 자기 크리처 수만큼 회복한다',(g,me)=>{ heal(me,me.cr.filter(Boolean).length); });
-def('v_gratitude',null,'턴 끝에 생명 콴타 1과 체력 5를 얻는다',(g,me,s)=>{ gain(me,5,1); heal(me,s.up?5:3); });
+def('v_gratitude',null,'턴 끝에 생명 퀀텀 1과 체력 5를 얻는다',(g,me,s)=>{ gain(me,5,1); heal(me,s.up?5:3); });
 def('v_divinity',null,'최대 체력이 늘고 그만큼 회복한다',(g,me,s)=>{ me.maxhp+=s.up?24:16; heal(me,s.up?24:16); });
-def('siphon',null,'상대 콴타 1을 빼앗아 어둠 콴타로 바꾼다',(g,me,s)=>{
+def('siphon',null,'상대 퀀텀 1을 빼앗아 어둠 퀀텀으로 바꾼다',(g,me,s)=>{
   const f=foe(me); const es=[]; for(let e=1;e<=12;e++) if(f.q[e]>0) es.push(e);
   if(!es.length)return; const e=es[rnd(es.length)]; f.q[e]--; gain(me,11,1);
 });
 
 /* ── 피해 ──────────────────────────────────────────────────────────────── */
-def('v_firebolt','any','불 콴타 10마다 피해 3씩. 기본 3',(g,me,s,t)=>{
+def('v_firebolt','any','불 퀀텀 10마다 피해 3씩. 기본 3',(g,me,s,t)=>{
   spellDmg(me,t,3+3*Math.floor(me.q[6]/10));
 });
-def('v_icebolt','any','물 콴타 10마다 피해 2씩. 기본 2 · 확률로 얼린다',(g,me,s,t)=>{
+def('v_icebolt','any','물 퀀텀 10마다 피해 2씩. 기본 2 · 확률로 얼린다',(g,me,s,t)=>{
   const d=2+2*Math.floor(me.q[7]/10); spellDmg(me,t,d);
   if(t&&t.kind==='creature'&&Math.random()<0.25+0.05*d) freeze(t,3);
 });
-def('v_drainlife','any','시간… 어둠 콴타 10마다 2씩 흡수한다. 기본 2',(g,me,s,t)=>{
+def('v_drainlife','any','시간… 어둠 퀀텀 10마다 2씩 흡수한다. 기본 2',(g,me,s,t)=>{
   const d=2+2*Math.floor(me.q[11]/10); heal(me,spellDmg(me,t,d));
 });
 def('lightning','any','피해 5',(g,me,s,t)=>{ spellDmg(me,t,5); });
@@ -204,7 +204,7 @@ def('catapult','mycr','자기 크리처를 던진다. 체력이 클수록 큰 �
   spellDmg(me,foe(me),d); if(t.frozen) spellDmg(me,foe(me),d);
   kill(t);
 });
-def('v_blackhole',null,'상대 콴타를 최대 3씩 빨아들여 회복한다',(g,me)=>{
+def('v_blackhole',null,'상대 퀀텀을 최대 3씩 빨아들여 회복한다',(g,me)=>{
   const f=foe(me); let tot=0;
   for(let e=1;e<=12;e++){ const n=Math.min(3,f.q[e]); f.q[e]-=n; tot+=n; }
   heal(me,tot);
@@ -231,7 +231,7 @@ def('earthquake',null,'가장 많이 쌓인 기둥 더미에서 3장을 부순�
   f.pm.forEach(p=>{ if(p&&p.charges&&(!best||p.charges>best.charges)) best=p; });
   if(best){ best.charges-=(a||3); if(best.charges<=0) destroyPerm(best); }
 });
-def('v_scramble',null,'상대 콴타를 뒤섞는다',(g,me)=>{
+def('v_scramble',null,'상대 퀀텀을 뒤섞는다',(g,me)=>{
   const f=foe(me); let n=0;
   for(let e=1;e<=12;e++){ const k=Math.min(f.q[e],rnd(3)); f.q[e]-=k; n+=k; }
   for(let i=0;i<n;i++) gain(f,1+rnd(12),1);
@@ -284,7 +284,7 @@ def('v_integrity',null,'파편을 합쳐 골렘을 만든다 (여기서는 4|4 �
 /* ── 회복 ──────────────────────────────────────────────────────────────── */
 def('mend','cr','대상 크리처를 5 회복시킨다',(g,me,s,t)=>{ healThing(t,s.up?10:5); });
 def('v_heal',null,'체력을 20 회복한다',(g,me,s)=>{ heal(me,s.up?24:20); });
-def('miracle',null,'체력을 최대치보다 1 낮게 채운다. 빛 콴타를 모두 잃는다',(g,me)=>{
+def('miracle',null,'체력을 최대치보다 1 낮게 채운다. 빛 퀀텀을 모두 잃는다',(g,me)=>{
   me.q[8]=0; me.hp=Math.max(me.hp,me.maxhp-1);
 });
 def('regenerate',null,'턴 끝에 5 회복한다',(g,me)=>{ heal(me,5); });
@@ -345,7 +345,7 @@ def('duality',null,'상대 덱 맨 위 카드를 복사해 손에 넣는다',(g,
 });
 
 /* ── 방패 ──────────────────────────────────────────────────────────────── */
-def('v_dshield',null,'엔트로피 콴타 1로 피해 3을 막는다',()=>{});
+def('v_dshield',null,'엔트로피 퀀텀 1로 피해 3을 막는다',()=>{});
 def('skull',null,'때린 크리처가 확률로 해골이 된다',(g,me,s,t)=>{
   if(!t||t.kind!=='creature')return;
   if(Math.random()<0.5/Math.max(1,t.hp)){ const c=BYNAME['Skeleton']; if(c) morph(t,c.code); }
@@ -353,14 +353,14 @@ def('skull',null,'때린 크리처가 확률로 해골이 된다',(g,me,s,t)=>{
 def('wings',null,'날지 않는 공격을 전부 막는다',()=>{});
 def('evade',null,'확률로 공격을 흘린다',()=>{});
 def('v_freeevade',null,'확률로 공격을 흘린다',()=>{});
-def('disshield',null,'에테르 콴타를 쓰는 동안 모든 피해를 막는다',()=>{});
+def('disshield',null,'에테르 퀀텀을 쓰는 동안 모든 피해를 막는다',()=>{});
 def('blockwithcharge',null,'뼈 하나로 공격 하나를 통째로 막는다',()=>{});
 def('gaincharge',null,'크리처가 죽을 때마다 뼈가 2 늘어난다',(g,me,s,t,a)=>{ s.charges=(s.charges||0)+(a||2); });
 def('losecharge',null,'턴마다 한 번씩 닳고, 다 닳으면 사라진다',(g,me,s)=>{
   s.charges=(s.charges||0)-1; if(s.charges<=0) destroyPerm(s);
 });
 def('weight',null,'체력 5 이상인 크리처의 공격을 막는다',()=>{});
-def('solar',null,'막을 때마다 빛 콴타를 얻는다',(g,me)=>{ gain(me,8,1); });
+def('solar',null,'막을 때마다 빛 퀀텀을 얻는다',(g,me)=>{ gain(me,8,1); });
 def('bow',null,'바람 문장이면 공격력이 1 오른다',()=>{});
 def('hammer',null,'중력·대지 문장이면 공격력이 1 오른다',()=>{});
 def('v_dagger',null,'죽음·어둠 문장이면 공격력이 1 오른다',()=>{});
@@ -373,7 +373,7 @@ def('stasis',null,'모든 공격을 막는다 (해시계)',()=>{});
 def('upkeep',null,'유지 비용을 못 내면 사라진다',(g,me,s)=>{
   if(!pay(me,s.c.costel,1)) destroyPerm(s);
 });
-def('sskin',null,'대지 콴타 수만큼 +0|+1',(g,me,s)=>{ buff(s,0,me.q[4]); });
+def('sskin',null,'대지 퀀텀 수만큼 +0|+1',(g,me,s)=>{ buff(s,0,me.q[4]); });
 def('dive',null,'다음 공격의 공격력이 두 배가 된다',(g,me,s)=>{ s.dive=true; });
 def('bravery',null,'용기 — 카드를 2장 뽑고 공격력을 올린다',(g,me,s)=>{ draw(me); draw(me); });
 def('v_freedom',null,'확률로 공격이 방패를 무시하고 1.5배가 된다',()=>{});
@@ -391,10 +391,10 @@ def('ignite',null,'터져서 상대에게 20, 모든 크리처에게 1',(g,me,s)
 });
 def('gas',null,'불안정한 기체를 놓는다',(g,me)=>{ const c=BYNAME['Unstable Gas']; if(c) playPerm(me,mk(c.code,me)); });
 def('steam',null,'+5 공격력을 얻고 매 턴 1씩 잃는다',(g,me,s)=>{ s.steam=(s.steam||0)+5; buff(s,5,0); });
-def('immolate',null,'자기 크리처를 태워 콴타를 얻는다',(g,me,s,t)=>{
+def('immolate',null,'자기 크리처를 태워 퀀텀을 얻는다',(g,me,s,t)=>{
   if(!t)return; for(let e=1;e<=12;e++) gain(me,e,1); gain(me,6,t.hp+(s.up?7:5)); kill(t);
 });
-def('fiery',null,'불 콴타 5마다 공격력 1',()=>{});
+def('fiery',null,'불 퀀텀 5마다 공격력 1',()=>{});
 def('lycanthropy',null,'+5|+5 를 얻는다',(g,me,s)=>{ buff(s,5,5); s.sk=s.sk.filter(k=>k.id!=='lycanthropy'); });
 def('luciferin',null,'체력을 10 채우고 능력 없는 크리처에게 능력을 준다',(g,me)=>{ heal(me,10); });
 def('neuro',null,'때린 대상에게 신경독을 준다',(g,me,s,t)=>{ addPoison(t,1); });
@@ -409,7 +409,7 @@ def('chimera',null,'자기 크리처를 전부 합친다',(g,me)=>{
   const c=BYNAME['Chimera']; const u=mk(c.code,me);
   u.kind='creature'; u.atk=a; u.hp=u.maxhp=h; u.flags=['momentum']; u.slot=0; me.cr[0]=u;
 });
-def('skyblitz',null,'바람 콴타를 모두 쓰고 비행 크리처가 급강하한다',(g,me)=>{
+def('skyblitz',null,'바람 퀀텀을 모두 쓰고 비행 크리처가 급강하한다',(g,me)=>{
   me.q[9]=0; me.cr.forEach(u=>{ if(u&&u.flags.includes('airborne')) u.dive=true; });
 });
 def('phaseshield',null,'',()=>{});
@@ -453,7 +453,7 @@ def('wisdom','any','대상에게 +3|+0. 실체 없는 대상은 염동을 얻어
   if(t.flags.includes('immaterial')&&!t.flags.includes('psionic')) t.flags.push('psionic');
 });
 def('die',null,'이 카드를 희생한다',(g,me,s)=>{ destroyPerm(s); });
-def('sosa',null,'체력 48을 바치고 죽음 외 콴타를 모두 잃는다. 두 턴 동안 피해와 회복이 뒤바뀐다',
+def('sosa',null,'체력 48을 바치고 죽음 외 퀀텀을 모두 잃는다. 두 턴 동안 피해와 회복이 뒤바뀐다',
   (g,me,s)=>{
     dmgP(me,s.up?40:48);
     for(let e=1;e<=12;e++) if(e!==2) me.q[e]=0;
@@ -1001,14 +1001,14 @@ function boardHTML(p,k){
   const arr=k==='cr'?p.cr:p.pm.concat([p.weapon,p.shield]);
   return arr.filter(Boolean).map(u=>slotHTML(u,p)).join('');
 }
-/* 콴타 — 본편 마나줄과 같은 자리, 같은 눈높이. 0 인 속성은 흐리게 둔다. */
+/* 퀀텀 — 본편 마나줄과 같은 자리, 같은 눈높이. 0 인 속성은 흐리게 둔다. */
 function qbarHTML(p){
   return [...Array(12)].map((_,i)=>{const e=i+1;
     return `<i class="qp${p.q[e]?'':' z'}${p.mark===e?' mk':''}" style="--qc:${ELC[e]}"
       title="${ELKO[e]}"><b>${p.q[e]}</b></i>`;}).join('');
 }
-/* ⚠ 콴타는 12칸이라 본편 마나 자리에 그냥 넣으면 **체력 막대를 실오라기로 만든다.**
-   `.bar` 를 줄바꿈시키고 콴타줄에 100% 폭을 줘서 아래 한 줄을 통째로 쓴다. */
+/* ⚠ 퀀텀은 12칸이라 본편 마나 자리에 그냥 넣으면 **체력 막대를 실오라기로 만든다.**
+   `.bar` 를 줄바꿈시키고 퀀텀줄에 100% 폭을 줘서 아래 한 줄을 통째로 쓴다. */
 function barHTML(p,foeSide){
   return `<div class="bar ${foeSide?'':'me'}" id="${foeSide?'foeBar':'myBar'}">
     <div class="who">${p.name}${p.mark?`<i class="mkl" style="color:${ELC[p.mark]}">${ELKO[p.mark]}</i>`:''}</div>
@@ -1195,8 +1195,8 @@ function screenBuild(){
     <div class="deckpick">${ELS.map((e,i)=>i?elbtn(i,BUILD_EL,'el'):'').join('')}</div>
     <div class="lbl" style="margin-top:8px">문장</div>
     <div class="deckpick">${ELS.map((e,i)=>i?elbtn(i,BUILD_MARK,'mk'):'').join('')}</div>
-    <div class="dmech">문장은 <b>매 턴 끝</b>에 그 속성 콴타 1을 공짜로 준다.
-      덱은 30~60장, 같은 카드는 6장까지. 콴타는 <b>속성별로 쌓인다</b>(상한 75).</div>
+    <div class="dmech">문장은 <b>매 턴 끝</b>에 그 속성 퀀텀 1을 공짜로 준다.
+      덱은 30~60장, 같은 카드는 6장까지. 퀀텀은 <b>속성별로 쌓인다</b>(상한 75).</div>
   </div>
   <div class="panel">
     <div class="ctl" style="justify-content:space-between">
