@@ -18,15 +18,20 @@ const P='file://'+path.join(__dirname,'..','prototype','index.html')+'?dev=1';
     await p.evaluate(()=>{ const f=RG.floor+1;
       const i=RG.map[f].findIndex(n=>n.t!=='event'&&n.t!=='shop');
       rgEnter(f,i<0?0:i); });
-    await w(400);
+    /* ⚠⚠ **버튼이 뜰 때까지 기다린다.** 400ms 만 쉬고 `if(있으면 누른다)` 로 두면,
+       느린 판에서 아직 안 뜬 버튼을 조용히 건너뛴다 → 전투가 아예 안 시작되고
+       그 뒤 검사가 전부 **지난 판의 낡은 HP** 를 읽는다(전체 검사에서만 이따금 잡혔다).
+       '있으면' 이라는 말이 곧 '없으면 그냥 넘어간다' 라는 뜻이었다. */
+    await p.waitForSelector('#rgGo',{timeout:9000}).catch(()=>{});
     if(await p.evaluate(()=>!!document.getElementById('rgGo')))await p.click('#rgGo');
     /* ⚠ **시간으로 기다리지 않는다.** 느린 판에서 전투가 아직 안 열렸는데 HP 를 읽어
        "회복분이 이월 안 됐다" 로 읽혔다(전체 검사에서 두 번 잡혔다).
        전투가 실제로 열릴 때까지 기다린다. */
-    /* ⚠ **정확한 조건을 기다린다.** 'RG.fighting 이 켜졌는가' 만 보면 커튼(veilRun)이
-       newGame 을 부르기 전 한순간을 통과해 **지난 전투의 낡은 S.me.hp** 를 읽는다.
-       newGame 이 RG.hp 를 S.me.hp 로 옮기고 나면 둘이 같아진다 — 그걸 기다린다. */
-    await p.waitForFunction(()=>RG.fighting&&S.me&&S.me.hp===RG.hp,null,{timeout:9000})
+    /* ⚠⚠ **'차리는 중이 아니고 전투가 켜졌는가'** 를 기다린다(`RG.entering`).
+       · 'RG.fighting 이 켜졌는가' 만 보면 지난 전투가 끝나며 남긴 값을 그대로 읽는다.
+       · 'S.me.hp === RG.hp' 도 안 된다 — 이긴 직후엔 둘이 이미 같아서 **즉시 통과**해
+         버리고, newGame 이 돌기 전의 낡은 판에 대고 검사를 이어 간다(실제로 그랬다). */
+    await p.waitForFunction(()=>RG.fighting&&!RG.entering&&S.me,null,{timeout:9000})
       .catch(()=>{});
     await p.evaluate(()=>{ const k=document.getElementById('keepBtn'); k&&k.click(); });
     await w(400);

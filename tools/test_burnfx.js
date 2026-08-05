@@ -59,12 +59,14 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
   await p.evaluate(()=>{const e=document.getElementById('end'); if(!e.disabled)e.click();});
   let pop=0, flash=false;
   for(let i=0;i<45;i++){
+    /* ⚠ 연소는 이제 **떠 있는 불꽃**(.burnfx)으로 보여 준다 — 슬롯 클래스(.fxhit)로 걸면
+       endStep 끝의 render() 가 통째로 날려서 한 번도 안 보였다(2026-08). */
     const st=await p.evaluate(()=>({p:document.querySelectorAll('.hitpop').length,
-      f:document.querySelectorAll('.slot.fxhit').length}));
+      f:document.querySelectorAll('.slot.fxhit,.burnfx').length}));
     pop=Math.max(pop,st.p); if(st.f)flash=true;
     await p.waitForTimeout(60);
   }
-  ok('턴 종료에 저절로 보인다', pop>0&&flash, `숫자 팝업 최대 ${pop}개 · 칸 번쩍임 ${flash}`);
+  ok('턴 종료에 저절로 보인다', pop>0&&flash, `숫자 팝업 최대 ${pop}개 · 불꽃/번쩍임 ${flash}`);
 
   /* 폭발 — 죽으면서 상대 얼굴에. 정보줄이 번쩍여야 어디로 갔는지 읽힌다 */
   await p.evaluate(()=>{

@@ -1288,7 +1288,9 @@ body{padding:0;height:100dvh;overflow:hidden;
 /* ⚠ 카드 **테두리 색은 건드리지 않는다** — 그건 속성(=카드 정체)이다.
       한 번 `border-color:!important` 로 덮었더니 불 카드가 파랗게 보여 어느 속성인지 알 수 없었다.
       광채는 테두리 **바깥에 두른 고리**(box-shadow spread)로만 준다. */
-.slot.echoon .tcard{animation:glowecho 1.8s ease-in-out infinite}
+/* 환류가 **아직 남은** 몸 — 파란 테두리가 일렁인다(성권 요청).
+   ⚠ 다 쓴 몸은 u.echo 가 꺼져 이 클래스가 안 붙는다 = 한눈에 갈린다. */
+.slot.echoon .tcard{animation:glowecho 1.4s ease-in-out infinite}
 .slot.breedon .tcard{animation:glowbreed 1.8s ease-in-out infinite}
 .slot.wardon .tcard{animation:glowward 1.8s ease-in-out infinite}
 @keyframes glowecho{0%,100%{box-shadow:0 0 0 2px rgba(95,198,238,.85),0 0 8px rgba(95,198,238,.5)}
@@ -1297,6 +1299,38 @@ body{padding:0;height:100dvh;overflow:hidden;
   50%{box-shadow:0 0 0 2px #6fd86a,0 0 16px rgba(111,216,106,.9)}}
 @keyframes glowward{0%,100%{box-shadow:0 0 0 2px rgba(255,215,94,.85),0 0 8px rgba(255,215,94,.5)}
   50%{box-shadow:0 0 0 2px #ffd75e,0 0 16px rgba(255,215,94,.95)}}
+/* ── 상태를 몸으로 보여 주는 것들 (2026-08) ───────────────────────────
+   ⚠ 전부 `.tcard` 안쪽 요소에 건다. `.slot` 자체는 때리는 연출(lunge)이 transform 을
+     쓰므로, 여기서 또 transform 을 걸면 서로 덮어써서 둘 다 어긋난다. */
+/* 비행 — 아주 약간 떠 있다 */
+.slot.fly .tart,.slot.flyguard .tart{animation:hover 3.1s ease-in-out infinite}
+@keyframes hover{0%,100%{transform:translateY(0)}50%{transform:translateY(-3.5%)}}
+/* 수호 — 체력 뱃지가 방패 모양이다 */
+.slot.guard .tb.h,.slot.flyguard .tb.h{border-radius:22% 22% 46% 46%/18% 18% 74% 74%}
+/* 면역 — 일러스트가 프리즘처럼 흐른다(희귀도 보석과 다른 결) */
+.slot.veilon .tart::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:1;
+  background:linear-gradient(112deg,transparent 22%,rgba(190,230,255,.55) 38%,
+    rgba(255,214,255,.55) 47%,rgba(190,255,238,.55) 56%,transparent 72%);
+  background-size:260% 100%;mix-blend-mode:screen;animation:prism 2.6s linear infinite}
+@keyframes prism{0%{background-position:180% 0}100%{background-position:-80% 0}}
+/* 연소가 실제로 타는 순간 — 그 자리에서 불이 올랐다 사라진다.
+   ⚠⚠ **슬롯에 클래스로 걸면 안 된다.** endStep 이 끝나며 render() 가 슬롯을 다시 그려
+     클래스가 통째로 날아간다(실제로 불이 한 번도 안 보였다). body 위에 띄운다. */
+.burnfx{position:fixed;z-index:127;pointer-events:none;border-radius:9px;
+  background:radial-gradient(ellipse at 50% 100%,rgba(255,150,60,.9),rgba(255,80,20,.4) 45%,transparent 72%);
+  animation:burnup .62s ease-out both}
+@keyframes burnup{0%{opacity:0;transform:translateY(6%) scaleY(.7)}
+  30%{opacity:1;transform:translateY(0) scaleY(1.05)}
+  100%{opacity:0;transform:translateY(-14%) scaleY(1.2)}}
+/* 광분 — 한 번 더 칠 때 붉게 달아오른다 */
+.slot.raging .tcard{animation:ragepulse .5s ease-out both}
+@keyframes ragepulse{0%{box-shadow:none;filter:none}
+  35%{box-shadow:0 0 0 3px #ff5a46,0 0 22px rgba(255,90,70,.95);filter:brightness(1.45) saturate(1.5)}
+  100%{box-shadow:none;filter:none}}
+/* 맞은 쪽이 뒤로 밀린다 — 때리는 연출의 짝 */
+.slot.bumped .tcard{animation:bump .26s cubic-bezier(.2,.8,.3,1) both}
+@keyframes bump{0%{transform:none}30%{transform:translateY(6%) scale(.94) rotate(2deg)}
+  100%{transform:none}}
 /* 성장까지 남은 턴 — **일러스트 왼쪽 위**. 카드 맨 위에 두면 이름 첫 글자를 덮는다(실제로 덮었다).
    오른쪽은 키워드 뱃지 줄(.kbs)이 쓰므로 왼쪽만 비어 있다. */
 .gtim{position:absolute;left:2px;top:27%;z-index:6;font-style:normal;
@@ -1828,7 +1862,9 @@ function rgFight(kind,e,nd){
   /* ⚠ `RG.fighting` 은 **newGame() 뒤에** 켠다. 여기서 미리 켜면 커튼이 떠 있는 동안의
      render() 가 **지난 전투의 낡은 S.me.hp** 를 RG.hp 로 흘려보낸다 —
      이벤트로 회복한 HP 가 전투에 들어가기도 전에 도로 깎였다(실제로 밟았다). */
-  veilRun(`${e?e.name:'적'} 과(와)의 전투 준비 중…`,()=>{ newGame(); RG.fighting=true; });
+  RG.entering=true;                     /* 차리는 동안 RG.hp 를 지킨다 */
+  veilRun(`${e?e.name:'적'} 과(와)의 전투 준비 중…`,
+          ()=>{ newGame(); RG.entering=false; RG.fighting=true; });
 }
 /* 속성별 기본 지형. **여러 종류일 수 있다** — 장수를 그 종류들에 고르게 나눠 담는다.
    ⚠ 2026-08 불·물은 기본 지형을 세 종씩 새로 지정했다(옛 화산·심해는 목록에 없어 지웠다).
@@ -2266,7 +2302,7 @@ function rgStart(el){
   RG.on=true; RG.el=el;
   RG.gold=RC.startGold; RG.hp=RC.startHp; RG.maxhp=RC.startHp;
   RG.floor=-1; RG.at=-1; RG.removes=0; RG.cleared=0; RG.shopStock=null; RG.foe=null;
-  RG.fighting=false; EHP=null; FOEUSED=[];
+  RG.fighting=false; RG.entering=false; EHP=null; FOEUSED=[];
   RG.deck=[]; RG.lands=[];
   DECKS[el].list.filter(([n])=>!LANDS[n]).forEach(([n,c])=>{for(let i=0;i<c;i++)RG.deck.push(n);});
   RG.map=rgMakeMap();
@@ -3169,7 +3205,14 @@ function rageHit(u,d){
   if(!u||!u.rage||d<=0||RAGED>3)return;
   const p=sideOf(u); if(!p)return;
   RAGED++;
-  const foe=foeOf(p), dv=faceDmg(foe,u.a);
+  const foe=foeOf(p);
+  /* 광분이 **한 번 더 칠 때** 그 몸이 붉게 달아오르고, 그 값이 상대 본체로 날아간다(성권 요청).
+     ⚠ 때리는 연출(strike)이 아니라 여기다 — 광분은 '맞으면 반격' 이라 정규 공격과 다른 박자다. */
+  const rEl=slotEl(p,S[p].board.indexOf(u));
+  u.ragefx=true; setTimeout(()=>{ u.ragefx=false; },Math.round(560/SPEED));
+  if(rEl)rEl.classList.add('raging');
+  flyBolt(rEl,document.getElementById(foe==='me'?'myBar':'foeBar'),'#ff5a46');
+  const dv=faceDmg(foe,u.a);
   if(u.a>0)log(`  ${p==='me'?'나':'상대'} ${u.name} 광분 — 상대에게 ${dv} · HP ${Math.max(0,S[foe].hp)}`,'a');
   RAGED--;
 }
@@ -3183,13 +3226,13 @@ function hurtRaw(u,inst,v){
   rageHit(u,v);
   return v;
 }
-function hurtAll(u,v){
+function hurtAll(u,v,tone){
   if(v<=0)return 0;
   if(veiled(u))return 0;                     /* 면역 — 여기도 막는다(광역·연소가 이 길로 온다) */
   if(u.ward){ u.ward=false; return 0; }
   const d=Math.max(0,v-(u.hard||0));
   u.insts.forEach(i=>{i.hp-=d;});
-  hitFx(sideOf(u),u,d);                      /* 연소·광역 — 눈에 보이게 한 발 */
+  hitFx(sideOf(u),u,d,tone);                 /* 연소·광역 — 눈에 보이게 한 발 */
   rageHit(u,d);                              /* 광역·연소도 '줄면' 이다 */
   return d;
 }
@@ -3546,6 +3589,13 @@ function onDeath(p,u,idx,cnt){
      ⚠ 수치가 카드에 안 적혀 있다 = 죽는 시점의 ATK 를 쓴다. 연마·버프로 커진 값이 그대로 들어간다. */
   if(u.boom&&u.a>0&&DEATHD<4){
     const v=u.a*cnt;
+    /* 폭발 — **그 자리에서 진짜 터지고**, 터진 값이 상대 본체로 날아간다(성권 요청).
+       ⚠ 슬롯은 cleanup 이 이미 판에서 뺐지만 DOM 은 아직 남아 있다(다음 render 전) —
+         그래서 여기서 좌표를 뜰 수 있다. 순서를 바꾸면 터질 자리를 잃는다. */
+    const bEl=slotEl(p,idx);
+    burstFx(bEl,(EL[(POOL[u.name]||{}).el]||EL.fire).c);
+    flyBolt(bEl,document.getElementById(foe==='me'?'myBar':'foeBar'),
+            (EL[(POOL[u.name]||{}).el]||EL.fire).c);
     const dv=faceDmg(foe,v);
     log(`  ${who} ${u.name} 폭발 — 상대에게 ATK ${u.a}${cnt>1?`×${cnt}`:''} = ${dv} 피해 · HP ${Math.max(0,S[foe].hp)}`,'a');
     fireEnch(p,'boom',{dmg:v,unit:u});      /* 고블린 지뢰 — 터진 값을 상대 크리처에게도 */
@@ -3646,7 +3696,8 @@ async function endStep(p){
   for(const u of burners){
     if(S.gen!==gen)return;                  /* 판이 갈렸다 — 지난 판의 연출을 이어 그리지 않는다 */
     if(!S[p].board.includes(u)||!u.insts.length)continue;   /* 앞선 폭발에 이미 죽었다 */
-    const d=hurtAll(u,u.burn);
+    /* 연소는 **불붙는 연출**로 따로 표시한다(성권 요청) — 광역 피해와 눈으로 갈린다 */
+    const d=hurtAll(u,u.burn,'burn');
     log(`  ${who} ${u.name} 연소 ${u.burn} — 자신이 ${d} 피해`,'a');
     cleanup(p);                             /* 이 몸의 죽음과 그 폭발 연쇄를 여기서 마무리 */
     await beat();                           /* 그리고 눈으로 보여 준 뒤에 다음 칸으로 */
@@ -3671,6 +3722,14 @@ function hitFx(side,u,v,tone){
   if(FXQ.length>40)FXQ.shift();            /* 흘려보내지 못한 것이 쌓이지 않게 */
 }
 function faceFx(side,v){ if(v>0)FXQ.push({side,face:1,v,tone:'dmg'}); }
+/* 연소 불꽃 — 슬롯 위에 **떠 있는** 요소로 띄운다(슬롯 클래스는 다음 render 에 지워진다). */
+function burnFx(r){
+  const d=document.createElement('i');
+  d.className='burnfx';
+  d.style.cssText=`left:${r.left-4}px;top:${r.top-4}px;width:${r.width+8}px;height:${r.height+8}px`;
+  document.body.appendChild(d);
+  setTimeout(()=>d.remove(),Math.round(680/SPEED));
+}
 function drawFx(e){
   if(typeof document==='undefined')return;
   let r=null;
@@ -3681,8 +3740,10 @@ function drawFx(e){
     const B=(S[e.side]||{}).board||[];
     const at=B.indexOf(e.u)>=0?B.indexOf(e.u):e.idx;
     const el=at>=0?slotEl(e.side,at):null;
-    if(el){ r=el.getBoundingClientRect(); el.classList.add('fxhit');
-      setTimeout(()=>el.classList.remove('fxhit'),420); }
+    if(el){ r=el.getBoundingClientRect();
+      if(e.tone==='burn')burnFx(r);              /* 연소 — 불이 올랐다 사라진다 */
+      else{ el.classList.add('fxhit'); setTimeout(()=>el.classList.remove('fxhit'),420); }
+    }
   }
   if(!r)return;
   const d=document.createElement('i');
@@ -3736,6 +3797,34 @@ function drawTrace(aEl,tEl,cls){
   setTimeout(()=>el.remove(),420/SPEED);
 }
 function slotEl(side,idx){return document.querySelector(`.slot[data-side="${side}"][data-idx="${idx}"]`);}
+/* 때리는 연출 — 공격자가 대상으로 **달려들어 박고** 제자리로 돌아온다(성권 요청).
+   ⚠ **실제 슬롯을 옮긴다**(복제가 아니다). 복제하면 원본이 제자리에 남아 몸이 둘로 보인다.
+   ⚠ 가속이 규칙이다: 달려들 때 ease-in(점점 빨라짐) · 돌아올 때 ease-out(스르르).
+     둘 다 같은 곡선을 쓰면 '미끄러지는' 느낌이 나고 부딪히는 맛이 없다.
+   ⚠ 이 함수가 도는 동안 render() 를 부르면 안 된다 — 슬롯이 새로 그려지면 transform 이 날아간다.
+   ⚠ `.slot` 은 transform 을, 그 안 `.tcard`/`.tart` 는 부유·광분 연출을 쓴다. 층을 갈라 둔다. */
+async function lungeFx(aEl,tEl,tUnit){
+  if(typeof document==='undefined'||!aEl||!tEl)return;
+  const a=aEl.getBoundingClientRect(), b=tEl.getBoundingClientRect();
+  if(!a.width||!b.width)return;
+  const dx=(b.left+b.width/2)-(a.left+a.width/2);
+  const dy=(b.top+b.height/2)-(a.top+a.height/2);
+  const k=0.58;                                   /* 끝까지 안 간다 — 살짝 못 미쳐 박는다 */
+  const go=Math.max(70,Math.round(180/SPEED)), back=Math.max(80,Math.round(240/SPEED));
+  const z0=aEl.style.zIndex, t0=aEl.style.transition;
+  aEl.style.zIndex='40';
+  aEl.style.transition=`transform ${go}ms cubic-bezier(.6,0,.95,.45)`;
+  aEl.style.transform=`translate(${dx*k}px,${dy*k}px) scale(1.07)`;
+  await new Promise(r=>setTimeout(r,go));
+  tEl.classList.add('bumped');
+  /* 반동은 개체에도 적어 둔다 — 곧 이어질 render() 가 클래스를 지우기 때문이다 */
+  if(tUnit){ tUnit.bumpfx=true; setTimeout(()=>{tUnit.bumpfx=false;},Math.round(300/SPEED)); }
+  aEl.style.transition=`transform ${back}ms cubic-bezier(.18,.72,.3,1)`;
+  aEl.style.transform='';
+  await new Promise(r=>setTimeout(r,Math.round(back*0.45)));
+  setTimeout(()=>{ aEl.style.zIndex=z0; aEl.style.transition=t0; aEl.style.transform='';
+    tEl.classList.remove('bumped'); },back);
+}
 /* 파괴 연출 — **사라지기 직전의 그 자리**에서 카드가 금이 가며 부서진다.
    ⚠ render() 가 슬롯을 통째로 다시 그리므로, 지워지기 전에 지금 모습과 화면 좌표를 떠서
      body 위에 얹는다. 슬롯 자체에 애니메이션을 걸면 다음 render 에 그냥 사라진다.
@@ -3838,7 +3927,7 @@ let DEALT=0;                             /* 흡혈용 — 방금 실제로 입�
 /* 한 개체가 **한 번** 때린다. 정규 공격도, 연합이 부른 추가 공격도 전부 여기를 지난다.
    ⚠ 슬롯 번호가 아니라 **유닛 자체**를 받는다 — 앞의 몸이 죽으면 판이 다시 채워져 번호가 밀린다.
    돌려주는 값: false 면 그 뒤 공격을 이어갈 이유가 없다(게임이 끝났거나 판이 갈렸다). */
-async function strike(p,u,gen,tag){
+async function strike(p,u,gen,tag,opt){
   const foe=p==='me'?'ai':'me', D=S[foe].board, me=p==='me';
   if(S.gen!==gen)return false;
   if(S[foe].hp<=0){S.fx=null;return false;}
@@ -3860,8 +3949,13 @@ async function strike(p,u,gen,tag){
   S.fx={aSide:p,aIdx:i,tSide:foe,tIdx:tgt>=0?tgt:null,tHero:tgt<0?foe:null};
   render();
   const label=u.name+(tag||'');
-  drawTrace(slotEl(p,i), tgt>=0?slotEl(foe,tgt):document.getElementById(foe==='me'?'myBar':'foeBar'), u.f?'f':(tgt>=0?'g':''));
-  await sleep(400);
+  const aEl=slotEl(p,i);
+  const tEl=tgt>=0?slotEl(foe,tgt):document.getElementById(foe==='me'?'myBar':'foeBar');
+  /* ⚠ 연격·연합의 **두 번째 이후 타격은 화살표를 다시 안 그린다**(성권 요청).
+     같은 대상을 향해 화살표가 몇 번씩 다시 뜨면 몇 대를 때렸는지 되레 안 보인다.
+     대신 달려드는 연출은 매번 한다 — '여러 번 때린다' 가 그걸로 읽힌다. */
+  if(!(opt&&opt.notrace))drawTrace(aEl,tEl,u.f?'f':(tgt>=0?'g':''));
+  await lungeFx(aEl,tEl,tgt>=0?D[tgt]:null);
   if(S.gen!==gen||!S.fx)return false;
 
   /* --- 2) 피해 적용 --- */
@@ -3904,9 +3998,13 @@ async function strike(p,u,gen,tag){
      ⚠⚠ 2026-08 **회복 대상이 본체에서 그 크리처 자신으로 바뀌었다.**
         최대 체력을 넘지 않는다 — 넘게 두면 흡혈 하나로 몸이 무한히 불어난다. */
   if(u.drain&&DEALT>0&&u.insts.length){
-    const g=Math.round(DEALT/2), i=u.insts[0], b=i.hp;
-    i.hp=Math.min(i.mh,i.hp+g);
-    log(`  ${me?'나':'상대'} ${u.name} 흡혈 — 입힌 ${DEALT} 의 절반 ${g} 회복 · HP ${b}→${i.hp}`,'g'); render();
+    const g=Math.round(DEALT/2), inst=u.insts[0], b=inst.hp;
+    inst.hp=Math.min(inst.mh,inst.hp+g);
+    /* 흡혈 — **맞은 쪽에서 때린 몸으로** 붉은 것이 빨려 들어간다.
+       ⚠ 회복 대상은 본체가 아니라 **그 크리처 자신**이다(2026-08 규칙 변경) —
+         발사체도 그 몸으로 가야 한다. 본체로 보내면 규칙과 그림이 어긋난다. */
+    flyBolt(tEl,slotEl(p,S[p].board.indexOf(u))||aEl,'#c0392b');
+    log(`  ${me?'나':'상대'} ${u.name} 흡혈 — 입힌 ${DEALT} 의 절반 ${g} 회복 · HP ${b}→${inst.hp}`,'g'); render();
   }
   await sleep(560);
   if(S.gen!==gen)return false;
@@ -3941,7 +4039,9 @@ async function resolveAttacks(p){
     const hits=u.insts.length*(u.multi||1);
     for(let n=0;n<hits&&go;n++){
       if(!S[p].board.includes(u)||!u.insts.length)break;
-      go=await strike(p,u,gen,(u.multi||1)>1?` 연격 ${n+1}/${hits}`:'');
+      /* 화살표는 **첫 발에만**(성권 요청) — 같은 대상에 몇 번씩 다시 뜨면
+         몇 대를 때렸는지 되레 안 보인다. 달려드는 연출은 매번 한다. */
+      go=await strike(p,u,gen,(u.multi||1)>1?` 연격 ${n+1}/${hits}`:'',{notrace:n>0});
     }
     if(!go)return;
     /* ── 연합 ─────────────────────────────────────────────────
@@ -3953,7 +4053,8 @@ async function resolveAttacks(p){
                                        &&x.insts.length&&x.a>0&&!x.sick);
       for(const m of mates){
         if(!S[p].board.includes(m))continue;
-        go=await strike(p,m,gen,' 연합');
+        /* 연합도 화살표는 **주체가 그린 것 하나뿐**이다. 따라 치는 몸들은 달려들기만 한다. */
+        go=await strike(p,m,gen,' 연합',{notrace:true});
         if(!go)return;
       }
       if(mates.length)log(`  ${me?'나':'상대'} ${u.name} 연합 — 동명 ${mates.length}개체가 따라 쳤다`,'g');
@@ -5896,6 +5997,7 @@ function slotHTML(u,side,i){
   if(u.breed)cls+=' breedon';
   if(u.ward)cls+=' wardon';
   if(u.doom)cls+=' doomed';                 /* 사신의 수확 — 표식이 남아 있는 동안 계속 */
+  if(veiled(u))cls+=' veilon';              /* 면역 — 일러스트가 프리즘처럼 흐른다 */
   const tim=(u.grow&&u.grow.left>0)?`<i class="gtim" title="성장까지 ${u.grow.left}턴">${u.grow.left}</i>`:'';
   return `<div class="${cls}" data-side="${side}" data-idx="${i}">`
     +`${tcardHTML(u.name,{size:'sm',unit:u})}${kwBadges(u)}${tim}</div>`;
@@ -5937,7 +6039,12 @@ function render(){
      "지고 있는 전투를 설정 → 지도로 나갔다가 다시 들어오면 HP 가 만피로 돌아오는" 구멍이 있었다.
      RG.fighting 이 켜져 있을 때만 흘린다 — 지도·이벤트 화면에서 흘리면
      이벤트가 올려 놓은 HP 를 지난 전투의 낡은 S.me.hp 가 도로 깎는다. */
-  if(RG.on&&RG.fighting&&S.me)RG.hp=Math.max(0,S.me.hp);
+  /* ⚠⚠ `RG.entering` — **커튼이 내려가 새 판을 차리는 동안**은 흘려보내지 않는다.
+     그 사이의 render() 는 아직 **지난 전투의 낡은 S.me.hp** 를 들고 있어서, 이벤트로
+     회복한 HP 가 전투에 들어가기도 전에 도로 깎인다(전체 검사에서 이따금 잡혔다).
+     ⚠ '#rg 창이 떠 있으면 건너뛴다' 로 막아 봤다가 **전투 중 실시간 반영이 통째로 죽었다** —
+       창이 아니라 '차리는 중' 인지를 봐야 한다. */
+  if(RG.on&&RG.fighting&&!RG.entering&&S.me)RG.hp=Math.max(0,S.me.hp);
   const mine=S.active==='me'&&!S.over&&!S.busy;
   /* 처리 중에는 화면을 가리지 않고 조작만 막는다(위쪽 얇은 진행 막대) */
   if(TUT.on)tutSync();               /* 튜토리얼 — 상태가 바뀌면 저절로 다음 단계로 */
@@ -6019,9 +6126,13 @@ function render(){
     const el=slotEl(S.spawn.side,S.spawn.idx);
     if(el)el.classList.add('spawned');
   }
-  /* 부활한 몸 — 보라 오오라. 개체에 붙은 표시라 자리가 밀려도 따라간다. */
+  /* 개체에 붙은 연출 표시 — **자리가 밀려도 따라가고, 다시 그려도 안 지워진다.**
+     ⚠⚠ 슬롯에 클래스로 직접 걸면 바로 다음 render() 가 통째로 날려 버린다.
+       광분 광채와 피격 반동이 실제로 그렇게 한 번도 안 보였다. 개체에 표시를 달아 둔다. */
+  const FXCLS={revfx:'revived',ragefx:'raging',bumpfx:'bumped'};
   ['me','ai'].forEach(sd=>{ const B=(S[sd]||{}).board||[];
-    B.forEach((u,i)=>{ if(u&&u.revfx){ const el=slotEl(sd,i); if(el)el.classList.add('revived'); } }); });
+    B.forEach((u,i)=>{ if(!u)return; const el=slotEl(sd,i); if(!el)return;
+      Object.keys(FXCLS).forEach(k=>{ if(u[k])el.classList.add(FXCLS[k]); }); }); });
   if(S.aoeFx){
     S[S.aoeFx.side].board.forEach((u,i)=>{
       if(!u||u.kind!=='cr')return;
@@ -6129,7 +6240,7 @@ document.getElementById('restart').onclick=()=>{
      시작 → 모드 선택 → 덱 선택 → (배틀: 상대 덱 선택 | 원정: 지도) → 게임
      패배 → 다시 도전하기(덱 선택으로) · 초기 화면(모드 선택으로)
    ⚠ ?dev=1 로 열면 페이지를 건너뛰고 바로 배틀로 들어간다(자동 테스트용). */
-const VERSION='0.43.1', BUILD='2026-08-04';
+const VERSION='0.44.0', BUILD='2026-08-05';
 const DEV=/[?&]dev=1/.test(location.search);
 let PAGE=null, FLOW={mode:'battle', my:null, foe:null};
 function pageOpen(html){

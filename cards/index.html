@@ -1288,7 +1288,9 @@ body{padding:0;height:100dvh;overflow:hidden;
 /* ⚠ 카드 **테두리 색은 건드리지 않는다** — 그건 속성(=카드 정체)이다.
       한 번 `border-color:!important` 로 덮었더니 불 카드가 파랗게 보여 어느 속성인지 알 수 없었다.
       광채는 테두리 **바깥에 두른 고리**(box-shadow spread)로만 준다. */
-.slot.echoon .tcard{animation:glowecho 1.8s ease-in-out infinite}
+/* 환류가 **아직 남은** 몸 — 파란 테두리가 일렁인다(성권 요청).
+   ⚠ 다 쓴 몸은 u.echo 가 꺼져 이 클래스가 안 붙는다 = 한눈에 갈린다. */
+.slot.echoon .tcard{animation:glowecho 1.4s ease-in-out infinite}
 .slot.breedon .tcard{animation:glowbreed 1.8s ease-in-out infinite}
 .slot.wardon .tcard{animation:glowward 1.8s ease-in-out infinite}
 @keyframes glowecho{0%,100%{box-shadow:0 0 0 2px rgba(95,198,238,.85),0 0 8px rgba(95,198,238,.5)}
@@ -1297,6 +1299,38 @@ body{padding:0;height:100dvh;overflow:hidden;
   50%{box-shadow:0 0 0 2px #6fd86a,0 0 16px rgba(111,216,106,.9)}}
 @keyframes glowward{0%,100%{box-shadow:0 0 0 2px rgba(255,215,94,.85),0 0 8px rgba(255,215,94,.5)}
   50%{box-shadow:0 0 0 2px #ffd75e,0 0 16px rgba(255,215,94,.95)}}
+/* ── 상태를 몸으로 보여 주는 것들 (2026-08) ───────────────────────────
+   ⚠ 전부 `.tcard` 안쪽 요소에 건다. `.slot` 자체는 때리는 연출(lunge)이 transform 을
+     쓰므로, 여기서 또 transform 을 걸면 서로 덮어써서 둘 다 어긋난다. */
+/* 비행 — 아주 약간 떠 있다 */
+.slot.fly .tart,.slot.flyguard .tart{animation:hover 3.1s ease-in-out infinite}
+@keyframes hover{0%,100%{transform:translateY(0)}50%{transform:translateY(-3.5%)}}
+/* 수호 — 체력 뱃지가 방패 모양이다 */
+.slot.guard .tb.h,.slot.flyguard .tb.h{border-radius:22% 22% 46% 46%/18% 18% 74% 74%}
+/* 면역 — 일러스트가 프리즘처럼 흐른다(희귀도 보석과 다른 결) */
+.slot.veilon .tart::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:1;
+  background:linear-gradient(112deg,transparent 22%,rgba(190,230,255,.55) 38%,
+    rgba(255,214,255,.55) 47%,rgba(190,255,238,.55) 56%,transparent 72%);
+  background-size:260% 100%;mix-blend-mode:screen;animation:prism 2.6s linear infinite}
+@keyframes prism{0%{background-position:180% 0}100%{background-position:-80% 0}}
+/* 연소가 실제로 타는 순간 — 그 자리에서 불이 올랐다 사라진다.
+   ⚠⚠ **슬롯에 클래스로 걸면 안 된다.** endStep 이 끝나며 render() 가 슬롯을 다시 그려
+     클래스가 통째로 날아간다(실제로 불이 한 번도 안 보였다). body 위에 띄운다. */
+.burnfx{position:fixed;z-index:127;pointer-events:none;border-radius:9px;
+  background:radial-gradient(ellipse at 50% 100%,rgba(255,150,60,.9),rgba(255,80,20,.4) 45%,transparent 72%);
+  animation:burnup .62s ease-out both}
+@keyframes burnup{0%{opacity:0;transform:translateY(6%) scaleY(.7)}
+  30%{opacity:1;transform:translateY(0) scaleY(1.05)}
+  100%{opacity:0;transform:translateY(-14%) scaleY(1.2)}}
+/* 광분 — 한 번 더 칠 때 붉게 달아오른다 */
+.slot.raging .tcard{animation:ragepulse .5s ease-out both}
+@keyframes ragepulse{0%{box-shadow:none;filter:none}
+  35%{box-shadow:0 0 0 3px #ff5a46,0 0 22px rgba(255,90,70,.95);filter:brightness(1.45) saturate(1.5)}
+  100%{box-shadow:none;filter:none}}
+/* 맞은 쪽이 뒤로 밀린다 — 때리는 연출의 짝 */
+.slot.bumped .tcard{animation:bump .26s cubic-bezier(.2,.8,.3,1) both}
+@keyframes bump{0%{transform:none}30%{transform:translateY(6%) scale(.94) rotate(2deg)}
+  100%{transform:none}}
 /* 성장까지 남은 턴 — **일러스트 왼쪽 위**. 카드 맨 위에 두면 이름 첫 글자를 덮는다(실제로 덮었다).
    오른쪽은 키워드 뱃지 줄(.kbs)이 쓰므로 왼쪽만 비어 있다. */
 .gtim{position:absolute;left:2px;top:27%;z-index:6;font-style:normal;
