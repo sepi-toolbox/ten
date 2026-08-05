@@ -192,6 +192,65 @@ const TEN =path.join(__dirname,'..','data','cards.json');
   ok('한 판이 끝까지 돈다', run.board>0||run.over||run.q>0,
      `내 ${run.myhp} · 상대 ${run.aihp} · 내 몸 ${run.board} · 퀀텀 ${run.q}${run.over?' · 승부남':''}`);
 
+  /* ── 12b) 죽음이 실제로 무언가를 터뜨린다 ──────────────────────────── */
+  /* ⚠⚠ 이 검사가 있는 이유. 죽음은 **두 갈래**다 —
+       ① 죽은 몸 자신의 owndeath (불사조 → 잿더미)
+       ② 양쪽 판 전부의 death   (백골 무덤 · 영혼 포집기 · 독수리 · 뼈 장벽)
+     이 둘을 거꾸로 걸어 놨더니 **어느 쪽도 한 번도 안 돌았는데 오류도 안 났다.**
+     TEN 에서 strike() 가 시체를 직접 지워 onDeath 가 통째로 죽었던 것과 같은 사고다.
+     그래서 '죽였을 때 무엇이 남는가' 를 눈으로 센다. */
+  const dth=await p.evaluate(()=>{
+    const D=window.ETGDBG;
+    D.startGame(D.deckList(D.autoDeck(2)),2);
+    const G=D.G; G.me.hand=[];G.ai.hand=[];
+    G.me.cr=new Array(23).fill(null); G.me.pm=new Array(16).fill(null);
+    const out={};
+    /* ① 불사조 — 죽으면 그 자리에 잿더미 */
+    const ph=D.summon(G.me,D.BYNAME['Phoenix'].code);
+    D.kill(ph);
+    out.ash=G.me.cr.filter(Boolean).map(u=>u.c.en);
+    /* ② 백골 무덤 — 크리처가 죽을 때마다 해골 */
+    G.me.cr=new Array(23).fill(null);
+    G.me.pm[0]=D.mk(D.BYNAME['Boneyard'].code,G.me); G.me.pm[0].slot=0;
+    const v=D.summon(G.me,D.BYNAME['Crimson Dragon'].code);
+    D.kill(v);
+    out.bone=G.me.cr.filter(Boolean).map(u=>u.c.en);
+    /* ③ 영혼 포집기 — 죽을 때마다 죽음 퀀텀 */
+    G.me.pm=new Array(16).fill(null);
+    G.me.pm[0]=D.mk(D.BYNAME['Soul Catcher'].code,G.me);
+    G.me.cr=new Array(23).fill(null); G.me.q[2]=0;
+    D.kill(D.summon(G.me,D.BYNAME['Crimson Dragon'].code));
+    out.soul=G.me.q[2];
+    /* ④ 독수리 — 크리처가 죽을 때마다 +1|+1 (같은 id 인데 발동형이 아니다) */
+    G.me.pm=new Array(16).fill(null); G.me.cr=new Array(23).fill(null);
+    const vul=D.summon(G.me,D.BYNAME['Vulture'].code);
+    const a0=vul.atk, h0=vul.hp;
+    D.kill(D.summon(G.ai,D.BYNAME['Crimson Dragon'].code));
+    out.vul=[a0+'|'+h0, vul.atk+'|'+vul.hp];
+    return out;});
+  ok('불사조는 잿더미를 남긴다', dth.ash.includes('Ash'), dth.ash.join(',')||'(아무것도 안 남았다)');
+  ok('무덤은 해골을 낸다', dth.bone.includes('Skeleton'), dth.bone.join(',')||'(안 나왔다)');
+  ok('영혼 포집기가 퀀텀을 얻는다', dth.soul===2, `죽음 퀀텀 ${dth.soul}`);
+  ok('독수리는 시체를 먹고 큰다', dth.vul[1]!==dth.vul[0], `${dth.vul[0]} → ${dth.vul[1]}`);
+
+  /* ── 12c) '눌러서 쓰는 능력' 과 '저절로 도는 것' 을 안 헷갈린다 ─────── */
+  /* 성권이 짚은 자리 — 불의 정령은 공격할 때가 아니라 **1불 내고 눌러야** 큰다. */
+  const act=await p.evaluate(()=>{
+    const D=window.ETGDBG; const G=D.G;
+    G.me.cr=new Array(23).fill(null); G.me.q=new Array(13).fill(0);
+    const u=D.summon(G.me,D.BYNAME['Fire Spirit'].code);
+    const a0=u.atk,h0=u.hp;
+    D.attack(u);                       /* 그냥 공격만 해서는 안 커야 한다 */
+    const afterAtk=[u.atk,u.hp];
+    G.me.q[6]=5; D.useAbility(G.me,u,null);
+    return {cost:u.cast, el:u.castel, before:[a0,h0], afterAtk, after:[u.atk,u.hp],
+      q:G.me.q[6]};});
+  ok('불의 정령은 공격만으론 안 큰다', act.afterAtk.join()===act.before.join(),
+     `${act.before.join('|')} → ${act.afterAtk.join('|')}`);
+  ok('눌러서 쓰면 큰다(비용도 낸다)',
+     act.after.join()!==act.before.join()&&act.q===5-act.cost,
+     `${act.before.join('|')} → ${act.after.join('|')} · 불 퀀텀 5→${act.q} (비용 ${act.cost})`);
+
   /* ── 13) 카드가 본편 규격으로 그려진다 ─────────────────────────────── */
   /* ⚠ 여기서 '보이냐' 가 아니라 **본편 클래스로 그려졌냐** 를 본다. 규격을 이 모드에서
      따로 그리기 시작하면 두 벌이 되어 반드시 어긋난다(옛 card_gallery 가 그렇게 낡았다). */
