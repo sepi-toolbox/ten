@@ -192,6 +192,71 @@ const TEN =path.join(__dirname,'..','data','cards.json');
   ok('한 판이 끝까지 돈다', run.board>0||run.over||run.q>0,
      `내 ${run.myhp} · 상대 ${run.aihp} · 내 몸 ${run.board} · 콴타 ${run.q}${run.over?' · 승부남':''}`);
 
+  /* ── 13) 카드가 본편 규격으로 그려진다 ─────────────────────────────── */
+  /* ⚠ 여기서 '보이냐' 가 아니라 **본편 클래스로 그려졌냐** 를 본다. 규격을 이 모드에서
+     따로 그리기 시작하면 두 벌이 되어 반드시 어긋난다(옛 card_gallery 가 그렇게 낡았다). */
+  await p.evaluate(()=>{ const D=window.ETGDBG;
+    D.startGame(D.deckList(D.autoDeck(6)),6);
+    const G=D.G; D.summon(G.me,D.BYNAME['Crimson Dragon'].code);
+    G.me.weapon=D.mk(D.BYNAME['Fahrenheit'].code,G.me); D.render(); });
+  await p.waitForTimeout(150);
+  const spec=await p.evaluate(()=>{
+    const c=document.querySelector('#myBoard .slot.occ .tcard');
+    return {slot:!!document.querySelector('#myBoard .slot.occ'),
+      tcard:!!c, head:!!(c&&c.querySelector('.thead .tname')),
+      art:!!(c&&c.querySelector('.tart')), eff:!!(c&&c.querySelector('.tbody .teff')),
+      stat:!!(c&&c.querySelector('.tstat .tb.a')),
+      hand:!!document.querySelector('#hand .hcw .tcard')};
+  });
+  ok('본편 카드 규격으로 그린다', Object.values(spec).every(Boolean), JSON.stringify(spec));
+
+  /* ── 14) 줄 순서가 본편과 같다 ─────────────────────────────────────── */
+  /* ⚠⚠ 본편 `.main` 은 자식을 **id 로 재배열한다**(#foeHand:0 … #hand:8).
+     HTML 에 적은 순서가 화면 순서가 아니다 — 이걸 모르고 붙였다가 상대 판·내 판·
+     기록이 뒤죽박죽 섞여 나왔다. 화면에 찍힌 **실제 y 좌표**로 잰다. */
+  const ord=await p.evaluate(()=>{
+    const ids=['foeHand','foeBar','foePm','foeBoard','myBoard','myPm','myBar','hand','log'];
+    const y={}; ids.forEach(i=>{const e=document.getElementById(i);
+      y[i]=e?Math.round(e.getBoundingClientRect().top):null;});
+    const ctl=document.querySelector('.ctl');
+    y.ctl=ctl?Math.round(ctl.getBoundingClientRect().top):null;
+    return y;});
+  const want=['foeHand','foeBar','foePm','foeBoard','ctl','myBoard','myPm','myBar','hand','log'];
+  const seq=want.map(k=>ord[k]);
+  ok('줄 순서가 본편과 같다', seq.every((v,i)=>v!==null&&(i===0||v>=seq[i-1])),
+     want.map((k,i)=>`${k}:${seq[i]}`).join(' '));
+
+  /* ── 15) 손패가 화면 밖으로 안 나간다 ──────────────────────────────── */
+  const fit=await p.evaluate(()=>{
+    const D=window.ETGDBG, G=D.G;
+    while(G.me.hand.length<8) G.me.hand.push(D.mk(D.BYNAME['Crimson Dragon'].code,G.me));
+    D.render();
+    const el=document.getElementById('hand');
+    const last=el.lastElementChild.getBoundingClientRect();
+    return {n:G.me.hand.length, right:Math.round(last.right), w:window.innerWidth};
+  });
+  ok('손패 8장이 화면 안에 들어온다', fit.right<=fit.w+2, `${fit.n}장 · 오른쪽 끝 ${fit.right} ≤ ${fit.w}`);
+
+  /* ── 16) 길게 누르면 효과 전문이 뜬다 ──────────────────────────────── */
+  /* 성권이 짚은 그것 — 카드 설명란은 본편 규격상 3줄에서 잘린다. 전문은 확대창이 맡는다. */
+  const box=await p.$('#myBoard .slot.occ');
+  const bb=await box.boundingBox();
+  await p.mouse.move(bb.x+bb.width/2,bb.y+bb.height/2);
+  await p.mouse.down(); await p.waitForTimeout(650);
+  const z=await p.evaluate(()=>{
+    const zz=document.getElementById('zoom');
+    return {on:zz.classList.contains('on'),
+      big:!!zz.querySelector('.tcard.lg'),
+      defs:zz.querySelectorAll('.zdef').length,
+      txt:(zz.textContent||'').length};});
+  await p.mouse.up();
+  ok('길게 누르면 효과가 다 뜬다', z.on&&z.big&&z.defs>=2&&z.txt>60,
+     `확대 ${z.on} · 큰 카드 ${z.big} · 설명 ${z.defs}칸 · 글자 ${z.txt}자`);
+  const closed=await p.evaluate(()=>{ document.body.dispatchEvent(
+      new PointerEvent('pointerdown',{bubbles:true}));
+    return !document.getElementById('zoom').classList.contains('on'); });
+  ok('아무 데나 누르면 닫힌다', closed, '');
+
   if(errs.length){ bad++; console.log('   ERR',errs.slice(0,4)); }
   console.log(`\n미구현 능력 ${cov.miss.length}종: ${cov.miss.join(' ')}`);
   console.log(bad?`❌ ${bad}건 실패`:'✅ 전부 통과');

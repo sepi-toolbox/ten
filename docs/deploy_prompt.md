@@ -45,6 +45,15 @@ sepi-toolbox/ten 저장소로 작업한다. 아래를 그대로 지켜라. 순�
   python3 tools/build_cards_page.py     # 카드 뷰어(cards/index.html)
   python3 tools/dump_over.py            # 예산 초과 기록(고치지 말고 기록만)
 
+  엘리멘츠 원정 모드(prototype/etg/)를 건드렸다면 이 둘도 함께:
+  python3 tools/gen_etg.py              # 카드 데이터 → data/etg_cards.json · prototype/etg/data.js
+  python3 tools/build_etg_page.py       # 틀 + **본편 카드 CSS** → prototype/etg/index.html
+
+  ⚠ prototype/etg/index.html 은 **생성물이다.** 직접 고치면 다음 빌드에 지워진다.
+    고칠 곳은 prototype/etg/etg.template.html.
+  ⚠ 본편 prototype/index.html 의 카드 CSS 를 고쳤으면 build_etg_page.py 를 **반드시**
+    다시 돌려라. 안 돌리면 원정 모드만 옛 규격으로 남는다.
+
   ⚠ 인챈트를 새로 만들거나 트리거를 바꿨으면 gen_rogue 를 **반드시** 다시 돌려라.
     강화판이 tg/fx 를 물려받는데, 안 돌리면 강화 카드만 fx 가 비어 조용히 안 돈다.
 
