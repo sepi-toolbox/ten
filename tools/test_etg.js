@@ -384,6 +384,63 @@ const TEN =path.join(__dirname,'..','data','cards.json');
     return !document.getElementById('zoom').classList.contains('on'); });
   ok('아무 데나 누르면 닫힌다', closed, '');
 
+  /* ── 17) 손패에서 끌어내 낸다 (본편과 같은 손짓) ────────────────────── */
+  /* ⚠ 이 모드는 한동안 **탭으로만** 낼 수 있었다. 본편에 있는 조작이 여기 없으면
+     그건 기능이 없는 게 아니라 **고장 난 것처럼** 느껴진다(성권이 그렇게 읽었다). */
+  await p.evaluate(()=>{
+    const D=window.ETGDBG; D.startGame(D.deckList(D.autoDeck(6)),6);
+    const G=D.G; G.me.hand=[]; G.me.cr=new Array(23).fill(null); G.ai.cr=new Array(23).fill(null);
+    ['Crimson Dragon','Fire Bolt'].forEach(n=>G.me.hand.push(D.mk(D.BYNAME[n].code,G.me)));
+    D.summon(G.ai,D.BYNAME['Armagio'].code);
+    for(let e=1;e<=12;e++)G.me.q[e]=20; D.render();});
+  await p.waitForTimeout(200);
+  let hb=await (await p.$('#hand .hcw[data-h="0"]')).boundingBox();
+  await p.mouse.move(hb.x+hb.width/2,hb.y+hb.height/2);
+  await p.mouse.down(); await p.mouse.move(hb.x+hb.width/2,hb.y-40,{steps:6});
+  await p.waitForTimeout(120);
+  const drg=await p.evaluate(()=>({ghost:!!document.querySelector('.dgh'),
+    tip:(document.querySelector('.dztip')||{}).textContent||'',
+    mode:document.body.classList.contains('dragmode')}));
+  ok('끌면 카드가 따라온다', drg.ghost&&drg.mode, `"${drg.tip}"`);
+  await p.mouse.move(195,430,{steps:6}); await p.mouse.up(); await p.waitForTimeout(250);
+  const put=await p.evaluate(()=>ETGDBG.G.me.cr.filter(Boolean).map(u=>u.c.en));
+  ok('손패 밖에 놓으면 나간다', put.includes('Crimson Dragon'), put.join(',')||'(안 나갔다)');
+
+  /* ── 18) 대상이 필요하면 화살표로 겨눈다 ───────────────────────────── */
+  hb=await (await p.$('#hand .hcw[data-h="0"]')).boundingBox();
+  await p.mouse.move(hb.x+hb.width/2,hb.y+hb.height/2);
+  await p.mouse.down(); await p.mouse.move(hb.x+hb.width/2,hb.y-60,{steps:6});
+  await p.mouse.move(195,500,{steps:6}); await p.mouse.up(); await p.waitForTimeout(250);
+  const arw=await p.evaluate(()=>({svg:!!document.getElementById('tgtsvg'),
+    dim:document.body.classList.contains('tgtmode'),
+    pick:document.querySelectorAll('.slot.pick').length}));
+  ok('겨눌 땐 화살표와 딤', arw.svg&&arw.dim&&arw.pick>0,
+     `화살표 ${arw.svg} · 딤 ${arw.dim} · 빛나는 대상 ${arw.pick}개`);
+  const tgt=await p.$('#foeBoard .slot.pick');
+  const tb=await tgt.boundingBox();
+  await p.mouse.move(tb.x+tb.width/2,tb.y+tb.height/2);
+  await p.mouse.down(); await p.mouse.up(); await p.waitForTimeout(250);
+  const hit=await p.evaluate(()=>({hp:(ETGDBG.G.ai.cr.filter(Boolean)[0]||{}).hp,
+    svg:!!document.getElementById('tgtsvg')}));
+  ok('고르면 나가고 화살표가 걷힌다', hit.hp<25&&!hit.svg, `아르마지오 25→${hit.hp}`);
+
+  /* ── 19) 못 내는 카드도 끌리고, 왜 안 되는지 말해 준다 ─────────────── */
+  /* ⚠ 못 끌게 막으면 "드래그가 안 된다" 로 읽힌다 — 끌리게 두고 놓을 때 이유를 말한다. */
+  await p.evaluate(()=>{ const D=window.ETGDBG, G=D.G;
+    G.me.hand=[D.mk(D.BYNAME['Miracle'].code,G.me)];   /* 15빛 — 낼 수 없다 */
+    G.me.q=new Array(13).fill(0); D.render(); });
+  await p.waitForTimeout(150);
+  hb=await (await p.$('#hand .hcw[data-h="0"]')).boundingBox();
+  await p.mouse.move(hb.x+hb.width/2,hb.y+hb.height/2);
+  await p.mouse.down(); await p.mouse.move(hb.x+hb.width/2,hb.y-50,{steps:6});
+  await p.waitForTimeout(120);
+  const badtip=await p.evaluate(()=>{const t=document.querySelector('.dztip');
+    return {t:t?t.textContent:'', bad:t?t.classList.contains('bad'):false};});
+  await p.mouse.move(195,430,{steps:5}); await p.mouse.up(); await p.waitForTimeout(200);
+  const said=await p.evaluate(()=>{const t=document.querySelector('.toast');return t?t.textContent:'';});
+  ok('못 내는 카드도 끌리고 이유를 말한다', badtip.bad&&/퀀텀/.test(said),
+     `끌 때 "${badtip.t}" · 놓을 때 "${said}"`);
+
   if(errs.length){ bad++; console.log('   ERR',errs.slice(0,4)); }
   console.log(`\n미구현 능력 ${cov.miss.length}종: ${cov.miss.join(' ')}`);
   console.log(bad?`❌ ${bad}건 실패`:'✅ 전부 통과');

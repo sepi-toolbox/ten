@@ -113,6 +113,8 @@ h1.tt small{font-family:'Gowun Batang',serif;letter-spacing:0;font-size:10px;col
 </head>
 <body>
 <div class="wrap">
+  <!-- 대상 지정 딤 — .wrap 안에 있어야 .slot.pick 이 이 위로 올라온다(본편과 같다) -->
+  <div class="tgtdim" id="tgtdim"></div>
   <h1 class="tt">ELEMENTS<br><small>엘리멘츠 대전 — Elements the Game 이식 · TEN 카드는 나오지 않습니다</small></h1>
   <div id="screen"></div>
 </div>
@@ -121,7 +123,7 @@ h1.tt small{font-family:'Gowun Batang',serif;letter-spacing:0;font-size:10px;col
 <script src="data.js"></script>
 <script>
 'use strict';
-const VERSION='0.6.0', BUILD='2026-08-05';
+const VERSION='0.7.0', BUILD='2026-08-05';
 /* 판 번호는 제목줄에 붙인다 — 아래 h1.tt 안 small */
 document.addEventListener('DOMContentLoaded',()=>{const t=document.querySelector('h1.tt small');
   if(t)t.insertAdjacentHTML('beforeend',` · v${VERSION}`);});
@@ -1151,8 +1153,8 @@ function render(){
 }
 
 function bind(){
-  const e=$('#end'); if(e) e.onclick=()=>{ if(G.turn===G.me&&!G.over){ SEL=null;TGT=null; endTurn(); render(); } };
-  const q=$('#quit'); if(q) q.onclick=()=>{ G=null; screenBuild(); };
+  const e=$('#end'); if(e) e.onclick=()=>{ if(G.turn===G.me&&!G.over){ endTargeting(); SEL=null;TGT=null; endTurn(); render(); } };
+  const q=$('#quit'); if(q) q.onclick=()=>{ endTargeting(); G=null; screenBuild(); };
   const hm=$('#home'); if(hm) hm.onclick=()=>{ location.href='../index.html';   /* ⚠ '../' 는 file:// 에서 목록이 뜬다 */ };
   const ag=$('#again'); if(ag) ag.onclick=()=>{ G=null; screenBuild(); };
   SCR.querySelectorAll('[data-h]').forEach(el=>el.onclick=()=>{
@@ -1160,8 +1162,8 @@ function bind(){
     if(G.turn!==G.me||G.over)return;
     const u=G.me.hand[+el.dataset.h]; if(!u||!canPlay(G.me,u))return;
     const t=needsTarget(u);
-    if(t){ SEL=u; TGT={kind:t,src:u,mode:'play'}; }
-    else { playCard(G.me,u,null); SEL=null;TGT=null; }
+    if(t){ SEL=u; TGT={kind:t,src:u,mode:'play'}; render(); startTargeting(); return; }
+    playCard(G.me,u,null); SEL=null;TGT=null;
     render();
   });
   SCR.querySelectorAll('[data-uid]').forEach(el=>el.onclick=()=>{
@@ -1175,7 +1177,7 @@ function bind(){
       const s=activeSk(u);
       if(s&&!u.used&&!u.frozen&&canPay(G.me,u.castel,u.cast)){
         const t=SK[s.id].t;
-        if(t){ TGT={kind:t,src:u,mode:'skill'}; render(); return; }
+        if(t){ TGT={kind:t,src:u,mode:'skill'}; render(); startTargeting(); return; }
         useAbility(G.me,u,null); render(); return;
       }
     }
@@ -1278,6 +1280,164 @@ document.addEventListener('pointermove',e=>{
   lpDown=false;
 },{passive:true}));
 document.addEventListener('contextmenu',e=>{ if(cardAt(e.target))e.preventDefault(); });
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   8.5 편의 조작 — **본편에 있는 것을 그대로** 옮긴다
+   ───────────────────────────────────────────────────────────────────────────
+   손패에서 끌어내 내기 · 화살표로 겨누기 · 알림줄. 본편 prototype/index.html 의
+   드래그·타게팅을 그대로 옮겼고, CSS(.dgh · .dztip · #tgtsvg · .tgtdim · .toast)는
+   build_etg_page.py 가 본편에서 통째로 가져다 붙인 것을 쓴다 — 규격이 두 벌이 되지 않게.
+
+   ⚠ 본편과 다른 점 하나: 이 게임은 **기물 자리와 크리처 자리가 갈려 있다.**
+     그래서 '어디에 떨궜는가' 는 안 본다 — 손패 밖으로 나가면 곧 발동이고,
+     자리는 카드 종류가 정한다. 끼워 넣을 자리를 고르는 dropbar 도 쓰지 않는다
+     (엘리멘츠는 크리처 순서가 규칙에 아무 영향을 주지 않는다).
+   ═══════════════════════════════════════════════════════════════════════════ */
+function toast(msg){
+  document.querySelectorAll('.toast').forEach(e=>e.remove());
+  const t=document.createElement('div'); t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t); setTimeout(()=>t.remove(),1600);
+}
+/* 왜 못 내는지 한 줄로 — 아무 말 없이 안 나가면 '조작이 안 된다' 로 읽힌다 */
+function whyNot(p,u){
+  if(G.over) return '판이 끝났다';
+  if(G.turn!==G.me) return '내 턴이 아니다';
+  if(p.sabbath) return '침묵 — 이번 턴엔 카드를 못 낸다';
+  const c=costOf(u);
+  if(!canPay(p,c.e,c.n)) return `${c.n}${c.e?ELKO[c.e]:'(아무)'} 퀀텀이 모자라다`;
+  if(u.kind==='creature'&&p.cr.indexOf(null)<0) return '크리처 자리가 없다';
+  if(u.kind==='perm'&&!u.c.flags.includes('stackable')&&p.pm.indexOf(null)<0) return '기물 자리가 없다';
+  const t=needsTarget(u);
+  if(t&&!targetsFor(t,p).length) return '겨눌 대상이 없다';
+  return '';
+}
+/* ── 손패에서 끌어내기 ── */
+let DR=null, dg=null, HANDLOCK=false;
+const handEl=()=>document.getElementById('hand');
+function inHand(x,y){
+  const el=handEl(); if(!el)return false;
+  const r=el.getBoundingClientRect();
+  return x>=r.left-10&&x<=r.right+10&&y>=r.top-8&&y<=r.bottom+12;
+}
+function dragStart(i,x,y,pid){
+  if(!G||G.over||G.turn!==G.me)return;
+  const u=G.me.hand[i]; if(!u)return;
+  hideZoom(); endTargeting();
+  clearTimeout(lpT); lpT=null;
+  const why=whyNot(G.me,u);
+  /* ⚠ 손패를 다시 그리면 지금 손가락이 잡고 있는 노드가 사라진다. 다시 그리지 않는다. */
+  const src=document.querySelector(`.hcw[data-h="${i}"]`);
+  if(src)src.classList.add('dragging');
+  const g=document.createElement('div'); g.className='dgh';
+  g.innerHTML=etgCardHTML(u.c,{size:'md'});
+  document.body.appendChild(g);
+  const tip=document.createElement('div'); tip.className='dztip'+(why?' bad':'');
+  tip.textContent=why?`${u.c.ko} — ${why}`
+    :`${u.c.ko} — 손패 밖에 놓으면 ${needsTarget(u)?'대상 지정으로':'발동'}`;
+  document.body.appendChild(tip);
+  document.body.classList.add('dragmode');
+  DR={i,u,g,tip,ok:!why,why,pid};
+  dragMove(x,y);
+}
+function dragMove(x,y){
+  if(!DR)return;
+  DR.g.style.transform=`translate(${x-46}px,${y-74}px) rotate(-3.5deg) scale(1.05)`;
+  const armed=!inHand(x,y)&&DR.ok;
+  DR.g.classList.toggle('ok',armed); DR.g.classList.toggle('bad',!DR.ok);
+  DR.tip.classList.toggle('ok',armed);
+  document.body.classList.toggle('armed',armed);
+}
+function dragEnd(x,y,cancel){
+  if(!DR)return; const d=DR; DR=null;
+  d.g.remove(); d.tip.remove();
+  if(d.pid!=null){ try{document.body.releasePointerCapture(d.pid);}catch(_){} }
+  document.body.classList.remove('dragmode','armed');
+  document.querySelectorAll('.hcw.dragging').forEach(e=>e.classList.remove('dragging'));
+  if(cancel||inHand(x,y)){ render(); return; }
+  if(!d.ok){ toast(`${d.u.c.ko} — ${d.why}`); render(); return; }
+  const t=needsTarget(d.u);
+  /* ⚠ 대상이 필요한 카드는 **떨군 자리에 바로 꽂지 않는다.** 내려놓는 손짓과 겨누는 손짓이
+     한 동작에 섞이면 판이 붐빌수록 엉뚱한 몸에 꽂힌다(본편에서 같은 이유로 지름길을 없앴다). */
+  if(t){ SEL=d.u; TGT={kind:t,src:d.u,mode:'play'}; startTargeting(x,y); render(); return; }
+  playCard(G.me,d.u,null); SEL=null; render();
+}
+/* ── 화살표로 겨누기 ── */
+let ARR=null;
+function startTargeting(x,y){
+  const bd=document.getElementById('myBoard');
+  const hr=handEl()?handEl().getBoundingClientRect():{left:0,width:0,top:0};
+  const br=bd?bd.getBoundingClientRect():null;
+  const ox=br&&br.width?br.left+br.width/2:hr.left+hr.width/2;
+  const oy=br&&br.width?br.top+br.height/2:hr.top-18;
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.id='tgtsvg'; document.body.appendChild(svg);
+  document.body.classList.add('tgtmode');
+  ARR={svg,ox,oy};
+  toast(TGT.kind==='any'?'빛나는 대상이나 체력 막대를 누르세요 · 빈 곳을 누르면 취소'
+                        :'빛나는 대상을 누르세요 · 빈 곳을 누르면 취소');
+  arrowDraw(x===undefined?ox:x, y===undefined?oy-60:y);
+}
+function arrowValid(x,y){
+  const el=document.elementFromPoint(x,y); if(!el||!el.closest)return null;
+  if(TGT&&TGT.kind==='any'&&el.closest('.bar')) return {face:el.closest('#foeBar')?G.ai:G.me};
+  const sl=el.closest('.slot.occ[data-uid]'); if(!sl)return null;
+  const u=byUid(+sl.dataset.uid);
+  return (u&&isTarget(u))?{unit:u}:null;
+}
+function arrowDraw(x,y){
+  if(!ARR)return;
+  const x1=ARR.ox, y1=ARR.oy, dx=x-x1, dy=y-y1;
+  const cx=x1+dx*0.5, cy=y1+dy*0.5-Math.min(150,Math.abs(dx)*0.45+40);
+  ARR.svg.classList.toggle('bad',!arrowValid(x,y));
+  const ang=Math.atan2(y-cy,x-cx), L=15;
+  const p1=`${x-L*Math.cos(ang-0.42)},${y-L*Math.sin(ang-0.42)}`;
+  const p2=`${x-L*Math.cos(ang+0.42)},${y-L*Math.sin(ang+0.42)}`;
+  ARR.svg.innerHTML=`<path class="ln" d="M${x1},${y1} Q${cx},${cy} ${x},${y}"/>`
+    +`<polygon class="hd" points="${x},${y} ${p1} ${p2}"/>`;
+}
+function endTargeting(){
+  if(!ARR)return;
+  ARR.svg.remove(); document.body.classList.remove('tgtmode'); ARR=null;
+}
+function fireAt(hit){
+  const t=TGT, tgt=hit.unit||hit.face;
+  endTargeting(); SEL=null; TGT=null;
+  if(t.mode==='play') playCard(G.me,t.src,tgt); else useAbility(G.me,t.src,tgt);
+  render();
+}
+/* 겨누는 동안은 슬롯의 기본 클릭보다 **먼저** 가로챈다 */
+document.addEventListener('pointerdown',e=>{
+  if(!ARR)return;
+  const hit=arrowValid(e.clientX,e.clientY);
+  e.stopPropagation(); e.preventDefault();
+  if(hit) { lpFired=true; fireAt(hit); }
+  else { endTargeting(); SEL=null; TGT=null; render(); toast('취소 — 카드가 손으로 돌아왔다'); }
+},true);
+document.addEventListener('pointermove',e=>{ if(ARR)arrowDraw(e.clientX,e.clientY); },{passive:true});
+/* ── 제스처 가르기 — 가로는 손패 넘기기, 위로는 카드 끌어내기 ── */
+document.addEventListener('pointerdown',e=>{
+  const hc=e.target.closest&&e.target.closest('.hcw[data-h]'); if(!hc||!G)return;
+  /* ⚠ 못 내는 카드도 **끌리게 둔다.** 아무 반응이 없으면 '드래그가 안 된다' 로 읽힌다 —
+     놓는 순간 왜 안 되는지 알려 준다(본편에서 같은 판단을 했다). */
+  dg={i:+hc.dataset.h,x:e.clientX,y:e.clientY,id:e.pointerId};
+});
+document.addEventListener('pointermove',e=>{
+  if(DR){ e.preventDefault(); dragMove(e.clientX,e.clientY); return; }
+  if(!dg)return;
+  const dx=e.clientX-dg.x, dy=e.clientY-dg.y;
+  if(Math.abs(dx)>14&&Math.abs(dx)>Math.abs(dy)*1.4){ dg=null; return; }   /* 가로 = 손패 넘기기 */
+  if(dy<-14||Math.hypot(dx,dy)>26){
+    const i=dg.i, pid=dg.id; dg=null; dragStart(i,e.clientX,e.clientY,pid);
+    /* 손가락을 몸통에 붙들어 둔다 — 중간에 노드가 사라져도 pointermove 가 안 끊긴다 */
+    if(DR&&pid!=null){ try{document.body.setPointerCapture(pid);}catch(_){} }
+  }
+},{passive:false});
+document.addEventListener('pointerup',e=>{ if(DR){ lpFired=true; dragEnd(e.clientX,e.clientY,false); } dg=null; });
+document.addEventListener('pointercancel',()=>{ if(DR){ dragEnd(0,0,true); toast('제스처가 중단되어 취소됐다'); } dg=null; });
+/* 확대 제스처·컨텍스트 메뉴 차단 — 본편과 같다 */
+['gesturestart','gesturechange','gestureend'].forEach(t=>
+  document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+document.addEventListener('touchmove',e=>{ if(e.touches.length>1)e.preventDefault(); },{passive:false});
 
 /* ── 덱 만들기 ─────────────────────────────────────────────────────────── */
 let BUILD_EL=6, BUILD_MARK=6, DKB={};
