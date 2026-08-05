@@ -1,0 +1,34 @@
+id,name,kind,produces,produces2,tapped,copies,element,note
+LD03,수림,basic,nature,,0,0,nature,자연 자원 1 생성 · 즉시 사용
+LD04,대장간,basic,steel,,0,0,steel,강철 자원 1 생성 · 즉시 사용
+LD05,고원,basic,earth,,0,0,earth,대지 자원 1 생성 · 즉시 사용
+LD06,심연,basic,dark,,0,0,dark,어둠 자원 1 생성 · 즉시 사용
+LD07,성소,basic,light,,0,0,light,빛 자원 1 생성 · 즉시 사용
+LD08,성채 관문,dual,steel,earth,1,0,steel,두 속성 중 택1 · 놓은 턴 사용 불가
+LD09,썩은 늪,dual,dark,nature,1,0,dark,두 속성 중 택1 · 놓은 턴 사용 불가
+LD10,증기 협곡,dual,water,fire,1,0,water,두 속성 중 택1 · 놓은 턴 사용 불가
+LD11,신성 병기고,dual,light,steel,1,0,light,두 속성 중 택1 · 놓은 턴 사용 불가
+LD12,용암 지대,dual,fire,earth,1,0,fire,두 속성 중 택1 · 놓은 턴 사용 불가
+LD13,범람원,dual,water,nature,1,0,water,두 속성 중 택1 · 놓은 턴 사용 불가
+LD14,여명의 경계,dual,dark,light,1,0,dark,두 속성 중 택1 · 놓은 턴 사용 불가
+LD15,고블린 요새,special,,,0,0,fire,자원을 만들지 않는다 · 매 턴 시작 시 고블린 폭탄병 소환
+LD16,화염의 원천,rich,fire,,0,0,fire,불 자원 2 생성 · 덱에 1장만
+LD17,파도 지대,basic,water,,0,0,water,물 자원 1 생성 · 즉시 사용
+LD18,폭포,basic,water,,0,0,water,물 자원 1 생성 · 즉시 사용
+LD19,설원 지대,basic,water,,0,0,water,물 자원 1 생성 · 즉시 사용
+LD20,호수 유적,special,,,0,0,water,자원을 만들지 않는다 · 내 턴 종료마다 무작위 아군 HP +1
+LD21,바닷속 풍경,special,,,0,0,water,자원을 만들지 않는다 · 내 턴 종료마다 카드 1장
+LD22,인어 기둥,extra,water,,0,0,water,자원 2를 내고 놓는다 · 지형을 이미 놓았어도 추가로 놓는다
+LD23,수정구,temp,water,,0,0,water,소멸 · 다음 내 턴에 한 번 쓰고 사라진다
+LD24,불지옥,basic,fire,,0,0,fire,불 자원 1 생성 · 즉시 사용
+LD25,용암 폭포,basic,fire,,0,0,fire,불 자원 1 생성 · 즉시 사용
+LD26,용암 동굴,basic,fire,,0,0,fire,불 자원 1 생성 · 즉시 사용
+LD27,불지옥의 계곡,special,,,0,0,fire,자원을 만들지 않는다 · 내 턴 종료마다 파이어버그 소환
+LD28,지하 감옥,extra,fire,,0,0,fire,자원 2를 내고 놓는다 · 지형을 이미 놓았어도 추가로 놓는다
+LD29,간이 지형,temp,fire,,0,0,fire,소멸 · 산불이 만든다 · 한 번 쓰면 사라진다
+LD30,죽음의 늪,basic,dark,,0,0,dark,어둠 자원 1 생성 · 즉시 사용
+LD31,죽음의 호수,basic,dark,,0,0,dark,어둠 자원 1 생성 · 즉시 사용
+LD32,죽음의 대지,basic,dark,,0,0,dark,어둠 자원 1 생성 · 즉시 사용
+LD33,망각의 숲,twin,dark,,0,0,dark,어둠 자원 1 생성 · 지형을 이미 놓았어도 추가로 놓는다
+LD34,묘지,special,,,0,0,dark,자원을 만들지 않는다 · 내 크리처가 소멸할 때마다 좀비랫 소환
+LD35,저주의 땅,extra+special,,,0,0,dark,자원 2를 내고 놓는다 · 자원을 만들지 않는다 · 내 턴 종료마다 카드 1장

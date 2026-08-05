@@ -1,0 +1,2904 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
+<meta name="color-scheme" content="light only">
+<title>엘리멘츠 대전 — TEN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Gothic+A1:wght@700&family=Gowun+Batang:wght@400;700&family=Noto+Serif+KR:wght@400;700&display=swap" rel="stylesheet">
+<!--
+  엘리멘츠 대전 모드 — Elements the Game 의 카드와 규칙을 그대로 옮긴 별도 모드.
+
+  ⚠⚠ 이 파일은 **생성물이다.** 고치지 말고 prototype/etg/etg.template.html 을 고친 뒤
+      `python3 tools/build_etg_page.py` 를 다시 돌릴 것.
+      아래 <style> 은 본편 prototype/index.html 에서 통째로 가져온 카드 규격이다 —
+      카드·판·손패·확대창을 본편과 **같은 규격**으로 그리기 위해서다.
+
+  ■ 왜 페이지가 따로인가
+    본편(../index.html)과 **자바스크립트를 한 줄도 공유하지 않는다.** 자원 모델도,
+    전투도, 승패 조건도 다른 게임이기 때문이다. 본편에 끼워 넣었다면 manaLeft·strike·
+    cleanup 같은 단일 통로를 전부 '모드에 따라 갈라지는' 함수로 만들어야 했고,
+    그 순간 본편의 30개 검사가 전부 이 모드의 인질이 된다. 그래서 나눴다.
+    **가져오는 것은 CSS 뿐이고, 데이터(POOL·ART·FRAMES)는 한 줄도 안 가져온다.**
+
+  ■ 카드
+    data.js (tools/gen_etg.py 가 만든다) 만 읽는다. TEN 의 POOL 은 쳐다보지 않는다.
+
+  ■ 원작 규칙 중 여기서 지킨 것
+    · 퀀텀은 **속성별로 쌓인다**(최대 75). 턴마다 초기화되지 않는다. ← TEN 과 가장 큰 차이
+    · 기둥/탑/진자와 문장은 **자기 턴이 끝날 때** 퀀텀을 만든다 (openEtG v_endturn 순서 그대로)
+    · **막기가 없다.** 크리처는 언제나 상대 얼굴을 때리고, 방패만 그 피해를 깎는다
+    · 소환 멀미가 없다 — 낸 턴에 바로 때리고 능력도 쓴다
+    · 체력 100, 덱 30~60장, 같은 카드 6장까지, 손패 8장 상한, 덱이 마르면 패배
+    · 크리처 23칸 · 기물 16칸 · 무기 1 · 방패 1
+-->
+<style>
+/* ↓↓ 본편 prototype/index.html 에서 그대로 가져온 규격 — 손대지 말고 tools/build_etg_page.py 를 다시 돌릴 것 ↓↓ */
+#nojs{display:block!important}
+
+:root{
+  /* 손패·크리처 판·지형존이 **같은 규격**을 쓴다. 크기는 이 변수 하나로만 바꾼다. */
+  --cardw:76px;
+  /* 상대 손패도 **내 카드와 완전히 같은 규격**이다(뒷면만 다르다).
+     한때 0.48배로 줄였다가 되돌렸다 — 줄이는 게 아니라 **더 깊이 집어넣어야** 했다.
+     차지하는 자리는 크기가 아니라 노출 비율(--foehide)로 조절한다. */
+  --foecw:var(--cardw);
+  /* 화면 밖으로 미는 양. 카드 높이는 1.4W 이므로 0.70W = 정확히 절반이 가려진다.
+     내 손패는 30%(0.42W)만 가리고, 상대 손패는 절반(0.70W)을 가린다. */
+  --myhide:calc(var(--cardw) * -0.42);
+  --foehide:calc(var(--cardw) * -0.76);
+  /* ══ 딤 — 뒤 조작이 막히는 오버레이의 배경은 **전부 이 하나**를 쓴다 ══
+     대상 지정 딤·확대·시작 손패·지도·설정·상대 카드 공개가 모두 같은 값을 공유한다.
+     농도를 바꾸고 싶으면 여기 두 줄만 고칠 것. 개별 규칙에 rgba 를 직접 적지 말 것.
+     ⚠ 화면 전체를 대신 그리는 '페이지'(.pg/.boot/.over)와 커튼(.veil)은 딤이 아니다 —
+        저건 뒤를 흐리게 보여 주는 게 아니라 아예 가려 버리는 것이라 값이 따로다.
+     ⚠ 가리지 않는 로딩(.busy)에는 절대 붙이지 말 것 — 화면은 보이고 입력만 막는 장치다. */
+  --dim:rgba(6,4,2,.66);
+  --dim-blur:3px;
+  --bg:#120d09; --leather:#241a12; --leather-2:#2e2116; --wood:#3a2a1a;
+  --parch:#ece0c4; --parch-2:#ddceac; --parch-edge:#c9b688;
+  --ink:#2a1d10; --ink-soft:#5a4630; --ink-faint:#8a7452;
+  --gold:#c9a24b; --gold-bright:#f2d488; --bronze:#7c5a30; --rule:#5a4326;
+  --emerald:#2f9d84; --amber:#d99a2b; --crimson:#c04a3f; --violet:#9a72d8; --sapphire:#4d6fd4;
+  --slot:#1c140d;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{overflow-x:hidden}         /* 닫힌 서랍이 오른쪽으로 밀려 있어 가로 스크롤이 생긴다 */
+body{
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(201,162,75,.14), transparent 60%),
+    radial-gradient(140% 120% at 50% 50%, #241a12 0%, #16100a 60%, #0d0906 100%);
+  color:var(--parch);
+  font-family:'Gowun Batang','Noto Serif KR',serif;
+  min-height:100vh;padding:12px;
+  -webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;
+}
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+.wrap{max-width:900px;margin:0 auto;position:relative;z-index:1}
+
+/* ---- header ---- */
+/* 톱니 — 화면 위에 떠 있고 자리를 차지하지 않는다. 예전 헤더 정보는 전부 서랍 안에. */
+.gear{position:fixed;top:8px;right:8px;z-index:130;   /* 페이지 위에서도 설정을 열 수 있어야 한다 */width:38px;height:38px;padding:0;
+  border-radius:50%;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(180deg,var(--leather-2),var(--leather));color:var(--gold-bright);
+  border:1px solid var(--bronze);box-shadow:0 2px 8px rgba(0,0,0,.55);opacity:.82}
+.gear:hover{opacity:1}
+body.sideon .gear{opacity:0;pointer-events:none}
+.shdr{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;
+  padding-bottom:8px;border-bottom:1px solid var(--rule)}
+.shdr h1{font-family:'Cinzel Decorative','Cinzel',serif;font-weight:900;font-size:20px;
+  color:var(--gold-bright);text-shadow:0 1px 0 #000,0 0 14px rgba(201,162,75,.4)}
+.shdr h1 span{color:var(--emerald)}
+.shdr .meta{font-family:'Cinzel',serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+.ihow{font-family:'Gowun Batang',serif;font-size:11px;line-height:1.7;color:var(--gold);
+  opacity:.85;margin-top:6px;padding:8px 10px;border:1px solid var(--rule);border-radius:5px;background:#150e08}
+.newver{position:fixed;left:50%;top:calc(6px + env(safe-area-inset-top));transform:translateX(-50%) translateY(-140%);
+  z-index:210;display:none;padding:6px 14px;border-radius:16px;cursor:pointer;
+  font-family:'Gothic A1',sans-serif;font-size:11.5px;font-weight:700;letter-spacing:.02em;
+  border:1px solid var(--gold-bright);background:linear-gradient(180deg,#3a2a12,#241809);
+  color:var(--gold-bright);box-shadow:0 4px 14px rgba(0,0,0,.6);
+  transition:transform .3s cubic-bezier(.2,0,.2,1)}
+.newver.on{display:block;transform:translateX(-50%) translateY(0)}
+.sclose{margin-left:auto;padding:4px 10px;font-size:13px;background:none;border:1px solid var(--rule);
+  color:var(--gold);box-shadow:none}
+.deckpick{margin:0 0 8px}
+.modepick{display:flex;gap:5px;margin-bottom:10px}
+.modepick button{font-family:'Cinzel',serif;font-size:11px;font-weight:700;letter-spacing:.08em;
+  padding:5px 14px;border-radius:4px;border:1px solid var(--rule);background:#150e08;
+  color:var(--gold);cursor:pointer;opacity:.6;transition:.14s}
+.modepick button.on{opacity:1;color:#1a1206;border-color:var(--gold-bright);
+  background:linear-gradient(180deg,var(--gold-bright),var(--gold));box-shadow:0 0 12px rgba(242,212,136,.45)}
+
+/* ---- player bars ---- */
+.bar{position:relative;display:flex;align-items:center;gap:14px;padding:10px 14px;margin-bottom:9px;
+  background:linear-gradient(180deg,var(--leather-2),var(--leather));
+  border:1px solid var(--bronze);border-radius:7px;
+  box-shadow:inset 0 1px 0 rgba(242,212,136,.12),inset 0 0 24px rgba(0,0,0,.5),0 2px 6px rgba(0,0,0,.4)}
+.bar .who{font-family:'Cinzel',serif;font-weight:700;font-size:13px;min-width:50px;color:var(--gold);letter-spacing:.04em}
+.bar .hp{font-family:'Cinzel',serif;font-weight:700;font-size:22px;font-variant-numeric:tabular-nums;
+  color:#e7c98f;text-shadow:0 0 10px rgba(192,74,63,.5);min-width:34px}
+.bar .hpbar{flex:1;height:11px;background:#0d0806;border:1px solid var(--bronze);border-radius:6px;overflow:hidden;min-width:60px;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.7)}
+.bar .hpbar i{display:block;height:100%;
+  background:linear-gradient(180deg,#d76a5e,#a5352c);transition:width .45s cubic-bezier(.2,.7,.3,1)}
+.bar.me .hpbar i{background:linear-gradient(180deg,#4fc4a6,#1d7a63)}
+.bar.me{border-color:var(--emerald);box-shadow:inset 0 1px 0 rgba(79,196,166,.18),inset 0 0 24px rgba(0,0,0,.5),0 0 12px rgba(47,157,132,.2)}
+.mana{display:flex;gap:4px}
+.mana i{width:13px;height:18px;border:1px solid #2a3a7a;border-radius:3px;background:#0e1428;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.6)}
+.mana i.spent{border-color:var(--rule);background:#141008;opacity:.5}
+.mana i.full{background:radial-gradient(circle at 50% 30%,#8fb0ff,#3457c4);border-color:#9ab4ff;
+  box-shadow:0 0 8px rgba(77,111,212,.7),inset 0 1px 2px rgba(255,255,255,.4)}
+.bar .cnt{font-family:'Cinzel',serif;font-size:10px;color:var(--gold);letter-spacing:.08em;opacity:.85}
+
+/* ---- 지형존 (land zone) ----
+   크리처 보드와 **완전히 같은 판**을 쓴다(.board + .slot). 내려놓은 지형을 카드 그대로 보여주고,
+   그 위에 자원 토큰과 상태 뱃지만 얹는다. */
+.lz .slot{position:relative}
+/* 지형 카드의 앞·뒷면을 담는 껍데기. 뒤집기 애니메이션은 여기에 건다. */
+.lz .lface{position:relative;width:100%;height:100%}
+.lz .lface .cback{width:100%;height:100%;display:block}
+/* 쓴 지형은 뒤집혀 있다 — 회색으로 어둡게 하던 예전 처리는 필요 없다. */
+.lz .slot.flip .lface{animation:lflip .34s cubic-bezier(.35,.05,.35,1) both}
+@keyframes lflip{0%{transform:rotateY(0) scaleX(1)}
+  50%{transform:rotateY(0) scaleX(.06)}
+  100%{transform:rotateY(0) scaleX(1)}}
+.lz .slot.ent .tcard{opacity:.82}
+/* 지형에서 빠져나와 카드로 흘러 들어가는 자원 알갱이. 색은 실제로 지불한 속성 색(--c). */
+.mspark{position:fixed;z-index:92;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;
+  border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle at 50% 38%,#fff,var(--c) 52%,transparent 72%);
+  box-shadow:0 0 12px var(--c),0 0 28px var(--c);
+  animation-name:mspark;animation-timing-function:cubic-bezier(.4,.02,.25,1);animation-fill-mode:both}
+@keyframes mspark{
+  0%{opacity:0;transform:translate(0,0) scale(.35)}
+  14%{opacity:1;transform:translate(0,0) scale(1.15)}
+  70%{opacity:1}
+  100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.5)}}
+/* 흩뿌리는 피해 — 맞은 칸 위로 '1' 이 한 발씩 떠오른다(고블린 미치광이) */
+/* 피해를 받은 칸을 잠깐 붉게 흔든다 — 숫자만으로는 어디가 맞았는지 눈이 못 따라간다 */
+.slot.fxhit{animation:fxhit .38s ease both}
+@keyframes fxhit{0%{filter:none}35%{filter:brightness(1.5) saturate(1.5) drop-shadow(0 0 10px #ff5a2b)}
+  100%{filter:none}}
+/* 카드 효과로 **붙은** 능력은 설명란에서 금색으로 뜬다 — 인쇄된 것과 구분이 돼야 한다 */
+.teff .gr{color:#f2d488;text-shadow:0 0 6px rgba(242,212,136,.55)}
+/* 튜토리얼 안내판 — 손패를 가리면 안 되므로 **위쪽**에 띄우고, 판 자체는 계속 만질 수 있게
+   상자 밖은 클릭이 통과한다(pointer-events:none → 버튼만 auto). */
+#tutbox{position:fixed;left:50%;top:calc(6px + env(safe-area-inset-top));transform:translateX(-50%);
+  z-index:150;width:min(94vw,430px);pointer-events:none;
+  background:linear-gradient(180deg,rgba(30,22,12,.97),rgba(16,11,6,.97));
+  border:1px solid var(--bronze);border-radius:10px;padding:9px 12px 8px;
+  box-shadow:0 6px 22px rgba(0,0,0,.6);animation:zfade .18s ease both}
+#tutbox .tutn{font-family:'Cinzel',serif;font-size:9px;letter-spacing:.18em;color:var(--gold);opacity:.8}
+#tutbox .tutt{font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:var(--gold-bright);margin:1px 0 4px}
+#tutbox .tutd{font-size:12px;line-height:1.5;color:var(--ink-soft)}
+#tutbox .tutd b{color:#f2d488}
+#tutbox .tutb{display:flex;gap:7px;justify-content:flex-end;margin-top:8px;pointer-events:auto}
+#tutbox button{font-size:11px;padding:5px 12px}
+/* ⚠ 안내판 높이는 글 길이에 따라 달라진다. 고정값으로 밀면 긴 안내에서 **상대 손패가
+   가려진다** — 실제로 그랬다. 그래서 판을 그린 뒤 실제 높이를 재어 변수로 넣는다. */
+body.tutmode .main{padding-top:calc(var(--tuth,96px) + 8px)}
+@media (max-height:760px){ #tutbox .tutd{font-size:11px} #tutbox{padding:7px 10px 6px} }
+.hitpop.big{font-size:21px}
+.hitpop{position:fixed;z-index:93;pointer-events:none;font-family:'Cinzel',serif;
+  font-size:15px;font-weight:700;color:#ffd9c2;text-shadow:0 0 8px #ff5a2b,0 1px 2px #000;
+  animation:hitpop .7s cubic-bezier(.25,.7,.3,1) both}
+@keyframes hitpop{
+  0%{opacity:0;transform:translate(-50%,4px) scale(.6)}
+  22%{opacity:1;transform:translate(-50%,-6px) scale(1.15)}
+  100%{opacity:0;transform:translate(-50%,-26px) scale(.9)}}
+@media (prefers-reduced-motion:reduce){.mspark,.hitpop{display:none}.lz .slot.flip .lface{animation:none}}
+/* 지형 카드 가운데의 동그란 자원 마커(.tok)는 없앴다 —
+   뒤집힘 + 알갱이가 빠져나가는 연출이 같은 정보를 더 잘 보여 준다. */
+.ltag{position:absolute;top:47%;right:4%;z-index:5;font-family:'Cinzel',serif;
+  font-size:8.5cqw;letter-spacing:.08em;line-height:1.5;padding:0 4%;border-radius:2px;
+  background:rgba(8,5,3,.9);border:1px solid #6b5430;color:var(--gold)}
+.lz .slot.used .ltag{color:var(--rule);border-color:var(--rule)}
+/* 지형존 왼쪽 위 배지 — 남은 마나 / 배치한 지형 수. 라벨 줄을 없애고 이걸로 대신한다.
+   ⚠ packRow 는 `:scope > .slot` 만 건드리므로 이 요소는 안전하다(위치를 덮어쓰지 않는다). */
+.lzb{position:absolute;left:5px;top:4px;z-index:30;pointer-events:none;
+  font-family:'Cinzel',serif;font-size:11px;font-weight:700;letter-spacing:.04em;
+  font-style:normal;font-variant-numeric:tabular-nums;
+  padding:2px 7px;border-radius:11px;border:1px solid var(--bronze);
+  background:rgba(8,5,3,.88);color:var(--gold-bright);
+  box-shadow:0 1px 4px rgba(0,0,0,.5)}
+.lzb b{color:#fff;font-weight:700}
+.lzb i{font-style:normal;opacity:.55;margin:0 1px}
+
+/* ---- board ---- */
+/* 판은 격자가 아니라 '가운데로 모인 한 줄'이다. 카드는 --cardw 폭으로 크게 그리고,
+   자리가 모자라면 손패처럼 겹친다(오른쪽이 왼쪽을 덮는다). */
+.board{position:relative;display:flex;justify-content:center;align-items:flex-end;
+  min-height:calc(var(--cardw,84px)*1.4 + 10px);gap:0;margin-bottom:14px;padding:5px 6px;
+  background:linear-gradient(180deg,rgba(0,0,0,.32),rgba(0,0,0,.14));
+  border:1px solid var(--rule);border-radius:8px;
+  box-shadow:inset 0 0 30px rgba(0,0,0,.6)}
+/* 자리는 packRow 가 left 로 직접 잡는다.
+   ⚠ .slot 의 기본 transition 은 `all` 이라 left 까지 물린다 → render 마다 카드가 왼쪽에서
+   미끄러져 들어오고, 방금 넣은 값을 읽으면 아직 0 이 나온다(테스트가 통째로 헷갈렸다).
+   판에서는 위치를 즉시 반영하고 색·그림자만 부드럽게 둔다. */
+.board.packed>.slot{position:absolute;bottom:5px;left:0;
+  transition:border-color .16s,box-shadow .16s,filter .16s}
+.board>.slot{flex:none;width:var(--cardw,84px)}
+.board.lz.empty::after{content:'지형'}
+.board.empty::after{content:'크리처 & 인챈트';position:absolute;left:50%;top:50%;
+  transform:translate(-50%,-50%);font-family:'Cinzel',serif;font-size:10px;letter-spacing:.2em;
+  color:var(--gold);opacity:.28;pointer-events:none}
+/* 끼워 넣을 자리 표시 — 드래그 중 손끝 위치에 따라 좌/우/사이가 정해진다 */
+.dropbar{position:absolute;top:4px;bottom:4px;width:3px;margin-left:-1.5px;border-radius:3px;
+  /* 순수 장식이다 — opacity:0 이어도 히트 테스트에는 걸리므로 포인터를 반드시 꺼 둘 것 */
+  background:linear-gradient(180deg,var(--gold-bright),var(--gold));opacity:0;z-index:90;
+  pointer-events:none;
+  box-shadow:0 0 10px var(--gold-bright),0 0 22px rgba(242,212,136,.6);
+  transition:left .09s ease,opacity .12s}
+.dropbar.on{opacity:1}
+.slot{
+  aspect-ratio:5/7;container-type:inline-size;border:1px solid #4a371f;border-radius:5px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  position:relative;background:linear-gradient(180deg,#1e150d,#150e08);
+  cursor:default;transition:.16s;padding:2px;overflow:hidden;font-family:'Gowun Batang',serif;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.6)}
+.slot.occ{background:linear-gradient(180deg,var(--parch),var(--parch-2));border:1.5px solid var(--gold);cursor:pointer;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.3),0 2px 5px rgba(0,0,0,.45)}
+.slot.guard{border-color:var(--emerald);box-shadow:inset 0 0 0 1px rgba(255,255,255,.25),0 0 9px rgba(47,157,132,.45)}
+.slot.fly{border-color:var(--amber);border-style:dashed;border-width:2px}
+.slot.flyguard{border-color:var(--amber);box-shadow:inset 0 0 0 3px rgba(47,157,132,.4),0 0 9px rgba(217,154,43,.4)}
+.deckpick{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0 2px}
+.deckpick button{font-family:'Cinzel',serif;font-size:10.5px;font-weight:700;letter-spacing:.06em;
+  padding:5px 10px;border-radius:4px;border:1px solid var(--rule);background:#150e08;color:var(--gold);
+  cursor:pointer;transition:.14s;opacity:.62}
+.deckpick button:hover{opacity:.9}
+.deckpick button.on{opacity:1;color:#fff;border-color:var(--dc);
+  background:linear-gradient(180deg,var(--dc),rgba(0,0,0,.45));box-shadow:0 0 10px var(--dc)}
+.dmech{font-family:'Gowun Batang',serif;font-size:11px;line-height:1.6;color:var(--gold);
+  opacity:.85;padding:8px 10px;border:1px solid var(--rule);border-radius:5px;background:#150e08;margin-bottom:6px}
+.dmech b{color:#fff;font-family:'Cinzel',serif;letter-spacing:.05em}
+.slot.pierce{border-color:#c98a4a;border-style:double;border-width:3px}
+.slot.ench{border-color:var(--violet);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2),0 0 10px rgba(154,114,216,.5)}
+.slot.pick{border-color:var(--gold-bright);border-width:2px;background:linear-gradient(180deg,#2a2010,#1d1509);cursor:pointer;
+  box-shadow:0 0 12px rgba(242,212,136,.5);animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 18px rgba(242,212,136,.8)}}
+.slot.pick:hover{background:linear-gradient(180deg,#382a14,#241a0c)}
+.slot .nm{font-weight:700;font-size:9px;line-height:1.12;text-align:center;margin-bottom:2px;color:var(--ink)}
+.slot .st{font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--ink)}
+.slot .tg{font-size:6.5px;letter-spacing:.06em;color:var(--ink-soft);margin-top:1px}
+.slot .stk{position:absolute;top:1px;right:3px;font-family:'Cinzel',serif;font-size:9px;font-weight:700;color:#7a3;
+  background:rgba(0,0,0,.15);padding:0 3px;border-radius:3px}
+.slot .hps{display:flex;gap:1.5px;margin-top:2px;flex-wrap:wrap;justify-content:center}
+.slot .hps b{font-family:'Cinzel',serif;font-size:7.5px;font-weight:700;background:rgba(42,29,16,.16);padding:0 2px;border-radius:2px;color:var(--ink-soft)}
+.lbl{font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:5px}
+
+/* ---- hand ---- */
+.hand{display:flex;gap:0;overflow:visible;touch-action:none;padding:8px 0 12px;
+  justify-content:center;align-items:flex-end;--basecw:var(--cardw,84px)}
+.hand>*{margin-left:var(--hgap,7px)}
+.hand>*:first-child{margin-left:0}
+.hc{
+  flex:none;width:86px;border:1.5px solid var(--gold);border-radius:6px;
+  background:linear-gradient(180deg,var(--parch),var(--parch-2));
+  padding:8px 7px;cursor:pointer;transition:.15s;position:relative;color:var(--ink);
+  box-shadow:0 2px 5px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,255,255,.3)}
+.hc:hover{transform:translateY(-4px);box-shadow:0 7px 14px rgba(0,0,0,.5),0 0 12px rgba(242,212,136,.4)}
+.hc.sel{border-color:var(--gold-bright);transform:translateY(-6px);box-shadow:0 8px 18px rgba(0,0,0,.55),0 0 18px rgba(242,212,136,.7)}
+.hc.no{opacity:.42;cursor:not-allowed;filter:grayscale(.4)}
+.hc.no:hover{transform:none;box-shadow:0 2px 5px rgba(0,0,0,.45)}
+.hc .cost{position:absolute;top:6px;right:6px;width:20px;height:20px;border-radius:50%;
+  background:radial-gradient(circle at 40% 30%,#f2d488,#b07f2c);border:1px solid #6b4d1f;
+  font-family:'Cinzel',serif;font-weight:700;font-size:11px;color:#3a2810;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.hc .n{font-family:'Gowun Batang',serif;font-weight:700;font-size:12px;margin:2px 0 3px;line-height:1.15;color:var(--ink)}
+.hc .s{font-family:'Cinzel',serif;font-weight:700;font-size:13px;color:var(--ink)}
+.hc .d{font-size:8.5px;color:var(--ink-soft);line-height:1.4;font-weight:400}
+.hc .t{font-family:'Cinzel',serif;font-size:7px;letter-spacing:.08em;text-transform:uppercase;margin-top:3px;color:var(--ink-soft)}
+.hc.g{border-left:4px solid var(--emerald)}
+.hc.f{border-left:4px solid var(--amber)}
+.hc.sp{border-left:4px solid var(--crimson)}
+.hc.en{border-left:4px solid var(--violet)}
+
+/* ---- controls ---- */
+.ctl{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:5px}
+button{
+  font-family:'Cinzel',serif;font-size:12px;font-weight:700;letter-spacing:.06em;
+  background:linear-gradient(180deg,#d9b45a,#a67d31);color:#2a1c0a;
+  border:1px solid #6b4d1f;padding:10px 17px;border-radius:5px;cursor:pointer;transition:.15s;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 2px 5px rgba(0,0,0,.45)}
+button.ghost{background:linear-gradient(180deg,var(--leather-2),var(--leather));color:var(--gold);border-color:var(--bronze);
+  box-shadow:inset 0 1px 0 rgba(242,212,136,.12),0 2px 4px rgba(0,0,0,.4)}
+button:hover:not(:disabled){filter:brightness(1.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 0 12px rgba(201,162,75,.5)}
+button:disabled{opacity:.35;cursor:default;filter:grayscale(.5)}
+button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
+.hint{
+  font-family:'Gowun Batang',serif;font-size:11.5px;color:var(--parch);
+  padding:8px 12px;border:1px solid var(--bronze);border-radius:5px;
+  background:linear-gradient(180deg,rgba(46,33,22,.9),rgba(36,26,18,.9));
+  min-height:33px;display:flex;align-items:center;flex:1;min-width:150px;
+  box-shadow:inset 0 0 14px rgba(0,0,0,.5)}
+.hint.idle{color:var(--ink-faint);border-color:var(--rule)}
+.hint b{color:var(--gold-bright)}
+
+/* ---- log ---- */
+/* 설정 — 톱니로 여는 **가운데 사각 팝업**. (서랍이었다가 바꿨다) */
+.side{position:fixed;z-index:160;left:50%;top:50%;transform:translate(-50%,-50%) scale(.96);
+  width:min(94vw,420px);max-height:86dvh;overflow-y:auto;
+  border:1px solid var(--bronze);border-radius:12px;
+  background:linear-gradient(180deg,var(--leather-2),var(--leather));padding:16px;
+  opacity:0;visibility:hidden;transition:opacity .16s ease,transform .16s cubic-bezier(.2,.9,.3,1),visibility 0s .16s;
+  box-shadow:0 18px 50px rgba(0,0,0,.65),inset 0 1px 0 rgba(242,212,136,.12)}
+body.sideon .side{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1);transition-delay:0s}
+body.sideon::after{content:'';position:fixed;inset:0;z-index:155;
+  background:var(--dim);backdrop-filter:blur(var(--dim-blur));-webkit-backdrop-filter:blur(var(--dim-blur))}
+.ver{font-family:'Cinzel',serif;font-size:10px;letter-spacing:.14em;color:var(--gold);opacity:.7;
+  text-align:center;margin-top:12px;padding-top:9px;border-top:1px solid var(--rule)}
+.log{font-family:'Gowun Batang',serif;font-size:11px;line-height:1.7;max-height:64vh;overflow-y:auto;color:var(--parch-2)}
+.log div{padding:3px 0;border-bottom:1px solid rgba(90,67,38,.4)}
+.log .t{color:var(--gold-bright);font-family:'Cinzel',serif;font-weight:700;margin-top:6px;letter-spacing:.03em}
+.log .a{color:#e0796e}
+.log .g{color:#5fc4a6}
+.log .f{color:#e6b552}
+.log .e{color:#b79ae8}
+@media(max-width:900px){.log{max-height:190px}}   /* 서랍은 좁은 화면에서도 fixed 다 */
+
+/* ---- game over ---- */
+.over{
+  position:fixed;inset:0;background:radial-gradient(circle at 50% 40%,rgba(30,20,10,.92),rgba(8,5,3,.97));z-index:60;
+  display:none;align-items:center;justify-content:center;flex-direction:column;gap:20px;padding:20px;text-align:center;
+}
+.over.on{display:flex}
+.over h2{font-family:'Cinzel Decorative','Cinzel',serif;font-weight:900;font-size:50px;color:var(--gold-bright);
+  letter-spacing:.04em;text-shadow:0 0 24px rgba(201,162,75,.6),0 2px 0 #000}
+.over p{font-family:'Cinzel',serif;font-size:13px;color:var(--parch-2);letter-spacing:.08em}
+.over button{padding:13px 28px;font-size:14px}
+
+/* ---- 전투 연출 ---- */
+.slot.attacking{
+  transform:translateY(-7px) scale(1.1);z-index:8;
+  border-color:var(--gold-bright)!important;border-width:2px!important;border-style:solid!important;
+  box-shadow:0 8px 18px rgba(0,0,0,.6),0 0 16px rgba(242,212,136,.7)!important;
+}
+.slot.aimed{
+  border-color:var(--crimson)!important;border-width:2px!important;border-style:solid!important;
+  box-shadow:0 0 14px rgba(192,74,63,.7)!important;
+}
+.slot.struck{animation:shake .34s cubic-bezier(.36,.07,.19,.97)}
+@keyframes shake{
+  10%,90%{transform:translateX(-2px)} 20%,80%{transform:translateX(3px)}
+  30%,50%,70%{transform:translateX(-5px)} 40%,60%{transform:translateX(5px)}
+}
+.pop{
+  position:absolute;top:-2px;left:50%;transform:translateX(-50%);
+  font-family:'Cinzel',serif;font-weight:700;font-size:16px;color:#ff7a5c;
+  text-shadow:0 0 8px #000,0 1px 0 #000;
+  animation:popup .85s cubic-bezier(.2,.7,.3,1) both;pointer-events:none;z-index:12;white-space:nowrap;
+}
+.pop.zero{color:var(--ink-faint);font-size:11px}
+.pop.kill{color:#ff5a4a;font-size:11px;top:16px;text-shadow:0 0 8px #000}
+@keyframes popup{
+  0%{opacity:0;transform:translateX(-50%) translateY(6px) scale(.7)}
+  22%{opacity:1;transform:translateX(-50%) translateY(-6px) scale(1.18)}
+  70%{opacity:1;transform:translateX(-50%) translateY(-13px) scale(1)}
+  100%{opacity:0;transform:translateX(-50%) translateY(-22px) scale(.95)}
+}
+.bar.struck{animation:shake .34s cubic-bezier(.36,.07,.19,.97);border-color:var(--crimson)}
+.bar .pop{top:-6px;left:64px;font-size:20px}
+.trace{
+  --nc:#f2d488;                      /* 네온 색 */
+  position:fixed;height:3px;transform-origin:0 50%;z-index:50;pointer-events:none;border-radius:3px;
+  background:linear-gradient(90deg,transparent 0%,color-mix(in srgb,var(--nc) 35%,transparent) 30%,var(--nc) 78%,#fff 100%);
+  box-shadow:0 0 4px var(--nc),0 0 12px var(--nc),0 0 26px color-mix(in srgb,var(--nc) 70%,transparent),
+             0 0 48px color-mix(in srgb,var(--nc) 45%,transparent);
+  filter:saturate(1.4);
+  animation:trace .3s cubic-bezier(.3,0,.15,1) both, tracepulse .34s ease-out .3s both;
+}
+.trace::after{                        /* 선 끝의 충격 지점 */
+  content:'';position:absolute;right:-4px;top:50%;width:11px;height:11px;margin-top:-5.5px;
+  border-radius:50%;background:#fff;
+  box-shadow:0 0 8px var(--nc),0 0 20px var(--nc),0 0 40px color-mix(in srgb,var(--nc) 80%,transparent);
+  animation:tracehit .32s ease-out .26s both}
+.trace.f{--nc:#ffbe4d}
+.trace.g{--nc:#4fe0bc}
+@keyframes trace{0%{opacity:0;clip-path:inset(0 100% 0 0)}25%{opacity:1}100%{opacity:1;clip-path:inset(0 0 0 0)}}
+@keyframes tracepulse{0%{filter:saturate(1.4) brightness(1.7)}100%{filter:saturate(1.4) brightness(1)}}
+@keyframes tracehit{0%{opacity:0;transform:scale(.2)}45%{opacity:1;transform:scale(1.5)}100%{opacity:.85;transform:scale(1)}}
+.turnban{
+  position:fixed;left:0;right:0;top:38%;z-index:56;pointer-events:none;text-align:center;
+  animation:turnban 1.15s cubic-bezier(.2,.8,.3,1) both}
+/* 상자(테두리·불투명 배경) 대신 **가장자리로 사라지는 옅은 그라데이션**을 깐다.
+   상자는 판을 가려 답답하고, 배경이 아예 없으면 밝은 카드 위에서 글자가 안 보인다. */
+.turnban::before{content:'';position:absolute;left:0;right:0;top:-42px;bottom:-42px;z-index:-1;
+  background:radial-gradient(58% 100% at 50% 50%,
+    rgba(6,4,2,.92) 0%, rgba(6,4,2,.78) 38%, rgba(6,4,2,.36) 66%, transparent 100%)}
+/* 배경·테두리 없이 글자만 떴다 사라진다(토스트처럼). 상자로 감싸면 판을 가려 답답하다. */
+.turnban .tb1{display:inline-block;padding:0}
+/* 그라데이션이 깔려 있어도 글자에 검은 그림자를 한 겹 더 둔다 — 가장자리로 갈수록 배경이 옅어진다. */
+.turnban .tn{font-family:'Cinzel',serif;font-size:12px;letter-spacing:.3em;color:var(--c);opacity:.95;
+  text-shadow:0 0 8px rgba(0,0,0,.9),0 1px 3px #000}
+.turnban .tt{font-family:'Cinzel Decorative','Cinzel',serif;font-weight:900;font-size:34px;
+  letter-spacing:.04em;color:var(--c);line-height:1.15;
+  text-shadow:0 0 26px color-mix(in srgb,var(--c) 70%,transparent),
+    0 0 10px rgba(0,0,0,.9),0 2px 5px #000}
+.turnban.me{--c:var(--emerald-bright,#5fe0bc)}
+.turnban.ai{--c:#e0796e}
+@keyframes turnban{0%{opacity:0;transform:translateY(-14px) scale(.94)}
+  18%{opacity:1;transform:none}75%{opacity:1;transform:none}100%{opacity:0;transform:translateY(8px) scale(1.02)}}
+.phase{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:55;
+  font-family:'Cinzel Decorative','Cinzel',serif;font-weight:900;font-size:38px;letter-spacing:.03em;
+  color:var(--gold-bright);text-shadow:0 0 26px rgba(201,162,75,.7),0 2px 0 #000;
+  animation:phase 1s ease both;pointer-events:none;
+}
+@keyframes phase{0%{opacity:0;transform:translate(-50%,-50%) scale(.86)}25%{opacity:1}72%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(1.05)}}
+@media (prefers-reduced-motion:reduce){.slot.attacking{transform:none}*{animation-duration:.01ms!important}}
+
+/* ---- 상대 카드 공개 ---- */
+.reveal{
+  position:fixed;inset:0;z-index:56;
+  display:flex;align-items:center;justify-content:center;pointer-events:none;
+  animation:fade .22s ease both;   /* 배경은 공용 딤(.dim 목록에 포함) */
+}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+/* 상대 카드 공개 = 평소 카드(tcard)를 확대와 같은 `lg` 규격으로 보여 준다.
+   전용 마크업(.rcard)은 없앴다 — 같은 카드가 두 가지 모양으로 보이면 안 된다. */
+.rwrap{display:flex;flex-direction:column;align-items:center;gap:10px;
+  animation:flip .48s cubic-bezier(.2,.7,.3,1) both}
+@keyframes flip{
+  0%{opacity:0;transform:rotateY(88deg) scale(.8)}
+  60%{opacity:1;transform:rotateY(-8deg) scale(1.06)}
+  100%{opacity:1;transform:none}
+}
+.rwrap .rl{font-family:'Cinzel',serif;font-size:11px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--gold-bright);padding:5px 14px;border:1px solid var(--gold);border-radius:4px;
+  background:rgba(8,5,3,.8);text-shadow:0 0 10px rgba(242,212,136,.5)}
+.rwrap .tcard{box-shadow:0 18px 44px rgba(0,0,0,.65)}
+
+.slot.spawned{animation:spawn .5s cubic-bezier(.2,.7,.3,1) both;z-index:6}
+/* 단말마 부활 — 보라 오오라가 피어오르며 몸이 다시 선다. 소환(spawned)과 **다른 색**이라
+   무엇이 일어났는지 색만 보고도 갈린다. */
+.slot.revived{animation:spawn .5s cubic-bezier(.2,.7,.3,1) both;z-index:7}
+.slot.revived::after{content:'';position:absolute;inset:-9px;border-radius:12px;pointer-events:none;
+  background:radial-gradient(circle at 50% 60%,rgba(154,114,216,.55),rgba(154,114,216,.14) 55%,transparent 72%);
+  box-shadow:0 0 26px 6px rgba(154,114,216,.6),inset 0 0 18px rgba(196,160,255,.5);
+  animation:revaura .9s ease-out both}
+@keyframes revaura{
+  0%{opacity:0;transform:scale(.7)}
+  35%{opacity:1;transform:scale(1.06)}
+  100%{opacity:0;transform:scale(1.18)}}
+/* 환류 — 손패에 **일렁이며** 생겨난다 */
+.hcw.echoin{animation:echoin .72s cubic-bezier(.2,.7,.3,1) both;z-index:9}
+.hcw.echoin::after{content:'';position:absolute;inset:-4px;border-radius:9px;pointer-events:none;
+  background:linear-gradient(115deg,transparent 30%,rgba(126,214,255,.75) 48%,transparent 66%);
+  background-size:260% 100%;animation:echoshine .72s ease-out both}
+@keyframes echoin{
+  0%{opacity:0;transform:translateY(14px) scale(.82) skewX(-7deg);filter:blur(3px)}
+  55%{opacity:1;transform:translateY(-3px) scale(1.05) skewX(3deg);filter:blur(0)}
+  100%{opacity:1;transform:none}}
+@keyframes echoshine{0%{background-position:180% 0;opacity:0}
+  25%{opacity:1}100%{background-position:-80% 0;opacity:0}}
+/* 주문 발사체 — 시전자 쪽에서 대상까지 구슬이 날아가 터진다 */
+.bolt{position:fixed;z-index:145;   /* ⚠ 처리 가리개(.busy z-140) **위**여야 보인다 */
+  width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;
+  pointer-events:none;background:radial-gradient(circle at 38% 34%,#fff,var(--bc) 52%,transparent 74%);
+  box-shadow:0 0 14px 4px var(--bc),0 0 30px 10px color-mix(in srgb,var(--bc) 55%,transparent)}
+.bolt::after{content:'';position:absolute;inset:-3px;border-radius:50%;
+  background:radial-gradient(circle,var(--bc),transparent 70%);opacity:.55;filter:blur(4px)}
+.bolt.burst{animation:boltburst .24s ease-out both}
+/* 파괴 — **사라지기 직전의 그 자리**에서 카드가 금이 가며 부서져 내린다.
+   render() 가 슬롯을 지워 버리므로 그 모습을 떠서 body 위에 띄운다. */
+.deadfx{position:fixed;z-index:128;pointer-events:none;overflow:hidden;border-radius:6px;
+  animation:deadout .56s cubic-bezier(.3,.1,.7,1) both;transform-origin:50% 62%}
+.deadfx::before{content:'';position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:linear-gradient(103deg,transparent 46%,rgba(255,236,200,.95) 48.4%,transparent 51%),
+             linear-gradient(64deg,transparent 58%,rgba(255,236,200,.8) 60%,transparent 62.4%);
+  opacity:0;animation:deadcrack .56s ease-out both}
+.deadfx::after{content:'';position:absolute;inset:-30%;z-index:1;pointer-events:none;
+  background:radial-gradient(circle at 50% 60%,rgba(20,12,8,.9),transparent 62%);
+  opacity:0;animation:deadsmoke .56s ease-out both}
+@keyframes deadout{
+  0%{opacity:1;transform:scale(1) rotate(0deg);filter:none}
+  22%{opacity:1;transform:scale(1.07) rotate(-2deg);filter:brightness(1.7) contrast(1.2)}
+  100%{opacity:0;transform:scale(.72) rotate(7deg) translateY(16px);filter:brightness(.35) blur(2px)}}
+@keyframes deadcrack{0%{opacity:0}18%{opacity:1}55%{opacity:.8}100%{opacity:0}}
+@keyframes deadsmoke{0%{opacity:0}35%{opacity:.85}100%{opacity:0}}
+/* 되돌리기 — **그 자리에서 속성이 터진다.** 날아갈 것이 없는 주문이라 발사체를 안 쓴다. */
+.burstfx{position:fixed;z-index:144;pointer-events:none;border-radius:50%;
+  margin:-6px 0 0 -6px;width:12px;height:12px;
+  background:radial-gradient(circle,#fff 8%,var(--bc) 42%,transparent 72%);
+  animation:burstpop .46s cubic-bezier(.2,.75,.35,1) both}
+.burstfx::after{content:'';position:absolute;inset:0;border-radius:50%;
+  border:2.5px solid var(--bc);animation:burstring .46s cubic-bezier(.15,.85,.3,1) both}
+@keyframes burstpop{0%{transform:scale(.4);opacity:1;filter:brightness(2)}
+  100%{transform:scale(9);opacity:0;filter:brightness(1)}}
+@keyframes burstring{0%{transform:scale(.6);opacity:.95}
+  100%{transform:scale(13);opacity:0}}
+/* 되돌아가는 카드 — **그 카드가 실제로 손으로 날아간다.** 그냥 사라지면 어디로 갔는지 모른다. */
+.tohandfx{position:fixed;z-index:129;pointer-events:none;
+  transition:left .42s cubic-bezier(.4,0,.3,1),top .42s cubic-bezier(.4,0,.3,1),
+             transform .42s cubic-bezier(.4,0,.3,1),opacity .42s ease-in}
+/* 사신의 수확 — 다음 내 턴 시작에 죽는다. **표식이 남아 있는 동안** 계속 보여야 한다. */
+.slot.doomed{filter:saturate(.7)}
+.slot.doomed::after{content:'';position:absolute;inset:-5px;border-radius:10px;pointer-events:none;z-index:3;
+  border:1.5px solid rgba(154,114,216,.85);
+  box-shadow:0 0 14px 2px rgba(120,70,190,.75),inset 0 0 22px rgba(40,10,70,.75);
+  animation:doompulse 1.4s ease-in-out infinite}
+@keyframes doompulse{0%,100%{opacity:.45;transform:scale(1)}50%{opacity:1;transform:scale(1.03)}}
+@keyframes boltburst{0%{transform:scale(1);opacity:1}100%{transform:scale(3.2);opacity:0}}
+@keyframes spawn{
+  0%{opacity:0;transform:translateY(-14px) scale(.7)}
+  55%{opacity:1;transform:translateY(2px) scale(1.14)}
+  100%{opacity:1;transform:none}
+}
+
+/* ---- 카드 아트 + 스탯 오버레이 ---- */
+.slot.occ{padding:0;background:#120c07}
+.cart{position:absolute;inset:0;background-size:cover;background-position:center}
+.cname{position:absolute;top:0;left:0;right:0;font-size:8.5px;font-weight:700;text-align:center;
+  padding:2px 1px;color:#f4e6c8;line-height:1.15;
+  background:linear-gradient(180deg,rgba(8,5,3,.94),rgba(8,5,3,.35));text-shadow:0 1px 2px #000}
+.ov{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:flex-end;padding:2px}
+.ba,.bh,.bch{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:'Cinzel',serif;font-weight:700;font-size:10.5px;border:1.5px solid;
+  box-shadow:0 1px 4px rgba(0,0,0,.8);transition:.2s}
+.ba{background:#3a1512;border-color:#e0796e;color:#ffd9d2}
+.bh{background:#0d2b25;border-color:#4fc4a6;color:#d6fff2}
+.bch{background:#241436;border-color:#b79ae8;color:#eadcff;margin-left:auto}
+.bh.dmg{background:#6b1410;border-color:#ff7a66;color:#fff;box-shadow:0 0 8px rgba(255,90,74,.6)}
+.ba.buf,.bh.buf{background:#1d4a12;border-color:#8ce06a;color:#e8ffdc;box-shadow:0 0 8px rgba(140,224,106,.6)}
+.ba.dmg{background:#4a3a10;border-color:#e0b25e;color:#fff3d0}
+.pips{position:absolute;right:2px;bottom:22px;display:flex;flex-direction:column;gap:1px;align-items:flex-end}
+.pips i{font-family:'Cinzel',serif;font-style:normal;font-size:8px;font-weight:700;
+  background:rgba(13,43,37,.92);border:1px solid #4fc4a6;color:#d6fff2;border-radius:3px;padding:0 3px}
+.pips i.dmg{background:rgba(107,20,16,.92);border-color:#ff7a66;color:#fff}
+.slot .stk{top:1px;right:2px;z-index:3;background:rgba(8,5,3,.85);color:#f2d488;border:1px solid #7c5a30}
+.hart{height:44px;border-radius:3px;background-size:cover;background-position:center;margin:3px 0 4px;
+  border:1px solid rgba(107,77,31,.6)}
+
+/* ---- 롱프레스 카드 확대 ---- */
+/* 게임 화면은 문서가 아니라 조작판이다 — 글자를 끌어 선택하는 일이 없어야 한다.
+   길게 눌러 카드를 확대하려다 텍스트가 파랗게 잡히거나 돋보기가 뜨던 문제.
+   ⚠ `*`로 한 번에 거는 게 맞다. 요소를 하나씩 지정하면 새로 만든 UI에서 또 새는데,
+      실제로 슬롯·손패만 막아 뒀다가 안내문·바·라벨에서 계속 선택이 났다.
+   ⚠ 입력 요소만 예외로 되살린다(선택이 안 되면 편집이 불가능하다). */
+*{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
+  -webkit-tap-highlight-color:transparent}
+input,textarea,[contenteditable]{user-select:text;-webkit-user-select:text}
+/* 화면 확대 차단. `pan-x pan-y` 는 스크롤은 남기고 **핀치·더블탭 확대만** 뺀다.
+   (`manipulation` 은 더블탭만 막고 핀치는 그대로 남으므로 여기선 부족하다) */
+html,body{touch-action:pan-x pan-y}
+/* 뒤 조작을 막는 오버레이의 공용 배경. 새 팝업을 만들면 이 클래스를 붙이거나
+   var(--dim)/var(--dim-blur) 를 쓸 것 — 배경색을 새로 적지 않는다. */
+.dim,.tgtdim,.zoom,.mull,.reveal{
+  background:var(--dim);
+  backdrop-filter:blur(var(--dim-blur));-webkit-backdrop-filter:blur(var(--dim-blur))}
+/* ── 페이지(팝업이 아니라 화면 전체를 쓰는 단계) ────────── */
+.pg{position:fixed;inset:0;z-index:120;display:none;overflow-y:auto;
+  background:radial-gradient(120% 80% at 50% 0%, rgba(201,162,75,.10), transparent 60%),
+             radial-gradient(140% 120% at 50% 60%, #241a12 0%, #16100a 60%, #0d0906 100%);
+  padding:calc(22px + env(safe-area-inset-top)) 14px calc(22px + env(safe-area-inset-bottom))}
+.pg.on{display:block;animation:zfade .16s ease both}
+.pgin{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.pgh{font-family:'Cinzel Decorative','Cinzel',serif;font-weight:900;font-size:clamp(22px,6.5vw,34px);
+  color:var(--gold-bright);text-align:center;text-shadow:0 2px 0 #000,0 0 24px rgba(201,162,75,.45)}
+.pgh span{color:var(--emerald)}
+.pgs{font-family:'Gowun Batang',serif;font-size:12.5px;line-height:1.75;color:var(--gold);
+  opacity:.88;text-align:center;margin-top:-4px}
+.pgstep{font-family:'Cinzel',serif;font-size:10px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--gold);opacity:.6;text-align:center}
+.chs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;margin-top:4px}
+.chs.two{grid-template-columns:1fr 1fr}
+/* 세 갈래(원정·대전·엘리멘츠 대전) — 폰에서는 세로로 쌓아야 글이 안 뭉갠다 */
+.chs.three{grid-template-columns:1fr}
+@media(min-width:640px){.chs.three{grid-template-columns:repeat(3,1fr)}}
+.chs.three .chsi.big{padding:16px 18px}
+.chs.three .chsi.big b{font-size:19px;margin-bottom:4px}
+.chsi{text-align:left;padding:13px 15px;border-radius:8px;cursor:pointer;transition:.15s;
+  border:1px solid var(--rule);border-left:5px solid var(--c,var(--gold));
+  background:linear-gradient(150deg,rgba(46,33,22,.92),rgba(28,20,13,.92));
+  color:var(--parch);box-shadow:0 2px 6px rgba(0,0,0,.45);font-family:'Gowun Batang',serif}
+.chsi:hover,.chsi.on{transform:translateY(-2px);border-color:var(--c,var(--gold-bright));
+  box-shadow:0 6px 16px rgba(0,0,0,.5),0 0 14px color-mix(in srgb,var(--c,#c9a24b) 45%,transparent)}
+.chsi b{display:block;font-family:'Gothic A1',sans-serif;font-weight:900;font-size:15px;
+  color:var(--gold-bright);letter-spacing:-.01em;margin-bottom:3px}
+.chsi s{display:block;text-decoration:none;font-size:11.5px;line-height:1.6;color:var(--parch-2);opacity:.9}
+.chsi .en{font-family:'Cinzel',serif;font-size:9px;letter-spacing:.18em;color:var(--c);opacity:.9}
+.chsi.big{padding:22px 18px;text-align:center;border-left-width:1px}
+.chsi.big b{font-size:21px;margin-bottom:6px}
+.pgbtns{display:flex;gap:8px;justify-content:center;margin-top:6px;flex-wrap:wrap}
+.pgbtns button{min-width:120px}
+.over .obtns{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+
+/* ── 로딩 ─────────────────────────────────────────────── */
+.boot{position:fixed;inset:0;z-index:200;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:16px;
+  background:radial-gradient(120% 80% at 50% 40%,#241a12 0%,#16100a 55%,#0b0704 100%);
+  transition:opacity .38s ease,visibility 0s .38s}
+.boot.off{opacity:0;visibility:hidden;pointer-events:none}
+.bmark{font-family:'Cinzel Decorative','Cinzel',serif;font-weight:900;font-size:clamp(38px,13vw,64px);
+  letter-spacing:.06em;color:var(--gold-bright);text-shadow:0 2px 0 #000,0 0 30px rgba(201,162,75,.55)}
+.bmark span{color:var(--emerald)}
+.bbar{width:min(58vw,240px);height:4px;border-radius:4px;background:rgba(201,162,75,.16);overflow:hidden}
+.bbar i{display:block;height:100%;width:36%;border-radius:4px;
+  background:linear-gradient(90deg,transparent,var(--gold-bright),transparent);
+  animation:bslide 1.1s cubic-bezier(.5,0,.5,1) infinite}
+@keyframes bslide{0%{transform:translateX(-110%)}100%{transform:translateX(390%)}}
+.btxt{font-family:'Cinzel',serif;font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--gold);opacity:.8}
+
+.veil{position:fixed;inset:0;z-index:150;display:none;flex-direction:column;
+  align-items:center;justify-content:center;gap:14px;
+  /* 커튼은 딤이 아니다 — 전환 중 뒤 화면을 **보여 주면 안 되므로** 더 진하다 */
+  background:rgba(9,6,3,.96);backdrop-filter:blur(6px)}
+.veil.on{display:flex;animation:zfade .14s ease both}
+.spin{width:34px;height:34px;border-radius:50%;border:3px solid rgba(201,162,75,.22);
+  border-top-color:var(--gold-bright);animation:vspin .8s linear infinite}
+@keyframes vspin{100%{transform:rotate(360deg)}}
+.vtxt{font-family:'Gowun Batang',serif;font-size:13px;color:var(--gold-bright);letter-spacing:.04em}
+
+/* 가리지 않는 로딩 — 화면은 그대로 보이고 조작만 막는다 */
+/* ⚠ 가리개는 흐름 페이지(.pg 120)까지 덮어야 조작이 실제로 막힌다 → 그보다 위에 둔다.
+   ⚠⚠ 그래서 **가리개가 켜진 채로 남으면 보상 창(.mull 80)을 덮어 눌리지 않는다.**
+      한 번 그렇게 멈췄다. 막는 방법은 z-index 가 아니라 **제때 끄는 것**이다 —
+      checkEnd() 가 직접 끄고, render() 는 판이 끝났으면(S.over) 아예 안 띄운다. */
+.busy{position:fixed;inset:0;z-index:140;display:none}
+.busy.on{display:block}
+.busy .bar{position:absolute;left:0;right:0;top:0;height:3px;overflow:hidden;
+  background:rgba(201,162,75,.14)}
+.busy .bar::after{content:'';position:absolute;left:0;top:0;bottom:0;width:34%;
+  background:linear-gradient(90deg,transparent,var(--gold-bright),transparent);
+  animation:bslide 1s cubic-bezier(.5,0,.5,1) infinite}
+.busy .btag{position:absolute;left:50%;top:10px;transform:translateX(-50%);
+  font-family:'Gothic A1',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:.02em;
+  padding:4px 12px;border-radius:20px;border:1px solid var(--bronze);
+  background:rgba(18,12,6,.92);color:var(--gold-bright);white-space:nowrap}
+.busy .btag:empty{display:none}
+
+.zoom{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;
+  padding:20px}   /* 배경은 공용 딤 */
+.zoom.on{display:flex;animation:zfade .16s ease both}
+.zoom.hold{pointer-events:none}
+.zwrap{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;max-width:100%}
+/* ── 성장 전/후 겹쳐 보기 ────────────────────────────────────────
+   ⚠ 두 장을 **겹쳐 쌓되 자리를 차지하는 쪽은 앞장 하나**여야 한다.
+      둘 다 흐름에 두면 확대창 폭이 두 배가 되어 좁은 폰에서 카드가 반토막 난다.
+      → 뒷장을 position:absolute 로 빼고, 살짝 밀어 '뒤에 한 장 더 있다'만 알린다. */
+.zstack{position:relative;display:inline-block;touch-action:pan-y;padding:14px 18px 22px 0}
+.zstack .zfront,.zstack .zback{transition:transform .26s cubic-bezier(.3,0,.2,1),opacity .26s}
+.zstack .zback{position:absolute;left:0;top:14px;transform:translate(18px,-14px) scale(.95);
+  opacity:.85;filter:brightness(.66) saturate(.85);z-index:0;pointer-events:none}
+.zstack .zfront{position:relative;z-index:1}
+.zstack .zfront .tcard,.zstack .zback .tcard{box-shadow:0 4px 16px rgba(0,0,0,.65)}
+.zstack.flip .zfront{transform:translate(18px,-14px) scale(.95);opacity:.85;
+  filter:brightness(.66) saturate(.85);z-index:0}
+.zstack.flip .zback{transform:none;opacity:1;filter:none;z-index:1}
+.zswipe{position:absolute;left:50%;bottom:2px;transform:translateX(-50%);z-index:2;
+  font-style:normal;font-family:'Gothic A1',sans-serif;font-size:10px;font-weight:700;
+  white-space:nowrap;color:var(--gold);opacity:.8;letter-spacing:.02em}
+@media (max-width:900px){
+  /* ⚠ 예전에는 카드를 화면 정중앙에 **절대 배치**하고 용어 설명을 화면 아래에 **고정**했다.
+     둘이 서로 모르는 사이라 세로가 짧거나 태그가 많으면 설명이 카드를 덮었다.
+     이제는 그냥 한 덩어리(세로 플렉스)로 쌓는다 — 카드 위, 설명 아래. */
+  /* 들어가면 가운데, 안 들어가면 위부터 — margin:auto + align-items:flex-start 조합.
+     태그 3개까지는 안 넘치게 잡았지만(그 이상은 카드 설계에서 지양), 글꼴이 늦게 붙어
+     예상보다 커지는 경우가 있어 overflow 를 열어 둔다. 잘려 안 보이는 것보다 낫다. */
+  .zoom{padding:calc(40px + env(safe-area-inset-top)) 10px calc(12px + env(safe-area-inset-bottom));
+    align-items:flex-start;overflow-y:auto;overscroll-behavior:contain}
+  .zwrap{position:static;transform:none;flex-direction:column;align-items:center;gap:9px;
+    margin-top:auto;margin-bottom:auto}
+  .zside{position:static;width:min(92vw,320px);max-height:none;overflow:visible;z-index:auto}
+  /* 카드 + 용어 상자 3개가 함께 들어가야 하므로 높이에도 묶는다(카드 높이는 1.4×cw) */
+  /* ⚠ `.zoom`/`.reveal` 로 한정한다 — 기본 `.tcard.lg` 규칙이 이 미디어 블록보다 **아래**에 있어
+     그냥 `.tcard.lg` 로 적으면 뒤 규칙에 져서 무시된다(실제로 그렇게 안 먹었다).
+     상대 카드 공개도 확대와 **같은 폭**이어야 하므로 둘을 함께 적는다. */
+  .zoom .tcard.lg,.reveal .tcard.lg{--cw:min(66vw,250px,34dvh)}
+  .zdef{padding:7px 10px}
+  .zdef .kn{font-size:12px}
+  .zdef .kd{font-size:11px;line-height:1.5}
+  /* ⚠ bottom 을 풀어 준다 — top 과 bottom 이 함께 잡히면 상자가 화면 높이만큼 늘어난다 */
+  .zhint{position:fixed;left:0;right:0;top:calc(14px + env(safe-area-inset-top));bottom:auto}
+}
+.zside{width:min(78vw,240px);max-height:62vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  display:flex;flex-direction:column;gap:8px}
+.zdef{border:1px solid var(--rule);border-left:3px solid var(--gold);border-radius:6px;
+  background:rgba(20,13,7,.9);padding:9px 11px}
+.zdef .k{display:flex;align-items:baseline;gap:6px;margin-bottom:3px}
+.zdef .kn{font-family:'Cinzel',serif;font-weight:700;font-size:13px;color:var(--gold-bright);letter-spacing:.03em}
+.zdef .kc{font-family:'Cinzel',serif;font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--gold);opacity:.7;border:1px solid rgba(201,162,75,.45);border-radius:3px;padding:0 4px}
+.zdef .kd{font-family:'Gowun Batang',serif;font-size:11.5px;line-height:1.6;color:#d8c8a8}
+/* ⚠ 예전에 있던 `@media (max-width:640px){ .zside{max-height:32vh} }` 는 지웠다.
+   900 이하 규칙보다 **뒤에 있어서** 좁은 폰에서만 용어 상자를 32vh 로 잘라
+   세 번째 태그가 통째로 사라졌다. 확대 레이아웃은 900 이하 블록 한 곳에서만 정한다. */
+@keyframes zfade{from{opacity:0}to{opacity:1}}
+.zcard{--zc:var(--gold);width:min(72vw,270px);border:4px solid var(--zc);border-radius:12px;overflow:hidden;
+  background:linear-gradient(180deg,var(--parch),var(--parch-2));color:var(--ink);
+  box-shadow:0 22px 60px rgba(0,0,0,.7),0 0 0 1px rgba(0,0,0,.5);animation:zpop .22s cubic-bezier(.2,.7,.3,1) both}
+@keyframes zpop{from{opacity:0;transform:scale(.86) translateY(10px)}to{opacity:1;transform:none}}
+.zcard.guard{--zc:var(--emerald)} .zcard.fly{--zc:var(--amber)} .zcard.flyguard{--zc:var(--amber)} .zcard.pierce{--zc:#c98a4a}
+.zcard.sp{--zc:var(--crimson)} .zcard.en{--zc:var(--violet)}
+.zhead{display:flex;align-items:center;gap:8px;padding:8px 10px 6px}
+.zcost{flex:none;width:30px;height:30px;border-radius:50%;
+  background:radial-gradient(circle at 40% 30%,#f2d488,#b07f2c);border:1.5px solid #6b4d1f;color:#3a2810;
+  font-family:'Cinzel',serif;font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center}
+.zname{font-family:'Gowun Batang',serif;font-weight:700;font-size:19px;line-height:1.1;flex:1}
+.zart{aspect-ratio:1/1;background-size:cover;background-position:center;background-color:#1a120a;
+  border-top:3px solid color-mix(in srgb,var(--zc) 60%,transparent);
+  border-bottom:3px solid color-mix(in srgb,var(--zc) 60%,transparent)}
+.zchip{display:inline-block;margin:8px 10px 0;font-family:'Cinzel',serif;font-size:9.5px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--zc);color:var(--zc);padding:2px 7px;border-radius:3px}
+.zeff{font-size:12.5px;line-height:1.55;color:var(--ink-soft);padding:7px 11px 3px;min-height:20px}
+.zeff b{color:var(--ink);font-weight:700}
+.zstats{display:flex;justify-content:space-between;align-items:center;padding:6px 11px 11px;gap:8px}
+.zstats .zs{display:flex;align-items:center;gap:5px;font-family:'Cinzel',serif;font-weight:700;font-size:21px}
+.zs .ic{width:11px;height:11px;border-radius:2px;transform:rotate(45deg)}
+.zs.atk .ic{background:var(--crimson)} .zs.atk{color:#8e2f27}
+.zs.hp .ic{background:var(--emerald)} .zs.hp{color:#0d6d5c}
+.zs.ch .ic{background:var(--violet)} .zs.ch{color:#5a3ea8;margin-left:auto}
+.zbase{font-family:'Cinzel',serif;font-size:11px;color:var(--ink-faint);font-weight:400}
+.mull{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;
+  padding:18px}   /* 배경은 공용 딤 */
+.mull.on{display:flex;animation:zfade .18s ease both}
+.mbox{width:min(96vw,760px);max-height:92vh;overflow-y:auto;text-align:center;
+  border:1px solid var(--gold);border-radius:10px;padding:18px 16px 20px;
+  background:linear-gradient(180deg,#1a120a,#100b06);box-shadow:0 20px 60px rgba(0,0,0,.7)}
+.mbox h2{font-family:'Cinzel Decorative','Cinzel',serif;font-weight:900;font-size:22px;
+  color:var(--gold-bright);letter-spacing:.04em;text-shadow:0 0 18px rgba(201,162,75,.5)}
+.mbox .msub{font-family:'Gowun Batang',serif;font-size:12.5px;color:var(--gold);opacity:.85;margin-top:6px;line-height:1.7}
+.mbox .msub b{color:#fff}
+.mstat{display:inline-flex;gap:8px;margin:10px 0 4px;font-family:'Cinzel',serif;font-size:11px;letter-spacing:.1em}
+.mstat span{padding:3px 10px;border:1px solid var(--rule);border-radius:4px;color:var(--gold)}
+.mstat span.warn{border-color:#e0796e;color:#ffb0a4}
+.mstat span.good{border-color:var(--emerald);color:#7fe6c8}
+.mhand{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin:14px 0 6px}
+.mcard{position:relative;cursor:pointer;transition:.15s;border-radius:7px}
+.mcard:hover{transform:translateY(-4px)}
+.mcard.pick{transform:translateY(-6px)}
+.mcard.pick::after{content:'다시 뽑기';position:absolute;inset:0;z-index:5;border-radius:7px;
+  background:rgba(8,5,3,.72);border:2px solid var(--gold-bright);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Cinzel',serif;font-size:10px;letter-spacing:.1em;color:var(--gold-bright)}
+.mbtns{display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.mbtns button{font-family:'Cinzel',serif;font-weight:700;font-size:13px;letter-spacing:.08em;
+  padding:10px 22px;border-radius:5px;cursor:pointer;border:1px solid var(--gold);
+  background:linear-gradient(180deg,#3a2a12,#241809);color:var(--gold-bright)}
+.mbtns button.go{background:linear-gradient(180deg,var(--gold),#8a6a24);color:#1a1206;border-color:var(--gold-bright)}
+.mbtns button:disabled{opacity:.4;cursor:not-allowed}
+/* ---- 로그라이크 ---- */
+.rgbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:8px 0 2px;
+  font-family:'Cinzel',serif;font-size:11.5px;letter-spacing:.06em;color:var(--gold)}
+.rgbar b{color:var(--gold-bright);font-size:14px}
+.rgbar .pill{padding:4px 11px;border:1px solid var(--rule);border-radius:4px;background:#150e08}
+.rgbar .pill.hp{border-color:var(--emerald);color:#7fe6c8}
+.rgbar .pill.gold{border-color:var(--gold);color:var(--gold-bright)}
+.rgbar button{font-family:'Cinzel',serif;font-size:11px;font-weight:700;padding:5px 12px;border-radius:4px;
+  border:1px solid var(--rule);background:#150e08;color:var(--gold);cursor:pointer}
+.map{position:relative;padding:14px 10px;overflow-x:auto}
+.map svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.mrow{display:flex;justify-content:center;gap:26px;margin:0 0 26px;position:relative;z-index:1}
+.mnode{width:72px;height:auto;min-height:62px;padding:5px 3px;border-radius:9px;border:2px solid var(--rule);background:#150e08;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  cursor:default;transition:.16s;position:relative;opacity:.45}
+.mnode .ic{font-size:19px;line-height:1}
+.mnode .nm{font-family:'Gothic A1','Cinzel',sans-serif;font-size:8.5px;font-weight:700;line-height:1.2;
+  letter-spacing:-.01em;text-align:center;color:var(--gold);opacity:.92;word-break:keep-all}
+.mnode.can{opacity:1;cursor:pointer;border-color:var(--gold-bright);
+  box-shadow:0 0 14px rgba(242,212,136,.5);animation:pulse 1.4s ease-in-out infinite}
+.mnode.can:hover{transform:translateY(-3px)}
+.mnode.done{opacity:.85;border-color:var(--emerald);box-shadow:inset 0 0 14px rgba(47,157,132,.35)}
+.mnode.done::after{content:'✓';position:absolute;top:-6px;right:-6px;width:17px;height:17px;border-radius:50%;
+  background:var(--emerald);color:#04120e;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.mnode.boss{width:84px;min-height:74px;border-color:#e0796e}
+.mnode.boss.can{box-shadow:0 0 20px rgba(224,121,110,.65)}
+.rgcards{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin:14px 0 4px}
+.rgc{position:relative;cursor:pointer;transition:.15s;border-radius:7px}
+.rgc:hover{transform:translateY(-5px)}
+/* ⚠ 클래스 이름이 'over' 면 **패배 화면 `.over{display:none}`** 에 걸려 카드가 통째로 안 보인다.
+   실제로 원정 상점·보상의 강화 카드가 계속 빈 칸으로 나왔다(0×0). 그래서 `ovr` 로 쓴다.
+   전역 이름을 새로 지을 땐 기존 클래스와 겹치는지 먼저 확인할 것(예전 `.ghost` → `.dgh` 와 같은 사고). */
+.rgc.ovr::before{content:'강화';position:absolute;top:-7px;left:50%;transform:translateX(-50%);z-index:6;
+  font-family:'Cinzel',serif;font-size:8.5px;letter-spacing:.1em;padding:1px 7px;border-radius:3px;
+  background:#7a2420;border:1px solid #e0796e;color:#ffd0c8}
+.rgc .price{position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);z-index:6;
+  font-family:'Cinzel',serif;font-size:10px;font-weight:700;padding:1px 8px;border-radius:3px;
+  background:#150e08;border:1px solid var(--gold);color:var(--gold-bright)}
+.rgc.no{opacity:.4;cursor:not-allowed}.rgc.no:hover{transform:none}
+.rgopt{display:block;width:100%;text-align:left;margin:7px 0;padding:11px 14px;border-radius:6px;
+  border:1px solid var(--rule);background:#150e08;color:var(--gold);cursor:pointer;
+  font-family:'Gowun Batang',serif;font-size:13px;line-height:1.5;transition:.14s}
+.rgopt:hover{border-color:var(--gold-bright);background:#1e1409;transform:translateX(3px)}
+.rgopt:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.rgopt .cost{font-family:'Cinzel',serif;font-size:11px;color:#e0796e;margin-left:6px}
+.elpick{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin:16px 0 6px}
+.elpick button{width:112px;padding:12px 8px;border-radius:7px;border:2px solid var(--c);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--c) 22%,#150e08),#120c07);
+  color:#fff;cursor:pointer;font-family:'Gowun Batang',serif;transition:.16s}
+.elpick button:hover{transform:translateY(-4px);box-shadow:0 0 18px var(--c)}
+.elpick .en{display:block;font-family:'Cinzel',serif;font-size:9px;letter-spacing:.16em;opacity:.75}
+.elpick .kn{display:block;font-size:17px;font-weight:700;margin:3px 0 2px}
+.elpick .mc{display:block;font-size:11px;opacity:.85}
+/* ⚠⚠ pointer-events:none 이 **꼭** 있어야 한다. 이 안내줄은 position:fixed 에 left/right 가
+   0 인데, 좁은 화면 미디어 규칙이 top 까지 잡으면 top~bottom 사이가 통째로 늘어나
+   **화면을 덮는 투명 판**이 된다. 그러면 겹친 카드를 넘기려고 눌러도 히트 테스트가
+   .zstack 이 아니라 이 안내줄에 걸려 창이 그냥 닫혔다(실제로 그렇게 막혔다). */
+.zhint{position:fixed;bottom:26px;left:0;right:0;text-align:center;font-family:'Cinzel',serif;
+  font-size:11px;letter-spacing:.14em;color:var(--gold);opacity:.85;pointer-events:none}
+.zhint b{color:var(--gold-bright);font-weight:700}
+
+.ztico{flex:none;width:20px;height:20px;color:var(--zc)}
+.ztico svg{width:100%;height:100%;display:block}
+.hc{border-left-width:4px!important}
+
+/* ---- 지형 · 코스트 동그라미 ---- */
+.lnd{width:14px;height:18px;border-radius:3px;border:1px solid rgba(0,0,0,.5);position:relative;
+  box-shadow:0 1px 2px rgba(0,0,0,.5),inset 0 1px 1px rgba(255,255,255,.3)}
+.lnd.used{opacity:.28;filter:grayscale(.7)}
+.lnd.ent{opacity:.45;border-style:dashed}
+.lnd b{position:absolute;right:0;top:0;bottom:0;width:50%;border-radius:0 2px 2px 0}
+.mtxt{font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--gold);margin-left:6px;letter-spacing:.05em}
+.cpips{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:3px}
+.cp{width:9px;height:9px;border-radius:50%;flex:none;box-sizing:border-box}
+.cp.g{background:transparent;border:1.5px solid rgba(107,77,31,.85)}
+.cp.c{border:1px solid rgba(0,0,0,.45)}
+.hc.lnd{width:74px;height:auto;border-radius:6px;border-left-width:4px}
+.hc .lpip{display:flex;gap:3px;margin:5px 0}
+.hc .lpip i{width:13px;height:13px;border-radius:50%;border:1px solid rgba(0,0,0,.45)}
+
+/* ---- 통합 카드 ----
+   카드 규격은 폭(--cw) 하나로 결정된다. 내부 치수는 전부 --cw의 비율이므로
+   보드·손패·확대가 완전히 같은 비율이고, 효과문이 길어져도 카드 크기는 변하지 않는다. */
+.tcard{
+  --cw:86px;                       /* 유일한 크기 손잡이 */
+  --el:#8894A6;
+  width:var(--cw); aspect-ratio:5/7;   /* 규격 고정 — 내용이 크기를 바꾸지 못한다 */
+  position:relative;display:flex;flex-direction:column;overflow:hidden;
+  background:linear-gradient(180deg,var(--parch),var(--parch-2));color:var(--ink);
+  border:calc(var(--cw)*.034) solid var(--el);
+  border-radius:calc(var(--cw)*.075);
+  box-shadow:0 2px 6px rgba(0,0,0,.5)}
+.thead{flex:none;height:calc(var(--cw)*.30);box-sizing:border-box;
+  padding:calc(var(--cw)*.035) calc(var(--cw)*.055) calc(var(--cw)*.02);
+  border-bottom:1px solid color-mix(in srgb,var(--el) 30%,transparent)}
+.tname{font-family:'Gowun Batang',serif;font-weight:700;color:var(--ink);
+  font-size:calc(var(--cw)*.118);line-height:1.1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tcost{display:flex;gap:calc(var(--cw)*.022);flex-wrap:nowrap;overflow:hidden;
+  height:calc(var(--cw)*.085);margin-top:calc(var(--cw)*.022)}
+.cp{border-radius:50%;flex:none;box-sizing:border-box;
+  width:calc(var(--cw)*.085);height:calc(var(--cw)*.085)}
+.cp.c{border:1px solid rgba(0,0,0,.45)}
+.cp.g{background:transparent;border:1.5px solid rgba(90,67,38,.8)}
+.tart{flex:1;min-height:calc(var(--cw)*.30);
+  background-size:cover;background-position:center;background-color:#1a120a;position:relative;
+  border-top:calc(var(--cw)*.023) solid color-mix(in srgb,var(--el) 55%,transparent);
+  border-bottom:calc(var(--cw)*.023) solid color-mix(in srgb,var(--el) 55%,transparent)}
+.tbody{flex:none;overflow:hidden;
+  height:calc(var(--cw)*.03 + var(--cw)*.079*1.3*3)}   /* 여백 + 정확히 3줄 */
+.teff{color:var(--ink-soft);overflow:hidden;
+  font-size:calc(var(--cw)*.079);line-height:1.3;
+  padding:calc(var(--cw)*.03) calc(var(--cw)*.055) 0;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3}
+.teff b{color:var(--ink);font-weight:700}
+/* ── 희귀도 보석 ──────────────────────────────────────────
+   일러스트 아래 **경계선 한가운데에 걸터앉는다**. 카드 테두리는 **속성 색**이므로
+   보석은 속성과 겹치지 않는 별도 팔레트를 쓴다(회색·초록·파랑·주황).
+   크기는 --cw 에 비례시켜 어느 규격에서나 같은 비율로 보인다.
+   ⚠ 자리를 세 번 옮겼다. 폭 .10 으로 오른쪽 경계에 걸쳤더니 **효과문 첫 줄을 덮었고**,
+      일러스트 안쪽으로 집어넣었더니 그림을 가렸고, 오른쪽 끝에 작게 두었더니 눈에 안 띄었다.
+      → **폭 .075 로 줄여 경계선 한가운데**. 좌우 어느 글자와도 안 겹치고 그림도 덜 가린다.
+   ⚠ 가운데 정렬은 `left:50%` + 음수 `margin-left` 로 한다.
+      `transform:translateX(-50%)` 를 쓰면 45° 회전 선언을 덮어써 마름모가 사각형이 된다.
+   ⚠ 계산은 전부 `--cw` 비율이다. `bottom` 은 **일러스트의 padding 상자** 기준이라
+      아래 테두리(.023)만큼 더 내려가야 경계선에 닿는다.
+      아래 꼭짓점 = -bottom + (√2−1)/2 × 폭 = .030 + .0155 = .0455  <  글자 시작 .053. */
+.rgem{position:absolute;left:50%;margin-left:calc(var(--cw)*-.0375);bottom:calc(var(--cw)*-.030);
+  z-index:4;pointer-events:none;
+  width:calc(var(--cw)*.075);height:calc(var(--cw)*.075);
+  transform:rotate(45deg);
+  border-radius:calc(var(--cw)*.02);
+  background:linear-gradient(135deg,var(--rc2),var(--rc));
+  border:calc(var(--cw)*.014) solid rgba(0,0,0,.55);
+  box-shadow:0 0 calc(var(--cw)*.06) var(--rc),inset 0 0 calc(var(--cw)*.03) rgba(255,255,255,.6)}
+.rgem.common{--rc:#9aa6b4;--rc2:#dfe6ee}
+.rgem.uncommon{--rc:#35a35a;--rc2:#8ee9ab}
+.rgem.rare{--rc:#3b7fd4;--rc2:#9ccbff}
+.rgem.legendary{--rc:#e08a17;--rc2:#ffd889;
+  animation:rgemleg 2.4s ease-in-out infinite}   /* 레전더리만 은은하게 맥동 */
+@keyframes rgemleg{0%,100%{box-shadow:0 0 calc(var(--cw)*.06) var(--rc),inset 0 0 calc(var(--cw)*.03) rgba(255,255,255,.6)}
+  50%{box-shadow:0 0 calc(var(--cw)*.15) var(--rc),inset 0 0 calc(var(--cw)*.03) rgba(255,255,255,.9)}}
+@media (prefers-reduced-motion:reduce){.rgem.legendary{animation:none}}
+
+/* ── 레전더리 프리즘(홀로그램) ─────────────────────────────
+   실제 포일 카드처럼 **두 겹**으로 만든다.
+     ::before  넓은 무지개 — `mix-blend-mode:color` 로 **색조만** 얹는다.
+               명도를 건드리지 않으므로 글자 대비가 그대로 남는다.
+     ::after   좁고 밝은 반사光 한 줄 — 카드를 가로질러 천천히 지나간다.
+   ⚠ `color-dodge`·`screen` 은 밝은 양피지 위에서 하얗게 날아가 글자가 안 보인다.
+   ⚠ `hue`·높은 opacity 는 일러스트 색을 통째로 갈아엎는다(용이 초록색이 된다).
+   ⚠ `.tcard{overflow:hidden}` 덕에 두 겹 다 둥근 모서리로 잘린다. */
+.tcard.r-legendary{box-shadow:0 2px 6px rgba(0,0,0,.5),
+  0 0 0 calc(var(--cw)*.012) rgba(255,214,130,.6),0 0 calc(var(--cw)*.14) rgba(255,190,90,.4)}
+/* ⚠ 프리즘은 **숫자 뱃지와 코스트 구슬보다 아래**에 깐다(z-index 3).
+   그 위로 올리면 ATK 붉은색·HP 청록색이 무지개에 물들어 무슨 수치인지 헷갈린다.
+   머리·발치 줄에 z-index 5 를 줘서 확실히 위로 뺀다. */
+.tcard.r-legendary>.thead,.tcard.r-legendary>.tstat{position:relative;z-index:5}
+.tcard.r-legendary::before,.tcard.r-legendary::after{
+  content:'';position:absolute;inset:0;z-index:3;pointer-events:none}
+.tcard.r-legendary::before{
+  background:linear-gradient(115deg,#ff6eb0 0%,#ffd66e 18%,#78ffcd 36%,#73b9ff 54%,#cd7dff 72%,#ff6eb0 100%);
+  background-size:230% 100%;
+  mix-blend-mode:color;opacity:.28;
+  animation:prismhue 9s linear infinite}
+.tcard.r-legendary::after{
+  background:linear-gradient(108deg,transparent 38%,rgba(255,255,255,.72) 47%,
+    rgba(255,255,255,.92) 50%,rgba(255,255,255,.72) 53%,transparent 62%);
+  background-size:320% 100%;
+  mix-blend-mode:overlay;opacity:.85;
+  animation:prismgleam 4.5s cubic-bezier(.5,0,.5,1) infinite}
+@keyframes prismhue{0%{background-position:0% 50%}100%{background-position:230% 50%}}
+@keyframes prismgleam{0%{background-position:170% 50%}
+  70%,100%{background-position:-70% 50%}}
+@media (prefers-reduced-motion:reduce){
+  .tcard.r-legendary::before{animation:none;background-position:40% 50%}
+  .tcard.r-legendary::after{animation:none;opacity:0}}
+
+.tstat{flex:none;height:calc(var(--cw)*.235);box-sizing:border-box;
+  display:flex;justify-content:space-between;align-items:center;
+  padding:0 calc(var(--cw)*.05) calc(var(--cw)*.02)}
+.tb{display:flex;align-items:center;justify-content:center;border-radius:50%;
+  width:calc(var(--cw)*.185);height:calc(var(--cw)*.185);font-size:calc(var(--cw)*.105);
+  font-family:'Cinzel',serif;font-weight:700;border:1.5px solid;box-shadow:0 1px 3px rgba(0,0,0,.5)}
+.tb.a{background:#3a1512;border-color:#e0796e;color:#ffd9d2}
+.tb.h{background:#0d2b25;border-color:#4fc4a6;color:#d6fff2}
+.tb.ch{background:#241436;border-color:#b79ae8;color:#eadcff;margin-left:auto}
+.tb.h.dmg{background:#6b1410;border-color:#ff9a88;color:#fff;box-shadow:0 0 7px rgba(255,90,74,.65)}
+.tb.a.dmg{background:#4a3a10;border-color:#e0b25e;color:#fff3d0}
+.tb.buf{background:#1d4a12;border-color:#8ce06a;color:#e8ffdc}
+
+/* ---- 이미지 프레임 카드 (생성 프레임을 쓰는 경우) ----
+   레이아웃은 data/frames.json 의 실측 좌표를 CSS 변수로 받아 절대배치한다.
+   프레임 PNG는 일러스트 창이 뚫려 있어 아트가 뒤에서 비친다. */
+.tcard.fr{background:#0d0906;border:none;border-radius:calc(var(--cw)*.05);overflow:hidden}
+.tcard.fr>*{position:absolute}
+.fart{left:calc(var(--aX)*1%);top:calc(var(--aY)*1%);
+  width:calc(var(--aW)*1%);height:calc(var(--aH)*1%);
+  background-size:cover;background-position:center;background-color:#1a120a;z-index:1}
+.fimg{inset:0;width:100%;height:100%;background-size:100% 100%;background-repeat:no-repeat;
+  z-index:2;pointer-events:none}
+.fname.split{justify-content:space-between;gap:calc(var(--cw)*.04)}
+.fcin{display:flex;align-items:center;gap:calc(var(--cw)*.018);flex:none}
+.fcin i{width:calc(var(--cw)*.072);height:calc(var(--cw)*.072);border-radius:50%;flex:none;
+  background-size:100% 100%;background-repeat:no-repeat;
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.35),0 1px 2px rgba(0,0,0,.55)}
+.fcin i[style*="background-image"]{box-shadow:none;border-radius:0}
+.fcin i.g{background:rgba(20,14,8,.5);box-shadow:inset 0 1px 3px rgba(0,0,0,.8)}
+.fname{left:9%;right:9%;top:calc(var(--nY)*1%);height:calc(var(--nH)*1%);z-index:3;
+  display:flex;align-items:center;justify-content:flex-start;
+  font-family:'Gowun Batang',serif;font-weight:700;color:#2a1c0d;
+  font-size:calc(var(--cw)*.10);line-height:1.05;text-align:left;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  text-shadow:0 0 calc(var(--cw)*.03) rgba(238,228,205,.95),
+    0 0 calc(var(--cw)*.06) rgba(238,228,205,.75), 0 1px 0 rgba(255,255,255,.5)}
+.fcost{left:7%;top:calc(var(--cY)*1%);height:calc(var(--cH)*1%);z-index:3;
+  display:flex;align-items:center;gap:calc(var(--cw)*.018)}
+.fcost i{width:calc(var(--cw)*.082);height:calc(var(--cw)*.082);border-radius:50%;flex:none;
+  background-size:100% 100%;background-repeat:no-repeat;
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.35),0 1px 2px rgba(0,0,0,.55)}
+.fcost i[style*="background-image"]{box-shadow:none;border-radius:0}
+.fcost i.gap,.fcin i.gap{background:none;box-shadow:none}
+.fcost i.g{background:rgba(20,14,8,.55);box-shadow:inset 0 1px 3px rgba(0,0,0,.8)}
+.feff{left:8%;right:8%;top:calc(var(--rY)*1%);height:calc(var(--rH)*1%);z-index:3;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;
+  font-family:'Gowun Batang',serif;font-size:calc(var(--cw)*.068);line-height:1.3;
+  color:#3a2a16;padding-top:calc(var(--cw)*.012)}
+.feff b{color:#1d1408;font-weight:700}
+.fstat{left:0;right:0;top:calc(var(--sY)*1%);height:calc(var(--sH)*1%);z-index:3;
+  display:flex;align-items:center;justify-content:space-between;padding:0 calc(var(--cw)*.085)}
+.fstat span{width:calc(var(--cw)*.185);height:calc(var(--cw)*.185);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Cinzel',serif;font-weight:700;font-size:calc(var(--cw)*.115);
+  color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.9)}
+.fstat .fa{color:#ffd9d2} .fstat .fh{color:#d6fff2}
+.fstat .fa.dmg{color:#ffe6a8} .fstat .fh.dmg{color:#ff9a88}
+.fstat .fa.buf,.fstat .fh.buf{color:#c6ff9e}
+/* 인챈트 충전 — 효과문 판 오른쪽 아래 */
+.tcard.fr.ench .fstat{left:auto;right:calc(var(--cw)*.03);top:auto;bottom:calc(var(--cw)*.045);
+  height:auto;width:calc(var(--cw)*.2);padding:0;justify-content:center}
+
+/* 크기 — 세 곳 모두 같은 규격, 폭만 다르다 */
+.tcard.sm{--cw:100cqw}                       /* 보드: 슬롯 폭에 맞춘다 */
+.tcard.md{--cw:var(--cardw,86px)}            /* 손패도 같은 규격 */
+.tcard.lg{--cw:min(72vw,260px)}              /* 확대 (모바일 값은 아래 @media 900 블록이 아니라
+                                                여기 뒤에 오므로, 모바일 전용 크기는 .zoom .tcard.lg 로 적는다) */
+@supports not (width:1cqw){ .tcard.sm{--cw:84px} }
+
+/* 상대 손패 — 뒷면만 보인다. 만질 수 없고 부채꼴은 아래로 편다(상대가 쥔 모양). */
+.hand.foe{padding:6px 0 8px;align-items:flex-start}
+.hand.foe .hcw{pointer-events:none;cursor:default}
+.cback{width:var(--foecw,76px);aspect-ratio:5/7;border-radius:calc(var(--foecw,76px)*.06);
+  border:1.5px solid var(--bronze);position:relative;overflow:hidden;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(242,212,136,.16), transparent 60%),
+    repeating-linear-gradient(45deg, rgba(0,0,0,.22) 0 5px, transparent 5px 10px),
+    linear-gradient(180deg,#3d2c1b,#1f1509);
+  box-shadow:inset 0 0 0 1px rgba(242,212,136,.16),inset 0 0 18px rgba(0,0,0,.6),
+             0 2px 6px rgba(0,0,0,.55)}
+.cback::before{content:'';position:absolute;left:50%;top:50%;
+  width:42%;height:42%;transform:translate(-50%,-50%) rotate(45deg);
+  border:1.5px solid rgba(242,212,136,.5);border-radius:2px}
+.cback::after{content:'';position:absolute;left:50%;top:50%;
+  width:14%;height:14%;transform:translate(-50%,-50%) rotate(45deg);
+  background:rgba(242,212,136,.55);border-radius:1px;
+  box-shadow:0 0 8px rgba(242,212,136,.5)}
+
+/* 손패 래퍼 */
+/* 손패는 실제로 카드를 쥔 것처럼 부채꼴로 편다.
+   회전·들림·확대를 각각 변수로 두고 transform 은 한 줄로만 쓴다 —
+   여러 규칙에서 transform 을 덮어쓰면 서로 지워 버린다. */
+.hand.measuring .hcw{transition:none!important}
+.hcw{flex:none;position:relative;cursor:grab;touch-action:none;      /* ⚠ pan-x 로 두면 iOS가 제스처를 가로채 드래그가 취소된다 */
+  transform-origin:50% 100%;
+  transform:rotate(var(--rot,0deg)) translateY(var(--dy,0px)) scale(var(--sc,1));
+  transition:transform .16s cubic-bezier(.2,.9,.3,1),filter .16s}
+/* ⚠ 손패 카드는 눌러도 **제자리에 그대로 있어야 한다**.
+   z-index를 올리는 것은 물론이고 들어올리거나(--dy) 키우는 것(--sc)도 안 된다 —
+   옆 카드에 가려져 있던 부분이 위로 삐져나와 '갑자기 앞으로 튀어나온' 것처럼 보인다.
+   강조는 **크기를 바꾸지 않는 테두리 광채**로만 한다. */
+.hcw:hover,.hcw.zoomed,.hcw.sel{border-radius:7px;
+  box-shadow:0 0 0 2px var(--gold-bright),0 0 18px rgba(242,212,136,.8)}
+.hcw.zoomed,.hcw.sel{box-shadow:0 0 0 2.5px var(--gold-bright),0 0 24px rgba(242,212,136,.95)}
+/* 끌고 있는 원본은 완전히 감춘다 — 반투명으로 두면 밑장이 비쳐 지저분하다 */
+.hcw.dragging{opacity:0;transition:none}
+
+/* 드래그 — 손패 밖으로 끌어내면 발동 */
+.dgh{position:fixed;left:0;top:0;z-index:88;pointer-events:none;will-change:transform;
+  filter:drop-shadow(0 14px 26px rgba(0,0,0,.66))}
+.dgh .tcard{--cw:92px;border-color:var(--gold-bright)}
+.dgh.ok .tcard{box-shadow:0 0 0 2px var(--gold-bright),0 0 22px rgba(242,212,136,.75)}
+body.dragmode .hand{outline:1px dashed rgba(242,212,136,.28);outline-offset:4px;border-radius:8px}
+body.dragmode.armed .hand{outline-color:transparent}
+.dztip{position:fixed;z-index:87;left:50%;transform:translateX(-50%);top:8px;pointer-events:none;
+  font-family:'Gothic A1',sans-serif;font-size:12px;font-weight:700;letter-spacing:.02em;
+  padding:7px 14px;border-radius:20px;border:1px solid var(--gold);
+  background:rgba(20,14,6,.93);color:var(--gold-bright);white-space:nowrap;
+  box-shadow:0 6px 18px rgba(0,0,0,.5)}
+.dztip.ok{border-color:var(--gold-bright);background:rgba(46,34,10,.96)}
+.dztip.bad{border-color:#a2643c;background:rgba(38,18,10,.96);color:#f0c9a4}
+.dgh.bad .tcard{filter:grayscale(.7) brightness(.7)}
+/* 타게팅 — 손패 밖으로 끌어내면 카드가 판 위에 서고 대상 화살표가 손끝을 따라온다 */
+/* ⚠ .tgtcard 는 **폐기**했다 — 겨누는 동안 판을 가려서 대상이 안 보였다(성권 지적).
+   규칙은 남겨 두되 아무도 안 붙인다. */
+.tgtcard{position:fixed;z-index:86;left:50%;transform:translateX(-50%);pointer-events:none;
+  filter:drop-shadow(0 0 18px rgba(242,212,136,.55)) drop-shadow(0 12px 24px rgba(0,0,0,.6));
+  animation:tgtin .18s cubic-bezier(.2,.9,.3,1) both}
+.tgtcard .tcard{--cw:var(--cardw,76px);border-color:var(--gold-bright)}
+/* 대상을 고르는 동안 화면 전체를 어둡게 덮고, 고를 수 있는 것만 그 위로 올린다.
+   ⚠ 이 딤은 반드시 `.wrap` **안**에 둔다 — `.wrap{z-index:1}` 이 쌓임 맥락을 만들기 때문에
+      밖에 두면 안쪽의 `.slot.pick` 을 아무리 올려도 딤 위로 못 올라온다.
+      (`position:fixed` 라도 조상의 쌓임 맥락에는 그대로 갇힌다.) */
+.tgtdim{position:fixed;inset:0;z-index:40;display:none;pointer-events:none}
+body.tgtmode .tgtdim,body.tidemode .tgtdim{display:block;animation:zfade .16s ease both}
+body.tidemode .board>.slot.pick{z-index:41 !important}
+body.tidemode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
+body.tidemode .ctl{position:relative;z-index:41}
+/* 고를 수 있는 슬롯만 딤 위로. 판 전체가 아니라 슬롯 하나씩 올려야 옆칸이 딸려 올라오지 않는다.
+   ⚠ `!important` 가 필요하다 — `packRow` 가 겹침 순서를 위해 슬롯마다 z-index 를 **인라인으로**
+      박아 넣는다(10+i). 스타일시트 선언은 인라인에 지므로 !important 아니면 무시된다. */
+body.tgtmode .board>.slot.pick{z-index:41 !important}
+/* 가운데 안내 줄도 딤 위로 — "빛나는 대상을 누르세요 / 빈 곳을 누르면 취소"를 못 읽으면
+   딤이 오히려 방해가 된다. 조작 자체는 어차피 capture 단계에서 가로채므로 안전하다. */
+body.tgtmode .ctl{position:relative;z-index:41}
+/* 못 고르는 것에서 색기까지 빼면 무엇이 남았는지 알아보기 어렵다 — 딤만으로 충분하다.
+   (예전에는 슬롯마다 filter 를 걸었는데, filter 는 쌓임 맥락을 만들어 딤 계산을 망친다.) */
+@keyframes tgtin{0%{opacity:0;transform:translateX(-50%) scale(.85)}100%{opacity:1;transform:translateX(-50%) scale(1)}}
+/* SVG는 대체 요소라 inset:0 만으로는 300x150 고유 크기로 남는다 — 크기를 명시할 것 */
+#tgtsvg{position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:85;pointer-events:none;overflow:visible}
+#tgtsvg .ln{fill:none;stroke:#f2d488;stroke-width:4;stroke-linecap:round;
+  filter:drop-shadow(0 0 5px #f2d488) drop-shadow(0 0 14px rgba(242,212,136,.75))}
+#tgtsvg .hd{fill:#fff;filter:drop-shadow(0 0 6px #f2d488) drop-shadow(0 0 18px #f2d488)}
+#tgtsvg.bad .ln{stroke:#c8603c;filter:drop-shadow(0 0 5px #c8603c)}
+#tgtsvg.bad .hd{fill:#e88b62;filter:drop-shadow(0 0 6px #c8603c)}
+body.tgtmode .slot.pick{animation:tgtpulse 1.05s ease-in-out infinite}
+/* 본체 조준 — 상대 정보줄 전체가 하나의 큰 대상이 된다(이름·HP·체력바 어디든).
+   ⚠ 슬롯과 같은 z-index 로 딤 위에 올려야 '고를 수 있다' 는 게 눈에 보인다. */
+body.tgtmode #foeBar.pick{position:relative;z-index:41;border-radius:8px;
+  outline:2px solid var(--gold-bright);animation:tgtpulse 1.05s ease-in-out infinite;cursor:pointer}
+@keyframes tgtpulse{0%,100%{box-shadow:0 0 0 1px var(--gold-bright)}
+  50%{box-shadow:0 0 0 2px var(--gold-bright),0 0 16px rgba(242,212,136,.75)}}
+/* ══════════════════════════════════════════════════════════
+   게임 화면 레이아웃 — 하스스톤/MTGA 배치. **모든 해상도에 적용된다.**
+   한 화면 안에서 끝난다: 상대 → 내 판 → (가운데) 조작 → 손패.
+   ⚠ 예전에는 `@media (max-width:900px)` 안에 있었다. 그 바람에 아이패드 가로(1194px)나
+      데스크톱에서는 옛 세로 나열 레이아웃이 나와, **턴 종료 줄이 화면 밖 맨 아래**로 밀리고
+      페이지가 스크롤됐다. 카드 크기가 vw·dvh 로 묶여 있으므로 넓은 화면에서도 그대로 통한다.
+   높이는 dvh 로 잡는다(모바일 브라우저 주소창이 접히면 vh 가 어긋난다).
+   ══════════════════════════════════════════════════════════ */
+/* fixed 인 서랍은 body 의 overflow 로 잘리지 않는다 — html 에서 잘라야 문서가 안 늘어난다 */
+html{overflow:hidden;height:100dvh}
+/* 앱(standalone)으로 열면 노치·홈 인디케이터를 피해야 한다 */
+body{padding:0;height:100dvh;overflow:hidden;
+  padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+/* ⚠ body 가 안전영역만큼 줄었으므로 .wrap 은 100dvh 가 아니라 그 **안쪽 높이**를 따라야 한다.
+   100dvh 로 두면 노치·홈 인디케이터 높이만큼 아래가 잘린다(손패가 반만 보였다). */
+.wrap{height:100%}
+.gear{top:calc(6px + env(safe-area-inset-top));right:calc(6px + env(safe-area-inset-right));
+  width:34px;height:34px;font-size:16px}
+.side{padding-bottom:calc(14px + env(safe-area-inset-bottom))}
+/* 넓은 화면에서 판이 좌우로 한없이 늘어나면 카드만 가운데 몰려 허전하다 — 놀이판 폭을 묶는다.
+   좁은 화면에서는 100% 가 이겨서 영향이 없다. */
+.wrap{max-width:min(100%,1180px);margin:0 auto;height:100%;
+  display:flex;flex-direction:column;gap:0;padding:0}
+
+/* 판 — 세로로 쌓고, 가운데에 조작 줄을 끼운다 */
+/* 게임 화면은 **스크롤하지 않는다** — 해상도에 맞게 카드가 줄어 한 화면에 들어간다.
+   ⚠ overflow-y:auto 를 두면 iOS 가 가로 팬까지 잡아채 손패 드래그를 취소시킨다(예전 증상). */
+.main{flex:1;min-height:0;display:flex;flex-direction:column;padding:4px 6px 0;
+  overflow:hidden;overscroll-behavior:contain}
+#foeHand{order:0} #foeBar{order:1} #foeLz{order:2} #foeBoard{order:3}
+.ctl{order:4}
+#myBoard{order:5} #myLz{order:6}
+#myBar{order:7} #hand{order:8}
+
+.bar{flex:none;gap:7px;padding:4px 8px;margin-bottom:1px;border-radius:5px}
+.bar .who{font-size:10px;min-width:0;max-width:38%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar .hp{font-size:17px;min-width:26px}
+.bar .hpbar{height:8px;min-width:40px}
+.bar .cnt{font-size:8.5px;letter-spacing:.03em;white-space:nowrap}
+.mana{display:none}                      /* 지형존이 같은 정보를 더 잘 보여준다 */
+
+/* 판 라벨은 없앴다. 남는 세로 여백은 각 판 **위**로 고르게 나눈다.
+   (한 곳에 몰아주면 손패 위에 거대한 빈칸이 생긴다 — 실제로 그렇게 만들었다가 되돌림)
+   ⚠ `.lbl` 자체를 숨기지 말 것 — 설정 서랍('덱 메커니즘'·'전투 로그')도 같은 클래스를 쓴다. */
+.main .lbl{display:none}
+/* ⚠ `.ctl` 도 반드시 포함할 것. 빼면 조작 줄 **위쪽만** 여백이 없어 위아래가 어긋난다.
+   남는 세로를 이 다섯 곳이 똑같이 나눠 가져야 판 위아래가 대칭이 된다. */
+#foeLz,#foeBoard,.ctl,#myBoard,#myLz{margin-top:auto}
+.lzb{font-size:9px;padding:1px 6px;left:4px;top:3px}
+.board{flex:none;padding:2px 4px;margin-bottom:1px;border-radius:5px;
+  min-height:calc(var(--cardw)*1.4 + 6px)}
+.board.packed>.slot{bottom:3px}
+.slot{border-radius:3px;padding:1px}
+.kb{font-size:5.5px;padding:1px 2px}
+.kbs{gap:1px;right:1px}
+
+/* 가운데 조작 줄 — 안내문 + 턴 종료 (하스스톤의 가운데 띠) */
+/* ⚠ `margin` 축약형을 쓰면 위의 `margin-top:auto` 가 지워져 조작 줄 위쪽 여백만 사라진다.
+   아래쪽만 0 으로 두고 위는 auto 가 맡게 한다. */
+.ctl{flex:none;margin-bottom:0;gap:5px;flex-wrap:nowrap}
+.hint{font-size:10.5px;padding:5px 8px;min-height:28px;min-width:0;flex:1;line-height:1.35}
+.ctl button{font-size:10.5px;padding:7px 10px;flex:none}
+
+/* 손패 — 넘치면 겹친다(--hgap 은 render 가 계산해 음수로 넣는다) */
+/* 모바일 — 판 카드는 손패보다 조금만 작게. 10칸 격자를 버렸으니 크게 그릴 수 있다. */
+/* 모바일 — 손패·판·지형존이 전부 이 하나를 쓴다. 세로 예산이 빠듯하니 여기서만 조절할 것. */
+/* 카드 규격 하나. 상대 손패도 같은 값을 쓴다(뒷면만 다르다).
+   ⚠ 폭(vw)뿐 아니라 **높이(dvh)로도 묶어야** 한다 — 판 4줄 + 손패 2줄이 전부 이 값을 따라
+   커지기 때문에, 주소창이 있는 브라우저처럼 세로가 짧으면 화면 밖으로 밀린다.
+   (앱으로 설치하면 주소창이 사라져 dvh 가 커지고 카드도 그만큼 커진다.)
+   세로 예산 = 판 4줄(5.6W) + 내 손패 노출분(0.98W) + 상대 손패 노출분(0.64W) ≈ 7.2W + 바·조작줄 ~107px.
+   라벨 4줄을 없애고 상대 손패를 절반까지 밀어 넣어 8.2dvh → 10dvh 로 올렸다.
+   ⚠ 더 올리면 320×568 같은 화면에서 판 사이 여백이 0이 되고 손패가 잘린다(11dvh 에서 확인). */
+:root{--cardw:min(clamp(46px,21vw,110px),10dvh)}
+/* 상대 손패는 위로 절반을 밀어 넣는다.
+   ⚠ margin-bottom 을 반드시 0 으로 되돌린다. `.hand.foe` 도 `.hand` 규칙을 함께 받으므로
+      내 손패용 음수 margin-bottom 이 그대로 걸려, 아래에 오는 상대 HP 바를
+      위로 끌어올려 뒷면 카드가 바를 덮어 버렸다. */
+.hand.foe{flex:none;padding:0 12px 2px;margin-top:var(--foehide);margin-bottom:0}
+/* 손패는 화면 바닥에 붙인다 — 남는 세로 여백이 판과 손패 사이로 간다 (하스스톤 배치) */
+/* 손패는 화면 가장자리에 **70%만** 걸치게 한다 — 카드 높이(1.4W)의 30%를 밖으로 민다.
+   좌우로도 여백을 줘서 화면에 딱 붙지 않게 한다. */
+.hand{flex:none;margin-top:auto;padding:4px 12px 0;justify-content:center;overflow:visible;
+  margin-bottom:var(--myhide)}
+/* 터치에는 hover 가 없다. 강조는 광채뿐이라 따로 끌 것이 없다. */
+
+
+/* ── 좁은 화면에서만 줄이는 것들(서랍·원정 화면). 레이아웃이 아니라 글자 크기 문제다. ── */
+@media (max-width:900px){
+  /* 로그·덱 설명은 아래에서 올라오는 서랍으로 */
+  .side{width:min(94vw,420px);max-height:82dvh}
+  .log{max-height:30dvh}
+
+  /* 원정 화면 */
+  .mbox{padding:14px 12px;max-height:92dvh}
+  .mbox h2{font-size:18px}
+  .mbox .msub{font-size:11px}
+  .mrow{gap:8px;margin-bottom:18px}
+  .mnode{width:64px;min-height:56px;padding:4px 2px}
+  .mnode.boss{width:74px;min-height:66px}
+  .mnode .ic{font-size:15px}
+  .mnode .nm{font-size:7.5px}
+  .mnode .fs{font-size:6.5px}
+  .map{padding:10px 4px}
+  .foecard{gap:10px;padding:9px}
+  .foecard .fart{width:74px}
+  .foecard .fnm{font-size:17px}
+  .foecard .fdesc{font-size:11.5px}
+  .rgcards{gap:6px}
+  .over h2{font-size:34px}
+  .dztip{font-size:11px;padding:6px 11px}
+}
+
+/* 아주 좁은 화면(360px 이하) — 카드와 글자를 한 단계 더 줄인다 */
+@media (max-width:380px){
+  :root{--cardw:min(clamp(44px,20vw,96px),10dvh)}
+  .bar .hp{font-size:15px}
+  .hint{font-size:9.5px}
+}
+/* 세로가 아주 짧은 화면(가로로 눕힌 휴대폰 등).
+   고정 크롬(바 2줄 + 조작 줄 ≈ 107px)이 화면의 1/4을 넘어서, 10dvh 를 그대로 쓰면
+   손패가 바닥으로 밀려 잘린다(390px 높이에서 24%만 보였다).
+   → 크롬을 한 단계 더 줄이고 카드도 8.4dvh 로 낮춘다.
+   ⚠ 예전 `--cardw:56px` 고정값은 지웠다 — 세로 390px 에서 56px 은 오히려 넘친다. */
+@media (max-height:520px){
+  :root{--cardw:min(clamp(38px,21vw,110px),8.4dvh)}
+  .bar{padding:2px 6px;margin-bottom:0}
+  .bar .hp{font-size:13px;min-width:20px}
+  .bar .hpbar{height:5px}
+  .bar .cnt{font-size:7.5px}
+  .ctl{margin:1px 0 2px}
+  .hint{font-size:9px;padding:3px 7px;min-height:20px}
+  .ctl button{font-size:9px;padding:4px 9px}
+  .lzb{font-size:8px;padding:0 5px}
+}
+
+/* 지도 노드의 적 표시 */
+.mnode .fs{display:block;font-family:'Gothic A1',sans-serif;font-size:8.5px;font-weight:700;
+  color:var(--c);opacity:.9;margin-top:2px;letter-spacing:-.01em;white-space:nowrap}
+/* 적 조우 화면 */
+.foecard{display:flex;gap:14px;align-items:stretch;margin:14px 0 6px;padding:12px;
+  border:1px solid var(--c);border-left:5px solid var(--c);border-radius:8px;
+  background:linear-gradient(100deg,rgba(20,14,7,.9),rgba(10,7,3,.9));
+  box-shadow:0 0 22px color-mix(in srgb,var(--c) 22%,transparent)}
+.foecard .fart{position:relative;flex:none;width:96px;border-radius:6px;overflow:hidden;
+  background:#120c06 center/cover no-repeat;border:1px solid rgba(242,212,136,.35)}
+.foecard .ftier{position:absolute;left:0;bottom:0;right:0;text-align:center;
+  font-family:'Gothic A1',sans-serif;font-size:10px;font-weight:900;padding:3px 0;
+  background:rgba(8,5,2,.88);color:var(--c);letter-spacing:.08em}
+.foecard .finfo{flex:1;min-width:0;display:flex;flex-direction:column;gap:7px;justify-content:center}
+.foecard .fnm{font-family:'Cinzel Decorative','Gothic A1',serif;font-weight:900;font-size:21px;
+  color:#f4e6c4;text-shadow:0 0 16px color-mix(in srgb,var(--c) 60%,transparent);line-height:1.1}
+.foecard .ftag{display:flex;flex-wrap:wrap;gap:5px}
+.foecard .ftag .pill{font-family:'Gothic A1',sans-serif;font-size:10.5px;font-weight:700;
+  padding:3px 9px;border-radius:20px;border:1px solid rgba(242,212,136,.45);
+  background:rgba(8,5,2,.6);color:#e6d2a4;white-space:nowrap;letter-spacing:-.01em}
+.foecard .ftag .pill.hp{border-color:#4fc4a6;color:#7fdcc2}
+.foecard .ftag .pill.gold{border-color:#d99a2b;color:#f0c34f}
+.foecard .fdesc{font-family:'Gowun Batang',serif;font-size:12.5px;color:#cdbb95;line-height:1.6}
+.lbl2{font-family:'Cinzel',serif;font-size:10px;letter-spacing:.2em;color:var(--gold);
+  opacity:.75;margin:12px 0 4px;text-transform:uppercase}
+.rgcards.sm{gap:6px}
+.toast{position:fixed;z-index:95;left:50%;bottom:22px;transform:translateX(-50%);
+  font-family:'Gothic A1',sans-serif;font-size:12.5px;font-weight:700;padding:9px 16px;border-radius:20px;
+  border:1px solid #a2643c;background:rgba(38,18,10,.96);color:#f0c9a4;pointer-events:none;
+  box-shadow:0 6px 18px rgba(0,0,0,.55);animation:tst 1.5s ease forwards}
+@keyframes tst{0%{opacity:0;transform:translate(-50%,10px)}12%{opacity:1;transform:translate(-50%,0)}
+  75%{opacity:1}100%{opacity:0;transform:translate(-50%,-6px)}}
+.hcw.sel .tcard,.hcw.zoomed .tcard{border-color:var(--gold-bright)}
+.hcw.no{cursor:not-allowed}
+/* 지금 실제로 드는 비용 — 인쇄값과 다를 때만 뜬다(용암거인) */
+.costnow{position:absolute;right:-5px;top:-5px;z-index:6;min-width:21px;height:21px;
+  display:flex;align-items:center;justify-content:center;border-radius:50%;
+  font-family:'Cinzel',serif;font-size:12.5px;font-weight:700;color:#0d0a06;
+  background:radial-gradient(circle at 40% 32%,#ffe9a8,#e8b94a 62%,#a97d22);
+  border:1.5px solid #3a2a10;box-shadow:0 0 10px rgba(242,212,136,.9)}
+.hcw.no .tcard{filter:grayscale(.85) brightness(.52) contrast(.95)}
+
+.slot.occ{padding:0;background:transparent;border:none!important;box-shadow:none!important}
+
+/* 키워드 상태 뱃지 — 카드 아래쪽에 겹친다 */
+/* 공/체 뱃지와 겹치지 않도록 일러스트 오른쪽에 세로로 쌓는다 */
+.kbs{position:absolute;right:2px;top:27%;z-index:4;display:flex;flex-direction:column;
+  align-items:flex-end;gap:2px;max-width:76%;pointer-events:none}
+.kb{font-style:normal;font-family:'Gothic A1',sans-serif;font-size:6.5px;font-weight:700;
+  line-height:1;padding:2px 3px;border-radius:3px;white-space:nowrap;
+  border:1px solid rgba(0,0,0,.4);background:rgba(16,11,5,.94);color:#f2d488}
+.kb.burn{color:#ffb27a;border-color:#a04a22}
+.kb.doom{color:#d8b6ff;border-color:#6b3fa0;background:rgba(24,10,38,.96)}
+.kb.grow{color:#9ce29a;border-color:#2f6d2c}
+.kb.hard{color:#cfd8e6;border-color:#5d6a7d}
+.kb.ward{color:#ffe9a8;border-color:#a8862c}
+.kb.drain{color:#e8a4da;border-color:#7d3a6d}
+.kb.echo{color:#8fd4ee;border-color:#2b6d8a}
+.kb.form{color:#e0c08a;border-color:#7a5c2a}
+.kb.heavy{color:#d7bb90;border-color:#6f5533}
+
+/* ── 대기 중인 능력은 **카드 테두리 광채**로 알린다 ─────────────────
+   ⚠ 광채는 `.slot` 이 아니라 그 안의 `.tcard` 에 건다 — `.slot.occ` 가
+      border/box-shadow 를 `!important` 로 지우고 있어서 슬롯에 걸면 안 보인다.
+   ⚠ 셋이 겹칠 수 있으므로 뒤에 오는 규칙이 이기게 두지 말고 각각 다른 색만 준다. */
+/* ⚠ 카드 **테두리 색은 건드리지 않는다** — 그건 속성(=카드 정체)이다.
+      한 번 `border-color:!important` 로 덮었더니 불 카드가 파랗게 보여 어느 속성인지 알 수 없었다.
+      광채는 테두리 **바깥에 두른 고리**(box-shadow spread)로만 준다. */
+/* 환류가 **아직 남은** 몸 — 파란 테두리가 일렁인다(성권 요청).
+   ⚠ 다 쓴 몸은 u.echo 가 꺼져 이 클래스가 안 붙는다 = 한눈에 갈린다. */
+.slot.echoon .tcard{animation:glowecho 1.4s ease-in-out infinite}
+.slot.breedon .tcard{animation:glowbreed 1.8s ease-in-out infinite}
+.slot.wardon .tcard{animation:glowward 1.8s ease-in-out infinite}
+@keyframes glowecho{0%,100%{box-shadow:0 0 0 2px rgba(95,198,238,.85),0 0 8px rgba(95,198,238,.5)}
+  50%{box-shadow:0 0 0 2px #5fc6ee,0 0 16px rgba(95,198,238,.95)}}
+@keyframes glowbreed{0%,100%{box-shadow:0 0 0 2px rgba(111,216,106,.8),0 0 8px rgba(111,216,106,.45)}
+  50%{box-shadow:0 0 0 2px #6fd86a,0 0 16px rgba(111,216,106,.9)}}
+@keyframes glowward{0%,100%{box-shadow:0 0 0 2px rgba(255,215,94,.85),0 0 8px rgba(255,215,94,.5)}
+  50%{box-shadow:0 0 0 2px #ffd75e,0 0 16px rgba(255,215,94,.95)}}
+/* ── 상태를 몸으로 보여 주는 것들 (2026-08) ───────────────────────────
+   ⚠ 전부 `.tcard` 안쪽 요소에 건다. `.slot` 자체는 때리는 연출(lunge)이 transform 을
+     쓰므로, 여기서 또 transform 을 걸면 서로 덮어써서 둘 다 어긋난다. */
+/* 비행 — 아주 약간 떠 있다 */
+.slot.fly .tart,.slot.flyguard .tart{animation:hover 3.1s ease-in-out infinite}
+@keyframes hover{0%,100%{transform:translateY(0)}50%{transform:translateY(-3.5%)}}
+/* 수호 — 체력 뱃지가 방패 모양이다 */
+.slot.guard .tb.h,.slot.flyguard .tb.h{border-radius:22% 22% 46% 46%/18% 18% 74% 74%}
+/* 면역 — 일러스트가 프리즘처럼 흐른다(희귀도 보석과 다른 결) */
+.slot.veilon .tart::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:1;
+  background:linear-gradient(112deg,transparent 22%,rgba(190,230,255,.55) 38%,
+    rgba(255,214,255,.55) 47%,rgba(190,255,238,.55) 56%,transparent 72%);
+  background-size:260% 100%;mix-blend-mode:screen;animation:prism 2.6s linear infinite}
+@keyframes prism{0%{background-position:180% 0}100%{background-position:-80% 0}}
+/* 연소가 실제로 타는 순간 — 그 자리에서 불이 올랐다 사라진다.
+   ⚠⚠ **슬롯에 클래스로 걸면 안 된다.** endStep 이 끝나며 render() 가 슬롯을 다시 그려
+     클래스가 통째로 날아간다(실제로 불이 한 번도 안 보였다). body 위에 띄운다. */
+.burnfx{position:fixed;z-index:127;pointer-events:none;border-radius:9px;
+  background:radial-gradient(ellipse at 50% 100%,rgba(255,150,60,.9),rgba(255,80,20,.4) 45%,transparent 72%);
+  animation:burnup .62s ease-out both}
+@keyframes burnup{0%{opacity:0;transform:translateY(6%) scaleY(.7)}
+  30%{opacity:1;transform:translateY(0) scaleY(1.05)}
+  100%{opacity:0;transform:translateY(-14%) scaleY(1.2)}}
+/* 광분 — 한 번 더 칠 때 붉게 달아오른다 */
+.slot.raging .tcard{animation:ragepulse .5s ease-out both}
+@keyframes ragepulse{0%{box-shadow:none;filter:none}
+  35%{box-shadow:0 0 0 3px #ff5a46,0 0 22px rgba(255,90,70,.95);filter:brightness(1.45) saturate(1.5)}
+  100%{box-shadow:none;filter:none}}
+/* 맞은 쪽이 뒤로 밀린다 — 때리는 연출의 짝 */
+.slot.bumped .tcard{animation:bump .26s cubic-bezier(.2,.8,.3,1) both}
+@keyframes bump{0%{transform:none}30%{transform:translateY(6%) scale(.94) rotate(2deg)}
+  100%{transform:none}}
+/* 성장까지 남은 턴 — **일러스트 왼쪽 위**. 카드 맨 위에 두면 이름 첫 글자를 덮는다(실제로 덮었다).
+   오른쪽은 키워드 뱃지 줄(.kbs)이 쓰므로 왼쪽만 비어 있다. */
+.gtim{position:absolute;left:2px;top:27%;z-index:6;font-style:normal;
+  font-family:'Cinzel',serif;font-size:8px;font-weight:700;line-height:1;
+  min-width:13px;height:13px;display:flex;align-items:center;justify-content:center;
+  border-radius:50%;border:1px solid #2f6d2c;background:rgba(10,22,9,.95);color:#9ce29a;
+  box-shadow:0 0 6px rgba(111,216,106,.5)}
+
+.tcard.land{border-style:dashed}
+.tcard.land .landart{background:
+  radial-gradient(circle at 50% 40%, color-mix(in srgb,var(--el) 55%,transparent), transparent 70%), #16100a}
+
+</style>
+<style>
+/* ══ 여기부터는 이 모드에만 있는 것 — 본편에 없는 것만 더한다 ════════════════
+   ⚠ 위 본편 CSS 를 **덮어쓰는 규칙은 최소로 유지할 것.** 덮어쓰기 시작하면
+     규격이 두 벌이 되고, 본편 카드가 바뀌어도 이쪽이 안 따라온다. */
+:root{ --cardw:66px; --foecw:52px; }   /* 판이 넓어서(크리처 23칸) 본편보다 조금 작게 */
+body{padding:8px 8px 24px}
+h1.tt{font-family:'Cinzel',serif;font-size:15px;letter-spacing:.1em;color:var(--gold-bright);
+  text-align:center;margin:2px 0 1px}
+h1.tt small{font-family:'Gowun Batang',serif;letter-spacing:0;font-size:10px;color:var(--gold);opacity:.7}
+.foot{text-align:center;font-size:11px;color:var(--gold);opacity:.65;margin:10px 0 0}
+.panel{border:1px solid var(--rule);border-radius:8px;padding:9px 10px;margin-bottom:8px;
+  background:linear-gradient(180deg,rgba(0,0,0,.3),rgba(0,0,0,.12))}
+
+/* 카드 그림 자리 — 이 모드는 일러스트가 없다. 원작 아트는 우리 것이 아니라 싣지 않았다.
+   빈 상자로 두면 어느 속성인지 안 보이므로 속성 이름을 크게 앉힌다. */
+.telm{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);
+  text-align:center;font-family:'Cinzel',serif;font-weight:700;
+  font-size:calc(var(--cw)*.14);letter-spacing:.08em;opacity:.85;
+  text-shadow:0 1px 3px rgba(0,0,0,.9)}
+/* 비용이 7 이상이면 구슬 대신 숫자 — 구슬 15개는 머리줄을 넘친다 */
+.cpn{font-family:'Cinzel',serif;font-weight:700;font-size:calc(var(--cw)*.095);
+  color:var(--ink);margin-left:calc(var(--cw)*.03);line-height:1}
+
+/* 퀀텀줄 — 본편 마나줄 자리를 그대로 쓴다(.bar .mana) */
+.bar{flex-wrap:wrap;row-gap:6px}
+.qrow{display:flex;gap:2px;flex-wrap:nowrap;flex-basis:100%;justify-content:space-between}
+.qp{width:15px;height:17px;border-radius:3px;border:1px solid var(--qc);
+  background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;
+  font-style:normal;position:relative}
+.qp b{font-family:'Cinzel',serif;font-size:9px;font-weight:700;color:var(--qc)}
+.qp.z{opacity:.28}
+.qp.mk{box-shadow:0 0 0 1px var(--gold-bright),0 0 6px rgba(242,212,136,.7)}
+/* 지금 내려는 카드가 먹는 통 — 낼 수 있으면 초록, 모자라면 붉게 */
+.qp.need{opacity:1;background:rgba(20,60,30,.85);box-shadow:0 0 0 1.5px #6ee08a,0 0 9px rgba(110,224,138,.8)}
+.qp.short{opacity:1;background:rgba(70,18,14,.9);box-shadow:0 0 0 1.5px #ff8a7a,0 0 9px rgba(255,120,100,.8);
+  animation:qshort .9s ease-in-out infinite}
+@keyframes qshort{50%{box-shadow:0 0 0 1.5px #ffb0a4,0 0 14px rgba(255,120,100,1)}}
+@media (prefers-reduced-motion:reduce){.qp.short{animation:none}}
+.mkl{font-style:normal;font-family:'Gowun Batang',serif;font-size:9px;margin-left:4px;opacity:.9}
+
+/* 기물줄은 크리처줄보다 낮게 — 세로 예산을 아끼려고 */
+.board.pmrow{min-height:calc(var(--cardw)*1.0 + 8px);margin-bottom:8px}
+.board.pmrow>.slot{width:calc(var(--cardw)*0.78)}
+.board.pmrow.empty::after{content:'기물 · 무기 · 방패'}
+.board.empty::after{content:'크리처'}
+
+.logbox{height:74px;overflow-y:auto;font-family:'Gowun Batang',serif;font-size:11px;line-height:1.55;
+  border:1px solid var(--rule);border-radius:6px;padding:5px 8px;margin-top:8px;
+  background:rgba(0,0,0,.3);color:var(--parch)}
+.logbox .a{color:var(--gold-bright)}.logbox .b{color:#9ecbff}.logbox .c{color:#ff9a9a}
+
+/* 덱 편집 — 카드를 실제 규격으로 늘어놓는다(글자 목록이 아니라) */
+.pickgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px;margin-top:6px}
+.pcard{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px}
+.pcard .tcard{opacity:.55;transition:opacity .15s}
+.pcard.has .tcard{opacity:1;box-shadow:0 0 0 2px var(--gold-bright),0 2px 8px rgba(0,0,0,.5)}
+.pctl{display:flex;align-items:center;gap:5px}
+.pctl button{padding:1px 8px;font-size:12px;border-radius:4px}
+.pctl b{font-family:'Cinzel',serif;font-size:12px;color:var(--gold-bright);min-width:12px;text-align:center}
+.deckpick button.elb{padding:4px 8px;font-family:'Gowun Batang',serif;font-size:11px;letter-spacing:0}
+
+/* ── 쓸 수 있는 능력 ──────────────────────────────────────────────────
+   ⚠ 본편의 '가호' 광채(.wardon)를 빌려 썼더니 다른 상태 표시와 구별이 안 됐다.
+     이건 **지금 누르면 된다** 는 신호라 따로 둔다 — 초록 테 + 맥동 + 비용 뱃지. */
+.slot.canuse{border-color:#6ee08a;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.3),0 0 12px rgba(110,224,138,.75);
+  animation:canuse 1.5s ease-in-out infinite}
+@keyframes canuse{50%{box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),0 0 20px rgba(110,224,138,1)}}
+.slot .usetag{position:absolute;left:2px;bottom:2px;z-index:5;font-style:normal;
+  font-family:'Gothic A1',sans-serif;font-size:7px;font-weight:700;
+  padding:1px 4px;border-radius:7px;background:rgba(8,24,12,.92);
+  color:#a9f5bd;border:1px solid #4c9a63;white-space:nowrap}
+@media (prefers-reduced-motion:reduce){.slot.canuse{animation:none}}
+
+/* ⚠⚠ 본편 `.main` 은 자식을 **id 로 재배열한다**(#foeHand:0 … #hand:8).
+   그래서 HTML 에 적은 순서가 화면 순서가 아니다 — 처음에 이걸 모르고 붙였다가
+   상대 판·내 판·기록이 뒤죽박죽으로 섞여 나왔다.
+   이 모드의 기물줄은 본편 지형줄과 **같은 자리**를 쓴다(#foeLz:2 · #myLz:6).
+   order 를 안 준 요소는 0 이 되어 맨 위로 튀므로 로그에도 반드시 준다. */
+#foePm{order:2} #myPm{order:6} #log{order:9}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <!-- 대상 지정 딤 — .wrap 안에 있어야 .slot.pick 이 이 위로 올라온다(본편과 같다) -->
+  <div class="tgtdim" id="tgtdim"></div>
+  <h1 class="tt">ELEMENTS<br><small>엘리멘츠 대전 — Elements the Game 이식 · TEN 카드는 나오지 않습니다</small></h1>
+  <div id="screen"></div>
+</div>
+<div class="zoom" id="zoom"></div>
+
+<script src="data.js"></script>
+<script>
+'use strict';
+const VERSION='0.8.0', BUILD='2026-08-05';
+/* 판 번호는 제목줄에 붙인다 — 아래 h1.tt 안 small */
+document.addEventListener('DOMContentLoaded',()=>{const t=document.querySelector('h1.tt small');
+  if(t)t.insertAdjacentHTML('beforeend',` · v${VERSION}`);});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   0. 원작 상수
+   ═══════════════════════════════════════════════════════════════════════════ */
+const ELS=ETG.els, ELKO=ETG.elko;
+const QCAP=75;              /* 원작(Original)의 속성별 퀀텀 상한 */
+const HANDMAX=8;            /* 손패 상한 — 넘치면 뽑은 카드가 버려진다 */
+const MAXCR=23, MAXPM=16;   /* 크리처 23칸 · 기물 16칸 */
+const STARTHP=100;
+const DECKMIN=30, DECKMAX=60, COPYMAX=6;
+
+const CARD={};              /* code → 카드 */
+ETG.cards.forEach(c=>{CARD[c.code]=c;});
+const BYNAME={};
+ETG.cards.forEach(c=>{ if(!c.up) BYNAME[c.en]=c; });
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   1. 능력 — 구현한 것만 여기 있다
+   ───────────────────────────────────────────────────────────────────────────
+   ⚠⚠ 여기 없는 능력을 가진 카드는 **덱에 들어가지 않는다**(playable() 참조).
+      "카드는 있는데 조용히 아무 일도 안 일어난다" 를 만들지 않기 위해서다.
+      빠진 목록은 docs/etg_import.md 에 그대로 적어 뒀다.
+
+   각 항목: {t:대상종류, f:함수(g,me,src,tgt,arg), d:'한국어 설명'}
+     대상종류 — null(대상없음) · 'cr'(아무 크리처) · 'foecr' · 'mycr'
+                · 'pm'(아무 기물) · 'foepm' · 'any'(크리처+무기+방패+기물)
+                · 'crw'(크리처 또는 무기)
+   ═══════════════════════════════════════════════════════════════════════════ */
+const SK={};
+const def=(id,t,d,f)=>{SK[id]={t,d,f};};
+
+/* ── 퀀텀 생산 ─────────────────────────────────────────────────────────── */
+def('pillar',null,'매 턴 끝에 자기 속성 퀀텀 1을 만든다 (무색이면 무작위 3)',(g,me,s)=>{
+  const n=s.charges||1, e=s.c.el;
+  if(e===0) for(let i=0;i<3*n;i++) gain(me,1+rnd(12),1); else gain(me,e,n);
+});
+def('pend',null,'매 턴 끝에 자기 속성과 문장 속성을 번갈아 만든다',(g,me,s)=>{
+  s.pendstate=!s.pendstate;
+  const e=s.pendstate?(me.mark||s.c.el):s.c.el, n=s.charges||1;
+  if(e===0) for(let i=0;i<3*n;i++) gain(me,1+rnd(12),1); else gain(me,e,n);
+});
+def('pillar1',null,'낼 때 자기 속성 퀀텀 1을 더 준다',(g,me,s)=>{
+  const e=s.c.el; if(e===0) for(let i=0;i<3;i++) gain(me,1+rnd(12),1); else gain(me,e,1);
+});
+/* ⚠ 값이 **속성 번호**다. 카드 자신의 속성이 아니다 —
+   반딧불(바람)은 [빛] 을, 정예 반딧불은 [불] 을 만든다. 카드 속성으로 읽으면 둘 다 바람이 된다. */
+def('quanta',null,'매 턴 끝에 {EL} 퀀텀 1을 만든다',(g,me,s,t,a)=>{
+  const e=(typeof a==='number')?a:s.c.el;
+  if(e===0){ for(let i=0;i<3;i++) gain(me,1+rnd(12),1); } else gain(me,e,1);
+});
+def('nova',null,'12속성 퀀텀을 1씩 얻는다. 한 턴에 3장 이상 쓰면 특이점이 나온다',(g,me)=>{
+  for(let e=1;e<=12;e++) gain(me,e,1);
+  me.nova=(me.nova||0)+1;
+  if(me.nova>=3&&BYNAME['Singularity']) summon(me,BYNAME['Singularity'].code);
+});
+def('v_relic',null,'아무 일도 하지 않는다 (팔아서 값을 받는 카드)',()=>{});
+def('photosynthesis',null,'생명 퀀텀 2를 얻고, 이 능력을 다시 쓸 수 있게 된다',(g,me,s)=>{
+  gain(me,5,2); s.used=false;
+});
+def('soulcatch',null,'크리처가 죽을 때마다 죽음 퀀텀을 얻는다',(g,me,s)=>{ gain(me,2,s.up?3:2); });
+def('empathy',null,'턴 끝에 자기 크리처 수만큼 회복한다',(g,me)=>{ heal(me,me.cr.filter(Boolean).length); });
+def('v_gratitude',null,'턴 끝에 생명 퀀텀 1과 체력 5를 얻는다',(g,me,s)=>{ gain(me,5,1); heal(me,s.up?5:3); });
+def('v_divinity',null,'최대 체력이 늘고 그만큼 회복한다',(g,me,s)=>{ me.maxhp+=s.up?24:16; heal(me,s.up?24:16); });
+def('siphon',null,'상대 퀀텀 1을 빼앗아 어둠 퀀텀으로 바꾼다',(g,me,s)=>{
+  const f=foe(me); const es=[]; for(let e=1;e<=12;e++) if(f.q[e]>0) es.push(e);
+  if(!es.length)return; const e=es[rnd(es.length)]; f.q[e]--; gain(me,11,1);
+});
+
+/* ── 피해 ──────────────────────────────────────────────────────────────── */
+/* 원작 공식 그대로: 3 + 3 × ⌊(불 퀀텀 + 이 카드 비용) / 10⌋.
+   ⚠ **비용을 더해야 한다** — 계산 시점엔 이미 낸 뒤라, 빼먹으면 화염 창(1코)이 손해를 본다. */
+def('v_firebolt','any','불 퀀텀 10마다 피해 3씩 늘어난다 (기본 3)',(g,me,s,t,a)=>{
+  spellDmg(me,t,3+3*Math.floor((me.q[6]+(a||0))/10));
+});
+def('v_icebolt','any','물 퀀텀 10마다 피해 2씩 늘어난다 (기본 2) · 확률로 얼린다',(g,me,s,t,a)=>{
+  const b=Math.floor((me.q[7]+(a||0))/10);
+  if(t&&t.kind==='creature'&&rnd(20)<7+b*2) freeze(t,s.up?4:3);
+  spellDmg(me,t,2+b*2);
+});
+def('v_drainlife','any','어둠 퀀텀 10마다 2씩 더 빨아들인다 (기본 2)',(g,me,s,t,a)=>{
+  const b=Math.floor((me.q[11]+(a||0))/10);
+  heal(me,spellDmg(me,t,2+b*2));
+});
+def('lightning','any','피해 5',(g,me,s,t)=>{ spellDmg(me,t,5); });
+def('v_holylight','any','대상을 10 회복시킨다. 야행성이면 대신 10 피해',(g,me,s,t)=>{
+  if(t&&t.flags&&t.flags.includes('nocturnal')) spellDmg(me,t,10); else healThing(t,10);
+});
+def('v_storm',null,'상대 크리처 전부에게 피해 {N}',(g,me,s,t,a)=>{
+  foe(me).cr.forEach(u=>{ if(u) spellDmg(me,u,a||3); });
+});
+def('v_thorn',null,'때린 크리처에게 피해 2 · 확률로 독',(g,me,s,t)=>{
+  if(!t)return; spellDmg(me,t,2); if(Math.random()<0.75) t.poison=(t.poison||0)+1;
+});
+def('v_firewall',null,'때린 크리처에게 피해 1',(g,me,s,t)=>{ if(t) spellDmg(me,t,1); });
+def('snipe','foecr','대상 크리처에게 피해 3',(g,me,s,t)=>{ spellDmg(me,t,3); });
+def('v_swarm',null,'공격력이 같은 편 반딧불 수만큼이다',()=>{});
+def('catapult','mycr','자기 크리처를 던진다. 체력이 클수록 큰 피해',(g,me,s,t)=>{
+  const hp=t.hp, d=Math.ceil(hp*100/(hp+100));
+  spellDmg(me,foe(me),d); if(t.frozen) spellDmg(me,foe(me),d);
+  kill(t);
+});
+def('v_blackhole',null,'상대 퀀텀을 최대 3씩 빨아들여 회복한다',(g,me)=>{
+  const f=foe(me); let tot=0;
+  for(let e=1;e<=12;e++){ const n=Math.min(3,f.q[e]); f.q[e]-=n; tot+=n; }
+  heal(me,tot);
+});
+def('v_plague',null,'상대 크리처 전부에게 독 1',(g,me)=>{
+  foe(me).cr.forEach(u=>{ if(u) u.poison=(u.poison||0)+1; });
+});
+def('poison','cr','대상에게 독 {N} 을 준다',(g,me,s,t,a)=>{ addPoison(t,a||1); });
+def('poisonfoe',null,'상대에게 독 {N} 을 준다',(g,me,s,t,a)=>{ foe(me).poison+=(a||1); });
+def('aflatoxin','cr','대상에게 독 2. 그 몸이 죽으면 악성 세포가 된다',(g,me,s,t)=>{
+  addPoison(t,2); t.afla=true;
+});
+def('virusinfect',null,'자신을 희생해 대상에게 독을 준다',(g,me,s,t)=>{ addPoison(t,1); kill(s); });
+def('v_pandemonium',null,'모든 크리처에게 무작위 효과',(g,me)=>{
+  all().forEach(u=>{ if(u&&u.kind==='creature') randomEffect(owner(u),u); });
+});
+def('v_cseed','cr','대상에게 무작위 효과',(g,me,s,t)=>{ randomEffect(me,t); });
+
+/* ── 파괴·제거 ─────────────────────────────────────────────────────────── */
+def('destroy','pm','대상 기물을 파괴한다',(g,me,s,t)=>{ destroyPerm(t); });
+def('v_steal','pm','대상 기물을 빼앗는다',(g,me,s,t)=>{ stealPerm(me,t); });
+def('earthquake',null,'가장 많이 쌓인 기둥 더미에서 {N}장을 부순다',(g,me,s,t,a)=>{
+  const f=foe(me); let best=null;
+  f.pm.forEach(p=>{ if(p&&p.charges&&(!best||p.charges>best.charges)) best=p; });
+  if(best){ best.charges-=(a||3); if(best.charges<=0) destroyPerm(best); }
+});
+def('v_scramble',null,'상대 퀀텀을 뒤섞는다',(g,me)=>{
+  const f=foe(me); let n=0;
+  for(let e=1;e<=12;e++){ const k=Math.min(f.q[e],rnd(3)); f.q[e]-=k; n+=k; }
+  for(let i=0;i<n;i++) gain(f,1+rnd(12),1);
+});
+def('void',null,'상대 최대 체력을 3 깎는다',(g,me)=>{ const f=foe(me); f.maxhp-=3; if(f.hp>f.maxhp)f.hp=f.maxhp; });
+def('lobotomize','cr','대상의 능력을 지운다',(g,me,s,t)=>{ t.sk=[]; t.silenced=true; });
+def('v_silence',null,'상대는 이번 턴에 카드를 낼 수 없다',(g,me)=>{ foe(me).sabbath=true; });
+def('appease','mycr','자기 크리처를 희생하고 +1|+1 을 얻는다',(g,me,s,t)=>{ kill(t); buff(s,1,1); });
+def('devour','foecr','체력이 자기보다 작은 크리처를 먹고 +1|+1',(g,me,s,t)=>{
+  if(t.hp>=s.hp)return; kill(t); buff(s,1,1);
+});
+
+/* ── 강화·약화 ─────────────────────────────────────────────────────────── */
+def('bless','cr','대상에게 +3|+3',(g,me,s,t)=>{ buff(t,3,3); });
+def('rage','cr','대상에게 +5|-5. 얼어붙은 상태를 푼다',(g,me,s,t)=>{
+  const n=s.up?6:5; buff(t,n,-n); if(t)t.frozen=0;
+});
+def('platearmor','cr','대상에게 +0|+{N}',(g,me,s,t,a)=>{ buff(t,0,a||4); });
+def('v_stoneform',null,'+0|+20 을 얻고 능력을 잃는다',(g,me,s)=>{ buff(s,0,20); s.sk=[]; });
+/* ⚠ 이건 **눌러서 쓰는 능력**이다(불의 정령·숲의 정령·중력자 불먹보 — 비용을 낸다).
+   독수리·콘도르에서는 같은 id 가 **크리처가 죽을 때마다** 도는 쪽으로 붙는다.
+   그래서 설명에 '언제' 를 적으면 한쪽이 반드시 거짓말이 된다 — '무엇을' 만 적고,
+   '언제' 는 확대창의 머리말(능력 · N불 / 크리처가 죽을 때마다)이 말하게 둔다.
+   성권이 "불의 정령은 공격할 때가 아니라 눌러서 쓰는 것 아니냐" 고 짚어 준 자리다. */
+def('growth',null,'+{A}|+{H} 를 얻는다',(g,me,s,t,a,ar)=>{
+  const A=(ar&&ar.length?ar[0]:(a||2)), H=(ar&&ar.length>1?ar[1]:A);
+  buff(s,A,H);
+});
+def('v_bblood','cr','대상에게 +0|+20, 5턴 동안 못 움직인다',(g,me,s,t)=>{ buff(t,0,20); t.delayed=5; });
+def('v_slow','cr','대상을 2턴 동안 못 움직이게 한다',(g,me,s,t)=>{ t.delayed=(t.delayed||0)+2; });
+def('freeze','crw','대상을 {N}턴 얼린다',(g,me,s,t,a)=>{ freeze(t,a||3); });
+def('v_cold',null,'때린 크리처를 확률로 3턴 얼린다',(g,me,s,t)=>{ if(t&&Math.random()<0.3) freeze(t,3); });
+def('purify','cr','독을 씻어내고 오히려 독 -{N} 을 준다',(g,me,s,t,a)=>{
+  const n=a||2; t.poison=Math.min((t.poison||0)-n,-n);
+});
+def('acceleration','cr','대상의 능력을 「공격할 때마다 +{N}|-1」 로 바꾼다',(g,me,s,t,a)=>{ t.sk=[{ev:'ownattack',id:'accel',arg:(a||2)}]; });
+def('accel',null,'공격할 때마다 +{N}|-1',(g,me,s,t,a)=>{ buff(s,a||2,-1); });
+def('adrenaline','cr','대상이 한 턴에 여러 번 공격한다. 약할수록 더 많이',(g,me,s,t)=>{ t.adren=1; });
+def('momentum','cr','대상이 방패를 무시한다',(g,me,s,t)=>{ if(!t.flags.includes('momentum'))t.flags.push('momentum'); });
+def('quint','cr','대상이 실체를 잃는다 (겨눌 수 없고 얼지 않는다)',(g,me,s,t)=>{
+  if(!t.flags.includes('immaterial'))t.flags.push('immaterial'); t.frozen=0; t.delayed=0;
+});
+def('liquid','foecr','대상의 능력을 흡혈로 바꾸고 독 1을 준다',(g,me,s,t)=>{
+  t.sk=[{ev:'hit',id:'vampire',arg:null}]; addPoison(t,1);
+});
+def('antimatter','cr','대상의 공격력 부호를 뒤집는다',(g,me,s,t)=>{ t.atk=-t.atk; });
+def('gpullspell','foecr','대상이 그 편의 모든 공격을 대신 맞는다',(g,me,s,t)=>{ owner(t).gpull=t; });
+def('gpull',null,'그 편의 모든 공격을 대신 맞는다',(g,me,s)=>{ me.gpull=s; });
+def('nightmare','foecr','상대 손패를 그 카드로 채우고, 채운 만큼 피해를 준다',(g,me,s,t)=>{
+  const f=foe(me), n=HANDMAX-f.hand.length;
+  for(let i=0;i<n;i++) f.hand.push(mk(t.c.code,f));
+  spellDmg(me,f,n*2); heal(me,n*2);
+});
+def('v_obsession',null,'손패가 넘쳐 버려지면 그 주인이 피해를 받는다',(g,me)=>{ dmgP(me,10); });
+def('v_integrity',null,'파편을 합쳐 골렘을 만든다 (여기서는 4|4 골렘 한 몸)',(g,me)=>{
+  const c=BYNAME['Shard Golem']; if(!c)return;
+  const u=summon(me,c.code); if(u){u.atk=4;u.hp=u.maxhp=4;}
+});
+
+/* ── 회복 ──────────────────────────────────────────────────────────────── */
+def('mend','cr','대상 크리처를 5 회복시킨다',(g,me,s,t)=>{ healThing(t,s.up?10:5); });
+def('v_heal',null,'체력을 20 회복한다',(g,me,s)=>{ heal(me,s.up?24:20); });
+def('miracle',null,'체력을 최대치보다 1 낮게 채운다. 빛 퀀텀을 모두 잃는다',(g,me)=>{
+  me.q[8]=0; me.hp=Math.max(me.hp,me.maxhp-1);
+});
+def('regenerate',null,'턴 끝에 {N} 회복한다',(g,me,s,t,a)=>{ heal(me,(typeof a==='number')?a:5); });
+def('v_hope',null,'빛을 내는 크리처 수만큼 피해를 막는다',()=>{});
+def('vampire',null,'준 피해만큼 주인이 회복한다',(g,me,s,t,a)=>{ heal(me,a||0); });
+
+/* ── 소환·복제 ─────────────────────────────────────────────────────────── */
+/* ⚠⚠ 값이 **카드 번호**다(1908 = 반딧불). 이름으로 찾으려다 undefined 가 되어
+   반딧불 여왕·파라오가 **아무것도 안 불렀다** — 눌러도 조용히 아무 일이 없었다. */
+def('summon',null,'{SUM} 을(를) 부른다',(g,me,s,t,a)=>{
+  const c=(typeof a==='number')?CARD[a]:BYNAME[a];
+  if(c) summon(me,c.code);
+});
+def('v_hatch',null,'무작위 크리처로 변한다',(g,me,s)=>{
+  const pool=ETG.cards.filter(c=>c.kind==='creature'&&!c.up&&playable(c));
+  const c=pool[rnd(pool.length)]; morph(s,c.code);
+});
+def('deja',null,'자신을 한 번 복제하고 이 능력을 잃는다',(g,me,s)=>{
+  const u=summon(me,s.c.code); if(u) u.sk=u.sk.filter(k=>k.id!=='deja'); s.sk=s.sk.filter(k=>k.id!=='deja');
+});
+def('mitosis',null,'자기 자신을 하나 더 소환한다',(g,me,s)=>{ summon(me,s.c.code); });
+def('mitosisspell','mycr','대상이 유사분열 능력을 얻는다',(g,me,s,t)=>{
+  t.sk=t.sk.concat([{ev:'cast',id:'mitosis',arg:null}]); t.cast=t.c.cost; t.castel=t.c.costel;
+});
+def('parallel','cr','대상을 그대로 복제해 자기 편에 놓는다',(g,me,s,t)=>{
+  const u=summon(me,t.c.code); if(u){ u.atk=t.atk; u.hp=u.maxhp=t.hp; u.flags=t.flags.slice(); }
+});
+def('fractal','foecr','손패를 그 크리처로 채운다',(g,me,s,t)=>{
+  me.q[12]=0; while(me.hand.length<HANDMAX) me.hand.push(mk(t.c.code,me));
+});
+def('phoenix',null,'죽으면 잿더미가 남는다',(g,me,s)=>{
+  const c=BYNAME['Ash']; if(c) summonAt(me,s.up&&c.upcode?c.upcode:c.code,s.slot);
+});
+def('rebirth',null,'불사조로 되돌아간다',(g,me,s)=>{ const c=BYNAME['Phoenix']; if(c) morph(s,c.code); });
+def('v_nymph',null,'무작위 님프를 손에 넣는다',(g,me)=>{
+  const ns=ETG.cards.filter(c=>!c.up&&/Nymph$/.test(c.en)&&c.kind==='creature'&&playable(c));
+  if(ns.length&&me.hand.length<HANDMAX) me.hand.push(mk(ns[rnd(ns.length)].code,me));
+});
+def('v_serendipity',null,'무작위 카드 3장을 손에 넣는다',(g,me)=>{
+  const pool=ETG.cards.filter(c=>!c.up&&playable(c)&&c.kind!=='perm');
+  for(let i=0;i<3&&me.hand.length<HANDMAX;i++) me.hand.push(mk(pool[rnd(pool.length)].code,me));
+});
+def('boneyard',null,'크리처가 죽을 때마다 해골이 나온다',(g,me,s)=>{
+  const c=BYNAME['Skeleton']; if(c) summon(me,s.up&&c.upcode?c.upcode:c.code);
+});
+def('v_flyingweapon','pm','무기가 크리처가 되어 날아오른다',(g,me,s,t)=>{
+  if(!t||t.kind!=='weapon')return;
+  const u=summon(me,t.c.code); if(u){ u.kind='creature'; u.flags=u.flags.concat(['airborne']); }
+  me.weapon=null;
+});
+def('v_endow',null,'상대 무기의 능력치를 흉내 낸다',(g,me,s)=>{
+  const w=foe(me).weapon; if(!w)return; buff(s,w.atk,0);
+});
+
+/* ── 뽑기 ──────────────────────────────────────────────────────────────── */
+def('precognition',null,'카드를 1장 뽑고 상대 손패를 본다',(g,me)=>{ draw(me); me.seefoe=true; });
+def('hasten',null,'카드를 1장 뽑는다',(g,me)=>{ draw(me); });
+def('v_readiness','mycr','대상의 능력을 즉시 다시 쓸 수 있게 한다',(g,me,s,t)=>{ t.used=false; });
+def('salvage',null,'상대가 버린 카드를 손에 넣는다',()=>{});
+def('duality',null,'상대 덱 맨 위 카드를 복사해 손에 넣는다',(g,me)=>{
+  const f=foe(me); if(!f.deck.length||me.hand.length>=HANDMAX)return;
+  me.hand.push(mk(f.deck[f.deck.length-1],me));
+});
+
+/* ── 방패 ──────────────────────────────────────────────────────────────── */
+def('v_dshield',null,'엔트로피 퀀텀 1로 피해 3을 막는다',()=>{});
+def('skull',null,'때린 크리처가 확률로 해골이 된다',(g,me,s,t)=>{
+  if(!t||t.kind!=='creature')return;
+  if(Math.random()<0.5/Math.max(1,t.hp)){ const c=BYNAME['Skeleton']; if(c) morph(t,c.code); }
+});
+def('wings',null,'날지 않는 공격을 전부 막는다',()=>{});
+def('evade',null,'{N}% 확률로 공격을 흘린다',()=>{});
+def('v_freeevade',null,'확률로 공격을 흘린다',()=>{});
+def('disshield',null,'에테르 퀀텀을 쓰는 동안 모든 피해를 막는다',()=>{});
+def('blockwithcharge',null,'뼈 하나로 공격 하나를 통째로 막는다',()=>{});
+def('gaincharge',null,'크리처가 죽을 때마다 뼈가 {N} 늘어난다',(g,me,s,t,a)=>{ s.charges=(s.charges||0)+(a||2); });
+def('losecharge',null,'턴마다 한 번씩 닳고, 다 닳으면 사라진다',(g,me,s)=>{
+  s.charges=(s.charges||0)-1; if(s.charges<=0) destroyPerm(s);
+});
+def('weight',null,'체력 5 이상인 크리처의 공격을 막는다',()=>{});
+def('solar',null,'막을 때마다 빛 퀀텀을 얻는다',(g,me)=>{ gain(me,8,1); });
+def('bow',null,'바람 문장이면 공격력이 1 오른다',()=>{});
+def('hammer',null,'중력·대지 문장이면 공격력이 1 오른다',()=>{});
+def('v_dagger',null,'죽음·어둠 문장이면 공격력이 1 오른다',()=>{});
+def('v_noluci',null,'방패를 무시한다',()=>{});
+
+/* ── 기타 지속 ─────────────────────────────────────────────────────────── */
+def('nightfall',null,'모든 야행성 크리처가 +{N}|+{N}',()=>{});
+def('sanctuary',null,'상대가 이 편의 것을 겨눌 수 없다. 턴마다 1 회복',(g,me)=>{ heal(me,1); });
+def('stasis',null,'모든 공격을 막는다 (해시계)',()=>{});
+def('upkeep',null,'유지 비용을 못 내면 사라진다',(g,me,s)=>{
+  if(!pay(me,s.c.costel,1)) destroyPerm(s);
+});
+def('sskin',null,'대지 퀀텀 수만큼 +0|+1',(g,me,s)=>{ buff(s,0,me.q[4]); });
+def('dive',null,'다음 공격의 공격력이 두 배가 된다',(g,me,s)=>{ s.dive=true; });
+def('bravery',null,'용기 — 카드를 2장 뽑고 공격력을 올린다',(g,me,s)=>{ draw(me); draw(me); });
+def('v_freedom',null,'확률로 공격이 방패를 무시하고 1.5배가 된다',()=>{});
+def('evolve',null,'비명벌레로 자란다',(g,me,s)=>{ const c=BYNAME['Shrieker']; if(c) morph(s,s.up&&c.upcode?c.upcode:c.code); });
+def('burrow',null,'땅에 숨는다 (공격력 절반, 겨눌 수 없다)',(g,me,s)=>{
+  s.burrowed=!s.burrowed;
+});
+def('guard',null,'대상 크리처를 막고 피해를 준다',(g,me,s,t)=>{ if(t){t.delayed=(t.delayed||0)+1; spellDmg(me,t,s.atk);} });
+def('paradox','foecr','공격력이 체력보다 큰 크리처를 죽인다',(g,me,s,t)=>{ if(t.atk>t.hp) kill(t); });
+def('deadalive',null,'죽었다가 살아난다 — 죽음 효과가 터진다',(g,me,s)=>{ trig(s,'death'); });
+def('web','foecr','대상이 비행을 잃는다',(g,me,s,t)=>{ t.flags=t.flags.filter(f=>f!=='airborne'); });
+def('ignite',null,'터져서 상대에게 20, 모든 크리처에게 1',(g,me,s)=>{
+  spellDmg(me,foe(me),20); all().forEach(u=>{ if(u&&u.kind==='creature') spellDmg(me,u,1); });
+  destroyPerm(s);
+});
+def('gas',null,'불안정한 기체를 놓는다',(g,me)=>{ const c=BYNAME['Unstable Gas']; if(c) playPerm(me,mk(c.code,me)); });
+def('steam',null,'+5 공격력을 얻는다. 매 턴 1씩 식는다',(g,me,s)=>{ s.steam=(s.steam||0)+5; buff(s,5,0); });
+/* 식는 쪽은 공격 차례에 돈다 — 설명에 적어 놓고 구현을 빼면 그게 곧 거짓말이다 */
+def('steamdecay',null,'',(g,me,s)=>{ if(s.steam>0){ s.steam--; buff(s,-1,0); } });
+def('immolate','mycr','자기 크리처를 태운다. 12속성 1씩 + 불 퀀텀(체력 + {N})',(g,me,s,t,a)=>{
+  if(!t)return; for(let e=1;e<=12;e++) gain(me,e,1); gain(me,6,t.hp+(a||5)); kill(t);
+});
+def('fiery',null,'불 퀀텀 5마다 공격력 1',()=>{});
+def('lycanthropy',null,'+5|+5 를 얻는다',(g,me,s)=>{ buff(s,5,5); s.sk=s.sk.filter(k=>k.id!=='lycanthropy'); });
+def('luciferin',null,'체력을 10 채우고 능력 없는 크리처에게 능력을 준다',(g,me)=>{ heal(me,10); });
+def('neuro',null,'때린 대상에게 신경독을 준다',(g,me,s,t)=>{ addPoison(t,1); });
+def('singularity',null,'특이점 — 매 턴 주인에게 나쁜 일이 일어난다',(g,me,s)=>{
+  const r=rnd(4);
+  if(r===0) buff(s,-1,0); else if(r===1) spellDmg(me,me,2);
+  else if(r===2) gain(me,1+rnd(12),2); else s.atk=-s.atk;
+});
+def('chimera',null,'자기 크리처를 전부 합친다',(g,me)=>{
+  let a=0,h=0; me.cr.forEach(u=>{ if(u){a+=u.atk;h+=u.hp;} });
+  me.cr=new Array(MAXCR).fill(null);
+  const c=BYNAME['Chimera']; const u=mk(c.code,me);
+  u.kind='creature'; u.atk=a; u.hp=u.maxhp=h; u.flags=['momentum']; u.slot=0; me.cr[0]=u;
+});
+def('skyblitz',null,'바람 퀀텀을 모두 쓰고 비행 크리처가 급강하한다',(g,me)=>{
+  me.q[9]=0; me.cr.forEach(u=>{ if(u&&u.flags.includes('airborne')) u.dive=true; });
+});
+def('phaseshield',null,'',()=>{});
+def('butterfly','cr','대상이 기물 파괴 능력을 얻는다',(g,me,s,t)=>{
+  if(t.atk<3||t.hp<3){ t.sk=[{ev:'cast',id:'destroy',arg:null}]; t.cast=3; t.castel=1; }
+});
+def('v_mutation','foecr','대상이 흉물이 되거나 죽는다',(g,me,s,t)=>{
+  const r=Math.random();
+  if(r<0.5) kill(t);
+  else { const c=BYNAME['Abomination']; if(c) morph(t,c.code); }
+});
+def('v_swarmhp',null,'같은 편 반딧불 수만큼 체력을 가진다',()=>{});
+def('dryspell',null,'모든 크리처에게 피해 2',(g,me)=>{ all().forEach(u=>{ if(u&&u.kind==='creature') spellDmg(me,u,2); });});
+def('v_swarm',null,'같은 편 반딧불 수만큼 공격한다',()=>{});
+
+/* ── 마지막 아홉 — 여기까지 넣어야 기본 239장이 전부 논다 ─────────────── */
+def('swave','any','대상에게 주문 피해 4. 얼어붙은 크리처는 그대로 죽는다',(g,me,s,t)=>{
+  if(t&&t.c&&t.frozen>0){ kill(t); return; }
+  spellDmg(me,t,4);
+});
+def('enchant','pm','대상 기물이 실체를 잃는다 (겨눌 수 없다)',(g,me,s,t)=>{
+  if(t&&!t.flags.includes('immaterial')) t.flags.push('immaterial');
+});
+def('v_rewind','foecr','대상 크리처를 주인의 덱 맨 위로 되돌린다',(g,me,s,t)=>{
+  if(!t||t.kind!=='creature')return;
+  const p=t.own;
+  /* 원작의 특수 처리 — 해골은 아무 크리처로, 미이라는 파라오로 되돌아간다 */
+  let code=t.c.code;
+  if(/^(Skeleton|Elite Skeleton)$/.test(t.c.en)){
+    const pool=ETG.cards.filter(c=>c.kind==='creature'&&!c.up&&playable(c));
+    code=pool[rnd(pool.length)].code;
+  } else if(/Mummy$/.test(t.c.en)){ const ph=BYNAME['Pharaoh']; if(ph) code=ph.code; }
+  const i=p.cr.indexOf(t); if(i>=0)p.cr[i]=null;
+  if(p.gpull===t)p.gpull=null;
+  t.dead=true;                    /* 죽은 게 아니라 치운 것 — death 는 안 돈다 */
+  p.deck.push(code);
+});
+def('wisdom','any','대상에게 +3|+0. 실체 없는 대상은 염동을 얻어 방패를 무시한다',(g,me,s,t)=>{
+  if(!t||!t.c)return;
+  buff(t,s.up?4:3,0);
+  if(t.flags.includes('immaterial')&&!t.flags.includes('psionic')) t.flags.push('psionic');
+});
+def('die',null,'이 카드를 희생한다',(g,me,s)=>{ destroyPerm(s); });
+def('sosa',null,'체력 48을 바치고 죽음 외 퀀텀을 모두 잃는다. 두 턴 동안 피해와 회복이 뒤바뀐다',
+  (g,me,s)=>{
+    dmgP(me,s.up?40:48);
+    for(let e=1;e<=12;e++) if(e!==2) me.q[e]=0;
+    me.sosa=2;
+  });
+def('accretion','pm','대상 기물을 부수고 +0|+15. 체력이 45를 넘으면 스스로 무너져 블랙홀이 손에 들어온다',
+  (g,me,s,t)=>{
+    destroyPerm(t); buff(s,0,15);
+    if(s.hp>45){ kill(s); const c=BYNAME['Black Hole'];
+      if(c&&me.hand.length<HANDMAX) me.hand.push(mk(c.code,me)); }
+  });
+def('evade100',null,'상대 공격을 통째로 막는다',()=>{});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   2. 카드가 놀 수 있는가 — 능력이 하나라도 없으면 덱에 안 넣는다
+   ═══════════════════════════════════════════════════════════════════════════ */
+const MISS=new Set();
+function playable(c){
+  if(c.kind==='perm'&&c.flags.includes('token')) return false;
+  for(const s of c.sk){ if(!SK[s.id]){ MISS.add(s.id); return false; } }
+  return true;
+}
+const POOLS={};   /* 속성 → 놀 수 있는 기본 카드 */
+ELS.forEach((e,i)=>{POOLS[i]=[];});
+ETG.cards.forEach(c=>{ if(!c.up&&playable(c)) POOLS[c.el].push(c); });
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   3. 판 상태
+   ═══════════════════════════════════════════════════════════════════════════ */
+let G=null, SEL=null, TGT=null;
+const rnd=n=>Math.floor(Math.random()*n);
+const foe=p=>p===G.me?G.ai:G.me;
+const owner=u=>u&&u.own?u.own:G.me;
+const all=()=>[].concat(G.me.cr,G.ai.cr,G.me.pm,G.ai.pm,[G.me.weapon,G.ai.weapon,G.me.shield,G.ai.shield]);
+/* 판 위에 실제로 놓여 있는 것 전부 — 양쪽 크리처·기물·무기·방패.
+   전역 이벤트(죽음 등)는 반드시 이걸 돈다. 한 종류라도 빼면 그 카드만 조용히 안 돈다. */
+const everyThing=()=>all().filter(Boolean);
+
+function newPlayer(deck,mark,name){
+  return {name,hp:STARTHP,maxhp:STARTHP,q:new Array(13).fill(0),mark,
+    deck:shuffle(deck.slice()),hand:[],cr:new Array(MAXCR).fill(null),
+    pm:new Array(MAXPM).fill(null),weapon:null,shield:null,
+    poison:0,gpull:null,sabbath:false,nova:0,out:false,seefoe:false};
+}
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+/* 카드 한 장의 몸 */
+function mk(code,own){
+  const c=CARD[code];
+  return {c,code,kind:c.kind,own,atk:c.atk,hp:c.hp,maxhp:c.hp,
+    flags:c.flags.slice(),sk:c.sk.map(s=>({...s})),cast:c.cast,castel:c.castel,
+    charges:c.stats.charges||0,used:false,frozen:0,delayed:0,poison:0,
+    slot:-1,up:c.up,pendstate:false};
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   4. 기본 동작
+   ═══════════════════════════════════════════════════════════════════════════ */
+function gain(p,e,n){ p.q[e]=Math.min(QCAP,p.q[e]+n); }
+function canPay(p,e,n){ if(n<=0)return true;
+  if(e===0){ let t=0; for(let i=1;i<=12;i++)t+=p.q[i]; return t>=n; }
+  return p.q[e]>=n; }
+function pay(p,e,n){
+  if(!canPay(p,e,n))return false;
+  if(n<=0)return true;
+  if(e===0){ for(let i=0;i<n;i++){ let t=0; for(let k=1;k<=12;k++)t+=p.q[k];
+      let pick=rnd(t); for(let k=1;k<=12;k++){ if(pick<p.q[k]){p.q[k]--;break;} pick-=p.q[k]; } } }
+  else p.q[e]-=n;
+  return true;
+}
+/* ⚠ 희생의 파편(sosa)이 걸린 동안은 **피해와 회복이 서로 바뀐다.**
+   그래서 회복·피해가 이 두 함수를 반드시 거쳐야 한다. 어딘가에서 p.hp 를
+   직접 만지면 그 자리만 규칙이 안 먹는다. */
+function heal(p,n){
+  if(n<=0)return;
+  if(p.sosa>0){ p.hp-=n; if(p.hp<=0){p.hp=0;p.out=true;} return; }
+  p.hp=Math.min(p.maxhp,p.hp+n);
+}
+function healThing(t,n){ if(!t)return; if(t.hp!==undefined&&t.c){ t.hp=Math.min(t.maxhp,t.hp+n); } else heal(t,n); }
+function buff(u,a,h){ if(!u)return; u.atk+=a; u.maxhp+=h; u.hp+=h; if(u.hp<=0) kill(u); }
+function freeze(u,n){ if(!u||u.flags&&u.flags.includes('immaterial'))return; u.frozen=Math.max(u.frozen||0,n); }
+function addPoison(u,n){ if(!u)return; if(u.c) u.poison=(u.poison||0)+n; else u.poison+=n; }
+
+function log(t,cls){ G.log.push({t,cls}); if(G.log.length>200)G.log.shift(); }
+
+/* 피해 — 얼굴이면 방패를 안 탄다(주문 피해). 몸이면 체력을 깎는다 */
+function spellDmg(me,t,n){
+  if(!t)return 0;
+  if(t.c) return dmgThing(t,n);
+  return dmgP(t,n);
+}
+function dmgThing(u,n){
+  if(!u||!u.c)return 0;
+  u.hp-=n; if(u.hp<=0) kill(u);
+  return n;
+}
+function dmgP(p,n){
+  if(n<=0){ heal(p,-n); return 0; }
+  if(p.sosa>0){ p.hp=Math.min(p.maxhp,p.hp+n); return n; }
+  p.hp-=n; if(p.hp<=0){ p.hp=0; p.out=true; }
+  return n;
+}
+
+/* ── 죽음 — 한 통로로만 지나간다 ─────────────────────────────────────────
+   ⚠ 이 함수를 건너뛰고 배열에서 직접 지우면 death 유발이 통째로 사라진다.
+     TEN 본편에서 정확히 그 사고를 냈다(strike 의 insts.shift()). 되풀이하지 않는다. */
+function kill(u){
+  if(!u||!u.c||u.dead)return;
+  u.dead=true;
+  const p=u.own;
+  if(u.kind==='creature'){
+    const i=p.cr.indexOf(u); if(i>=0) p.cr[i]=null;
+    if(p.gpull===u) p.gpull=null;
+    log(`${u.c.ko} 파괴`,'c');
+    if(u.afla){ const c=BYNAME['Malignant Cell']; if(c) summonAt(p,c.code,i); }
+    /* ⚠⚠⚠ 죽음은 **두 갈래**다. openEtG 의 proc_data(Event::Death) 그대로:
+         ① 죽은 몸 **자신**의 'owndeath'  — 불사조가 잿더미를 남긴다
+         ② **양쪽 판 전부**의 'death'      — 백골 무덤 · 영혼 포집기 · 독수리 · 뼈 장벽
+       예전에는 이 둘을 **정확히 거꾸로** 걸어 놨다(죽은 몸에 'death', 기물에 'owndeath').
+       두 이름이 다 존재하니 오류도 안 났고, **어느 쪽도 한 번도 안 돌았다** —
+       불사조는 되살아나지 않았고 무덤은 해골을 한 마리도 못 냈다.
+       TEN 에서 strike() 가 시체를 직접 지워 onDeath 가 통째로 죽었던 것과 같은 사고다.
+       ⚠ 기물만 보면 안 된다 — 독수리는 크리처, 뼈 장벽은 방패다. 판 위 전부를 본다. */
+    trig(u,'owndeath');
+    everyThing().forEach(x=>{ if(x&&x!==u&&!x.dead) trig(x,'death',u); });
+  } else destroyPerm(u);
+}
+function destroyPerm(u){
+  if(!u||!u.c)return;
+  const p=u.own;
+  if(p.weapon===u) p.weapon=null;
+  else if(p.shield===u) p.shield=null;
+  else { const i=p.pm.indexOf(u); if(i>=0) p.pm[i]=null; }
+  log(`${u.c.ko} 파괴`,'c');
+}
+function stealPerm(me,u){
+  const p=u.own;
+  if(p.weapon===u) p.weapon=null;
+  else if(p.shield===u) p.shield=null;
+  else { const i=p.pm.indexOf(u); if(i>=0) p.pm[i]=null; }
+  u.own=me; placePerm(me,u);
+  log(`${u.c.ko} 을(를) 빼앗았다`,'a');
+}
+function morph(u,code){
+  const c=CARD[code];
+  u.c=c; u.code=code; u.atk=c.atk; u.hp=u.maxhp=c.hp;
+  u.flags=c.flags.slice(); u.sk=c.sk.map(s=>({...s})); u.cast=c.cast; u.castel=c.castel;
+}
+function summon(p,code){ return summonAt(p,code,-1); }
+function summonAt(p,code,slot){
+  let i=(slot>=0&&!p.cr[slot])?slot:p.cr.indexOf(null);
+  if(i<0)return null;
+  const u=mk(code,p); u.slot=i; p.cr[i]=u;
+  trig(u,'play');
+  return u;
+}
+function placePerm(p,u){
+  if(u.kind==='weapon'){ p.weapon=u; return true; }
+  if(u.kind==='shield'){ p.shield=u; return true; }
+  /* 기둥은 쌓인다 — 같은 카드가 이미 있으면 charges 만 늘린다 */
+  if(u.c.flags.includes('stackable')){
+    const s=p.pm.find(x=>x&&x.code===u.code);
+    if(s){ s.charges+=(u.charges||1); return true; }
+  }
+  const i=p.pm.indexOf(null); if(i<0)return false;
+  u.slot=i; p.pm[i]=u; return true;
+}
+function playPerm(p,u){ return placePerm(p,u); }
+
+/* ── 능력 발동 ─────────────────────────────────────────────────────────── */
+function trig(u,ev,tgt,extra){
+  if(!u||!u.sk)return;
+  u.sk.forEach(s=>{
+    if(s.ev!==ev)return;
+    const h=SK[s.id]; if(!h)return;
+    /* ⚠ 값이 여러 개인 능력이 있다(growth 2 0). 배열을 통째로 넘긴다. */
+    h.f(G,u.own,u,tgt,(typeof s.arg==='number'?s.arg:(extra!==undefined?extra:s.arg)),s.args||[]);
+  });
+}
+function hasSk(u,ev){ return u&&u.sk&&u.sk.some(s=>s.ev===ev&&SK[s.id]); }
+function activeSk(u){ return u&&u.sk?u.sk.find(s=>s.ev==='cast'&&SK[s.id]):null; }
+
+function randomEffect(me,u){
+  /* ⚠ 여기 이름은 **원작 능력 id** 여야 한다. 'v_rage' 로 적어 뒀다가 분노의 물약을
+     'rage' 로 고치면서 이 목록만 안 고쳐, 무작위 효과가 뜰 때마다 판이 통째로 죽었다.
+     (아수라장·혼돈의 씨앗이 나오는 순간 조용히 멈췄다.) */
+  if(!u||!u.c)return;
+  const opts=['bless','rage','freeze','v_slow','poison','antimatter','quint','platearmor'];
+  const id=opts[rnd(opts.length)];
+  const h=SK[id]; if(!h)return;
+  h.f(G,me,u,u,id==='freeze'?3:(id==='platearmor'?4:1));
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   5. 턴
+   ═══════════════════════════════════════════════════════════════════════════ */
+function draw(p){
+  if(!p.deck.length){ p.out=true; log(`${p.name} — 덱이 말랐다`,'c'); return; }
+  const code=p.deck.pop();
+  if(p.hand.length>=HANDMAX){ log(`${p.name} 손패가 넘쳐 카드가 버려졌다`,'c');
+    p.hand.forEach(h=>trig(h,'owndiscard')); return; }
+  p.hand.push(mk(code,p));
+}
+
+/* ⚠ 순서가 규칙이다 — openEtG v_endturn 그대로:
+     문장 → 상대 독 → 기물(기둥) → 크리처 공격 → 무기 공격 */
+function endTurn(){
+  const p=G.turn, f=foe(p);
+  /* 1) 문장 */
+  if(p.mark===0){ for(let i=0;i<3;i++) gain(p,1+rnd(12),1); } else gain(p,p.mark,1);
+  /* 2) 독 — 내 턴이 끝날 때 **상대**가 자기 독만큼 맞는다 */
+  if(f.poison>0){ dmgP(f,f.poison); log(`${f.name} 독 ${f.poison}`,'c'); }
+  /* 3) 기물 */
+  p.pm.forEach(pm=>{ if(pm){ trig(pm,'ownattack'); pm.used=false; if(pm.frozen>0)pm.frozen--; } });
+  /* 4) 크리처 */
+  p.cr.forEach(u=>{ if(u) attack(u); });
+  /* 5) 방패·무기 */
+  if(p.shield){ trig(p.shield,'ownattack'); p.shield.used=false; }
+  if(p.weapon) attack(p.weapon);
+  p.sabbath=false; p.nova=0; p.seefoe=false;
+
+  if(checkEnd())return;
+  /* 다음 사람 */
+  G.turn=f; f.sabbath=false; f.nova=0;
+  if(f.sosa>0) f.sosa--;
+  f.cr.forEach(u=>{ if(u) u.used=false; });
+  f.pm.forEach(u=>{ if(u) u.used=false; });
+  draw(f);
+  if(checkEnd())return;
+  log(`── ${f.name} 의 턴 ──`,'b');
+  if(f===G.ai) setTimeout(aiTurn,420);
+}
+
+function attack(u){
+  if(!u)return;
+  let loops=0;
+  do{
+    loops++;
+    if(u.kind==='creature'&&u.poison>0){ dmgThing(u,u.poison); if(u.dead)return; }
+    const p=u.own, f=foe(p);
+    trig(u,'ownattack');
+    if(u.steam>0){ u.steam--; buff(u,-1,0); }     /* 증기 기관 — 매 턴 1씩 식는다 */
+    if(u.dead)return;
+    if(u.frozen>0||u.delayed>0){ if(u.frozen>0)u.frozen--; if(u.delayed>0)u.delayed--; return; }
+    if(stasisOn(f)){ return; }
+    let atk=trueAtk(u);
+    if(u.dive){ atk*=2; u.dive=false; }
+    if(atk!==0){
+      if(u.flags.includes('psionic')) spellDmg(p,f,atk);
+      else if(u.flags.includes('momentum')||atk<0){ dmgP(f,atk); trig(u,'hit',f,atk); }
+      else if(f.gpull&&u.kind==='creature'){ const d=dmgThing(f.gpull,atk); trig(u,'hit',f.gpull,d); }
+      else {
+        const sh=f.shield;
+        let dmg=atk, blocked=0;
+        if(sh){ const r=shieldReduce(sh,u,atk); dmg=r.dmg; blocked=r.blocked;
+          if(dmg>0||blocked>0) trig(sh,'shield',u,dmg); }
+        if(dmg>0){ dmgP(f,dmg); trig(u,'hit',f,dmg); }
+      }
+    }
+    if(u.frozen>0)u.frozen--; if(u.delayed>0)u.delayed--;
+    u.used=false;
+    if(u.kind==='creature'&&u.hp<=0){ kill(u); return; }
+    trig(u,'postauto');
+  } while(u.adren&&loops<adrenCount(u));
+}
+function adrenCount(u){ const a=Math.abs(trueAtk(u)); return a<=1?4:a<=2?3:a<=4?2:1; }
+function trueAtk(u){
+  let a=u.atk;
+  if(u.burrowed) a=Math.ceil(a/2);
+  if(u.flags.includes('nocturnal')&&nightfallOn(u.own)) a+=1;
+  if(hasSk(u,'ownattack')&&u.sk.some(s=>s.id==='fiery')) a+=Math.floor(u.own.q[6]/5);
+  if(u.sk.some(s=>s.id==='v_swarm')) a=u.own.cr.filter(x=>x&&/Firefly$/.test(x.c.en)).length;
+  return a;
+}
+function nightfallOn(p){ return [G.me,G.ai].some(q=>q.pm.some(x=>x&&x.sk.some(s=>s.id==='nightfall'))); }
+function stasisOn(f){ return f.pm.some(x=>x&&x.sk.some(s=>s.id==='stasis')&&x.charges>0); }
+
+/* 방패 — 원작의 특수 방패를 이름이 아니라 **능력 id** 로 가른다 */
+function shieldReduce(sh,atk,dmg){
+  const s0=sh.sk.find(s=>s.ev==='shield')||{};
+  const id=s0.id, arg=s0.arg;
+  let dr=sh.hp||0;      /* 평범한 방패는 체력칸이 곧 감소량이다 */
+  const p=sh.own;
+  if(id==='wings') return atk.flags.includes('airborne')?{dmg,blocked:0}:{dmg:0,blocked:dmg};
+  /* ⚠ 회피 확률은 카드마다 다르다 — 안개 방패는 40. 값을 무시하고 반반으로 굴리면 안 된다 */
+  if(id==='evade'||id==='v_freeevade')
+    return Math.random()<((typeof arg==='number'?arg:50)/100)?{dmg:0,blocked:dmg}:{dmg,blocked:0};
+  if(id==='evade100') return {dmg:0,blocked:dmg};
+  if(id==='weight') return (atk.hp>=5&&atk.kind==='creature')?{dmg:0,blocked:dmg}:{dmg,blocked:0};
+  if(id==='disshield'){ if(pay(p,12,1)) return {dmg:0,blocked:dmg}; return {dmg,blocked:0}; }
+  if(id==='v_dshield'){ if(pay(p,1,Math.ceil(dmg/3))) return {dmg:0,blocked:dmg}; return {dmg,blocked:0}; }
+  if(id==='blockwithcharge'){ if(sh.charges>0){ sh.charges--; return {dmg:0,blocked:dmg}; } return {dmg,blocked:0}; }
+  /* 희망은 shield 가 아니라 ownattack 으로 걸려 있다 — id 로만 찾으면 0 이 된다 */
+  if(sh.sk.some(s=>s.id==='v_hope'))
+    dr=p.cr.filter(x=>x&&x.sk.some(s=>s.id==='solar'||s.id==='luciferin')).length;
+  const b=Math.min(dr,dmg);
+  return {dmg:dmg-b,blocked:b};
+}
+
+function checkEnd(){
+  if(G.over)return true;
+  if(G.me.out||G.ai.out){
+    G.over=true; G.win=G.ai.out&&!G.me.out;
+    log(G.win?'★ 이겼다':'☠ 졌다',G.win?'a':'c');
+    render(); return true;
+  }
+  return false;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   6. 카드 내기
+   ═══════════════════════════════════════════════════════════════════════════ */
+function costOf(u){ return {n:u.c.cost,e:u.c.costel}; }
+function targetsFor(kind,p){
+  const f=foe(p);
+  const cr=x=>x&&x.kind==='creature'&&!x.flags.includes('immaterial');
+  const pm=x=>x&&x.kind!=='creature'&&!x.flags.includes('immaterial');
+  if(kind==='mycr')return p.cr.filter(cr);
+  if(kind==='foecr')return f.cr.filter(cr);
+  if(kind==='cr')return p.cr.concat(f.cr).filter(cr);
+  if(kind==='pm')return p.pm.concat(f.pm,[p.weapon,p.shield,f.weapon,f.shield]).filter(pm);
+  if(kind==='foepm')return f.pm.concat([f.weapon,f.shield]).filter(pm);
+  if(kind==='crw')return f.cr.filter(cr).concat([f.weapon].filter(Boolean));
+  if(kind==='any')return [f].concat(p.cr.filter(cr),f.cr.filter(cr));
+  return [];
+}
+function canPlay(p,u){
+  if(p.sabbath)return false;
+  const c=costOf(u);
+  if(!canPay(p,c.e,c.n))return false;
+  /* 겨눌 것이 없으면 낼 수 없다 — 손패에서 회색으로 보인다 */
+  const t=needsTarget(u);
+  if(t&&!targetsFor(t,p).length)return false;
+  if(u.kind==='creature'&&p.cr.indexOf(null)<0)return false;
+  if(u.kind==='perm'&&!u.c.flags.includes('stackable')&&p.pm.indexOf(null)<0)return false;
+  return true;
+}
+function needsTarget(u){
+  if(u.kind!=='spell')return null;
+  const s=u.sk.find(k=>k.ev==='cast');
+  return s&&SK[s.id]?SK[s.id].t:null;
+}
+function playCard(p,u,tgt){
+  /* ⚠⚠ **대상이 필요한 카드를 대상 없이 내면 안 된다.** 막지 않으면 능력 함수가
+     null 을 받아 그 자리에서 판이 죽는다(정화가 겨눌 크리처가 없을 때 실제로 그랬다).
+     한 판에 크리처가 하나도 없을 때 상대가 그 주문을 뽑으면 바로 터진다. */
+  if(needsTarget(u)&&!tgt)return false;
+  const c=costOf(u);
+  if(!pay(p,c.e,c.n))return false;
+  const i=p.hand.indexOf(u); if(i>=0)p.hand.splice(i,1);
+  log(`${p.name} — ${u.c.ko}`,p===G.me?'b':'a');
+  if(u.kind==='spell'){ trig(u,'cast',tgt); }
+  else if(u.kind==='creature'){
+    const k=p.cr.indexOf(null); if(k<0)return false;
+    u.slot=k; p.cr[k]=u; trig(u,'play');
+  } else {
+    if(u.kind==='weapon'&&p.weapon) p.weapon=null;
+    if(u.kind==='shield'&&p.shield) p.shield=null;
+    if(!u.charges&&u.c.stats.charges) u.charges=u.c.stats.charges;
+    if(u.c.flags.includes('stackable')&&!u.charges) u.charges=1;
+    if(!placePerm(p,u))return false;
+    trig(u,'ownplay');
+  }
+  checkEnd();
+  return true;
+}
+function useAbility(p,u,tgt){
+  const s=activeSk(u); if(!s)return false;
+  if(u.used||u.frozen>0)return false;
+  if(SK[s.id].t&&!tgt)return false;          /* 위와 같은 이유 — 대상 없이는 못 쓴다 */
+  if(!pay(p,u.castel,u.cast))return false;
+  u.used=true;
+  log(`${u.c.ko} — ${SK[s.id].d.split('.')[0].replace(/\{N\}/g,typeof s.arg==='number'?s.arg:'N')}`,p===G.me?'b':'a');
+  SK[s.id].f(G,p,u,tgt,typeof s.arg==='number'?s.arg:s.arg,s.args||[]);
+  checkEnd();
+  return true;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   7. 아주 단순한 상대 — 낼 수 있는 걸 싼 것부터 낸다
+   ═══════════════════════════════════════════════════════════════════════════ */
+function aiTurn(){
+  if(G.over||G.turn!==G.ai)return;
+  const p=G.ai;
+  let guard=0;
+  while(guard++<40){
+    const opts=p.hand.filter(u=>canPlay(p,u));
+    if(!opts.length)break;
+    /* 기둥이 적으면 기둥부터, 아니면 싼 것부터 */
+    const pillars=opts.filter(u=>u.sk.some(s=>s.id==='pillar'||s.id==='pend'));
+    const pick=(pillars.length&&p.pm.filter(Boolean).length<6)?pillars[0]
+              :opts.sort((a,b)=>a.c.cost-b.c.cost)[0];
+    const t=needsTarget(pick);
+    const tg=t?aiTarget(t,p):null;
+    if(t&&!tg){ p.hand.splice(p.hand.indexOf(pick),1); continue; }   /* 겨눌 게 없다 — 버린다 */
+    if(!playCard(p,pick,tg))break;
+    if(G.over)return;
+  }
+  p.cr.concat(p.pm).concat([p.weapon,p.shield]).forEach(u=>{
+    if(u&&activeSk(u)&&!u.used&&!u.frozen){
+      const t=SK[activeSk(u).id].t;
+      useAbility(p,u,t?aiTarget(t,p):null);
+    }
+  });
+  if(G.over)return;
+  endTurn(); render();
+}
+function aiTarget(kind,p){
+  /* ⚠ 사람이 고를 수 있는 것과 **같은 목록**에서 고른다. 예전엔 여기만 따로 짜서
+     실체 없는 몸을 겨누거나, 빈 목록에서 null 을 돌려주고 그대로 발동했다. */
+  const pool=targetsFor(kind,p);
+  return pool.length?pool[rnd(pool.length)]:null;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════════════════
+   8. 화면 — **본편과 같은 카드 규격**을 쓴다
+   ───────────────────────────────────────────────────────────────────────────
+   카드 CSS(.tcard/.slot/.board/.hcw/.zoom)는 tools/build_etg_page.py 가
+   prototype/index.html 에서 통째로 가져다 붙인다. 여기서는 그 규격에 맞는
+   **마크업만** 만든다. 규격을 이 파일에서 다시 그리면 두 벌이 되어 반드시 어긋난다.
+
+   ⚠ 데이터는 한 줄도 안 가져온다 — POOL·ART·FRAMES 없이 --el 색 하나로 갈린다.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+const SCR=$('#screen');
+
+/* 13속성 색 — 본편의 보석 팔레트 감각에 맞춰 잡았다(양피지 위에서 읽히는 채도) */
+const ELC=['#8894A6','#a578e0','#7d8fa2','#b0762e','#8a6a3a','#57ab3c','#c04a3f',
+           '#4d6fd4','#e0c65e','#4fb8d8','#d99a2b','#6b5a80','#4fd1c0'];
+const KINDKO={creature:'크리처',spell:'주문',perm:'기물',weapon:'무기',shield:'방패'};
+/* 설명 속 {N} 은 **그 카드의 실제 수치**로 바꾼다.
+   ⚠ 안 바꾸면 "+N|+N 을 얻는다" 가 그대로 카드에 찍힌다 — 읽는 사람에게는 아무 말도 아니다.
+     수치를 설명에 손으로 박아 넣으면 카드마다 값이 다를 때(독수리 1 · 불의 정령 2) 틀린다. */
+function fillN(d,s){
+  const a=s.args||[], n=typeof s.arg==='number'?s.arg:null;
+  return d.replace(/\{N\}/g, n===null?'N':n)
+          .replace(/\{A\}/g, a.length?a[0]:'N')
+          .replace(/\{H\}/g, a.length>1?a[1]:(a.length?a[0]:'N'))
+          .replace(/\{EL\}/g, n!==null&&ELKO[n]?ELKO[n]:'자기 속성')
+          .replace(/\{SUM\}/g, (n!==null&&CARD[n])?CARD[n].ko:'몸 하나');
+}
+/* 카드에 붙은 능력 이름을 **맞는 능력에만** 붙인다.
+   한 카드에 이름은 하나뿐인데 능력은 여럿일 수 있다 —
+   발동형 이름은 cast 쪽에, 지속형 이름은 저절로 도는 쪽에 붙는다. */
+function abilName(c,s){
+  if(!c.abilko)return '';
+  const act=(s.ev==='cast'&&c.kind!=='spell');
+  if(c.abilkind==='act') return act?c.abilko:'';
+  return act?'':c.abilko;
+}
+const kindKo=k=>KINDKO[k]||k;
+const FLAGKO={airborne:'비행',momentum:'관성',immaterial:'실체 없음',poisonous:'유독',
+  aquatic:'수생',ranged:'원거리',nocturnal:'야행성',burrowed:'굴속',reflective:'주문 반사',
+  voodoo:'부두',psionic:'염동',token:'토큰',stackable:'쌓임',additive:'합산',
+  patience:'인내',cloak:'장막',flooding:'범람'};
+/* 확대창에서 풀어 주는 말 — 본편 용어집(zdef)과 같은 자리에 뜬다 */
+const FLAGDEF={
+  airborne:'날아다닌다. 지상만 막는 방패(날개)를 지나친다.',
+  momentum:'방패를 통째로 무시하고 그대로 때린다.',
+  immaterial:'겨눌 수 없고 얼지 않는다. 주문의 대상이 되지 않는다.',
+  poisonous:'때릴 때마다 상대에게 독을 남긴다.',
+  aquatic:'범람이 깔려도 물에서 죽지 않는다.',
+  ranged:'원거리 — 지상 방패에 걸리지 않는다.',
+  nocturnal:'야행성. 땅거미·일식이 깔리면 +1|+1.',
+  burrowed:'땅에 숨어 있다. 겨눌 수 없지만 공격력이 절반이다.',
+  reflective:'자기에게 오는 주문을 상대에게 되돌린다.',
+  psionic:'주문 피해로 때린다 — 방패에 깎이지 않는다.',
+  stackable:'같은 카드를 한 칸에 쌓는다. 쌓인 수만큼 일한다.',
+  token:'능력이 만들어 낸 몸. 덱에 넣을 수 없다.'};
+
+/* ── 카드 한 장 — 본편 .tcard 규격 그대로 ─────────────────────────────── */
+function pipsHTML(c){
+  /* ⚠⚠ 비용 0 은 **구슬을 하나도 안 그린다.** 예전엔 빈 구슬 하나를 그렸는데
+     그게 '무색 1' 로 읽혔다(광자·신성이 공짜인데 1처럼 보였다). */
+  if(!c.cost) return '';
+  const col=c.costel?ELC[c.costel]:null;
+  const pip=col?`<i class="cp c" style="background:${col}"></i>`:'<i class="cp g"></i>';
+  /* ⚠⚠ EtG 는 비용이 15까지 간다. 구슬 6개를 그리고 옆에 10 을 적었더니
+     **6 + 10 = 16 으로 읽혔다.** 7 이상은 구슬 하나에 `×10` 으로 적는다 — 곱하기라 헷갈릴 수 없다. */
+  if(c.cost>6) return pip+`<b class="cpn">×${c.cost}</b>`;
+  return pip.repeat(c.cost);
+}
+function cardCls(c,u){
+  if(c.kind==='creature'){
+    const f=u?u.flags:c.flags;
+    return f.includes('airborne')?'fly':(f.includes('momentum')?'pierce':'normal');
+  }
+  return c.kind==='spell'?'sp':'en';
+}
+/* 카드 설명란 — **인쇄된 글이 아니라 지금 그 개체의 상태**를 보여 준다(본편과 같은 원칙).
+   능력을 잃은 몸(뇌엽절제 맞은 크리처)은 설명도 같이 사라져야 판을 보고 판단할 수 있다. */
+function ruleText(c,u,full){
+  const out=[];
+  const flags=(u?u.flags:c.flags).filter(f=>FLAGKO[f]&&!['stackable','additive','token'].includes(f));
+  if(flags.length) out.push('<b>'+flags.map(f=>FLAGKO[f]).join(' · ')+'</b>');
+  const sks=u?u.sk:c.sk;
+  sks.forEach(s=>{
+    const h=SK[s.id]; if(!h)return;
+    const d=fillN(full?h.d:h.d.split('.')[0],s);
+    /* ⚠ 원작에는 능력마다 **이름**이 있다(불의 정령 = 아블레이즈, 독수리 = 스캐빈저).
+       openEtG 는 능력을 일반화해 이름을 버렸고, 우리도 한동안 그대로 빠뜨렸다.
+       이름을 앞에 세워야 "그 능력" 을 부를 수 있다 — 성권이 짚은 자리다. */
+    const nm=abilName(c,s);
+    if(s.ev==='cast'&&c.kind!=='spell'){
+      const cst=u?u.cast:c.cast, ce=u?u.castel:c.castel;
+      out.push(`<b>[${cst?cst+ELKO[ce]:'무료'}]</b> ${nm?`<b>${nm}</b> · `:''}${d}`);
+    } else out.push((nm?`<b>${nm}</b> · `:'')+d);
+  });
+  if(u&&u.sk.length===0&&c.sk.length) out.push('<b>능력을 잃었다</b>');
+  return out.join(' · ');
+}
+function statHTML(c,u){
+  if(c.kind==='creature'||c.kind==='weapon'){
+    const a=u?trueAtk(u):c.atk, h=u?u.hp:c.hp;
+    const ac=u&&a!==c.atk?(a>c.atk?'buf':'dmg'):'', hc=u&&h!==c.hp?(h>c.hp?'buf':'dmg'):'';
+    return `<div class="tstat"><span class="tb a ${ac}">${a}</span><span class="tb h ${hc}">${h}</span></div>`;
+  }
+  if(c.kind==='shield'&&(u?u.hp:c.hp))
+    return `<div class="tstat"><span></span><span class="tb h">-${u?u.hp:c.hp}</span></div>`;
+  const ch=u?u.charges:(c.stats.charges||0);
+  if(ch) return `<div class="tstat"><span></span><span class="tb ch">${ch}</span></div>`;
+  return '<div class="tstat"></div>';
+}
+/* 희귀도 보석 — 원작 rarity(0 기둥 · 2 커먼 · 3~4 레어 · 6+ 울트라)를 본편 4단계에 맞췄다 */
+function rarKo(r){ return r>=6?'legendary':r>=4?'rare':r>=3?'uncommon':'common'; }
+function etgCardHTML(c,opt){
+  opt=opt||{}; const u=opt.unit||null;
+  const ec=ELC[c.el]||ELC[0];
+  const gem=`<i class="rgem ${rarKo(c.rarity)}"></i>`;
+  return `<div class="tcard ${cardCls(c,u)} ${opt.size||'md'}" style="--el:${ec}">
+    <div class="thead"><div class="tname">${esc(c.ko)}</div><div class="tcost">${pipsHTML(c)}</div></div>
+    <div class="tart"><span class="telm" style="color:${ec}">${ELKO[c.el]}</span>${gem}</div>
+    <div class="tbody"><div class="teff">${ruleText(c,u)}</div></div>
+    ${statHTML(c,u)}
+  </div>`;
+}
+
+/* ── 판 ───────────────────────────────────────────────────────────────── */
+function slotHTML(u,p){
+  let cls='slot occ';
+  if(u.kind!=='creature') cls+=' ench';
+  else if(u.flags.includes('airborne')) cls+=' fly';
+  if(u.flags.includes('immaterial')) cls+=' veilon';
+  if(u.frozen>0) cls+=' doomed';
+  if(TGT&&isTarget(u)) cls+=' pick';
+  /* ⚠ 쓸 수 있는 능력이 있는데 그게 안 보이면 **없는 것과 같다.**
+     비용을 낼 수 있고 · 안 얼었고 · 이번 턴에 아직 안 썼을 때만 켠다 — 그래야 신호가 산다. */
+  const act=activeSk(u);
+  const usable=(p===G.me&&act&&!u.used&&!u.frozen&&canPay(p,u.castel,u.cast)
+                &&G.turn===G.me&&!G.over&&!(SK[act.id].t&&!targetsFor(SK[act.id].t,p).length));
+  if(usable) cls+=' canuse';
+  const bs=[];
+  if(u.poison>0) bs.push(`<b class="kb" style="color:#9f6">독 ${u.poison}</b>`);
+  if(u.frozen>0) bs.push(`<b class="kb" style="color:#8cf">얼음 ${u.frozen}</b>`);
+  if(u.delayed>0) bs.push(`<b class="kb" style="color:#fc8">지연 ${u.delayed}</b>`);
+  if(u.charges>1) bs.push(`<b class="kb" style="color:#f2d488">×${u.charges}</b>`);
+  /* 쓸 수 있을 때만 비용 뱃지를 띄운다 — '얼마 내면 되는지' 까지 한눈에 */
+  const tip=usable?`<i class="usetag">${u.cast?u.cast+ELKO[u.castel]:'무료'}</i>`:'';
+  return `<div class="${cls}" data-uid="${uid(u)}">`
+    +etgCardHTML(u.c,{size:'sm',unit:u})+tip
+    +(bs.length?`<div class="kbs">${bs.join('')}</div>`:'')+'</div>';
+}
+/* 본편 packRow 와 같은 방식 — 가운데로 모으고 자리가 모자라면 오른쪽이 왼쪽을 덮는다.
+   ⚠ .slot 은 container-type:inline-size 라 margin 이 안 먹는다. left 로 직접 놓는다. */
+function packRow(el){
+  if(!el)return;
+  const cards=[...el.querySelectorAll(':scope > .slot')];
+  const n=cards.length;
+  el.classList.toggle('empty',!n);
+  el.classList.toggle('packed',!!n);
+  if(!n)return;
+  const cw=cards[0].offsetWidth||60;
+  const avail=Math.max(40,el.clientWidth-8);
+  let step=cw+4;
+  if(n>1&&cw+(n-1)*step>avail){
+    const minShow=Math.max(20,cw*0.30);
+    step=Math.max(minShow,(avail-cw)/(n-1));
+  }
+  const vis=cw+(n-1)*step;
+  const x0=Math.max(4,(el.clientWidth-vis)/2);
+  cards.forEach((c,i)=>{ c.style.left=(x0+i*step).toFixed(1)+'px'; c.style.zIndex=String(10+i); });
+}
+function boardHTML(p,k){
+  const arr=k==='cr'?p.cr:p.pm.concat([p.weapon,p.shield]);
+  return arr.filter(Boolean).map(u=>slotHTML(u,p)).join('');
+}
+/* 퀀텀 — 본편 마나줄과 같은 자리, 같은 눈높이. 0 인 속성은 흐리게 둔다. */
+/* 지금 손에 쥔 카드가 **어느 퀀텀을 얼마나** 먹는지 내 줄에 표시한다.
+   ⚠ 이게 없으면 "왜 안 나가지" 를 손패 회색만 보고 짐작해야 한다 —
+     12속성이라 어느 통이 빈 건지 눈으로 세는 게 일이다. */
+function qbarHTML(p){
+  const need=(p===G.me&&NEED)?NEED:null;
+  return [...Array(12)].map((_,i)=>{const e=i+1;
+    let cls=p.q[e]?'':' z';
+    if(p.mark===e)cls+=' mk';
+    if(need&&need.el===e) cls+=(p.q[e]>=need.n)?' need':' short';
+    return `<i class="qp${cls}" style="--qc:${ELC[e]}"
+      title="${ELKO[e]}${need&&need.el===e?` · ${need.n} 필요`:''}"><b>${p.q[e]}</b></i>`;}).join('');
+}
+/* 무색 비용은 어느 통에서든 나간다 — 특정 칸을 짚을 수 없으니 표시하지 않는다 */
+let NEED=null;
+function setNeed(u){
+  NEED=(u&&u.c.cost&&u.c.costel)?{el:u.c.costel,n:u.c.cost}:null;
+}
+/* ⚠ 퀀텀은 12칸이라 본편 마나 자리에 그냥 넣으면 **체력 막대를 실오라기로 만든다.**
+   `.bar` 를 줄바꿈시키고 퀀텀줄에 100% 폭을 줘서 아래 한 줄을 통째로 쓴다. */
+/* 판을 통째로 다시 그리지 않고 퀀텀줄만 갈아 끼운다(드래그 중에 쓴다) */
+function refreshQbars(){
+  if(!G)return;
+  [['#myBar',G.me],['#foeBar',G.ai]].forEach(([id,p])=>{
+    const el=document.querySelector(id+' .qrow'); if(el)el.innerHTML=qbarHTML(p);
+  });
+}
+function barHTML(p,foeSide){
+  return `<div class="bar ${foeSide?'':'me'}" id="${foeSide?'foeBar':'myBar'}">
+    <div class="who">${p.name}${p.mark?`<i class="mkl" style="color:${ELC[p.mark]}">${ELKO[p.mark]}</i>`:''}</div>
+    <div class="hp">${Math.max(0,p.hp)}</div>
+    <div class="hpbar"><i style="width:${Math.max(0,p.hp/p.maxhp*100)}%"></i></div>
+    <div class="cnt">손 ${p.hand.length} · 덱 ${p.deck.length}${p.poison?` · 독 ${p.poison}`:''}</div>
+    <div class="mana qrow">${qbarHTML(p)}</div>
+  </div>`;
+}
+/* 손패도 판과 같은 규칙 — 자리가 모자라면 오른쪽이 왼쪽을 덮는다.
+   ⚠ 안 하면 8장이 화면 밖으로 흘러 나가 마지막 장을 못 누른다(실제로 그랬다).
+     본편 `.hand>*{margin-left:var(--hgap,7px)}` 를 그대로 쓴다. */
+function packHand(){
+  const el=document.getElementById('hand'); if(!el)return;
+  const cards=[...el.children]; if(!cards.length)return;
+  const cw=cards[0].offsetWidth||66, n=cards.length;
+  const avail=Math.max(60,el.clientWidth-6);
+  let gap=7;
+  if(cw*n+gap*(n-1)>avail) gap=Math.max(-cw*0.62,(avail-cw*n)/(n-1));
+  el.style.setProperty('--hgap',gap.toFixed(1)+'px');
+  cards.forEach((c,i)=>{c.style.zIndex=String(10+i);});
+}
+function handHTML(p){
+  return p.hand.map((u,i)=>{
+    const no=(!canPlay(p,u)||G.turn!==G.me||G.over)?' no':'';
+    const sel=SEL===u?' sel':'';
+    return `<div class="hcw${no}${sel}" data-h="${i}">${etgCardHTML(u.c,{size:'md'})}</div>`;
+  }).join('');
+}
+
+/* ── 전투 화면 ─────────────────────────────────────────────────────────── */
+function render(){
+  if(!G){ screenBuild(); return; }
+  const m=G.me,a=G.ai;
+  SCR.innerHTML=`<div class="main">
+    <div class="hand foe" id="foeHand">${a.hand.map(()=>'<div class="hcw back"><div class="cback"></div></div>').join('')}</div>
+    ${barHTML(a,true)}
+    <div class="board pmrow" id="foePm">${boardHTML(a,'pm')}</div>
+    <div class="board" id="foeBoard">${boardHTML(a,'cr')}</div>
+    <div class="board" id="myBoard">${boardHTML(m,'cr')}</div>
+    <div class="board pmrow" id="myPm">${boardHTML(m,'pm')}</div>
+    ${barHTML(m,false)}
+    <div class="hand" id="hand">${handHTML(m)}</div>
+    <div class="ctl">
+      <div class="hint ${TGT?'act':'idle'}" id="hint">${
+        G.over?(G.win?'★ 이겼다':'☠ 졌다')
+        :TGT?`${esc(TGT.src.c.ko)} — 대상을 고르세요`
+        :G.turn===m?'카드를 내거나, 길게 눌러 효과를 보세요':'상대 턴…'}</div>
+      ${G.over?'<button id="again">다시</button>'
+              :`<button id="end"${G.turn!==m?' disabled':''}>턴 종료 →</button>`}
+      <button class="ghost" id="quit">덱으로</button>
+      <button class="ghost" id="home">← TEN</button>
+    </div>
+    <div class="logbox" id="log">${G.log.slice(-30).map(l=>`<div class="${l.cls||''}">${esc(l.t)}</div>`).join('')}</div>
+  </div>`;
+  ['foePm','foeBoard','myBoard','myPm'].forEach(id=>packRow(document.getElementById(id)));
+  packHand();
+  const lg=$('#log'); if(lg) lg.scrollTop=lg.scrollHeight;
+  bind();
+}
+
+function bind(){
+  const e=$('#end'); if(e) e.onclick=()=>{ if(G.turn===G.me&&!G.over){ endTargeting(); SEL=null;TGT=null; endTurn(); render(); } };
+  const q=$('#quit'); if(q) q.onclick=()=>{ endTargeting(); G=null; screenBuild(); };
+  const hm=$('#home'); if(hm) hm.onclick=()=>{ location.href='../index.html';   /* ⚠ '../' 는 file:// 에서 목록이 뜬다 */ };
+  const ag=$('#again'); if(ag) ag.onclick=()=>{ G=null; screenBuild(); };
+  SCR.querySelectorAll('[data-h]').forEach(el=>el.onclick=()=>{
+    if(lpFired){lpFired=false;return;}
+    if(G.turn!==G.me||G.over)return;
+    const u=G.me.hand[+el.dataset.h]; if(!u||!canPlay(G.me,u))return;
+    const t=needsTarget(u);
+    if(t){ SEL=u; TGT={kind:t,src:u,mode:'play'}; setNeed(u); render(); startTargeting(); return; }
+    playCard(G.me,u,null); SEL=null;TGT=null; NEED=null;
+    render();
+  });
+  SCR.querySelectorAll('[data-uid]').forEach(el=>el.onclick=()=>{
+    if(lpFired){lpFired=false;return;}
+    const u=byUid(+el.dataset.uid); if(!u)return;
+    if(TGT&&isTarget(u)){
+      if(TGT.mode==='play') playCard(G.me,TGT.src,u); else useAbility(G.me,TGT.src,u);
+      SEL=null;TGT=null;render();return;
+    }
+    if(u.own===G.me&&G.turn===G.me&&!G.over){
+      const s=activeSk(u);
+      if(s&&!u.used&&!u.frozen&&canPay(G.me,u.castel,u.cast)){
+        const t=SK[s.id].t;
+        if(t){ TGT={kind:t,src:u,mode:'skill'}; render(); startTargeting(); return; }
+        useAbility(G.me,u,null); render(); return;
+      }
+    }
+    showZoom(u.c,u);
+  });
+  /* 얼굴을 겨누는 주문(any) — 체력 막대를 누른다 */
+  SCR.querySelectorAll('.hpbar').forEach((el,i)=>el.onclick=()=>{
+    if(!TGT||TGT.kind!=='any')return;
+    const p=i===0?G.ai:G.me;
+    if(TGT.mode==='play') playCard(G.me,TGT.src,p); else useAbility(G.me,TGT.src,p);
+    SEL=null;TGT=null;render();
+  });
+}
+
+/* ── 길게 눌러 보기 — 본편과 같은 손짓·같은 창 ─────────────────────────
+   ⚠ 카드 설명란은 3줄에서 잘린다(본편 규격). 그래서 **전문은 확대창 옆 설명 상자**가 맡는다.
+     이게 없으면 "효과가 안 보인다" 가 된다 — 성권이 정확히 그걸 짚었다. */
+function zoomHTML(c,u){
+  const ec=ELC[c.el]||ELC[0];
+  const box=[];
+  box.push(`<div class="zdef"><div class="k"><span class="kn">${esc(c.ko)}</span>
+    <span class="kc">${esc(c.en)}</span></div>
+    <div class="kd">${ELKO[c.el]} · ${kindKo(c.kind)} · 비용 ${c.cost?c.cost+' '+ELKO[c.costel]:'없음'}
+    ${c.upcode&&CARD[c.upcode]?`<br>강화판: ${esc(CARD[c.upcode].ko)}`:''}</div></div>`);
+  const sks=u?u.sk:c.sk;
+  sks.forEach(s=>{ const h=SK[s.id]; if(!h)return;
+    const cst=u?u.cast:c.cast, ce=u?u.castel:c.castel;
+    /* ⚠ 'death' 는 **아무 크리처나 죽었을 때**(전역), 'owndeath' 는 **이 몸이 죽었을 때**다.
+       예전에 이 둘을 뒤집어 적어 뒀다 — 카드를 눌러 봐도 언제 도는지 알 수가 없었다. */
+    const EVKO={cast:'', ownattack:'매 턴', hit:'때릴 때', death:'크리처가 죽을 때마다',
+      owndeath:'이 몸이 죽을 때', shield:'맞을 때', ownplay:'낼 때', postauto:'공격을 마치고',
+      attack:'공격할 때', buff:'지속', ownbuff:'지속', destroy:'기물이 부서질 때',
+      prespell:'주문을 맞을 때', discard:'버려질 때', owndiscard:'손에서 버려질 때',
+      ownhp:'체력 계산', hp:'체력 계산'};
+    const nm=abilName(c,s);
+    const when=s.ev==='cast'?(c.kind==='spell'?'주문 효과':`${cst?cst+' '+ELKO[ce]:'무료'}`)
+      :(EVKO[s.ev]||'지속');
+    /* 이름이 있으면 이름을 머리에 세우고 '언제' 는 뒤에 작게 — 이름이 곧 그 능력이다 */
+    box.push(`<div class="zdef"><div class="k">
+      <span class="kn">${nm||when}</span>
+      <span class="kc">${nm?when+' · ':''}${esc(s.id)}</span></div>
+      <div class="kd">${fillN(h.d,s)}</div></div>`);
+  });
+  if(!sks.length) box.push('<div class="zdef"><div class="k"><span class="kn">효과</span></div><div class="kd">따로 없다. 몸으로 싸운다.</div></div>');
+  (u?u.flags:c.flags).forEach(f=>{ if(!FLAGDEF[f])return;
+    box.push(`<div class="zdef"><div class="k"><span class="kn">${FLAGKO[f]}</span>
+      <span class="kc">${f}</span></div><div class="kd">${FLAGDEF[f]}</div></div>`);});
+  /* 원작에 실제로 인쇄된 글. **번역이 아니라 원문 그대로** 둔다 —
+     내 한국어 설명은 '이 엔진이 실제로 하는 일' 이고, 이쪽은 '원작이 뭐라고 적었나' 다.
+     둘이 어긋나면 그게 곧 구현이 원작과 다르다는 신호다. 성권이 대조할 수 있어야 한다. */
+  if(c.otxt) box.push(`<div class="zdef" style="border-left-color:var(--sapphire)">
+    <div class="k"><span class="kn">원문</span><span class="kc">ELEMENTS</span></div>
+    <div class="kd" style="white-space:pre-line;opacity:.92">${esc(c.otxt)}</div></div>`);
+  if(u){
+    const st=[];
+    if(u.frozen>0) st.push(`얼어붙음 ${u.frozen}턴 — 공격도 능력도 못 쓴다`);
+    if(u.delayed>0) st.push(`지연 ${u.delayed}턴`);
+    if(u.poison>0) st.push(`독 ${u.poison} — 자기 턴마다 그만큼 깎인다`);
+    if(u.used) st.push('이번 턴 능력을 이미 썼다');
+    if(u.charges>1) st.push(`${u.charges}개 쌓여 있다`);
+    if(st.length) box.push(`<div class="zdef"><div class="k"><span class="kn">지금 상태</span></div>
+      <div class="kd">${st.join('<br>')}</div></div>`);
+  }
+  return `<div class="zwrap">${etgCardHTML(c,{size:'lg',unit:u})}
+    <div class="zside">${box.join('')}</div></div>
+    <div class="zhint">아무 곳이나 눌러 닫기</div>`;
+}
+let lpT=null, lpFired=false, lpDown=false, lpX=0, lpY=0;
+const zoomEl=()=>document.getElementById('zoom');
+const zoomOn=()=>zoomEl().classList.contains('on');
+function showZoom(c,u){
+  const z=zoomEl(); z.innerHTML=zoomHTML(c,u); z.classList.add('on');
+  setTimeout(()=>document.addEventListener('pointerdown',hideZoom,{once:true,capture:true}),60);
+}
+function hideZoom(){ const z=zoomEl(); if(!z.classList.contains('on'))return;
+  z.classList.remove('on'); z.innerHTML=''; lpFired=true; }
+/* 손패·판·덱 편집기 어디서든 같은 손짓으로 열린다 */
+function cardAt(t){
+  const sl=t.closest&&t.closest('.slot.occ');
+  if(sl&&sl.dataset.uid){ const u=byUid(+sl.dataset.uid); if(u)return [u.c,u]; }
+  const hc=t.closest&&t.closest('.hcw[data-h]');
+  if(hc&&G){ const u=G.me.hand[+hc.dataset.h]; if(u)return [u.c,u]; }
+  const dc=t.closest&&t.closest('[data-code]');
+  if(dc){ const c=CARD[+dc.dataset.code]; if(c)return [c,null]; }
+  return null;
+}
+document.addEventListener('pointerdown',e=>{
+  if(zoomOn())return;
+  const hit=cardAt(e.target); if(!hit)return;
+  lpFired=false; lpDown=true; lpX=e.clientX; lpY=e.clientY;
+  clearTimeout(lpT);
+  lpT=setTimeout(()=>showZoom(hit[0],hit[1]),420);   /* 본편과 같은 420ms */
+});
+document.addEventListener('pointermove',e=>{
+  if(lpT&&Math.hypot(e.clientX-lpX,e.clientY-lpY)>12){ clearTimeout(lpT); lpT=null; }
+},{passive:true});
+['pointerup','pointercancel','scroll'].forEach(ev=>document.addEventListener(ev,()=>{
+  clearTimeout(lpT); lpT=null;
+  if(lpDown&&zoomOn())lpFired=true;
+  lpDown=false;
+},{passive:true}));
+document.addEventListener('contextmenu',e=>{ if(cardAt(e.target))e.preventDefault(); });
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   8.5 편의 조작 — **본편에 있는 것을 그대로** 옮긴다
+   ───────────────────────────────────────────────────────────────────────────
+   손패에서 끌어내 내기 · 화살표로 겨누기 · 알림줄. 본편 prototype/index.html 의
+   드래그·타게팅을 그대로 옮겼고, CSS(.dgh · .dztip · #tgtsvg · .tgtdim · .toast)는
+   build_etg_page.py 가 본편에서 통째로 가져다 붙인 것을 쓴다 — 규격이 두 벌이 되지 않게.
+
+   ⚠ 본편과 다른 점 하나: 이 게임은 **기물 자리와 크리처 자리가 갈려 있다.**
+     그래서 '어디에 떨궜는가' 는 안 본다 — 손패 밖으로 나가면 곧 발동이고,
+     자리는 카드 종류가 정한다. 끼워 넣을 자리를 고르는 dropbar 도 쓰지 않는다
+     (엘리멘츠는 크리처 순서가 규칙에 아무 영향을 주지 않는다).
+   ═══════════════════════════════════════════════════════════════════════════ */
+function toast(msg){
+  document.querySelectorAll('.toast').forEach(e=>e.remove());
+  const t=document.createElement('div'); t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t); setTimeout(()=>t.remove(),1600);
+}
+/* 왜 못 내는지 한 줄로 — 아무 말 없이 안 나가면 '조작이 안 된다' 로 읽힌다 */
+function whyNot(p,u){
+  if(G.over) return '판이 끝났다';
+  if(G.turn!==G.me) return '내 턴이 아니다';
+  if(p.sabbath) return '침묵 — 이번 턴엔 카드를 못 낸다';
+  const c=costOf(u);
+  if(!canPay(p,c.e,c.n)) return `${c.n}${c.e?ELKO[c.e]:'(아무)'} 퀀텀이 모자라다`;
+  if(u.kind==='creature'&&p.cr.indexOf(null)<0) return '크리처 자리가 없다';
+  if(u.kind==='perm'&&!u.c.flags.includes('stackable')&&p.pm.indexOf(null)<0) return '기물 자리가 없다';
+  const t=needsTarget(u);
+  if(t&&!targetsFor(t,p).length) return '겨눌 대상이 없다';
+  return '';
+}
+/* ── 손패에서 끌어내기 ── */
+let DR=null, dg=null, HANDLOCK=false;
+const handEl=()=>document.getElementById('hand');
+function inHand(x,y){
+  const el=handEl(); if(!el)return false;
+  const r=el.getBoundingClientRect();
+  return x>=r.left-10&&x<=r.right+10&&y>=r.top-8&&y<=r.bottom+12;
+}
+function dragStart(i,x,y,pid){
+  if(!G||G.over||G.turn!==G.me)return;
+  const u=G.me.hand[i]; if(!u)return;
+  hideZoom(); endTargeting();
+  clearTimeout(lpT); lpT=null;
+  const why=whyNot(G.me,u);
+  /* ⚠ 손패를 다시 그리면 지금 손가락이 잡고 있는 노드가 사라진다. 다시 그리지 않는다. */
+  const src=document.querySelector(`.hcw[data-h="${i}"]`);
+  if(src)src.classList.add('dragging');
+  /* 퀀텀줄에 '이 카드가 먹는 통' 을 표시한다. 손패는 다시 그리지 않고 줄만 갈아 끼운다 —
+     지금 손가락이 잡고 있는 노드를 지우면 드래그가 끊긴다. */
+  setNeed(u); refreshQbars();
+  const g=document.createElement('div'); g.className='dgh';
+  g.innerHTML=etgCardHTML(u.c,{size:'md'});
+  document.body.appendChild(g);
+  const tip=document.createElement('div'); tip.className='dztip'+(why?' bad':'');
+  tip.textContent=why?`${u.c.ko} — ${why}`
+    :`${u.c.ko} — 손패 밖에 놓으면 ${needsTarget(u)?'대상 지정으로':'발동'}`;
+  document.body.appendChild(tip);
+  document.body.classList.add('dragmode');
+  DR={i,u,g,tip,ok:!why,why,pid};
+  dragMove(x,y);
+}
+function dragMove(x,y){
+  if(!DR)return;
+  DR.g.style.transform=`translate(${x-46}px,${y-74}px) rotate(-3.5deg) scale(1.05)`;
+  const armed=!inHand(x,y)&&DR.ok;
+  DR.g.classList.toggle('ok',armed); DR.g.classList.toggle('bad',!DR.ok);
+  DR.tip.classList.toggle('ok',armed);
+  document.body.classList.toggle('armed',armed);
+}
+function dragEnd(x,y,cancel){
+  if(!DR)return; const d=DR; DR=null;
+  d.g.remove(); d.tip.remove();
+  if(d.pid!=null){ try{document.body.releasePointerCapture(d.pid);}catch(_){} }
+  document.body.classList.remove('dragmode','armed');
+  document.querySelectorAll('.hcw.dragging').forEach(e=>e.classList.remove('dragging'));
+  NEED=null;
+  if(cancel||inHand(x,y)){ render(); return; }
+  if(!d.ok){ toast(`${d.u.c.ko} — ${d.why}`); render(); return; }
+  const t=needsTarget(d.u);
+  /* ⚠ 대상이 필요한 카드는 **떨군 자리에 바로 꽂지 않는다.** 내려놓는 손짓과 겨누는 손짓이
+     한 동작에 섞이면 판이 붐빌수록 엉뚱한 몸에 꽂힌다(본편에서 같은 이유로 지름길을 없앴다). */
+  if(t){ SEL=d.u; TGT={kind:t,src:d.u,mode:'play'}; startTargeting(x,y); render(); return; }
+  playCard(G.me,d.u,null); SEL=null; render();
+}
+/* ── 화살표로 겨누기 ── */
+let ARR=null;
+function startTargeting(x,y){
+  const bd=document.getElementById('myBoard');
+  const hr=handEl()?handEl().getBoundingClientRect():{left:0,width:0,top:0};
+  const br=bd?bd.getBoundingClientRect():null;
+  const ox=br&&br.width?br.left+br.width/2:hr.left+hr.width/2;
+  const oy=br&&br.width?br.top+br.height/2:hr.top-18;
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.id='tgtsvg'; document.body.appendChild(svg);
+  document.body.classList.add('tgtmode');
+  ARR={svg,ox,oy};
+  toast(TGT.kind==='any'?'빛나는 대상이나 체력 막대를 누르세요 · 빈 곳을 누르면 취소'
+                        :'빛나는 대상을 누르세요 · 빈 곳을 누르면 취소');
+  arrowDraw(x===undefined?ox:x, y===undefined?oy-60:y);
+}
+function arrowValid(x,y){
+  const el=document.elementFromPoint(x,y); if(!el||!el.closest)return null;
+  if(TGT&&TGT.kind==='any'&&el.closest('.bar')) return {face:el.closest('#foeBar')?G.ai:G.me};
+  const sl=el.closest('.slot.occ[data-uid]'); if(!sl)return null;
+  const u=byUid(+sl.dataset.uid);
+  return (u&&isTarget(u))?{unit:u}:null;
+}
+function arrowDraw(x,y){
+  if(!ARR)return;
+  const x1=ARR.ox, y1=ARR.oy, dx=x-x1, dy=y-y1;
+  const cx=x1+dx*0.5, cy=y1+dy*0.5-Math.min(150,Math.abs(dx)*0.45+40);
+  ARR.svg.classList.toggle('bad',!arrowValid(x,y));
+  const ang=Math.atan2(y-cy,x-cx), L=15;
+  const p1=`${x-L*Math.cos(ang-0.42)},${y-L*Math.sin(ang-0.42)}`;
+  const p2=`${x-L*Math.cos(ang+0.42)},${y-L*Math.sin(ang+0.42)}`;
+  ARR.svg.innerHTML=`<path class="ln" d="M${x1},${y1} Q${cx},${cy} ${x},${y}"/>`
+    +`<polygon class="hd" points="${x},${y} ${p1} ${p2}"/>`;
+}
+function endTargeting(){
+  if(!ARR)return;
+  ARR.svg.remove(); document.body.classList.remove('tgtmode'); ARR=null;
+}
+function fireAt(hit){
+  const t=TGT, tgt=hit.unit||hit.face;
+  endTargeting(); SEL=null; TGT=null; NEED=null;
+  if(t.mode==='play') playCard(G.me,t.src,tgt); else useAbility(G.me,t.src,tgt);
+  render();
+}
+/* 겨누는 동안은 슬롯의 기본 클릭보다 **먼저** 가로챈다 */
+document.addEventListener('pointerdown',e=>{
+  if(!ARR)return;
+  const hit=arrowValid(e.clientX,e.clientY);
+  e.stopPropagation(); e.preventDefault();
+  if(hit) { lpFired=true; fireAt(hit); }
+  else { endTargeting(); SEL=null; TGT=null; NEED=null; render(); toast('취소 — 카드가 손으로 돌아왔다'); }
+},true);
+document.addEventListener('pointermove',e=>{ if(ARR)arrowDraw(e.clientX,e.clientY); },{passive:true});
+/* ── 제스처 가르기 — 가로는 손패 넘기기, 위로는 카드 끌어내기 ── */
+document.addEventListener('pointerdown',e=>{
+  const hc=e.target.closest&&e.target.closest('.hcw[data-h]'); if(!hc||!G)return;
+  /* ⚠ 못 내는 카드도 **끌리게 둔다.** 아무 반응이 없으면 '드래그가 안 된다' 로 읽힌다 —
+     놓는 순간 왜 안 되는지 알려 준다(본편에서 같은 판단을 했다). */
+  dg={i:+hc.dataset.h,x:e.clientX,y:e.clientY,id:e.pointerId};
+});
+document.addEventListener('pointermove',e=>{
+  if(DR){ e.preventDefault(); dragMove(e.clientX,e.clientY); return; }
+  if(!dg)return;
+  const dx=e.clientX-dg.x, dy=e.clientY-dg.y;
+  if(Math.abs(dx)>14&&Math.abs(dx)>Math.abs(dy)*1.4){ dg=null; return; }   /* 가로 = 손패 넘기기 */
+  if(dy<-14||Math.hypot(dx,dy)>26){
+    const i=dg.i, pid=dg.id; dg=null; dragStart(i,e.clientX,e.clientY,pid);
+    /* 손가락을 몸통에 붙들어 둔다 — 중간에 노드가 사라져도 pointermove 가 안 끊긴다 */
+    if(DR&&pid!=null){ try{document.body.setPointerCapture(pid);}catch(_){} }
+  }
+},{passive:false});
+document.addEventListener('pointerup',e=>{ if(DR){ lpFired=true; dragEnd(e.clientX,e.clientY,false); } dg=null; });
+document.addEventListener('pointercancel',()=>{ if(DR){ dragEnd(0,0,true); toast('제스처가 중단되어 취소됐다'); } dg=null; });
+/* 확대 제스처·컨텍스트 메뉴 차단 — 본편과 같다 */
+['gesturestart','gesturechange','gestureend'].forEach(t=>
+  document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+document.addEventListener('touchmove',e=>{ if(e.touches.length>1)e.preventDefault(); },{passive:false});
+
+/* ── 덱 만들기 ─────────────────────────────────────────────────────────── */
+let BUILD_EL=6, BUILD_MARK=6, DKB={};
+function deckList(b){ const a=[]; Object.keys(b).forEach(c=>{ for(let i=0;i<b[c];i++)a.push(+c); }); return a; }
+function screenBuild(){
+  const pool=POOLS[BUILD_EL].concat(POOLS[0]);
+  const n=Object.values(DKB).reduce((a,b)=>a+b,0);
+  const elbtn=(i,cur,attr)=>`<button data-${attr}="${i}" class="elb${i===cur?' on':''}"
+    style="--dc:${ELC[i]}">${ELKO[i]}</button>`;
+  SCR.innerHTML=`
+  <div class="panel">
+    <div class="lbl">속성</div>
+    <div class="deckpick">${ELS.map((e,i)=>i?elbtn(i,BUILD_EL,'el'):'').join('')}</div>
+    <div class="lbl" style="margin-top:8px">문장</div>
+    <div class="deckpick">${ELS.map((e,i)=>i?elbtn(i,BUILD_MARK,'mk'):'').join('')}</div>
+    <div class="dmech">문장은 <b>매 턴 끝</b>에 그 속성 퀀텀 1을 공짜로 준다.
+      덱은 30~60장, 같은 카드는 6장까지. 퀀텀은 <b>속성별로 쌓인다</b>(상한 75).</div>
+  </div>
+  <div class="panel">
+    <div class="ctl" style="justify-content:space-between">
+      <div class="hint ${n<DECKMIN||n>DECKMAX?'idle':'act'}">덱 ${n}장 ${
+        n<DECKMIN?`· ${DECKMIN-n}장 더`:n>DECKMAX?`· ${n-DECKMAX}장 많다`:'· 준비됐다'}</div>
+      <span class="ctl">
+        <button class="ghost" id="auto">자동 구성</button>
+        <button class="ghost" id="clr">비우기</button>
+        <button id="go"${(n<DECKMIN||n>DECKMAX)?' disabled':''}>싸우러 간다 →</button>
+        <button class="ghost" id="home">← TEN</button>
+      </span>
+    </div>
+  </div>
+  <div class="pickgrid">
+    ${pool.map(c=>{const k=DKB[c.code]||0;
+      return `<div class="pcard${k?' has':''}" data-code="${c.code}">
+        ${etgCardHTML(c,{size:'md'})}
+        <div class="pctl"><button data-m="${c.code}">−</button><b>${k}</b><button data-p="${c.code}">+</button></div>
+      </div>`;}).join('')}
+  </div>
+  <p class="foot">카드를 <b>길게 누르면</b> 효과 전문이 뜬다.</p>`;
+  SCR.querySelectorAll('[data-el]').forEach(b=>b.onclick=()=>{BUILD_EL=+b.dataset.el;screenBuild();});
+  SCR.querySelectorAll('[data-mk]').forEach(b=>b.onclick=()=>{BUILD_MARK=+b.dataset.mk;screenBuild();});
+  SCR.querySelectorAll('[data-p]').forEach(b=>b.onclick=ev=>{ev.stopPropagation();
+    const c=+b.dataset.p, t=Object.values(DKB).reduce((a,x)=>a+x,0);
+    if((DKB[c]||0)<COPYMAX&&t<DECKMAX){DKB[c]=(DKB[c]||0)+1;screenBuild();}});
+  SCR.querySelectorAll('[data-m]').forEach(b=>b.onclick=ev=>{ev.stopPropagation();
+    const c=+b.dataset.m; if(DKB[c]){DKB[c]--;if(!DKB[c])delete DKB[c];screenBuild();}});
+  $('#clr').onclick=()=>{DKB={};screenBuild();};
+  $('#home').onclick=()=>{ location.href='../index.html';   /* ⚠ '../' 는 file:// 에서 목록이 뜬다 */ };
+  $('#auto').onclick=()=>{DKB=autoDeck(BUILD_EL);screenBuild();};
+  $('#go').onclick=()=>{ startGame(deckList(DKB),BUILD_MARK); };
+}
+/* 자동 구성 — 기둥 12 + 싼 것 위주 */
+function autoDeck(el){
+  const d={};
+  const pool=POOLS[el].filter(c=>!c.sk.some(s=>s.id==='pillar'||s.id==='pend'));
+  const pillar=POOLS[el].find(c=>c.sk.some(s=>s.id==='pillar'));
+  if(pillar) d[pillar.code]=6;
+  const qp=BYNAME['Quantum Pillar']; if(qp&&playable(qp)) d[qp.code]=6;
+  const sorted=pool.slice().sort((a,b)=>a.cost-b.cost);
+  let n=12;
+  for(const c of sorted){ if(n>=DECKMIN+6)break; const k=Math.min(COPYMAX,DECKMIN+6-n);
+    d[c.code]=k; n+=k; }
+  return d;
+}
+
+/* ── 판 시작 ───────────────────────────────────────────────────────────── */
+function startGame(deck,mark){
+  const aiEl=1+rnd(12);
+  const aiDeck=deckList(autoDeck(aiEl));
+  G={me:newPlayer(deck,mark,'나'),ai:newPlayer(aiDeck,aiEl,'상대'),turn:null,log:[],over:false};
+  for(let i=0;i<7;i++){ draw(G.me); draw(G.ai); }
+  G.turn=G.me;
+  log(`엘리멘츠 대전 시작 — 문장 ${ELKO[mark]} / 상대 ${ELKO[aiEl]}`,'b');
+  SEL=null;TGT=null;
+  render();
+}
+const UIDS=new Map(); let UN=0;
+function uid(u){ if(!UIDS.has(u))UIDS.set(u,++UN); return UIDS.get(u); }
+function byUid(n){ for(const [u,v] of UIDS) if(v===n) return u; return null; }
+function isTarget(u){
+  if(!TGT)return false;
+  const k=TGT.kind, mine=u.own===G.me;
+  if(u.flags&&u.flags.includes('immaterial')&&k!=='any')return false;
+  if(k==='cr')return u.kind==='creature';
+  if(k==='mycr')return u.kind==='creature'&&mine;
+  if(k==='foecr')return u.kind==='creature'&&!mine;
+  if(k==='pm')return u.kind!=='creature';
+  if(k==='foepm')return u.kind!=='creature'&&!mine;
+  if(k==='crw')return u.kind==='creature'||u.kind==='weapon';
+  if(k==='any')return true;
+  return false;
+}
+window.addEventListener('resize',()=>{ if(!G)return;
+  ['foePm','foeBoard','myBoard','myPm'].forEach(id=>packRow(document.getElementById(id)));
+  packHand(); });
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+window.ETGDBG={get G(){return G;},SK,MISS,POOLS,CARD,BYNAME,playable,startGame,autoDeck,
+  deckList,endTurn,render,attack,kill,summon,mk,playCard,useAbility,draw,canPlay,
+  showZoom,etgCardHTML,VERSION};
+screenBuild();
+
+</script>
+</body>
+</html>

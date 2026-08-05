@@ -1,0 +1,16 @@
+{
+  "name": "TEN — 카드 목록",
+  "short_name": "TEN 카드",
+  "description": "TEN의 카드 140종과 원정 적 35명의 덱을 게임과 같은 규격으로 본다.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#120d09",
+  "theme_color": "#120d09",
+  "lang": "ko",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

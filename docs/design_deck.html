@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light">
+<title>TEN — 시스템 설계 개요</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@500;700;900&family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:light only;
+  --paper:#EDEFF2;
+  --paper-2:#E3E6EB;
+  --ink:#141821;
+  --ink-soft:#4A5364;
+  --ink-faint:#8A94A6;
+  --rule:#C6CCD6;
+  --indigo:#2D3BAF;
+  --teal:#0F8A80;
+  --amber:#B87400;
+  --crimson:#B03A3F;
+  --violet:#6A4FBF;
+  --slot:#D6DAE2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'Noto Sans KR',sans-serif;
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+/* faint engineering grid */
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(to right,rgba(20,24,33,.045) 1px,transparent 1px),
+    linear-gradient(to bottom,rgba(20,24,33,.045) 1px,transparent 1px);
+  background-size:28px 28px;
+}
+
+/* ---------- slot strip : signature ---------- */
+.strip{
+  position:fixed;top:0;left:0;right:0;height:6px;z-index:40;
+  display:grid;grid-template-columns:repeat(12,1fr);gap:2px;
+  padding:0 0 0 0;background:var(--paper-2);
+}
+.strip i{background:var(--slot);transition:background .45s cubic-bezier(.2,.7,.3,1)}
+.strip i.on{background:var(--ink)}
+
+.deck{position:relative;z-index:1;height:100%}
+.slide{
+  position:absolute;inset:0;
+  display:none;
+  padding:76px clamp(28px,6vw,110px) 92px;
+  flex-direction:column;justify-content:center;
+  max-width:1440px;margin:0 auto;
+}
+.slide.active{display:flex;animation:rise .5s cubic-bezier(.2,.7,.3,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+.eyebrow{
+  font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;
+  letter-spacing:.22em;text-transform:uppercase;color:var(--ink-faint);
+  display:flex;align-items:center;gap:12px;margin-bottom:22px;
+}
+.eyebrow::after{content:'';flex:1;height:1px;background:var(--rule);max-width:180px}
+
+h2{
+  font-family:'Gothic A1',sans-serif;font-weight:900;
+  font-size:clamp(30px,4.2vw,56px);line-height:1.08;letter-spacing:-.02em;
+  margin-bottom:20px;
+}
+h3{
+  font-family:'Gothic A1',sans-serif;font-weight:700;
+  font-size:15px;letter-spacing:-.01em;margin-bottom:10px;
+}
+p{font-size:clamp(13px,1.15vw,15.5px);line-height:1.75;color:var(--ink-soft);max-width:62ch;font-weight:300}
+strong{font-weight:700;color:var(--ink)}
+.lede{font-size:clamp(15px,1.5vw,19px);line-height:1.65;color:var(--ink-soft);max-width:54ch}
+
+/* ---------- title ---------- */
+.cover{justify-content:center}
+.wordmark{
+  font-family:'Gothic A1',sans-serif;font-weight:900;
+  font-size:clamp(88px,20vw,240px);line-height:.82;letter-spacing:-.055em;
+}
+.wordmark span{color:var(--teal)}
+.cover .sub{
+  font-family:'JetBrains Mono',monospace;font-size:clamp(11px,1.1vw,13px);
+  letter-spacing:.28em;text-transform:uppercase;color:var(--ink-faint);
+  margin-top:26px;
+}
+.cover .tag{margin-top:30px;font-size:clamp(15px,1.7vw,21px);font-weight:300;color:var(--ink-soft);max-width:40ch;line-height:1.6}
+
+/* board demo on cover */
+.board{
+  display:grid;grid-template-columns:repeat(10,1fr);gap:6px;
+  max-width:520px;margin-top:44px;
+}
+.board div{
+  aspect-ratio:2/3;border:1px solid var(--rule);background:transparent;border-radius:2px;
+}
+.board div.f{background:var(--ink);border-color:var(--ink)}
+.board div.g{background:var(--teal);border-color:var(--teal)}
+.board div.e{background:var(--violet);border-color:var(--violet)}
+.board div.a{background:var(--amber);border-color:var(--amber)}
+
+/* ---------- grids ---------- */
+.cols{display:grid;gap:clamp(18px,2.4vw,40px);margin-top:8px}
+.c2{grid-template-columns:1fr 1fr}
+.c3{grid-template-columns:repeat(3,1fr)}
+.c4{grid-template-columns:repeat(4,1fr)}
+.split{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(24px,4vw,64px);align-items:start}
+
+.card{
+  border-top:2px solid var(--ink);padding-top:14px;
+}
+.card.teal{border-color:var(--teal)}
+.card.violet{border-color:var(--violet)}
+.card.crimson{border-color:var(--crimson)}
+.card.amber{border-color:var(--amber)}
+.card .k{
+  font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px;
+}
+.card p{font-size:13.5px;line-height:1.7}
+
+/* stat blocks */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--rule);border:1px solid var(--rule);margin-top:30px}
+.stats div{background:var(--paper);padding:18px 16px}
+.stats .n{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(26px,3.4vw,42px);letter-spacing:-.03em;line-height:1}
+.stats .l{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);margin-top:9px}
+
+/* ---------- table ---------- */
+table{border-collapse:collapse;width:100%;font-family:'JetBrains Mono',monospace;font-size:clamp(11px,1.05vw,13.5px)}
+th{
+  text-align:left;font-weight:500;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ink-faint);padding:0 12px 9px 0;border-bottom:1px solid var(--ink);
+}
+td{padding:9px 12px 9px 0;border-bottom:1px solid var(--rule);color:var(--ink-soft)}
+td:first-child{color:var(--ink);font-weight:700}
+tr:hover td{background:rgba(45,59,175,.045)}
+.num{font-variant-numeric:tabular-nums}
+.hl{color:var(--indigo);font-weight:700}
+
+/* formula */
+.formula{
+  font-family:'JetBrains Mono',monospace;font-size:clamp(13px,1.4vw,17px);font-weight:500;
+  background:var(--ink);color:var(--paper);padding:15px 20px;border-radius:3px;
+  display:inline-block;letter-spacing:-.01em;margin:6px 0 4px;
+}
+.formula em{color:var(--teal);font-style:normal}
+
+/* tag chips */
+.chip{
+  display:inline-flex;align-items:center;gap:7px;
+  font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
+  border:1px solid currentColor;padding:4px 9px;border-radius:2px;font-weight:500;
+}
+.chip.teal{color:var(--teal)}
+.chip.amber{color:var(--amber)}
+.chip.violet{color:var(--violet)}
+.chip.crimson{color:var(--crimson)}
+
+/* combat diagram */
+.lane{display:flex;align-items:center;gap:10px;margin:14px 0;flex-wrap:wrap}
+.unit{
+  width:52px;height:70px;border:1.5px solid var(--rule);border-radius:3px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--ink-faint);
+  background:var(--paper);flex:none;
+}
+.unit.guard{border-color:var(--teal);color:var(--teal);border-width:2.5px}
+.unit.fly{border-color:var(--amber);color:var(--amber);border-style:dashed}
+.unit.dead{opacity:.28}
+.unit small{font-weight:400;font-size:8.5px;letter-spacing:.1em;margin-top:4px;text-transform:uppercase}
+.arrow{font-family:'JetBrains Mono',monospace;color:var(--ink-faint);font-size:14px}
+.hero-hp{
+  font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;
+  border:1.5px solid var(--ink);padding:9px 12px;border-radius:3px;
+}
+
+/* charge meter */
+.meter{display:flex;gap:4px;margin-top:10px}
+.meter i{width:15px;height:26px;border:1.5px solid var(--violet);border-radius:2px}
+.meter i.used{background:var(--violet);opacity:.16;border-color:var(--rule)}
+
+/* open questions */
+.q{border-left:2px solid var(--crimson);padding-left:16px}
+.q .k{color:var(--crimson)}
+
+/* nav */
+.nav{
+  position:fixed;bottom:0;left:0;right:0;height:56px;z-index:40;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 clamp(20px,4vw,48px);
+  border-top:1px solid var(--rule);background:rgba(237,239,242,.92);
+  backdrop-filter:blur(6px);
+  font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;
+}
+.nav .t{color:var(--ink-faint);text-transform:uppercase}
+.nav .btns{display:flex;gap:6px}
+.nav button{
+  font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;
+  background:transparent;border:1px solid var(--rule);color:var(--ink);
+  width:34px;height:30px;border-radius:2px;cursor:pointer;transition:.16s;
+}
+.nav button:hover:not(:disabled){background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.nav button:disabled{opacity:.3;cursor:default}
+.nav button:focus-visible,.slide:focus-visible{outline:2px solid var(--indigo);outline-offset:2px}
+.counter{font-weight:700;font-variant-numeric:tabular-nums}
+.counter s{text-decoration:none;color:var(--ink-faint);font-weight:400}
+
+.note{font-size:12px;color:var(--ink-faint);font-family:'JetBrains Mono',monospace;line-height:1.7;margin-top:14px}
+
+@media (max-width:860px){
+  .c2,.c3,.c4,.split{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .slide{padding:60px 22px 76px;justify-content:flex-start;overflow-y:auto}
+  .board{max-width:100%}
+  table{font-size:10.5px}
+  td,th{padding-right:6px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+/* 기기가 다크모드여도 팔레트를 그대로 유지 */
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#EDEFF2; --paper-2:#E3E6EB; --ink:#141821;
+    --ink-soft:#4A5364; --ink-faint:#8A94A6; --rule:#C6CCD6; --slot:#D6DAE2;
+  }
+  body{background:#EDEFF2;color:#141821}
+  .nav{background:rgba(237,239,242,.92)}
+  .stats div,.unit{background:#EDEFF2}
+  .formula{background:#141821;color:#EDEFF2}
+}
+</style>
+</head>
+<body>
+
+<div class="strip" id="strip"></div>
+
+<main class="deck" id="deck">
+
+  <!-- 1 -->
+  <section class="slide cover active">
+    <div class="wordmark">TE<span>N</span></div>
+    <div class="sub">Card Battler · System Design Draft · 2026.07</div>
+    <div class="tag">슬롯 10개. 크리처는 매 턴 자동으로 때리고, 스펠만이 그걸 멈춘다.</div>
+    <div class="board">
+      <div class="g"></div><div class="g"></div><div class="f"></div><div class="f"></div>
+      <div class="a"></div><div class="e"></div><div class="f"></div><div></div><div></div><div></div>
+    </div>
+    <div class="note">■ 크리처 &nbsp;■ 수호 &nbsp;■ 비행 &nbsp;■ 인챈트 &nbsp;□ 빈 슬롯</div>
+  </section>
+
+  <!-- 2 -->
+  <section class="slide">
+    <div class="eyebrow">01 — 한 줄 요약</div>
+    <h2>서로 때리지 않는<br>보드 레이스</h2>
+    <p class="lede">크리처끼리는 전투하지 않는다. 각자 자기 턴 종료마다 상대 플레이어를 때릴 뿐이다. 개입 수단은 오직 <strong>스펠</strong>과 <strong>수호</strong>. 그래서 이 게임의 모든 판단은 "얼마나 빨리 쌓느냐"와 "언제 끊느냐" 두 축으로 수렴한다.</p>
+    <div class="stats">
+      <div><div class="n">60</div><div class="l">시작 HP</div></div>
+      <div><div class="n">6</div><div class="l">마나 상한</div></div>
+      <div><div class="n">10</div><div class="l">보드 슬롯</div></div>
+      <div><div class="n">10–13</div><div class="l">예상 턴 수</div></div>
+    </div>
+    <p class="note">무저항(골드피시) 킬 7~8턴 / 제거가 오갈 경우 10~13턴</p>
+  </section>
+
+  <!-- 3 -->
+  <section class="slide">
+    <div class="eyebrow">02 — 카드 타입</div>
+    <h2>세 종류, 세 가지 역할</h2>
+    <div class="cols c3">
+      <div class="card">
+        <div class="k">Creature</div>
+        <h3>크리처 — 딜 엔진</h3>
+        <p>공격력(ATK)과 체력(HP)을 가진다. <strong>내 턴 종료 시</strong> ATK만큼 상대 플레이어를 때린다. 한 번 깔면 계속 일한다.</p>
+      </div>
+      <div class="card crimson">
+        <div class="k">Spell</div>
+        <h3>스펠 — 유일한 개입</h3>
+        <p>즉시 소모. 크리처에 피해를 주거나 인챈트의 충전을 깎는다. 이 게임에서 상대 보드를 건드릴 수 있는 유일한 수단이다.</p>
+      </div>
+      <div class="card violet">
+        <div class="k">Enchant</div>
+        <h3>인챈트 — 유한 엔진</h3>
+        <p>충전량을 갖고 필드에 남는다. 소진되면 사라진다. 슬롯을 크리처와 나눠 쓰므로 항상 기회비용이 붙는다.</p>
+      </div>
+    </div>
+    <p class="note">스펠은 크리처와 인챈트를 같은 문법으로 다룬다 — "수치를 X만큼 깎는다". 덕분에 죽은 카드가 생기지 않는다.</p>
+  </section>
+
+  <!-- 4 -->
+  <section class="slide">
+    <div class="eyebrow">03 — 턴 진행</div>
+    <h2>턴 종료가 곧 공격</h2>
+    <div class="split">
+      <div>
+        <table>
+          <tr><td style="width:34px">1</td><td>마나 충전 — 턴 수만큼, 최대 6</td></tr>
+          <tr><td>2</td><td>드로우</td></tr>
+          <tr><td>3</td><td>카드 플레이 — 슬롯 위치 직접 지정</td></tr>
+          <tr><td>4</td><td class="hl">턴 종료 — 내 크리처가 순차 공격</td></tr>
+          <tr><td>5</td><td>인챈트 충전 소모 판정</td></tr>
+        </table>
+        <p class="note">공격은 <strong style="color:var(--ink)">내 턴 종료에만</strong> 1회 발동한다. 상대 턴 종료에는 발동하지 않는다.</p>
+      </div>
+      <div>
+        <h3>공격 처리 규칙</h3>
+        <p>보드 전체 ATK를 합산하지 <strong>않는다.</strong> 크리처 개체 단위로 하나씩 순차 처리하며, 초과 피해는 이월되지 않는다.</p>
+        <div class="lane">
+          <div class="unit">5<small>ATK</small></div>
+          <div class="arrow">→</div>
+          <div class="unit guard">2<small>HP</small></div>
+          <div class="arrow">＝</div>
+          <div class="unit guard dead">0<small>사망</small></div>
+        </div>
+        <p class="note">남은 3 피해는 소멸. 다음 크리처로 넘어가지 않는다.<br>→ 수호는 "피해량"이 아니라 <strong style="color:var(--ink)">공격 횟수</strong>를 흡수하는 자원이 된다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section class="slide">
+    <div class="eyebrow">04 — 보드</div>
+    <h2>슬롯 10개를 나눠 쓴다</h2>
+    <div class="split">
+      <div>
+        <p>크리처와 인챈트가 <strong>같은 10칸</strong>을 공유한다. 인챈트를 깔면 그만큼 딜이 줄어든다. 이 게임의 기본 긴장이 여기서 나온다.</p>
+        <div class="board" style="max-width:100%;margin-top:26px">
+          <div class="g"></div><div class="g"></div><div class="f"></div><div class="f"></div>
+          <div class="a"></div><div class="e"></div><div class="f"></div><div></div><div></div><div></div>
+        </div>
+        <p class="note">왼쪽부터 배치. 배치 순서가 곧 방어 순서다.</p>
+      </div>
+      <div>
+        <h3>스택 — 동명 크리처 중첩</h3>
+        <p>같은 이름의 크리처는 한 슬롯에 겹친다. <strong>최대 5중첩.</strong></p>
+        <table style="margin-top:18px">
+          <tr><td>총 ATK</td><td>ATK × 중첩 수</td></tr>
+          <tr><td>체력</td><td>개체별 독립</td></tr>
+          <tr><td>단일 제거</td><td>1개체만 처치</td></tr>
+          <tr><td class="hl">광역 스펠</td><td class="hl">스택 전체에 적용</td></tr>
+        </table>
+        <p class="note">뭉치면 슬롯이 남고, 흩으면 광역에서 안전하다.<br>이 교환이 덱 구성의 첫 번째 갈림길이다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section class="slide">
+    <div class="eyebrow">05 — 태그</div>
+    <h2><span style="color:var(--teal)">수호</span> — 대신 맞는다</h2>
+    <div class="split">
+      <div>
+        <p>수호 크리처가 있으면 플레이어 대신 피해를 받는다. 대상은 <strong>왼쪽 슬롯부터 자동</strong>으로 정해진다. 플레이어가 고르지 않는다.</p>
+        <div class="lane" style="margin-top:26px">
+          <div class="unit">3<small>ATK</small></div>
+          <div class="arrow">→</div>
+          <div class="unit guard">수호<small>slot 1</small></div>
+          <div class="unit guard">수호<small>slot 2</small></div>
+          <div class="unit">일반<small>slot 3</small></div>
+          <div class="arrow">✕</div>
+          <div class="hero-hp">HP 60</div>
+        </div>
+        <table style="margin-top:24px">
+          <tr><td>피해 누적</td><td>턴이 지나도 회복되지 않음</td></tr>
+          <tr><td>대상 선택</td><td>왼쪽부터 자동, 선택 불가</td></tr>
+          <tr><td>직접 피해 스펠</td><td>수호를 무시하고 관통</td></tr>
+        </table>
+      </div>
+      <div>
+        <h3>수호는 템포를 파는 카드다</h3>
+        <p>3코 수호를 3코 제거로 치우면 마나도 카드도 1:1이다. 그런데 그 사이 공격 측 보드는 계속 때린다. <strong>방어에 쓴 마나는 회수되지 않는다.</strong></p>
+        <p style="margin-top:14px">이건 버그가 아니라 설계 의도다. 수호는 손해를 감수하고 <strong>6마나 구간까지 도달할 시간</strong>을 사는 카드다.</p>
+        <p class="note">튼튼함은 HP가 아니라 <strong style="color:var(--ink)">개체 수</strong>로 준다. 초과 피해가 이월되지 않으므로 HP를 올려도 흡수 횟수는 그대로다. 저코스트 수호를 스택 주력으로 설계할 것.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section class="slide">
+    <div class="eyebrow">06 — 태그</div>
+    <h2><span style="color:var(--amber)">비행</span> — 벽을 넘는다</h2>
+    <div class="split">
+      <div>
+        <p>비행 크리처는 <strong>비행이 없는 수호</strong>를 무시한다. 수호가 흔한 환경이므로, 비행은 사실상 "확정 페이스 딜"이다.</p>
+        <div class="lane" style="margin-top:24px">
+          <div class="unit fly">비행<small>ATK 4</small></div>
+          <div class="arrow">→</div>
+          <div class="unit guard" style="opacity:.3">수호<small>무시됨</small></div>
+          <div class="arrow">→</div>
+          <div class="hero-hp" style="border-color:var(--amber);color:var(--amber)">HP −4</div>
+        </div>
+        <table style="margin-top:26px">
+          <th>조합</th><th>지상 공격</th><th>비행 공격</th>
+          <tr><td>일반</td><td>막힘</td><td>—</td></tr>
+          <tr><td>수호</td><td>막음</td><td class="hl">못 막음</td></tr>
+          <tr><td>비행</td><td>우회</td><td>—</td></tr>
+          <tr><td>비행 + 수호</td><td>막음</td><td>막음</td></tr>
+        </table>
+      </div>
+      <div>
+        <h3>대상 판정 순서</h3>
+        <div class="formula">
+          공격자가 비행? →<br>
+          <em>YES</em> 왼쪽부터 스캔, "비행+수호" 첫 개체<br>
+          <em>NO</em> &nbsp;왼쪽부터 스캔, "수호" 첫 개체<br>
+          해당 없음 → 플레이어
+        </div>
+        <p style="margin-top:18px">비행 여부에 따라 <strong>스캔 필터만 바뀌고</strong> 순서 규칙은 동일하다.</p>
+        <h3 style="margin-top:26px">카드풀 비율</h3>
+        <table>
+          <tr><td>수호</td><td class="num">35 – 40%</td></tr>
+          <tr><td>비행</td><td class="num">8 – 10%</td></tr>
+          <tr><td>비행 + 수호</td><td class="num">2 – 3% (5코 이상)</td></tr>
+        </table>
+        <p class="note">비행이 30%를 넘으면 지상 수호가 통째로 무의미해진다. 비율 관리가 곧 밸런스다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 -->
+  <section class="slide">
+    <div class="eyebrow">07 — 인챈트</div>
+    <h2>충전은 닳는다</h2>
+    <div class="split">
+      <div>
+        <p>인챈트는 충전량을 갖고, 소모되면 사라진다. 타 효과로 깎일 수도 있고 자체적으로도 소진된다. 제거 스펠이 크리처 HP와 인챈트 충전을 <strong>같은 눈금</strong>으로 다루므로 대응 카드가 항상 쓸 곳을 갖는다.</p>
+        <div class="meter"><i class="used"></i><i class="used"></i><i></i><i></i><i></i><i></i></div>
+        <p class="note">충전 6 / 잔여 4</p>
+        <div class="formula" style="margin-top:22px">총 산출 <em>T</em> = 효과값 <em>E</em> × 충전 <em>C</em></div>
+      </div>
+      <div>
+        <h3>소모 타입 3종</h3>
+        <table>
+          <th>타입</th><th>소모 시점</th><th>성격</th>
+          <tr><td>지속형</td><td>내 턴 종료마다 1</td><td>수명 예측 가능</td></tr>
+          <tr><td>발동형</td><td>조건 충족 시 1</td><td>상대가 수명 결정</td></tr>
+          <tr><td>사용형</td><td>능동 사용 시 1</td><td>타이밍 장악, 최고가</td></tr>
+        </table>
+        <h3 style="margin-top:28px">데이터 스키마</h3>
+        <div class="formula" style="font-size:11.5px;line-height:1.9">id / name / cost / charge_max /<br>drain_type / drain_per / trigger /<br>effect_value / target_scope</div>
+        <p class="note">target_scope가 전체일 때는 보드 크리처 수만큼 곱해지므로 E를 절반으로 깎을 것.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 -->
+  <section class="slide">
+    <div class="eyebrow">08 — 커브</div>
+    <h2>후반이 결정적이도록</h2>
+    <div class="split">
+      <div>
+        <p>마나는 매 턴 1씩 차서 <strong>6에서 멈춘다.</strong> 대신 코스트당 가치를 지수로 올려, 6마나 구간에 결정력 있는 카드가 놓이게 한다.</p>
+        <div class="formula" style="margin-top:16px">P = 3n + 1 + <em>(n−1)² × 0.5</em></div>
+        <p style="margin-top:18px">이 구조가 저코스트 카드의 존재 이유를 바꾼다. 1~2코는 효율 좋은 딜이 아니라 <strong>6마나 구간까지 살아남기 위한 도구</strong>가 된다. 수호를 흔하게 쓰는 이유와 정확히 맞물린다.</p>
+      </div>
+      <div>
+        <table>
+          <th>코스트</th><th>예산 P</th><th>마나당</th><th>비고</th>
+          <tr><td class="num">1</td><td class="num">4</td><td class="num">4.0</td><td>기반</td></tr>
+          <tr><td class="num">2</td><td class="num">8</td><td class="num">4.0</td><td>기반</td></tr>
+          <tr><td class="num">3</td><td class="num">12</td><td class="num">4.0</td><td>전환점</td></tr>
+          <tr><td class="num">4</td><td class="num">18</td><td class="num">4.5</td><td>가속</td></tr>
+          <tr><td class="num">5</td><td class="num">24</td><td class="num">4.8</td><td>가속</td></tr>
+          <tr><td class="num hl">6</td><td class="num hl">32</td><td class="num hl">5.3</td><td class="hl">결정력 구간</td></tr>
+        </table>
+        <p class="note">6코 11/10 한 장이 2코 넷(총 8/16)보다 딜에서 앞서고 슬롯은 1개만 쓴다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section class="slide">
+    <div class="eyebrow">09 — 데이터</div>
+    <h2>태그별 스탯 예산</h2>
+    <div class="cols c3" style="margin-bottom:26px">
+      <div class="card"><div class="k">일반</div><div class="formula" style="font-size:13px">2A + H = P</div></div>
+      <div class="card teal"><div class="k">수호</div><div class="formula" style="font-size:13px">2A + 2H = P<em>+2</em></div></div>
+      <div class="card amber"><div class="k">비행</div><div class="formula" style="font-size:13px"><em>4A</em> + H = P</div></div>
+    </div>
+    <table>
+      <th>코스트</th><th>일반 (ATK/HP)</th><th>수호</th><th>비행</th>
+      <tr><td class="num">1</td><td class="num">1/2</td><td class="num">0/3</td><td>—</td></tr>
+      <tr><td class="num">2</td><td class="num">2/4 · 3/2</td><td class="num">1/4</td><td class="num">1/4</td></tr>
+      <tr><td class="num">3</td><td class="num">4/4 · 3/6</td><td class="num">1/6 · 2/5</td><td class="num">2/4</td></tr>
+      <tr><td class="num">4</td><td class="num">6/6 · 5/8</td><td class="num">2/8 · 3/7</td><td class="num">4/2 · 3/6</td></tr>
+      <tr><td class="num">5</td><td class="num">8/8 · 7/10</td><td class="num">3/10 · 4/9</td><td class="num">5/4</td></tr>
+      <tr><td class="num">6</td><td class="num">11/10 · 9/14</td><td class="num">4/13 · 5/12</td><td class="num">7/4</td></tr>
+    </table>
+    <p class="note">가중치가 수호를 저공격·고체력으로, 비행을 고공격·저체력으로 자동 분류한다. 수호 ATK는 코스트−1로 캡 유지 — 막으면서 때리는 만능 카드를 막기 위함.</p>
+  </section>
+
+  <!-- 11 -->
+  <section class="slide">
+    <div class="eyebrow">10 — 데이터</div>
+    <h2>스펠 &amp; 인챈트 티어</h2>
+    <div class="split">
+      <div>
+        <h3>스펠 — 자기 코스트 +1 등급까지 처치</h3>
+        <table style="margin-top:12px">
+          <th>코스트</th><th>단일 제거</th><th>광역</th>
+          <tr><td class="num">1</td><td class="num">2</td><td>—</td></tr>
+          <tr><td class="num">2</td><td class="num">4</td><td class="num">2</td></tr>
+          <tr><td class="num">3</td><td class="num">6</td><td class="num">3</td></tr>
+          <tr><td class="num">4</td><td class="num">8</td><td class="num">5</td></tr>
+          <tr><td class="num">5</td><td class="num">12</td><td class="num">7</td></tr>
+          <tr><td class="num">6</td><td class="num">파괴</td><td class="num">10</td></tr>
+        </table>
+        <p class="note">6코 크리처(HP 10~14)를 5코 제거(12딜)로 잡는다. 한 단계 아래 마나로 대응 가능하되 확실하지는 않은 선.</p>
+      </div>
+      <div>
+        <h3>인챈트 — T = 4n + 2 + (n−1)²×0.5</h3>
+        <table style="margin-top:12px">
+          <th>코스트</th><th>예산 T</th><th>배분 예시</th>
+          <tr><td class="num">2</td><td class="num">11</td><td class="num">E2 × C5</td></tr>
+          <tr><td class="num">3</td><td class="num">16</td><td class="num">E3×C5 · E8×C2</td></tr>
+          <tr><td class="num">4</td><td class="num">22</td><td class="num">E4×C5 · E11×C2</td></tr>
+          <tr><td class="num">6</td><td class="num">39</td><td class="num">E6×C6 · E13×C3</td></tr>
+        </table>
+        <p class="note">인챈트는 유한 자원이므로 턴당 효율을 크리처보다 1.5배 높게 잡아야 채용된다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12 -->
+  <section class="slide">
+    <div class="eyebrow">11 — 미확정</div>
+    <h2>다음에 결정할 것</h2>
+    <div class="cols c2">
+      <div class="q">
+        <div class="k">Open — 01</div>
+        <h3>덱 사이즈와 소진 규칙</h3>
+        <p>10~13턴이면 30장으로 충분하다. 다만 수호 덱끼리 만나면 더 길어질 수 있으므로, 소진 시 매 턴 누적 피해를 넣어 교착을 끊을지 결정 필요.</p>
+      </div>
+      <div class="q">
+        <div class="k">Open — 02</div>
+        <h3>슬롯 만석 처리</h3>
+        <p>10칸이 다 찼을 때 소환 불가로 할지, 기존 개체를 밀어내고 배치 가능하게 할지. 후자가 교착 탈출구가 된다.</p>
+      </div>
+      <div class="q">
+        <div class="k">Open — 03</div>
+        <h3>수호 파괴 보상</h3>
+        <p>기본 수호는 보상 없이 템포 손실을 감수한다. 파괴 시 드로우·소환 등의 보상은 <strong>특수 케이스 카드</strong>로만 운용 — 강도와 채용 수 결정 필요.</p>
+      </div>
+      <div class="q">
+        <div class="k">Open — 04</div>
+        <h3>초반 스노우볼 방어선</h3>
+        <p>크리처끼리 트레이드가 없어 보드 격차가 자동으로 벌어진다. 후공 보상 설계, 혹은 광역 스펠 강도 상향 중 택일.</p>
+      </div>
+    </div>
+    <p class="note" style="margin-top:26px">다음 산출물: 예산 공식이 셀에 박힌 밸런스 시트 — 카드 입력 시 예산 초과 자동 검산.</p>
+  </section>
+
+</main>
+
+<nav class="nav">
+  <div class="t" id="chapter">TEN — System Design Draft</div>
+  <div class="btns">
+    <span class="counter" style="margin-right:14px;align-self:center"><b id="cur">01</b><s> / 12</s></span>
+    <button id="prev" aria-label="이전 슬라이드">←</button>
+    <button id="next" aria-label="다음 슬라이드">→</button>
+  </div>
+</nav>
+
+<script>
+const slides=[...document.querySelectorAll('.slide')];
+const strip=document.getElementById('strip');
+const titles=['표지','한 줄 요약','카드 타입','턴 진행','보드 · 슬롯','태그 — 수호','태그 — 비행','인챈트','마나 커브','스탯 예산','스펠 · 인챈트','미확정 사항'];
+let i=0;
+
+for(let k=0;k<12;k++){strip.appendChild(document.createElement('i'));}
+const cells=[...strip.children];
+
+function render(){
+  slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+  cells.forEach((c,k)=>c.classList.toggle('on',k<=i));
+  document.getElementById('cur').textContent=String(i+1).padStart(2,'0');
+  document.getElementById('chapter').textContent=titles[i];
+  document.getElementById('prev').disabled=(i===0);
+  document.getElementById('next').disabled=(i===slides.length-1);
+}
+function go(n){i=Math.max(0,Math.min(slides.length-1,n));render();}
+
+document.getElementById('prev').onclick=()=>go(i-1);
+document.getElementById('next').onclick=()=>go(i+1);
+document.addEventListener('keydown',e=>{
+  if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();go(i+1);}
+  if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();go(i-1);}
+  if(e.key==='Home')go(0);
+  if(e.key==='End')go(slides.length-1);
+});
+let x0=null;
+document.addEventListener('touchstart',e=>x0=e.touches[0].clientX,{passive:true});
+document.addEventListener('touchend',e=>{
+  if(x0===null)return;
+  const d=e.changedTouches[0].clientX-x0;
+  if(Math.abs(d)>60)go(d<0?i+1:i-1);
+  x0=null;
+},{passive:true});
+
+render();
+</script>
+</body>
+</html>

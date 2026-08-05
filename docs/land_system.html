@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light only">
+<title>TEN — 지형 시스템</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@700;900&family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDEFF2;--paper-2:#E3E6EB;--ink:#141821;--ink-soft:#4A5364;--ink-faint:#8A94A6;--rule:#C6CCD6;
+  --fire:#C1462E;--water:#2A6FB5;--nature:#3F8B3A;--steel:#6B7686;--earth:#8A6A33;--dark:#5B3E86;--light:#B8912A;
+  --ok:#0F8A80;--bad:#B03A3F;--warn:#B87400;--indigo:#2D3BAF;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:'Noto Sans KR',sans-serif;
+  -webkit-font-smoothing:antialiased;padding:20px 16px 60px;line-height:1.7}
+.wrap{max-width:1020px;margin:0 auto}
+h1{font-family:'Gothic A1';font-weight:900;font-size:clamp(26px,4vw,38px);letter-spacing:-.03em;line-height:1.1}
+.lede{font-size:15px;color:var(--ink-soft);font-weight:300;max-width:66ch;margin:10px 0 6px}
+.meta{font-family:'JetBrains Mono';font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint)}
+h2{font-family:'Gothic A1';font-weight:900;font-size:clamp(18px,2.4vw,23px);margin:40px 0 6px;padding-top:18px;border-top:2px solid var(--ink)}
+h2 .n{font-family:'JetBrains Mono';font-size:11px;font-weight:500;color:var(--ink-faint);letter-spacing:.16em;display:block;margin-bottom:6px}
+h3{font-family:'Gothic A1';font-weight:700;font-size:15px;margin:20px 0 6px}
+p{font-size:14px;color:var(--ink-soft);font-weight:300;max-width:70ch}
+p b,td b,li b{color:var(--ink);font-weight:700}
+ul{margin:8px 0 8px 18px}li{font-size:14px;color:var(--ink-soft);font-weight:300;margin:4px 0}
+.note{font-family:'JetBrains Mono';font-size:11.5px;color:var(--ink-faint);line-height:1.65;margin-top:10px}
+table{border-collapse:collapse;width:100%;font-size:13px;margin:12px 0}
+th{text-align:left;font-family:'JetBrains Mono';font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-faint);padding:0 10px 8px 0;border-bottom:1.5px solid var(--ink);white-space:nowrap}
+td{padding:8px 10px 8px 0;border-bottom:1px solid var(--rule);color:var(--ink-soft);vertical-align:top}
+td:first-child{color:var(--ink);font-weight:700;white-space:nowrap}
+.mono{font-family:'JetBrains Mono';font-variant-numeric:tabular-nums}
+.tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.ok{color:var(--ok);font-weight:700}.bad{color:var(--bad);font-weight:700}.warn{color:var(--warn);font-weight:700}
+.box{border:1px solid var(--rule);border-left:5px solid var(--c,var(--ink));border-radius:6px;padding:14px 18px;margin:14px 0;background:var(--paper-2)}
+.box.bad{--c:var(--bad)}.box.ok{--c:var(--ok)}.box.warn{--c:var(--warn)}
+.box .k{font-family:'JetBrains Mono';font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--c,var(--ink));font-weight:700}
+.box h3{margin:3px 0 5px}
+/* 마나 심볼 */
+.pip{display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:50%;
+  font-family:'JetBrains Mono';font-weight:700;font-size:11px;color:#fff;vertical-align:middle;margin-right:2px}
+.pip.g{background:#8A94A6}
+.pip.fire{background:var(--fire)}.pip.water{background:var(--water)}.pip.nature{background:var(--nature)}
+.pip.steel{background:var(--steel)}.pip.earth{background:var(--earth)}.pip.dark{background:var(--dark)}.pip.light{background:var(--light)}
+.formula{font-family:'JetBrains Mono';font-size:13px;font-weight:500;background:var(--ink);color:var(--paper);
+  padding:12px 16px;border-radius:4px;display:inline-block;margin:8px 0;line-height:1.9}
+.formula em{color:#5fd3c4;font-style:normal}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="meta">TEN · LAND SYSTEM · 2026.07</div>
+<h1>지형 시스템 — 매수 계산과 코스트 개편</h1>
+<p class="lede">덱 30장 · 동명 카드 2장 상한 · 매 턴 지형 1장. 모든 카드는 <b>자기 속성 자원 1개 + 무속성 나머지</b>를 요구한다. 이 문서는 확률 계산으로 지형 매수를 정하고, 그 결과 필요한 <b>규칙 변경 3건</b>을 제시한다.</p>
+
+<h2><span class="n">01 — 먼저 나온 문제</span>현재 설정으로는 지형이 돌아가지 않는다</h2>
+<div class="box bad"><div class="k">Blocker</div><h3>시작 손패 4장 + 마나 상한 6 = 성립 불가</h3>
+<p>지형을 <b>덱의 절반(15장)</b>까지 넣어도 6턴에 6지형을 확보할 확률이 <b class="bad">35%</b>다. 손패가 4장뿐이라 초기 지형 표본이 너무 작고, 마나 상한 6은 <b>land drop을 6번</b> 요구한다 — 30장 덱에는 과한 요구다.</p>
+<p class="note">비교: MTG는 60장 덱에 손패 7장, 커브는 보통 4~5. TEN은 30장에 손패 4장, 커브 6 — 조건이 정반대로 빡빡하다.</p></div>
+
+<div class="tbl-scroll">
+<table>
+<tr><th>지형</th><th>2턴 2지형</th><th>3턴 3지형</th><th>4턴 4지형</th><th>6턴 6지형</th><th>8턴 6지형</th></tr>
+<tr><td class="mono">12장</td><td class="mono">80%</td><td class="mono">60%</td><td class="mono">40%</td><td class="mono bad">12%</td><td class="mono bad">30%</td></tr>
+<tr><td class="mono">15장</td><td class="mono">92%</td><td class="mono">81%</td><td class="mono">66%</td><td class="mono bad">35%</td><td class="mono warn">64%</td></tr>
+</table>
+</div>
+<p class="note">시작 손패 4장 기준. 지형을 절반이나 넣고도 안 되면, 매수 조정이 아니라 <b>규칙을 바꿔야 한다.</b></p>
+
+<h2><span class="n">02 — 규칙 변경 3건</span></h2>
+<div class="box ok"><div class="k">Change 01</div><h3>시작 손패 4장 → <b>7장</b></h3>
+<p>지형 시스템의 전제 조건. 초기 표본이 커져야 land drop이 안정된다. 7장은 MTG 표준이며, 이 계산에서도 가장 안정적인 값이다.</p></div>
+<div class="box ok"><div class="k">Change 02</div><h3>마나 상한 6 → <b>5</b></h3>
+<p>land drop 요구를 6회에서 5회로 줄인다. 같은 지형 13장에서 <b>목표 달성률이 77% → 88%</b>로 오른다. 예산 공식은 6코까지 정의돼 있으므로, 6코 카드는 &ldquo;5지형 + 잉여 지형 1장&rdquo;으로 도달하는 <b>최상위 구간</b>이 된다.</p>
+<p class="note">대안: 상한을 6으로 유지하려면 지형 15장이 필요하고 홍수 위험이 커진다. 5로 낮추는 쪽이 덱 슬롯도 아낀다.</p></div>
+<div class="box ok"><div class="k">Change 03</div><h3>홍수 완화 — 잉여 지형을 드로우로 교환</h3>
+<p>지형이 이미 <b>상한만큼</b> 깔려 있으면, 손의 지형 카드를 <b>버리고 카드 1장</b>을 뽑을 수 있다(턴 1회). 9턴 기준 기대 지형이 6.9장이라 약 2장이 잉여인데, 이 규칙이 그것을 흡수한다.</p></div>
+
+<h2><span class="n">03 — 권장 구성</span>지형 13장 · 손패 7장 · 상한 5</h2>
+<div class="tbl-scroll">
+<table>
+<tr><th>턴</th><th>2턴 2지형</th><th>3턴 3지형</th><th>4턴 4지형</th><th>7턴 5지형</th><th>9턴 기대 지형</th></tr>
+<tr><td class="mono">확률</td><td class="mono ok">98%</td><td class="mono ok">93%</td><td class="mono ok">83%</td><td class="mono ok">88%</td><td class="mono">6.9장 (잉여 1.9)</td></tr>
+</table>
+</div>
+<p>초반 3턴은 거의 확정으로 굴러가고, 4턴부터 약간의 변수가 생기며, 상한 도달은 7턴 전후다. <b>지형 13장 = 덱의 43%</b>, 나머지 17장이 실제 카드가 된다.</p>
+<div class="formula">덱 30 = 지형 <em>13</em> + 카드 <em>17</em> &nbsp;·&nbsp; 동명 2장 상한 → 최소 <em>9종</em> 필요</div>
+
+<h3>매수 선택지</h3>
+<div class="tbl-scroll">
+<table>
+<tr><th>지형</th><th>4턴 4지형</th><th>7턴 5지형</th><th>9턴 기대</th><th>성향</th></tr>
+<tr><td class="mono">12장</td><td class="mono">75%</td><td class="mono">79%</td><td class="mono">6.4장</td><td>공격적 — 저코스트 덱, 사고 위험 감수</td></tr>
+<tr><td class="mono ok">13장</td><td class="mono">83%</td><td class="mono">88%</td><td class="mono">6.9장</td><td><b>표준</b> — 대부분의 덱</td></tr>
+<tr><td class="mono">14장</td><td class="mono">89%</td><td class="mono">93%</td><td class="mono">7.5장</td><td>안정 — 고코스트 덱, 홍수 완화 규칙 필수</td></tr>
+</table>
+</div>
+
+<h2><span class="n">04 — 색 구성</span>복합 지형과 다색의 대가</h2>
+<p>모든 카드가 <b>자기 속성 자원을 1개만</b> 요구하므로, 속성당 소스가 4~5장이면 충분하다. 이것이 다색 덱을 가능하게 만드는 핵심 완화 장치다.</p>
+<div class="tbl-scroll">
+<table>
+<tr><th>덱</th><th>지형 13장 배분</th><th>주 속성 3턴 확보</th><th>부 속성 3턴 확보</th><th>대가</th></tr>
+<tr><td>단색</td><td>기본 13</td><td class="mono ok">100%</td><td>—</td><td>카드풀이 1속성으로 제한</td></tr>
+<tr><td>2색</td><td>기본 A5 · B4 · 복합 4</td><td class="mono ok">99%</td><td class="mono ok">98%</td><td>복합 지형이 놓은 턴에 못 쓰임</td></tr>
+<tr><td>3색</td><td>기본 5·4·2 · 복합 2</td><td class="mono ok">99%</td><td class="mono warn">82%</td><td>세 번째 속성이 불안정 — 저코스트 위주로만</td></tr>
+</table>
+</div>
+<p class="note">3색은 부속성 확보가 82%로 떨어진다. 3색을 쓰려면 세 번째 속성을 <b>1~2코 카드로만</b> 채우거나 복합 지형을 늘려야 한다 — 의도된 난이도다.</p>
+
+<h2><span class="n">05 — 지형 카드</span></h2>
+<h3>기본 지형 (7종)</h3>
+<p>해당 속성 자원 <b>1</b>을 생성한다. 놓은 턴부터 즉시 사용 가능.</p>
+<div class="tbl-scroll">
+<table>
+<tr><th>속성</th><th>지형명</th><th>생성</th></tr>
+<tr><td style="color:var(--fire)">불</td><td>화산</td><td><span class="pip fire">불</span></td></tr>
+<tr><td style="color:var(--water)">물</td><td>심해</td><td><span class="pip water">물</span></td></tr>
+<tr><td style="color:var(--nature)">자연</td><td>수림</td><td><span class="pip nature">자</span></td></tr>
+<tr><td style="color:var(--steel)">강철</td><td>대장간</td><td><span class="pip steel">강</span></td></tr>
+<tr><td style="color:var(--earth)">대지</td><td>고원</td><td><span class="pip earth">대</span></td></tr>
+<tr><td style="color:var(--dark)">어둠</td><td>심연</td><td><span class="pip dark">어</span></td></tr>
+<tr><td style="color:var(--light)">빛</td><td>성소</td><td><span class="pip light">빛</span></td></tr>
+</table>
+</div>
+
+<h3>복합 지형 (21종 — 속성 쌍 전부)</h3>
+<p>두 속성 중 <b>하나를 선택</b>해 생성한다. 대신 <b>놓은 턴에는 사용할 수 없다</b>(다음 턴부터 가동). 이것이 다색 덱이 치르는 대가다 — 색은 넓어지지만 <b>템포가 한 턴 늦다.</b></p>
+<p class="note">21종을 전부 만들 필요는 없다. 아키타입이 실제로 쓰는 조합(예: 어둠·자연=군세, 강철·빛=방벽, 물·불=비상)부터 만들고 나머지는 나중에 채우면 된다.</p>
+
+<h2><span class="n">06 — 코스트 표기 개편</span></h2>
+<p>모든 카드의 코스트를 <b>속성 1 + 무속성 나머지</b>로 분해한다. 총 코스트는 기존 예산 공식 그대로이므로 <b>밸런스 수치는 바뀌지 않는다.</b></p>
+<div class="formula">코스트 N (속성 E) &nbsp;→&nbsp; <em>{E}1</em> + <em>{무속성}(N−1)</em></div>
+<div class="tbl-scroll">
+<table>
+<tr><th>카드</th><th>속성</th><th>기존</th><th>신규 표기</th><th>의미</th></tr>
+<tr><td>화살</td><td style="color:var(--nature)">자연</td><td class="mono">1코</td><td><span class="pip nature">자</span></td><td>자연 자원 1개만</td></tr>
+<tr><td>창격</td><td style="color:var(--earth)">대지</td><td class="mono">2코</td><td><span class="pip earth">대</span><span class="pip g">1</span></td><td>대지 1 + 아무거나 1</td></tr>
+<tr><td>기사</td><td style="color:var(--steel)">강철</td><td class="mono">4코</td><td><span class="pip steel">강</span><span class="pip g">3</span></td><td>강철 1 + 아무거나 3</td></tr>
+<tr><td>파괴자</td><td style="color:var(--dark)">어둠</td><td class="mono">6코</td><td><span class="pip dark">어</span><span class="pip g">5</span></td><td>어둠 1 + 아무거나 5</td></tr>
+</table>
+</div>
+<div class="box warn"><div class="k">선택 사항</div><h3>시그니처 카드는 속성 2개를 요구할 수 있다</h3>
+<p>속성 정체성이 특히 강한 카드(각 속성의 고코스트 요격·피니셔 등)에는 <b>{E}2 + 무속성</b>을 매겨 단색 덱에 보상을 줄 수 있다. 예: 강철 <b>분쇄추</b> 6코 → <span class="pip steel">강</span><span class="pip steel">강</span><span class="pip g">4</span>. 다색 덱은 이 카드를 쓰기 어려워지므로, <b>단색의 이점</b>이 생긴다.</p></div>
+
+<h2><span class="n">07 — 파급 효과</span>같이 손봐야 하는 것들</h2>
+<ul>
+<li><b>덱 소진 = 패배</b> — 실효 덱이 17장으로 얇아진다. 손패 7장 + 12턴이면 19장을 보므로 <b>소진 위험이 실재</b>한다. 덱 사이즈를 40으로 올리거나(지형 17 + 카드 23), 소진 규칙을 완화해야 한다.</li>
+<li><b>동명 2장 상한</b> — 기존 파수병(3장)·방벽병(3장)이 규칙 위반. 전부 2장 이하로 조정 필요.</li>
+<li><b>예산 공식</b> — 마나 상한을 5로 낮추면 6코 구간이 &ldquo;예외적 최상위&rdquo;가 된다. 6코 카드 수를 줄이거나 상한 6을 유지할지 결정 필요.</li>
+<li><b>프로토타입</b> — 마나가 자동 증가하는 현재 구조를 지형 기반으로 전면 교체해야 한다. 큰 작업.</li>
+</ul>
+
+<h2><span class="n">08 — 결정이 필요한 것</span></h2>
+<div class="box"><div class="k">Q1</div><h3>마나 상한 5 vs 6</h3><p>5로 낮추면 지형 13장으로 안정적. 6을 유지하려면 15장 필요 + 홍수 위험. <b>5 권장.</b></p></div>
+<div class="box"><div class="k">Q2</div><h3>덱 사이즈 30 유지 vs 40으로 확대</h3><p>30이면 실효 카드가 17장뿐이라 덱 소진과 충돌. <b>40장(지형 17 + 카드 23)</b>이면 여유롭고 동명 2장 상한과도 잘 맞는다.</p></div>
+<div class="box"><div class="k">Q3</div><h3>시그니처 카드에 속성 2개 요구를 도입할까</h3><p>도입하면 단색 덱에 명확한 보상이 생긴다. 안 하면 다색이 거의 무조건 유리해진다.</p></div>
+
+</div>
+</body>
+</html>
