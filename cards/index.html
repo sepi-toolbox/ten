@@ -1706,11 +1706,18 @@ function glossaryFor(name,u){
   const c=POOL[name]||{}; const keys=[];
   const push=k=>{ if(GLOSSARY[k]&&!keys.includes(k))keys.push(k); };
   if(c.k==='cr'){
-    if(c.g&&c.f)push('비행·수호'); else if(c.g)push('수호'); else if(c.f)push('비행');
-    if(c.p)push('관통');
+    /* ⚠ 개체가 있으면 **그 개체의 지금 태그**를 본다 — 면역을 얻으면 수호가 풀린다.
+       인쇄값으로 두면 없는 수호를 설명하고 얻은 면역은 설명하지 않는다. */
+    const g=u?u.g:c.g, f=u?u.f:c.f, pp=u?u.p:c.p;
+    if(g&&f)push('비행·수호'); else if(g)push('수호'); else if(f)push('비행');
+    if(pp)push('관통');
   }
   if(u&&u.token)push('토큰');
-  const txt=(c.kw||(u&&u.kw)||'');
+  /* ⚠⚠ 설명은 **카드 설명란과 같은 줄**을 읽는다(liveKw). 인쇄 글을 읽던 시절엔
+     투명화로 면역을 받은 몸의 옆 패널이 **빈칸**이었다 — 카드에는 '면역' 이라고 떠 있는데
+     설명은 아무것도 없었다(성권이 잡았다). 둘이 어긋나면 어느 쪽을 믿어야 할지 알 수 없다. */
+  const txt=(u&&c.k==='cr')?liveKw(name,u).replace(/<[^>]+>/g,'')
+                           :(c.kw||(u&&u.kw)||'');
   txt.split('·').forEach(part=>push(part.trim().split(/[\s0-9+]/)[0]));
   if(!keys.length)return '';
   return `<div class="zside">${keys.map(k=>{

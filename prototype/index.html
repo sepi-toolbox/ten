@@ -1537,8 +1537,8 @@ function newGame(){
       /* 무덤 — 이번 판에서 소멸한 **그 편의** 크리처 이름. 혼령 부활이 여기서 꺼낸다.
          ⚠ 빼앗은 몸은 **원래 주인** 쪽에 쌓인다(ownerOf). */
       grave:[],
-      /* 환류로 손에 생겨난 장 — 상대 것도 앞면으로 보여 준다(shown), 그 순간엔 일렁인다(echoAt) */
-      shown:{}, echoAt:-1};
+      /* 환류로 손에 생겨난 장 — 상대 것도 앞면으로 보여 준다(shown), 그 순간엔 일렁인다(echoNew) */
+      shown:{}, echoNew:null};
   });
   if(RG.on){ S.me.hp=RG.hp; S.me.maxhp=RG.maxhp; }
   if(RG.on&&EHP){ S.ai.hp=EHP; S.ai.maxhp=EHP; }
@@ -3515,7 +3515,9 @@ function cleanup(p){
     u.insts.forEach(inst=>{ if(inst.hp>0)alive.push(inst); else died++; });
     u.insts=alive;
     if(died){ deaths.push({u,i,died}); S.dead=(S.dead||0)+died; }
-    if(!u.insts.length){ deathFx(p,i); B[i]=null; }
+    /* ⚠ 개체마다 **한 번뿐**. 판에서 빠진 몸을 다시 볼 일은 없지만, 부르는 자리가 늘면
+       같은 죽음이 두 번 터진다 — 표시를 개체에 달아 두면 어디서 불러도 안전하다. */
+    if(!u.insts.length){ if(!u.fxdead){ u.fxdead=true; deathFx(p,i); } B[i]=null; }
   }
   deaths.forEach(d=>onDeath(p,d.u,d.i,d.died));
   const packed=B.filter(Boolean);                 /* 구멍을 남기지 않는다 */
@@ -4392,6 +4394,7 @@ async function aiTurn(){
       pay('ai',k.x.n);P.hand.splice(k.x.i,1);
       S.fx={tSide:'me',tIdx:k.j,dmg:k.x.c.v,struck:true,kill:`${u.name} 파괴`};
       render();
+      cleanup('me'); S.fx=null; render();   /* 맞는 그 순간에 부서진다(사람 쪽과 같은 규칙) */
       await sleep(640);
       S.fx=null;cleanup('me');render();
       continue;
@@ -5053,10 +5056,14 @@ function echoToHand(side,name){
     /* 환류로 **생겨난** 장은 일렁이며 나타난다.
        ⚠ 상대 것도 **앞면으로** 보여 준다(성권 결정) — 무엇이 돌아갔는지는 원래 양쪽이
          다 아는 정보다(판 위에서 죽는 걸 보고 있었다). 뒷면으로 덮으면 없는 안개를 만든다. */
-    S[side].echoAt=S[side].hand.length-1;
+    /* ⚠⚠ **번호가 아니라 이름으로 표시한다.** 주문 환류는 `pay()` 안에서 손패 맨 뒤에
+       카드를 얹고, 부르는 쪽은 **그 뒤에** 쓴 카드를 splice 로 뺀다 — 번호가 한 칸 밀려
+       일렁임이 엉뚱한 자리(또는 빈칸)를 가리켰다. 실제로 투명화의 환류 연출이 안 떴다.
+       같은 이름의 **맨 뒤 장**이 방금 생긴 장이다(환류는 항상 뒤에 얹는다). */
+    S[side].echoNew=name;
     S[side].shown=S[side].shown||{};
     S[side].shown[name]=(S[side].shown[name]||0)+1;
-    setTimeout(()=>{ if(S[side])S[side].echoAt=-1; render(); },Math.round(800/SPEED));
+    setTimeout(()=>{ if(S[side])S[side].echoNew=null; render(); },Math.round(800/SPEED));
   }
   fireEnch(side,'echo',{name});
 }
@@ -5428,6 +5435,11 @@ async function clickSlot(side,idx){
     S.fx={tSide:'ai',tIdx:idx,dmg:c.mode==='dmg'?c.v:0,struck:true,
           kill:dead?`${u.name} 파괴`:null};
     render();
+    /* ⚠⚠ **맞는 그 순간에 부서진다.** 예전에는 섬광 + '파괴' 라벨을 620ms 보여 준 **뒤에야**
+       cleanup 이 돌아 카드가 깨졌다 — 맞을 때 한 번, 한참 뒤에 또 한 번 터지는 것처럼 보였다
+       (성권이 '파괴 연출이 두 번' 으로 잡았다). 갓 그린 슬롯(섬광까지 얹힌 모습)을 그대로
+       떠서 부수고, 원본은 바로 판에서 뺀다. */
+    if(dead){ cleanup('ai'); S.fx=null; render(); }
     await sleep(620);
     S.fx=null;S.busy=false;
     cleanup('ai');render();
@@ -5528,7 +5540,7 @@ function renderFoeHand(){
   const used={};
   el.innerHTML=A.hand.map((n,i)=>{
     used[n]=(used[n]||0)+1;
-    const fx=(A.echoAt===i)?' echoin':'';
+    const fx=(A.echoNew&&i===A.hand.lastIndexOf(A.echoNew))?' echoin':'';
     if(used[n]<=(shown[n]||0))
       return `<div class="hcw open${fx}">${isLand(n)?landCardHTML(n,'md'):tcardHTML(n,{size:'md'})}</div>`;
     return `<div class="hcw back${fx}"><div class="cback"></div></div>`;
@@ -6071,7 +6083,8 @@ function render(){
     const badge=cw!==c.c?`<span class="costnow">${cw}</span>`:'';
     /* ⚠ 환류로 **돌아온 장**은 이제 발동하지 않는다 → 설명에서 '환류' 를 뺀다.
        빼지 않으면 '또 돌아온다' 고 읽혀서 그 계산으로 판을 짜게 된다. */
-    if(S.me.echoAt===i)cls+=' echoin';        /* 환류로 방금 생겨난 장 */
+    if(S.me.echoNew&&i===S.me.hand.lastIndexOf(S.me.echoNew))
+      cls+=' echoin';                         /* 환류로 방금 생겨난 장 */
     return `<div class="${cls}" data-h="${i}">${tcardHTML(n,{size:'md',noecho:echoSpent('me',n)})}${badge}</div>`;
   }).join('');
   /* 손패 탭에는 아무 동작도 걸지 않는다(끌어야만 발동). 길게 누르기는 전역 핸들러가 처리한다. */
@@ -6116,7 +6129,7 @@ document.getElementById('restart').onclick=()=>{
      시작 → 모드 선택 → 덱 선택 → (배틀: 상대 덱 선택 | 원정: 지도) → 게임
      패배 → 다시 도전하기(덱 선택으로) · 초기 화면(모드 선택으로)
    ⚠ ?dev=1 로 열면 페이지를 건너뛰고 바로 배틀로 들어간다(자동 테스트용). */
-const VERSION='0.43.0', BUILD='2026-08-04';
+const VERSION='0.43.1', BUILD='2026-08-04';
 const DEV=/[?&]dev=1/.test(location.search);
 let PAGE=null, FLOW={mode:'battle', my:null, foe:null};
 function pageOpen(html){
@@ -6333,11 +6346,18 @@ function glossaryFor(name,u){
   const c=POOL[name]||{}; const keys=[];
   const push=k=>{ if(GLOSSARY[k]&&!keys.includes(k))keys.push(k); };
   if(c.k==='cr'){
-    if(c.g&&c.f)push('비행·수호'); else if(c.g)push('수호'); else if(c.f)push('비행');
-    if(c.p)push('관통');
+    /* ⚠ 개체가 있으면 **그 개체의 지금 태그**를 본다 — 면역을 얻으면 수호가 풀린다.
+       인쇄값으로 두면 없는 수호를 설명하고 얻은 면역은 설명하지 않는다. */
+    const g=u?u.g:c.g, f=u?u.f:c.f, pp=u?u.p:c.p;
+    if(g&&f)push('비행·수호'); else if(g)push('수호'); else if(f)push('비행');
+    if(pp)push('관통');
   }
   if(u&&u.token)push('토큰');
-  const txt=(c.kw||(u&&u.kw)||'');
+  /* ⚠⚠ 설명은 **카드 설명란과 같은 줄**을 읽는다(liveKw). 인쇄 글을 읽던 시절엔
+     투명화로 면역을 받은 몸의 옆 패널이 **빈칸**이었다 — 카드에는 '면역' 이라고 떠 있는데
+     설명은 아무것도 없었다(성권이 잡았다). 둘이 어긋나면 어느 쪽을 믿어야 할지 알 수 없다. */
+  const txt=(u&&c.k==='cr')?liveKw(name,u).replace(/<[^>]+>/g,'')
+                           :(c.kw||(u&&u.kw)||'');
   txt.split('·').forEach(part=>push(part.trim().split(/[\s0-9+]/)[0]));
   if(!keys.length)return '';
   return `<div class="zside">${keys.map(k=>{

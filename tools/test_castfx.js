@@ -20,7 +20,7 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
   await p.waitForTimeout(350);
   const EL_WATER=await p.evaluate(()=>EL.water.c);
   const reset=()=>p.evaluate(()=>{S.gen=(S.gen||0)+1;S.me.board=[];S.ai.board=[];
-    S.me.hand=[];S.ai.hand=[];S.me.shown={};S.ai.shown={};S.me.echoAt=-1;S.ai.echoAt=-1;
+    S.me.hand=[];S.ai.hand=[];S.me.shown={};S.ai.shown={};S.me.echoNew=null;S.ai.echoNew=null;
     S.me.noecho={};S.ai.noecho={};S.busy=false;render();});
 
   /* ── 1) 단말마 부활 — 보라 오오라 ── */
@@ -184,6 +184,57 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
   await p.waitForTimeout(700);
   ok('날아간 잔상은 걷힌다',
      (await p.evaluate(()=>document.querySelectorAll('.tohandfx').length))===0, '');
+
+  /* ── 10) 파괴는 **발사체가 닿는 그 순간 한 번만** ── */
+  await reset();
+  await p.evaluate(()=>{ SPEED=1; window.__dead=[];
+    if(!window.__obs){ window.__obs=new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(n=>{
+      if(n.classList&&n.classList.contains('deadfx'))window.__dead.push(performance.now()|0);
+    }))); window.__obs.observe(document.body,{childList:true}); }
+    S.me.lands=[]; for(let i=0;i<5;i++){S.me.landPlayed=false;playLand('me','파도 지대');}
+    placeCreature('ai','오아네스',0); S.ai.board[0].insts.forEach(i=>{i.hp=1;});
+    S.me.hand=['환영검 소환']; S.sel=0; S.mode='target';
+    window.__t0=performance.now()|0; render(); });
+  await p.evaluate(()=>clickSlot('ai',0));
+  await p.waitForTimeout(2000);
+  const dt=await p.evaluate(()=>window.__dead.map(t=>t-window.__t0));
+  /* ⚠ 예전엔 섬광 + '파괴' 라벨을 620ms 보여 준 뒤에야 카드가 깨져서, 맞을 때 한 번
+     한참 뒤에 또 한 번 터지는 것처럼 보였다(성권이 '두 번' 으로 잡았다). */
+  ok('파괴는 한 번만', dt.length===1, `${dt.length}번 · ${dt.join(', ')}ms`);
+  ok('발사체가 닿을 때 부서진다', dt.length===1&&dt[0]>250&&dt[0]<900,
+     `발사 뒤 ${dt[0]}ms (발사체 비행 ≈380ms)`);
+
+  /* ── 11) 확대 옆 패널은 **지금 상태**를 설명한다 ── */
+  await reset();
+  const gl=await p.evaluate(()=>{
+    const keys=n=>(glossaryFor(n,S.me.board[0]).match(/class="kn">([^<]+)/g)||[])
+      .map(x=>x.replace(/.*>/,'')).join(',')||'(빈칸)';
+    S.me.board=[]; placeCreature('me','오아네스',0);
+    const 전=keys('오아네스'); resolveOnMine('me','투명화',0);
+    const 후=keys('오아네스');
+    S.me.board=[]; placeCreature('me','올렝',0);
+    const 수호전=keys('올렝'); resolveOnMine('me','투명화',0);
+    const 수호후=keys('올렝');
+    return {전,후,수호전,수호후};});
+  /* 카드에는 '면역' 이라고 떠 있는데 옆 패널이 빈칸이면 어느 쪽을 믿어야 할지 알 수 없다 */
+  ok('부여받은 면역을 설명한다', gl.전==='(빈칸)'&&gl.후==='면역', `${gl.전} → ${gl.후}`);
+  /* 면역과 수호는 양립하지 않는다 — 풀린 수호를 설명하면 안 된다 */
+  ok('풀린 수호는 안 설명한다', gl.수호전==='수호'&&gl.수호후==='면역',
+     `${gl.수호전} → ${gl.수호후}`);
+
+  /* ── 12) 주문 환류(투명화)도 손패에서 일렁인다 ── */
+  await reset();
+  await p.evaluate(()=>{ S.me.hand=['투명화','닉시']; S.me.nospell={};
+    S.me.lands=[]; for(let i=0;i<5;i++){S.me.landPlayed=false;playLand('me','파도 지대');}
+    S.me.board=[]; placeCreature('me','오아네스',0);
+    S.sel=0; pay('me','투명화'); S.me.hand.splice(0,1); render(); });
+  await p.waitForTimeout(100);
+  const se=await p.evaluate(()=>({
+    손:S.me.hand.slice(),
+    일렁:[...document.querySelectorAll('#hand .hcw.echoin .tname')].map(e=>e.textContent)}));
+  /* ⚠ 주문 환류는 pay() 안에서 손패 맨 뒤에 얹고, 부르는 쪽은 그 뒤에 쓴 카드를 splice 로
+     뺀다 — 번호로 표시하면 한 칸 밀려 엉뚱한 자리를 가리킨다(실제로 연출이 안 떴다). */
+  ok('주문 환류도 일렁인다', se.일렁.join()==='투명화', `손 [${se.손}] · 일렁 [${se.일렁}]`);
 
   /* ── 9) 토큰은 원정 보상·상점에 안 나온다 ── */
   const tok=await p.evaluate(()=>{

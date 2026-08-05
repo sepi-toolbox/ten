@@ -23,7 +23,11 @@ const P='file://'+path.join(__dirname,'..','prototype','index.html')+'?dev=1';
     /* ⚠ **시간으로 기다리지 않는다.** 느린 판에서 전투가 아직 안 열렸는데 HP 를 읽어
        "회복분이 이월 안 됐다" 로 읽혔다(전체 검사에서 두 번 잡혔다).
        전투가 실제로 열릴 때까지 기다린다. */
-    await p.waitForFunction(()=>RG.fighting&&S.me&&S.me.hp>0,null,{timeout:9000}).catch(()=>{});
+    /* ⚠ **정확한 조건을 기다린다.** 'RG.fighting 이 켜졌는가' 만 보면 커튼(veilRun)이
+       newGame 을 부르기 전 한순간을 통과해 **지난 전투의 낡은 S.me.hp** 를 읽는다.
+       newGame 이 RG.hp 를 S.me.hp 로 옮기고 나면 둘이 같아진다 — 그걸 기다린다. */
+    await p.waitForFunction(()=>RG.fighting&&S.me&&S.me.hp===RG.hp,null,{timeout:9000})
+      .catch(()=>{});
     await p.evaluate(()=>{ const k=document.getElementById('keepBtn'); k&&k.click(); });
     await w(400);
   }
