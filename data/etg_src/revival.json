@@ -1,0 +1,1917 @@
+{
+"Quantum Pillar": {
+"abil": null,
+"kind": null,
+"txt": "Each turn 3 random quantums are generated"
+},
+"Mark of Entropy": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Mark of Death": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Mark of Gravity": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Mark of Earth": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Mark of Life": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Mark of Fire": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Mark of Water": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Mark of Light": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Mark of Air": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Mark of Time": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Mark of Darkness": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Mark of Aether": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Shield (slot)": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Weapon (slot)": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Dagger": {
+"abil": null,
+"kind": null,
+"txt": "Weapon: Deal 2 damages at the end of every turn. Deal 1 extra damage if you have a Death or Darkness mark."
+},
+"Short Sword": {
+"abil": null,
+"kind": null,
+"txt": "Weapon: Deal 3 damages at the end of every turn"
+},
+"Hammer": {
+"abil": null,
+"kind": null,
+"txt": "Weapon: Deal 3 damages at the end of every turn. Deal 1 extra damage if you have a Gravity or Earth mark."
+},
+"Shard of Divinity": {
+"abil": null,
+"kind": null,
+"txt": "Add 16 HP's to your maximum health. 24 if your mark is [빛]."
+},
+"Malignant Cell": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Shard of Readiness": {
+"abil": null,
+"kind": null,
+"txt": "The target creature s skill cost is now zero. [시간] creatures can use their skill twice this turn."
+},
+"Short Bow": {
+"abil": null,
+"kind": null,
+"txt": "Weapon: Deal 3 damage at the end of every turn. Deal 1 extra damage if you have an Air mark."
+},
+"Shield": {
+"abil": null,
+"kind": null,
+"txt": "Shield: Reduce damage by 1."
+},
+"Amethyst Pillar": {
+"abil": null,
+"kind": null,
+"txt": "Each turn [엔트로피] is generated."
+},
+"Maxwell's Demon": {
+"abil": "Paradox",
+"kind": "act",
+"txt": "[엔트로피][엔트로피] : Paradox\nKill the target creature if its attack is higher than its defence"
+},
+"Abomination": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Purple Dragon": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Dissipation Shield": {
+"abil": null,
+"kind": null,
+"txt": "Shield: Use 1 [엔트로피] to absorb 3 damages from physical damage sources."
+},
+"Lycanthrope": {
+"abil": "Lycanthropy",
+"kind": "act",
+"txt": "[어둠][어둠] : Lycanthropy\nThe Lycanthrope gains +5/+5 permanently."
+},
+"Chaos Seed": {
+"abil": null,
+"kind": null,
+"txt": "A random effect is inflicted on the target"
+},
+"Nova": {
+"abil": null,
+"kind": null,
+"txt": "Generate 12 quanta. 1 for each element. Do not cast more than twice per turn."
+},
+"Mutation": {
+"abil": null,
+"kind": null,
+"txt": "Mutate the target creature into an abomination, unless it dies... or turn into something weird."
+},
+"Discord": {
+"abil": null,
+"kind": null,
+"txt": "Weapon: Deal 6 damage at the end of every turn. Randomly convert some of the opponent's quantums into other elements."
+},
+"Fallen Elf": {
+"abil": "Mutation",
+"kind": "act",
+"txt": "[생명]: Mutation\nThe target creature might turn into an abomination, a mutant, or die."
+},
+"Antimatter": {
+"abil": null,
+"kind": null,
+"txt": "Invert the attack power of the target creature (the creature inflict heals instead of damage)"
+},
+"Butterfly Effect": {
+"abil": null,
+"kind": null,
+"txt": "Target a low attack power creature (less than 3). The creature's skill is now\n[엔트로피][엔트로피][엔트로피]: Destroy (destroy target permanent)"
+},
+"Pandemonium": {
+"abil": null,
+"kind": null,
+"txt": "A random effect is inflicted to every enemy creature. Removes invisibility."
+},
+"Schrodinger's Cat": {
+"abil": "Dead and Alive",
+"kind": "act",
+"txt": "[엔트로피] : Dead and Alive\nKill this creature; death effects are triggered. This creature is still alive."
+},
+"Singularity": {
+"abil": null,
+"kind": null,
+"txt": "This object is not defined and not well-behaved."
+},
+"Purple Nymph": {
+"abil": "Antimatter",
+"kind": "act",
+"txt": "[엔트로피][엔트로피][엔트로피][엔트로피] : Antimatter\nInvert the attack power of the target creature (the creature inflict heals instead of damage)"
+},
+"Shard of Serendipity": {
+"abil": null,
+"kind": null,
+"txt": "Add up to 3 random upgraded cards to your hand. The first one will be an [엔트로피] card."
+},
+"Entropy Pendulum": {
+"abil": null,
+"kind": null,
+"txt": "Alternately generates [엔트로피] and 1 quantum matching your mark. Gain 1 extra [엔트로피] when you play this card"
+},
+"Bone Pillar": {
+"abil": null,
+"kind": null,
+"txt": "Each turn [죽음] is generated."
+},
+"Bone Dragon": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Virus": {
+"abil": "Infect",
+"kind": "pas",
+"txt": "Infect: \nSacrifice Virus to inflict 1 damage per round to a target creature"
+},
+"Flesh Spider": {
+"abil": "Web",
+"kind": "act",
+"txt": "[바람] : Web\nThe target creature loses its \"airborne\" skill"
+},
+"Vulture": {
+"abil": "Scavenger",
+"kind": "pas",
+"txt": "Scavenger:\nEvery time a creature dies, Vulture gains +1/+1"
+},
+"Skull Shield": {
+"abil": null,
+"kind": null,
+"txt": "The damage dealt to you from physical damage sources is reduced by 1. Attacking creatures have a small chance to die and turn into skeletons."
+},
+"Skeleton": {
+"abil": "Undead",
+"kind": "pas",
+"txt": "Undead: \nSkeleton turns into a random creature if targeted with reverse time"
+},
+"Boneyard": {
+"abil": null,
+"kind": null,
+"txt": "Every time a creature is killed, boneyard generates 1 skeleton."
+},
+"Poison": {
+"abil": null,
+"kind": null,
+"txt": "Inflicts 2 poison damage (to your opponent) at the end of every turn. Poison damage is cumulative."
+},
+"Plague": {
+"abil": null,
+"kind": null,
+"txt": "Infect every enemy creature (Inflicts +1 poison on every enemy creature). Removes invisibility."
+},
+"Arsenic": {
+"abil": null,
+"kind": null,
+"txt": "Weapon: Deal 4 damage at the end of every turn. Deal 1 poison damage at the end of every turn.\nPoison damage is cumulative."
+},
+"Bone Wall": {
+"abil": null,
+"kind": null,
+"txt": "Summon 7 bone shields that absorb damage from a single source. Gains 2 shields when a creature is killed."
+},
+"Aflatoxin": {
+"abil": null,
+"kind": null,
+"txt": "Poison the target creature. If the target creature dies, it turns into a malignant cell."
+},
+"Mummy": {
+"abil": null,
+"kind": null,
+"txt": "Mummy turns into a Pharaoh if targeted with reverse time."
+},
+"Deathstalker": {
+"abil": "Deadly Venom",
+"kind": "pas",
+"txt": "Deadly Venom: \nAdd 2 poison damage to each successful attack. Cause poisoning if ingested."
+},
+"Soul Catcher": {
+"abil": null,
+"kind": null,
+"txt": "Every time a creature is killed, Soul Catcher generates [죽음][죽음][죽음]"
+},
+"Grey Nymph": {
+"abil": "Aflatoxin",
+"kind": "act",
+"txt": "[죽음] : Aflatoxin\nPoison the target creature (+2 poison). If the target creature dies, it turns into a malignant cell."
+},
+"Shard of Sacrifice": {
+"abil": null,
+"kind": null,
+"txt": "Inflict 40 damage to yourself and remove all but your Death.jpg quanta. Swap damage with healing. Lasts 2 turns."
+},
+"Death Pendulum": {
+"abil": null,
+"kind": null,
+"txt": "Alternately generates [죽음] and 1 quantum matching your mark. Gain 1 extra [죽음] when you play this card"
+},
+"Gravity Pillar": {
+"abil": null,
+"kind": null,
+"txt": "Each turn [중력] is generated."
+},
+"Sapphire Charger": {
+"abil": null,
+"kind": null,
+"txt": "Momentum: The damage caused by the Sapphire Charger can not be reduced, shields are ignored."
+},
+"Armagio": {
+"abil": "Gravity Pull",
+"kind": "act",
+"txt": "[중력] : Gravity Pull\nThe damage inflicted to you is redirected on Armagio"
+},
+"Graviton Mercenary": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Colossal Dragon": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Gravity Shield": {
+"abil": null,
+"kind": null,
+"txt": "Shield: Any creature that has more than 5 HP's is unable to reach you"
+},
+"Momentum": {
+"abil": null,
+"kind": null,
+"txt": "The target creature ignores shield effects and gains +1/+1"
+},
+"Otyugh": {
+"abil": "Devour",
+"kind": "act",
+"txt": "[중력] : Devour\nSwallow a smaller (less HP's) creature and gain +1/+1"
+},
+"Titan": {
+"abil": null,
+"kind": null,
+"txt": "Weapon: Deal 8 damages at the end of every turn.\nMomentum: Shield effects are ignored."
+},
+"Gravity Pull": {
+"abil": null,
+"kind": null,
+"txt": "The creature enchanted with gravity pull will absorb all the damage directed against its owner."
+},
+"Graviton Fire Eater": {
+"abil": "Ablaze",
+"kind": "act",
+"txt": "[불] : Ablaze\nGraviton Fire Eater gains +2/+0"
+},
+"Black Hole": {
+"abil": null,
+"kind": null,
+"txt": "Absorb 3 quanta per element from the opponent. Gain 1 HP per absorbed quantum."
+},
+"Chimera": {
+"abil": null,
+"kind": null,
+"txt": "Combine all your creatures in a single one. Gravity pull. Momentum"
+},
+"Catapult": {
+"abil": null,
+"kind": null,
+"txt": "[중력][중력] : Sacrifice the target creature and damage your opponent. Larger creatures inflict more damage."
+},
+"Acceleration": {
+"abil": null,
+"kind": null,
+"txt": "Replace the target creature skill with acceleration: gain +2 / -1 per turn."
+},
+"Amber Nymph": {
+"abil": "Black Hole",
+"kind": "act",
+"txt": "[중력][중력][중력] : Black Hole\nAbsorb 3 quanta per element from the opponent. Gain 1 HP per absorbed quantum."
+},
+"Shard of Focus": {
+"abil": null,
+"kind": null,
+"txt": "Accretion: Destroy a permanent and gain +0/+15. Turn into a black hole if HP>45."
+},
+"Gravity Pendulum": {
+"abil": null,
+"kind": null,
+"txt": "Alternately generates [중력] and 1 quantum matching your mark. Gain 1 extra [중력] when you play this card"
+},
+"Stone Pillar": {
+"abil": null,
+"kind": null,
+"txt": "Each turn [대지] is generated."
+},
+"Antlion": {
+"abil": "Burrow",
+"kind": "act",
+"txt": "[대지] : Burrow\nThe antlion can not be targeted, but its damage is halved."
+},
+"Hematite Golem": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Stone Dragon": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Titanium Shield": {
+"abil": null,
+"kind": null,
+"txt": "Shield: The damage dealt to you from physical damage sources is reduced by 2"
+},
+"Plate Armor": {
+"abil": null,
+"kind": null,
+"txt": "The target creature gains +0/+3"
+},
+"Gnome Rider": {
+"abil": null,
+"kind": null,
+"txt": "Each turn [대지] is generated."
+},
+"Pulverizer": {
+"abil": null,
+"kind": null,
+"txt": "Weapon: Deal 5 damages at the end of every turn.\n[중력][중력] : Destroy\nShatter the target permanent."
+},
+"Graboid": {
+"abil": "Evolve",
+"kind": "act",
+"txt": "[시간] : Evolve\nTurn the graboid into a shrieker. Graboid enters the game burrowed."
+},
+"Shrieker": {
+"abil": "Burrow",
+"kind": "act",
+"txt": "[대지] : Burrow\nThe shrieker can not be targeted, but its damage is halved."
+},
+"Enchant Artifact": {
+"abil": null,
+"kind": null,
+"txt": "The target permanent can not be target of any skill. It does not work on creatures."
+},
+"Earthquake": {
+"abil": null,
+"kind": null,
+"txt": "Destroy up to 3 pillars in the target cluster."
+},
+"Stone Skin": {
+"abil": null,
+"kind": null,
+"txt": "Add X HP's to your maximum life points. X is the number of [대지] that you own."
+},
+"Basilisk's Blood": {
+"abil": null,
+"kind": null,
+"txt": "The target creature gains +0/+20 but can not attack or use skills for 6 turns."
+},
+"Iridium Warden": {
+"abil": "Guard",
+"kind": "act",
+"txt": "[대지] : Guard\n(Do not attack) Delay the target creature for 1 turn (cumulative) and attack it unless it is airborne."
+},
+"Shard Golem": {
+"abil": null,
+"kind": null,
+"txt": "Reassemble your last shard golem."
+},
+"Auburn Nymph": {
+"abil": "Petrify",
+"kind": "act",
+"txt": "[대지][대지][대지] : Petrify\nThe target creature gains +0/+20 but can not attack or use skills for 6 turns."
+},
+"Shard of Integrity": {
+"abil": null,
+"kind": null,
+"txt": "Combine all the shards in your hand to form a shard golem."
+},
+"Earth Pendulum": {
+"abil": null,
+"kind": null,
+"txt": "Alternately generates [대지] and 1 quantum matching your mark. Gain 1 extra [대지] when you play this card"
+},
+"Emerald Pillar": {
+"abil": null,
+"kind": null,
+"txt": "Each turn [생명] is generated."
+},
+"Emerald Dragon": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Horned Frog": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Rustler": {
+"abil": "Photosynthesis",
+"kind": "act",
+"txt": "[빛] : Photosynthesis\nGain [생명][생명]. This skill can be used multiple times per turn."
+},
+"Cockatrice": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Forest Spirit": {
+"abil": "Growth",
+"kind": "act",
+"txt": "[물] : Growth\nThe Forest Spirit gains +2/+2"
+},
+"Heal": {
+"abil": null,
+"kind": null,
+"txt": "Heal yourself for up to 20 HP's"
+},
+"Thorn Carapace": {
+"abil": null,
+"kind": null,
+"txt": "Shield: attacking creatures have a 75% chance to be infected."
+},
+"Emerald Shield": {
+"abil": null,
+"kind": null,
+"txt": "Shield: Reduce damage by 1. Spells are reflected against your opponent. Can not be destroyed or stolen."
+},
+"Druidic Staff": {
+"abil": null,
+"kind": null,
+"txt": "Weapon: Deal 2 damages at the end of every turn.\nHeal yourself for up to 5 HP's"
+},
+"Empathic Bond": {
+"abil": null,
+"kind": null,
+"txt": "Every creature in your possession heals you for 1 HP at the end of every turn"
+},
+"Adrenaline": {
+"abil": null,
+"kind": null,
+"txt": "The target creature attacks multiple times per turn. Smaller creatures gain more extra attacks."
+},
+"Forest Scorpion": {
+"abil": "Venom",
+"kind": "pas",
+"txt": "Venom :\nAdd 1 poison damage to each successful attack. Cause poisoning if ingested."
+},
+"Mitosis": {
+"abil": null,
+"kind": null,
+"txt": "The non-weapon creature skill is now mitosis: generate a daughter creature."
+},
+"Green Nymph": {
+"abil": "Adrenaline",
+"kind": "act",
+"txt": "[생명][생명] : Adrenaline\nThe target creature attacks multiple times per turn."
+},
+"Shard of Gratitude": {
+"abil": null,
+"kind": null,
+"txt": "Heal yourself for up to 3 HP at the end of every turn. 5 if your mark is [생명]."
+},
+"Life Pendulum": {
+"abil": null,
+"kind": null,
+"txt": "Alternately generates [생명] and 1 quantum matching your mark. Gain 1 extra [생명] when you play this card"
+},
+"Burning Pillar": {
+"abil": null,
+"kind": null,
+"txt": "Each turn [불] is generated."
+},
+"Ash Eater": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Crimson Dragon": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Fire Spirit": {
+"abil": "Ablaze",
+"kind": "act",
+"txt": "[불] : Ablaze\nThe Fire Spirit gains +2/+0"
+},
+"Fire Bolt": {
+"abil": null,
+"kind": null,
+"txt": "Deals 3 damage to the target for each 10 fire quantums in your possession."
+},
+"Fire Shield": {
+"abil": null,
+"kind": null,
+"txt": "Shield: 1 damage is dealt to any attacking creature"
+},
+"Deflagration": {
+"abil": null,
+"kind": null,
+"txt": "Destroy the targeted permanent"
+},
+"Fahrenheit": {
+"abil": null,
+"kind": null,
+"txt": "Weapon: Deal 5 + X damage at the end of every turn.\nDeal X damages at the end of every turn. X is the number of [불] you own, divided by 5."
+},
+"Rain of Fire": {
+"abil": null,
+"kind": null,
+"txt": "Deals 3 damages to every enemy creature. Removes invisibility."
+},
+"Immolation": {
+"abil": null,
+"kind": null,
+"txt": "Sacrifice a creature to generate 6 [불] plus 1 quantum for each non-fire element."
+},
+"Lava Golem": {
+"abil": "Growth",
+"kind": "act",
+"txt": "[대지] : Growth\nLava Golem gains +2/+2"
+},
+"Rage Potion": {
+"abil": null,
+"kind": null,
+"txt": "The target creature gains +5/-5"
+},
+"Phoenix": {
+"abil": null,
+"kind": null,
+"txt": "Phoenix turns into Ash when killed"
+},
+"Ash": {
+"abil": "Rebirth",
+"kind": "act",
+"txt": "[불]: Rebirth\nTurn this card into a Minor Phoenix"
+},
+"Seraph": {
+"abil": "Divine shield",
+"kind": "act",
+"txt": "[빛] : Divine shield\nSeraph can not be targeted for 1 turn."
+},
+"Red Nymph": {
+"abil": "Rage",
+"kind": "act",
+"txt": "[불][불][불] : Rage\nThe target creature gains +5/-5"
+},
+"Shard of Bravery": {
+"abil": null,
+"kind": null,
+"txt": "Your opponent draws 2 cards, 3 if your mark is [불]. Draw an equal amount of cards."
+},
+"Fire Pendulum": {
+"abil": null,
+"kind": null,
+"txt": "Alternately generates [불] and 1 quantum matching your mark. Gain 1 extra [불] when you play this card"
+},
+"Water Pillar": {
+"abil": null,
+"kind": null,
+"txt": "Each turn [물] is generated."
+},
+"Chrysaora": {
+"abil": "Poison",
+"kind": "act",
+"txt": "[죽음]: Poison\nInflict 1 poison damage at the end of every turn."
+},
+"Blue Crawler": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Freeze": {
+"abil": null,
+"kind": null,
+"txt": "Freeze the target creature for 3 turns. Frozen creatures can not attack or use skills."
+},
+"Ice Bolt": {
+"abil": null,
+"kind": null,
+"txt": "Deals 2 damage to the target for each 10 water quantums in your possession. Ice Bolt might freeze the target."
+},
+"Ice Shield": {
+"abil": null,
+"kind": null,
+"txt": "Shield: damage dealt to you from physical damage sources is reduced by 1. Attacking creatures might freeze"
+},
+"Purify": {
+"abil": null,
+"kind": null,
+"txt": "Remove poison and sacrifice status from the target. Heals 2 damage per turn. Cumulative."
+},
+"Arctic Squid": {
+"abil": "Freeze",
+"kind": "act",
+"txt": "[물][물] : Freeze\nFreeze the target creature"
+},
+"Trident": {
+"abil": null,
+"kind": null,
+"txt": "Weapon: Deal 4 damages at the end of every turn.\n[대지][대지][대지] : Tsunami\nDestroy up to 3 pillars / pendulums in the target cluster"
+},
+"Ice Dragon": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Toadfish": {
+"abil": "Inflate",
+"kind": "act",
+"txt": "[바람] : Inflate\nInflict 1 damage per turn to a target creature. Cause poisoning if ingested."
+},
+"Mind Flayer": {
+"abil": "Psionic wave",
+"kind": "act",
+"txt": "[에테르]: Psionic wave\nRemove any skill from the target creature."
+},
+"Nymph's Tears": {
+"abil": null,
+"kind": null,
+"txt": "Turn one of your pillars or pendulums into a Nymph. The Nymph will inherit the target's element."
+},
+"Flooding": {
+"abil": null,
+"kind": null,
+"txt": "Kill any creature along the edges of the field. Water and neutral creatures are immune. Absorb [물] per turn."
+},
+"Steam Machine": {
+"abil": "Steam",
+"kind": "act",
+"txt": "[불][불] : Steam\nGain 5 charges (+5|+0). Remove 1 charge per turn."
+},
+"Nymph Queen": {
+"abil": "Nymph's tears",
+"kind": "act",
+"txt": "[물][물][물][물] : Nymph's tears\nTurn one of your pillars into a Nymph"
+},
+"Shard of Patience": {
+"abil": null,
+"kind": null,
+"txt": "Your creatures do not attack and gain +1/+0; [물] creatures +2/+2, +4/+4 if in a flooded area. Click to remove."
+},
+"Water Pendulum": {
+"abil": null,
+"kind": null,
+"txt": "Alternately generates [물] and 1 quantum matching your mark. Gain 1 extra [물] when you play this card"
+},
+"Light Pillar": {
+"abil": null,
+"kind": null,
+"txt": "Each turn [빛] is generated."
+},
+"Photon": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Golden Dragon": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Pegasus": {
+"abil": "Dive",
+"kind": "act",
+"txt": "[바람] : Dive\nThe damage dealt is doubled for 1 turn."
+},
+"Holy Light": {
+"abil": null,
+"kind": null,
+"txt": "Heal the target for up to 10 HP's. If the target's element is death or darkness, damage is dealt instead."
+},
+"Solar Shield": {
+"abil": null,
+"kind": null,
+"txt": "Shield: Physical damage reduced by 1, the damage absorbed is converted to [빛]"
+},
+"Guardian Angel": {
+"abil": "Heal",
+"kind": "act",
+"txt": "[빛] : Heal\nHeal the target creature up to 5 HP's"
+},
+"Blessing": {
+"abil": null,
+"kind": null,
+"txt": "Adds +3/+3 permenantly on own creatures."
+},
+"Reflective Shield": {
+"abil": null,
+"kind": null,
+"txt": "Shield: Reduce damage by 1. Any damage from spells is reflected. Can not be destroyed or stolen."
+},
+"Morning Star": {
+"abil": null,
+"kind": null,
+"txt": "Weapon: Deal 7 damages at the end of every turn. Can not be destroyed or stolen."
+},
+"Miracle": {
+"abil": null,
+"kind": null,
+"txt": "Heal yourself to maximum health minus 1. This spell consumes all your light quanta left."
+},
+"Luciferin": {
+"abil": null,
+"kind": null,
+"txt": "All of your creatures without a skill gain \"bioluminescence\". Heal yourself for up to 10 HP's."
+},
+"Hope": {
+"abil": null,
+"kind": null,
+"txt": "Shield: Physical damage reduced by 1 + N. N is the number of your light emitting creatures. Immaterial."
+},
+"Crusader": {
+"abil": "Endow",
+"kind": "act",
+"txt": "[빛][빛] : Endow\nGain the target weapon's ability and +X|+2. X is the weapon's attack."
+},
+"Sanctuary": {
+"abil": null,
+"kind": null,
+"txt": "Your quanta pool and your hand can not be altered during your opponent's turn. Heal 4 HP per turn."
+},
+"Light Nymph": {
+"abil": "Luciferin",
+"kind": "act",
+"txt": "[빛][빛][빛][빛] : Luciferin\nAll your creatures without a skill gain \"bioluminescence\". Heal yourself for up to 10 HP"
+},
+"Holy Cow": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Light Pendulum": {
+"abil": null,
+"kind": null,
+"txt": "Alternately generates [빛] and 1 quantum matching your mark. Gain 1 extra [빛] when you play this card"
+},
+"Wind Pillar": {
+"abil": null,
+"kind": null,
+"txt": "Each turn [바람] is generated."
+},
+"Dragonfly": {
+"abil": null,
+"kind": null,
+"txt": "Each turn [바람] is generated"
+},
+"Wyrm": {
+"abil": "Dive",
+"kind": "act",
+"txt": "[바람][바람] : Dive\nThe damage dealt is doubled for 1 turn."
+},
+"Azure Dragon": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Fog Shield": {
+"abil": null,
+"kind": null,
+"txt": "Shield: The attacking creatures have a 40% chance to miss you"
+},
+"Thunderstorm": {
+"abil": null,
+"kind": null,
+"txt": "Deals 2 damage to every enemy creature"
+},
+"Flying Weapon": {
+"abil": null,
+"kind": null,
+"txt": "Turn your weapon into a creature"
+},
+"Firefly Queen": {
+"abil": "Firefly",
+"kind": "act",
+"txt": "[생명][생명] : Firefly\nGenerate a firefly."
+},
+"Firefly": {
+"abil": "Bioluminescence",
+"kind": "pas",
+"txt": "Bioluminescence : \nEach turn [빛] is generated"
+},
+"Owl's Eye": {
+"abil": null,
+"kind": null,
+"txt": "Weapon: Deal 5 damages at the end of every turn.\n[바람][바람] : Sniper\nDeal 3 damage to the target creature."
+},
+"Unstable Gas": {
+"abil": "Ignite (Sacrifice card)",
+"kind": "act",
+"txt": "[불] : Ignite (Sacrifice card)\nInflict 20 damages to your opponent and 1 damage to all the creatures on the field."
+},
+"Shockwave": {
+"abil": null,
+"kind": null,
+"txt": "Deal 4 damage to a target creature. Instantly kill the creature or destroy the weapon if frozen."
+},
+"Wings": {
+"abil": null,
+"kind": null,
+"txt": "Shield: Only flying or ranged creatures can harm you. Lasts 5 turns."
+},
+"Sky Blitz": {
+"abil": null,
+"kind": null,
+"txt": "Double the attack power of all your airborne creatures for 1 turn. All the remaining air quanta is consumed."
+},
+"Blue Nymph": {
+"abil": "Unstable gas",
+"kind": "act",
+"txt": "[바람][바람][바람] : Unstable gas\nGenerate unstable gas."
+},
+"Shard of Freedom": {
+"abil": null,
+"kind": null,
+"txt": "Airborne creatures gain a 25% chance to deal +50% damage, ignore shields and evade targeting if [바람]."
+},
+"Air Pendulum": {
+"abil": null,
+"kind": null,
+"txt": "Alternately generates [바람] and 1 quantum matching your mark. Gain 1 extra [바람] when you play this card"
+},
+"Time Factory": {
+"abil": null,
+"kind": null,
+"txt": "Each turn [시간] is generated."
+},
+"Deja Vu": {
+"abil": "Deja Vu",
+"kind": "act",
+"txt": "[시간] : Deja Vu\nDeja Vu creates a copy of itself"
+},
+"Fate Egg": {
+"abil": "Hatch",
+"kind": "act",
+"txt": "[시간] : Hatch\nThe Fate Egg turns into a random elite creature"
+},
+"Procrastination": {
+"abil": null,
+"kind": null,
+"txt": "Shield: Any creature that damaged you is stuck in a time bubble for 1 turn"
+},
+"Reverse Time": {
+"abil": null,
+"kind": null,
+"txt": "The target creature becomes the first card of the creature owner's deck"
+},
+"Golden Hourglass": {
+"abil": "Hasten",
+"kind": "act",
+"txt": "[시간][시간] : Hasten\nDraw a card from your deck"
+},
+"Devonian Dragon": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Anubis": {
+"abil": "Immortality",
+"kind": "act",
+"txt": "[에테르][에테르] : Immortality\nThe target creature is now immortal (untargetable)."
+},
+"Eternity": {
+"abil": null,
+"kind": null,
+"txt": "Weapon: Deal 4 damages at the end of every turn.\n[시간][시간][시간] : Put a creature back in its owner's deck."
+},
+"Sundial": {
+"abil": null,
+"kind": null,
+"txt": "Stasis: Creatures do not attack for 1 turn.\n[빛] : Hasten\nDraw a card from your deck"
+},
+"Scarab": {
+"abil": null,
+"kind": null,
+"txt": "Swarm : n = number of scarabs you control at the end of the turn.\n[중력] : Devour"
+},
+"Precognition": {
+"abil": null,
+"kind": null,
+"txt": "You can see your opponent's hand. Draw a card."
+},
+"Pharaoh": {
+"abil": "Scarab",
+"kind": "act",
+"txt": "[시간][시간] : Scarab\nGenerate a Elite Scarab."
+},
+"Dune Scorpion": {
+"abil": null,
+"kind": null,
+"txt": "Neurotoxin: Add 1 poison damage to each successful attack, 1 extra poison for each card played by afflicted player."
+},
+"Ghost of the Past": {
+"abil": null,
+"kind": null,
+"txt": "Obsession: Inflict 13 damage to the owner of this card if discarded."
+},
+"Golden Nymph": {
+"abil": "Precognition",
+"kind": "act",
+"txt": "[시간][시간] : Precognition\nYou can see your opponent's hand. Draw a card."
+},
+"Time Pendulum": {
+"abil": null,
+"kind": null,
+"txt": "Alternately generates [시간] and 1 quantum matching your mark. Gain 1 extra [시간] when you play this card"
+},
+"Obsidian Pillar": {
+"abil": null,
+"kind": null,
+"txt": "Each turn [어둠] is generated."
+},
+"Black Dragon": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Devourer": {
+"abil": null,
+"kind": null,
+"txt": "Absorb 1 quantum from your opponent per turn and return a [어둠] to you.\n[대지] : Burrow"
+},
+"Parasite": {
+"abil": "Infection",
+"kind": "act",
+"txt": "[죽음] : Infection\nInflict 1 damage per turn to a target creature."
+},
+"Dusk Mantle": {
+"abil": null,
+"kind": null,
+"txt": "Shield: The attacking creatures have a 50% chance to miss you"
+},
+"Steal": {
+"abil": null,
+"kind": null,
+"txt": "Steal a permanent"
+},
+"Nightfall": {
+"abil": null,
+"kind": null,
+"txt": "All the death or darkness creatures gain +1/+1"
+},
+"Vampire Stiletto": {
+"abil": null,
+"kind": null,
+"txt": "Weapon: Deal 4 damages at the end of every turn. The damage dealt is returned to you as healing."
+},
+"Drain Life": {
+"abil": null,
+"kind": null,
+"txt": "Drains 2 HP's from the target for each 10 darkness quantums in your possession."
+},
+"Minor Vampire": {
+"abil": "Vampire",
+"kind": "pas",
+"txt": "Vampire: \nThe damage dealt is returned to you as healing."
+},
+"Liquid Shadow": {
+"abil": null,
+"kind": null,
+"txt": "The target creature is poisoned and gains the vampire ability. Previous skills are removed."
+},
+"Gargoyle": {
+"abil": "Stone form",
+"kind": "act",
+"txt": "[대지] : Stone form\nGargoyle gains +0 / +20"
+},
+"Voodoo Doll": {
+"abil": "Voodoo",
+"kind": "pas",
+"txt": "Voodoo:\nIf this creature survives an attack, damage and status is inflicted to your opponent as well."
+},
+"Nightmare": {
+"abil": null,
+"kind": null,
+"txt": "Fill your opponent s hand with copies of the target creature s card. Drain 2 HP for each card added."
+},
+"Cloak": {
+"abil": null,
+"kind": null,
+"txt": "Your creatures and your permanents are invisible for 3 turns."
+},
+"Black Nymph": {
+"abil": "Liquid Shadow",
+"kind": "act",
+"txt": "[어둠][어둠] : Liquid Shadow\nThe target creature is poisoned and its skill switched to \"vampire\"."
+},
+"Shard of Void": {
+"abil": null,
+"kind": null,
+"txt": "Reduce your opponent's max health by 2 HP per turn. 3 if your mark is [어둠]."
+},
+"Dark Pendulum": {
+"abil": null,
+"kind": null,
+"txt": "Alternately generates [어둠] and 1 quantum matching your mark. Gain 1 extra [어둠] when you play this card"
+},
+"Aether Pillar": {
+"abil": null,
+"kind": null,
+"txt": "Each turn [에테르] is generated."
+},
+"Spark": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Lightning": {
+"abil": null,
+"kind": null,
+"txt": "Deals 5 damage to the target."
+},
+"Parallel Universe": {
+"abil": null,
+"kind": null,
+"txt": "Summon an exact copy of the target creature"
+},
+"Immortal": {
+"abil": "Immaterial",
+"kind": "pas",
+"txt": "Immaterial: \nThe Immortal can not be targeted."
+},
+"Dimensional Shield": {
+"abil": null,
+"kind": null,
+"txt": "Shield: Shift out of phase for 3 turns. Physical attacks are unable to hit you while this shield is in play."
+},
+"Lobotomizer": {
+"abil": null,
+"kind": null,
+"txt": "Weapon: Deal 5 damages at the end of every turn. \n[에테르][에테르] : Remove any skill from the target creature."
+},
+"Phase Dragon": {
+"abil": "Immaterial",
+"kind": "pas",
+"txt": "Immaterial: \nPhase Dragon can not be targeted."
+},
+"Phase Spider": {
+"abil": "Web",
+"kind": "act",
+"txt": "[에테르]: Web\nThe target creature loses its \"airborne\" skill"
+},
+"Quintessence": {
+"abil": null,
+"kind": null,
+"txt": "Grant immortality to the target creature. The target creature can no longer be targeted."
+},
+"Fractal": {
+"abil": null,
+"kind": null,
+"txt": "Fill your hand with copies of the target creature's card. All the remaining aether quanta is consumed."
+},
+"Mindgate": {
+"abil": "Duality",
+"kind": "act",
+"txt": "[에테르][에테르] : Duality\nAdd a copy of the first card in your opponent s deck to your hand."
+},
+"Silence": {
+"abil": null,
+"kind": null,
+"txt": "The opponent can not play any card during the next turn."
+},
+"Psion": {
+"abil": null,
+"kind": null,
+"txt": "Elite Psion's attacks deal spell damage."
+},
+"Turquoise Nymph": {
+"abil": "Immortality",
+"kind": "act",
+"txt": "[에테르][에테르][에테르]: Immortality\nThe target creature is now immortal (untargetable)."
+},
+"Shard of Wisdom": {
+"abil": null,
+"kind": null,
+"txt": "Target an immortal creature. The target creature now deals spell damage and gains +4/+0."
+},
+"Aether Pendulum": {
+"abil": null,
+"kind": null,
+"txt": "Alternately generates [에테르] and 1 quantum matching your mark. Gain 1 extra [에테르] when you play this card"
+},
+"Quantum Tower": {
+"abil": null,
+"kind": null,
+"txt": "Each turn 3 random quantums are generated. Gain 3 extra quantum when you play this card."
+},
+"Dirk": {
+"abil": null,
+"kind": null,
+"txt": "Weapon: Deal 4 damages at the end of every turn. Deal 1 extra damage if you have a Death or Darkness mark."
+},
+"Long Sword": {
+"abil": null,
+"kind": null,
+"txt": "Weapon: Deal 6 damages at the end of every turn"
+},
+"Gavel": {
+"abil": null,
+"kind": null,
+"txt": "Weapon: Deal 6 damages at the end of every turn. Deal 1 extra damage if you have a Gravity or Earth mark."
+},
+"Longbow": {
+"abil": null,
+"kind": null,
+"txt": "Weapon: Deal 6 damage at the end of every turn. Deal 1 extra damage if you have an Air mark."
+},
+"Tower Shield": {
+"abil": null,
+"kind": null,
+"txt": "Shield: Reduce damage by 2."
+},
+"Amethyst Tower": {
+"abil": null,
+"kind": null,
+"txt": "Each turn [엔트로피] is generated. Gain 1 extra [엔트로피] when you play this card"
+},
+"Micro Abomination": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Amethyst Dragon": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Dissipation Field": {
+"abil": null,
+"kind": null,
+"txt": "Shield: Use your quanta to absorb damage from physical damage sources."
+},
+"Werewolf": {
+"abil": "Lycanthropy",
+"kind": "act",
+"txt": "[어둠] : Lycanthropy\nThe Lycanthrope gains +5/+5 permanently."
+},
+"Chaos Power": {
+"abil": null,
+"kind": null,
+"txt": "A random bonus in attack power and health is granted to the target"
+},
+"Supernova": {
+"abil": null,
+"kind": null,
+"txt": "Generate 24 quanta. 2 for each element. Do not cast more than once per turn."
+},
+"Improved Mutation": {
+"abil": null,
+"kind": null,
+"txt": "Mutate the target creature into a superior mutant."
+},
+"Fallen Druid": {
+"abil": "Improved Mutation",
+"kind": "act",
+"txt": "[생명]: Improved Mutation\nThe target creature might turn into an abomination, a mutant, or die."
+},
+"Improved Antimatter": {
+"abil": null,
+"kind": null,
+"txt": "Invert the attack power of the target creature (the creature inflict heals instead of damage)"
+},
+"Bone Tower": {
+"abil": null,
+"kind": null,
+"txt": "Each turn [죽음] is generated. Gain 1 extra [죽음] when you play this card"
+},
+"Ivory Dragon": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Retrovirus": {
+"abil": "Plague",
+"kind": "pas",
+"txt": "Plague: \nSacrifice Retrovirus to inflict 1 damage per round to every enemy creature"
+},
+"Flesh Recluse": {
+"abil": "Web",
+"kind": "act",
+"txt": "[바람] : Web\nThe target creature loses its \"airborne\" skill"
+},
+"Condor": {
+"abil": "Scavenger",
+"kind": "pas",
+"txt": "Scavenger:\nEvery time a creature dies, Condor gains +1/+1"
+},
+"Skull Buckler": {
+"abil": null,
+"kind": null,
+"txt": "The damage dealt to you from physical damage sources is reduced by 1. Attacking creatures have a small chance to die and turn into skeletons."
+},
+"Elite Skeleton": {
+"abil": "Undead",
+"kind": "pas",
+"txt": "Undead: \nSkeleton turns into a random elite creature if targeted with reverse time"
+},
+"Graveyard": {
+"abil": null,
+"kind": null,
+"txt": "Every time a creature is killed, boneyard generates 1 elite skeleton."
+},
+"Deadly Poison": {
+"abil": null,
+"kind": null,
+"txt": "Inflicts 3 poison damage (to your opponent) at the end of every turn. Poison damage is cumulative."
+},
+"Improved Plague": {
+"abil": null,
+"kind": null,
+"txt": "Infect every enemy creature (Inflicts +1 poison on every enemy creature). Removes invisibility."
+},
+"Elite Mummy": {
+"abil": null,
+"kind": null,
+"txt": "Mummy turns into an Elite Pharaoh if targeted with reverse time."
+},
+"Death Nymph": {
+"abil": "Aflatoxin",
+"kind": "act",
+"txt": "[죽음] : Aflatoxin\nPoison the target creature (+2 poison). If the target creature dies, it turns into a malignant cell."
+},
+"Gravity Tower": {
+"abil": null,
+"kind": null,
+"txt": "Each turn [중력] is generated. Gain 1 extra [중력] when you play this card"
+},
+"Elite Charger": {
+"abil": null,
+"kind": null,
+"txt": "Momentum: The damage caused by the Elite Charger can not be reduced, shields are ignored."
+},
+"Elite Armagio": {
+"abil": "Gravity Pull",
+"kind": "act",
+"txt": "[중력] : Gravity Pull\nThe damage inflicted to you is redirected on Armagio"
+},
+"Graviton Guard": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Massive Dragon": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Unstoppable": {
+"abil": null,
+"kind": null,
+"txt": "The target creature ignores shield effects and gains +1/+1"
+},
+"Elite Otyugh": {
+"abil": "Devour",
+"kind": "act",
+"txt": "[중력] : Devour\nSwallow a smaller (less HP's) creature and gain +1/+1"
+},
+"Graviton Firemaster": {
+"abil": "Ablaze",
+"kind": "act",
+"txt": "[불] : Ablaze\nGraviton Firemaster gains +2/+0"
+},
+"Trebuchet": {
+"abil": null,
+"kind": null,
+"txt": "[중력] : Sacrifice the target creature and damage your opponent. Larger creatures inflict more damage."
+},
+"Overdrive": {
+"abil": null,
+"kind": null,
+"txt": "Replace the target creature skill with acceleration: gain +3 / -1 per turn."
+},
+"Gravity Nymph": {
+"abil": "Black Hole",
+"kind": "act",
+"txt": "[중력][중력][중력] : Black Hole\nAbsorb 3 quanta per element from the opponent. Gain 1 HP per absorbed quantum."
+},
+"Stone Tower": {
+"abil": null,
+"kind": null,
+"txt": "Each turn [대지] is generated. Gain 1 extra [대지] when you play this card"
+},
+"Elite Antlion": {
+"abil": "Burrow",
+"kind": "act",
+"txt": "[대지] : Burrow\nThe antlion can not be targeted, but its damage is halved."
+},
+"Steel Golem": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Basalt Dragon": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Diamond Shield": {
+"abil": null,
+"kind": null,
+"txt": "Shield: The damage dealt to you from physical damage sources is reduced by 3"
+},
+"Heavy Armor": {
+"abil": null,
+"kind": null,
+"txt": "The target creature gains +0/+6"
+},
+"Gnome Gemfinder": {
+"abil": null,
+"kind": null,
+"txt": "Each turn [대지] is generated."
+},
+"Elite Graboid": {
+"abil": "Burrow",
+"kind": "act",
+"txt": "[대지] : Burrow\nThe shrieker can not be targeted, but its damage is halved."
+},
+"Elite Shrieker": {
+"abil": "Burrow",
+"kind": "act",
+"txt": "[대지] : Burrow\nThe shrieker can not be targeted, but its damage is halved."
+},
+"Protect Artifact": {
+"abil": null,
+"kind": null,
+"txt": "The target permanent can not be target of any skill. It does not work on creatures."
+},
+"Quicksand": {
+"abil": null,
+"kind": null,
+"txt": "Destroy up to 3 pillars in the target cluster."
+},
+"Granite Skin": {
+"abil": null,
+"kind": null,
+"txt": "Add X HP's to your maximum life points. X is the number of [대지] that you own."
+},
+"Vanadium Warden": {
+"abil": "Guard",
+"kind": "act",
+"txt": "[대지] : Guard\n(Do not attack) Delay the target creature for 1 turn (cumulative) and attack it unless it is airborne."
+},
+"Earth Nymph": {
+"abil": "Petrify",
+"kind": "act",
+"txt": "[대지][대지][대지] : Petrify\nThe target creature gains +0/+20 but can not attack or use skills for 6 turns."
+},
+"Emerald Tower": {
+"abil": null,
+"kind": null,
+"txt": "Each turn [생명] is generated. Gain 1 extra [생명] when you play this card"
+},
+"Jade Dragon": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Giant Frog": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Leaf Dragon": {
+"abil": "Photosynthesis",
+"kind": "act",
+"txt": "[빛] : Photosynthesis\nGain [생명][생명]. This skill can be used multiple times per turn."
+},
+"Elite Cockatrice": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Forest Spectre": {
+"abil": "Growth",
+"kind": "act",
+"txt": "[물] : Growth\nThe Forest Spirit gains +2/+2"
+},
+"Improved Heal": {
+"abil": null,
+"kind": null,
+"txt": "Heal yourself for up to 20 HP's"
+},
+"Spine Carapace": {
+"abil": null,
+"kind": null,
+"txt": "Shield: Physical damage reduced by 1. Attacking creatures have a 75% chance to be infected."
+},
+"Jade Shield": {
+"abil": null,
+"kind": null,
+"txt": "Shield: Reduce damage by 2. Spells are reflected against your opponent. Can not be destroyed or stolen."
+},
+"Jade Staff": {
+"abil": null,
+"kind": null,
+"txt": "Weapon: Deal 4 damages at the end of every turn.\nHeal yourself for up to 5 HP's"
+},
+"Feral Bond": {
+"abil": null,
+"kind": null,
+"txt": "Every creature in your possession heals you for 1 HP at the end of every turn"
+},
+"Epinephrine": {
+"abil": null,
+"kind": null,
+"txt": "The target creature attacks multiple times per turn. Smaller creatures gain more extra attacks."
+},
+"Scorpion": {
+"abil": "Venom",
+"kind": "pas",
+"txt": "Venom :\nAdd 1 poison damage to each successful attack. Cause poisoning if ingested."
+},
+"Life Nymph": {
+"abil": "Adrenaline",
+"kind": "act",
+"txt": "[생명][생명] : Adrenaline\nThe target creature attacks multiple times per turn."
+},
+"Burning Tower": {
+"abil": null,
+"kind": null,
+"txt": "Each turn [불] is generated. Gain 1 extra [불] when you play this card"
+},
+"Brimstone Eater": {
+"abil": null,
+"kind": null,
+"txt": "Each turn [불] is generated."
+},
+"Ruby Dragon": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Fire Spectre": {
+"abil": "Ablaze",
+"kind": "act",
+"txt": "[불] : Ablaze\nThe Fire Spirit gains +2/+0"
+},
+"Fire Lance": {
+"abil": null,
+"kind": null,
+"txt": "Deals 3 damage to the target for each 10 fire quantums in your possession."
+},
+"Fire Buckler": {
+"abil": null,
+"kind": null,
+"txt": "Shield: 1 damage is dealt to any attacking creature"
+},
+"Explosion": {
+"abil": null,
+"kind": null,
+"txt": "Destroy the targeted permanent"
+},
+"Firestorm": {
+"abil": null,
+"kind": null,
+"txt": "Deals 3 damages to every enemy creature. Removes invisibility."
+},
+"Cremation": {
+"abil": null,
+"kind": null,
+"txt": "Sacrifice a creature to generate 8 [불] plus 1 quantum for each non-fire element."
+},
+"Lava Destroyer": {
+"abil": "Growth",
+"kind": "act",
+"txt": "[대지] : Growth\nLava Golem gains +2/+2"
+},
+"Rage Elixir": {
+"abil": null,
+"kind": null,
+"txt": "The target creature gains +6/-6"
+},
+"Minor Phoenix": {
+"abil": null,
+"kind": null,
+"txt": "Phoenix turns into Ash when killed"
+},
+"Fire Nymph": {
+"abil": "Rage",
+"kind": "act",
+"txt": "[불][불][불][불] : Rage\nThe target creature gains +6/-6"
+},
+"Water Tower": {
+"abil": null,
+"kind": null,
+"txt": "Each turn [물] is generated. Gain 1 extra [물] when you play this card"
+},
+"Physalia": {
+"abil": "Poison",
+"kind": "act",
+"txt": "[죽음]: Poison\nInflict 1 poison damage at the end of every turn."
+},
+"Abyss Crawler": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Congeal": {
+"abil": null,
+"kind": null,
+"txt": "Freeze the target creature for 4 turns. Frozen creatures can not attack or use skills."
+},
+"Ice Lance": {
+"abil": null,
+"kind": null,
+"txt": "Deals 2 damage to the target for each 10 water quantums in your possession. Ice Bolt might freeze the target."
+},
+"Permafrost Shield": {
+"abil": null,
+"kind": null,
+"txt": "Shield: damage dealt to you from physical damage sources is reduced by 2. Attacking creatures might freeze"
+},
+"Arctic Octopus": {
+"abil": "Congeal",
+"kind": "act",
+"txt": "[물][물] : Congeal\nCongeal the target creature"
+},
+"Poseidon": {
+"abil": null,
+"kind": null,
+"txt": "Weapon: Deal 4 damages at the end of every turn.\n[대지][대지] : Tsunami\nDestroy up to 3 pillars / pendulums in the target cluster"
+},
+"Arctic Dragon": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Puffer Fish": {
+"abil": null,
+"kind": null,
+"txt": "Venom\nAdd 1 poison damage to each successful attack. Cause poisoning if ingested."
+},
+"Ulitharid": {
+"abil": "Psionic wave",
+"kind": "act",
+"txt": "[에테르]: Psionic wave\nRemove any skill from the target creature."
+},
+"Inundation": {
+"abil": null,
+"kind": null,
+"txt": "Kill any creature along the edges of the field. Water and neutral creatures are immune. Absorb [물] per turn."
+},
+"Water Nymph": {
+"abil": "Nymph's tears",
+"kind": "act",
+"txt": "[물][물][물][물] : Nymph's tears\nTurn one of your pillars into a Nymph"
+},
+"Light Tower": {
+"abil": null,
+"kind": null,
+"txt": "Each turn [빛] is generated. Gain 1 extra [빛] when you play this card"
+},
+"Ray of Light": {
+"abil": null,
+"kind": null,
+"txt": "Each turn [빛] is generated"
+},
+"Light Dragon": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Elite Pegasus": {
+"abil": "Dive",
+"kind": "act",
+"txt": "[바람] : Dive\nThe damage dealt is doubled for 1 turn."
+},
+"Holy Flash": {
+"abil": null,
+"kind": null,
+"txt": "Heal the target for up to 10 HP's. If the target's element is death or darkness, damage is dealt instead."
+},
+"Solar Buckler": {
+"abil": null,
+"kind": null,
+"txt": "Shield: Physical damage reduced by 1, the damage absorbed is converted to [빛]"
+},
+"Archangel": {
+"abil": "Heal",
+"kind": "act",
+"txt": "[빛] : Heal\nHeal the target creature up to 5 HP's"
+},
+"Improved Blessing": {
+"abil": null,
+"kind": null,
+"txt": "Adds +3/+3 permenantly on own creatures."
+},
+"Mirror Shield": {
+"abil": null,
+"kind": null,
+"txt": "Shield: Any damage from spells is reflected against your opponent. Can not be destroyed or stolen."
+},
+"Morning Glory": {
+"abil": null,
+"kind": null,
+"txt": "Weapon: Deal 8 damages at the end of every turn. Can not be destroyed or stolen."
+},
+"Improved Miracle": {
+"abil": null,
+"kind": null,
+"txt": "Heal yourself to maximum health minus 1. This spell consumes all your light quanta left."
+},
+"Luciferaze": {
+"abil": null,
+"kind": null,
+"txt": "All of your creatures without a skill gain \"bioluminescence\". Heal yourself for up to 10 HP's."
+},
+"Wind Tower": {
+"abil": null,
+"kind": null,
+"txt": "Each turn [바람] is generated. Gain 1 extra [바람] when you play this card"
+},
+"Damselfly": {
+"abil": null,
+"kind": null,
+"txt": "Each turn [바람] is generated"
+},
+"Elite Wyrm": {
+"abil": "Dive",
+"kind": "act",
+"txt": "[바람][바람] : Dive\nThe damage dealt is doubled for 1 turn."
+},
+"Sky Dragon": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Improved Fog": {
+"abil": null,
+"kind": null,
+"txt": "Shield: The attacking creatures have a 40% chance to miss you"
+},
+"Lightning Storm": {
+"abil": null,
+"kind": null,
+"txt": "Deals 2 damage to every enemy creature. Removes invisibility."
+},
+"Animate Weapon": {
+"abil": null,
+"kind": null,
+"txt": "Turn your weapon into a creature"
+},
+"Elite Queen": {
+"abil": "Firefly",
+"kind": "act",
+"txt": "[생명][생명] : Firefly\nGenerate an elite firefly."
+},
+"Elite Firefly": {
+"abil": "Incandescence",
+"kind": "pas",
+"txt": "Incandescence : \nEach turn [불] is generated"
+},
+"Eagle's Eye": {
+"abil": null,
+"kind": null,
+"txt": "Weapon: Deal 7 damages at the end of every turn.\n[바람][바람] : Sniper\nDeal 3 damage to the target creature."
+},
+"Air Nymph": {
+"abil": "Unstable gas",
+"kind": "act",
+"txt": "[바람][바람][바람] : Unstable gas\nGenerate unstable gas."
+},
+"Time Tower": {
+"abil": null,
+"kind": null,
+"txt": "Each turn [시간] is generated. Gain 1 extra [시간] when you play this card"
+},
+"Elite Deja Vu": {
+"abil": "Deja Vu",
+"kind": "act",
+"txt": "[시간] : Deja Vu\nElite Deja Vu creates a copy of itself"
+},
+"Turtle Shield": {
+"abil": null,
+"kind": null,
+"txt": "Shield: Any creature that damaged you is stuck in a time bubble for 1 turn"
+},
+"Rewind": {
+"abil": null,
+"kind": null,
+"txt": "The target creature becomes the first card of the creature owner's deck"
+},
+"Electrum Hourglass": {
+"abil": "Hasten",
+"kind": "act",
+"txt": "[시간]  : Hasten\nDraw a card from your deck"
+},
+"Silurian Dragon": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Elite Anubis": {
+"abil": "Immortality",
+"kind": "act",
+"txt": "[에테르] : Immortality\nThe target creature is now immortal (untargetable)."
+},
+"Elite Scarab": {
+"abil": null,
+"kind": null,
+"txt": "Swarm : n = number of scarabs you control at the end of the turn.\n[중력] : Devour"
+},
+"Obsidian Tower": {
+"abil": null,
+"kind": null,
+"txt": "Each turn [어둠] is generated. Gain 1 extra [어둠] when you play this card"
+},
+"Obsidian Dragon": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Pest": {
+"abil": null,
+"kind": null,
+"txt": "Absorb 1 quantum from your opponent per turn and return a [어둠] to you.\n[대지] : Burrow"
+},
+"Bloodsucker": {
+"abil": "Infection",
+"kind": "act",
+"txt": "[죽음] : Infection\nInflict 1 damage per turn to a target creature."
+},
+"Improved Dusk": {
+"abil": null,
+"kind": null,
+"txt": "Shield: The attacking creatures have a 50% chance to miss you"
+},
+"Improved Steal": {
+"abil": null,
+"kind": null,
+"txt": "Steal a permanent"
+},
+"Eclipse": {
+"abil": null,
+"kind": null,
+"txt": "All the death or darkness creatures gain +2/+1"
+},
+"Vampire Dagger": {
+"abil": null,
+"kind": null,
+"txt": "Weapon: Deal 6 damages at the end of every turn. The damage dealt is returned to you as healing."
+},
+"Siphon Life": {
+"abil": null,
+"kind": null,
+"txt": "Drains 2 HP's from the target for each 10 darkness quantums in your possession."
+},
+"Vampire": {
+"abil": "Vampire",
+"kind": "pas",
+"txt": "Vampire: \nThe damage dealt is returned to you as healing."
+},
+"Dark Nymph": {
+"abil": "Liquid Shadow",
+"kind": "act",
+"txt": "[어둠][어둠] : Liquid Shadow\nThe target creature is poisoned and its skill switched to \"vampire\"."
+},
+"Aether Tower": {
+"abil": null,
+"kind": null,
+"txt": "Each turn [에테르] is generated. Gain 1 extra [에테르] when you play this card"
+},
+"Ball Lightning": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Thunderbolt": {
+"abil": null,
+"kind": null,
+"txt": "Deals 5 damage to the target."
+},
+"Twin Universe": {
+"abil": null,
+"kind": null,
+"txt": "Summon an exact copy of the target creature"
+},
+"Elite Immortal": {
+"abil": "Immaterial",
+"kind": "pas",
+"txt": "Immaterial: \nThe Immortal can not be targeted."
+},
+"Phase Shield": {
+"abil": null,
+"kind": null,
+"txt": "Shield: Shift out of phase for 3 turns. Physical attacks are unable to hit you while this shield is in play."
+},
+"Electrocuter": {
+"abil": null,
+"kind": null,
+"txt": "Weapon: Deal 5 damages at the end of every turn. \n[에테르] : Remove any skill from the target creature."
+},
+"Elite Phase Dragon": {
+"abil": null,
+"kind": null,
+"txt": ""
+},
+"Phase Recluse": {
+"abil": "Web",
+"kind": "act",
+"txt": "[에테르]: Web\nThe target creature loses its \"airborne\" skill"
+},
+"Aether Nymph": {
+"abil": "Immortality",
+"kind": "act",
+"txt": "[에테르][에테르][에테르]: Immortality\nThe target creature is now immortal (untargetable)."
+}
+}

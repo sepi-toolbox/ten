@@ -14,6 +14,12 @@
   data/etg_src/cards.csv      — openEtG (serprex/openEtG) 의 `src/vanilla/cards.csv`.
                                 openEtG 의 자체 확장이 아니라 **원작(vanilla) 표**다.
   data/etg_src/skilltext.json — 같은 저장소 `src/rs/src/text.rs` 에서 뽑은 능력 설명.
+  data/etg_src/revival.json   — **원작에 인쇄된 글과 능력 이름.**
+                                Sparklmonkey/ElementsTheRevival(원작을 잇는 유니티 구현)의
+                                `Assets/Resources/Cards/CardDatabase.json` 에서 뽑았다.
+                                openEtG 는 능력을 일반화해 버려서 **이름이 없다**
+                                (불의 정령도 독수리도 똑같이 `growth`). 원작에서는
+                                각각 '아블레이즈' 와 '스캐빈저' 라는 다른 이름이다.
 
   ⚠ 원작 위키(elementsthegame.fandom.com)는 이 환경에서 402 로 막힌다.
     그래서 사람이 옮겨 적은 위키 대신 **기계가 읽는 표**를 정본으로 삼았다.
@@ -160,6 +166,35 @@ KO = {
 }
 
 
+# ── 능력 이름 (원작) ─────────────────────────────────────────────────────────
+# ⚠ 이름은 **카드마다** 다르다. openEtG 로는 알 수 없다 — 거기서는 불의 정령도 독수리도
+#   똑같이 `growth` 다. 원작에서는 '아블레이즈' 와 '스캐빈저' 로 아예 다른 능력이다.
+ABILKO = {
+"Ablaze":"아블레이즈","Adrenaline":"아드레날린","Aflatoxin":"아플라톡신","Antimatter":"반물질",
+"Black Hole":"블랙홀","Burrow":"굴파기","Congeal":"응결","Dead and Alive":"삶과 죽음",
+"Deja Vu":"데자뷰","Devour":"포식","Dive":"급강하","Divine shield":"신성한 방패",
+"Duality":"이중성","Endow":"부여","Evolve":"진화","Firefly":"반딧불 소환","Freeze":"동결",
+"Gravity Pull":"중력 견인","Growth":"성장","Guard":"수문","Hasten":"재촉","Hatch":"부화",
+"Heal":"치유","Ignite (Sacrifice card)":"점화","Immortality":"불멸","Improved Mutation":"개량 돌연변이",
+"Infection":"감염","Inflate":"팽창","Liquid Shadow":"액체 그림자","Luciferin":"루시페린",
+"Lycanthropy":"수화","Mutation":"돌연변이","Nymph's tears":"님프의 눈물","Paradox":"역설",
+"Petrify":"석화","Photosynthesis":"광합성","Poison":"독","Precognition":"예지",
+"Psionic wave":"정신파","Rage":"분노","Rebirth":"환생","Scarab":"스카라브 소환","Steam":"증기",
+"Stone form":"돌 형상","Unstable gas":"불안정한 기체","Web":"거미줄","Sniper":"저격",
+# 지속형
+"Bioluminescence":"생물발광","Deadly Venom":"맹독","Immaterial":"실체 없음","Incandescence":"백열",
+"Infect":"감염","Plague":"역병","Scavenger":"시체 청소","Undead":"언데드","Vampire":"흡혈",
+"Venom":"독액","Voodoo":"부두",
+}
+# openEtG 이름 ↔ 리바이벌 이름의 철자 차이. **뜻이 같은 것만** 잇는다 —
+# 확신 없는 것(Dry Spell ↔ Inundation 등)은 잇지 않고 원문 없음으로 남긴다.
+ALIAS = {
+"Basilisk Blood":"Basilisk's Blood", "Déjà Vu":"Deja Vu", "Elite Déjà Vu":"Elite Deja Vu",
+"Electrocutor":"Electrocuter", "Elite Firefly Queen":"Elite Queen", "Fire Storm":"Firestorm",
+"Long Bow":"Longbow", "Luciferase":"Luciferaze", "Schrödinger's Cat":"Schrodinger's Cat",
+}
+
+
 def parse_cost(s, ele):
     """`3` 이면 자기 속성 3, `2:0` 이면 무색 2. 0 이면 색이 없다."""
     if ":" in s:
@@ -186,15 +221,23 @@ def parse_skills(raw, kind, ele):
         else:
             ev, body = ("cast" if kind == 3 else "ownattack"), tok
         parts = body.split(" ")
+        # ⚠⚠ 값이 **여러 개**인 능력이 있다 — `growth 2 0` 은 공격 +2, 체력 +0 이다.
+        #   처음에는 첫 값만 읽고 나머지를 버렸다. 그래서 불의 정령이 원작의 +2|+0 이 아니라
+        #   +2|+2 로 자랐다 — 글만 틀린 게 아니라 **수치가 틀렸다.**
+        #   `summon 1908` 처럼 값이 **카드 번호**인 것도 있다(이름이 아니다).
+        vals = []
+        for v in parts[1:]:
+            vals.append(int(v) if re.match(r"^-?\d+$", v) else v)
         out.append({"ev": ev, "id": parts[0],
-                    "arg": (int(parts[1]) if len(parts) > 1 and re.match(r"^-?\d+$", parts[1])
-                            else (parts[1] if len(parts) > 1 else None))})
+                    "arg": (vals[0] if vals else None),
+                    "args": vals})
     return out, cast, castel
 
 
 def main():
     rows = [l.split("|") for l in open(os.path.join(SRC, "cards.csv"), encoding="utf-8").read().split("\n") if l]
     sktext = json.load(open(os.path.join(SRC, "skilltext.json"), encoding="utf-8"))
+    rev = json.load(open(os.path.join(SRC, "revival.json"), encoding="utf-8"))
     cards, byname = [], {}
     for r in rows:
         if len(r) != 10:
@@ -219,6 +262,14 @@ def main():
             "sk": sk, "cast": cast, "castel": castel,
             "flags": flags, "stats": stats, "up": upped,
         }
+        # ── 원작에 인쇄된 글과 능력 이름을 붙인다 ────────────────────────────
+        r = rev.get(name) or rev.get(ALIAS.get(name, ""))
+        if r:
+            c["otxt"] = r["txt"]                      # 원문 그대로(속성 아이콘만 글자로)
+            if r["abil"]:
+                c["abil"] = r["abil"]
+                c["abilko"] = ABILKO.get(r["abil"], r["abil"])
+                c["abilkind"] = r["kind"]
         cards.append(c)
         byname.setdefault(name, c)
 
@@ -232,6 +283,9 @@ def main():
             c["upcode"] = None
 
     missing = sorted({s["id"] for c in cards for s in c["sk"] if s["id"] not in sktext})
+    # ⚠ 빈 글("")과 못 찾음(키 없음)은 다르다 — 용·골렘은 원래 능력 글이 없다.
+    noorig = [c["en"] for c in cards if "otxt" not in c]
+    noname = sorted({c["abil"] for c in cards if c.get("abil") and c["abil"] not in ABILKO})
     data = {
         "els": ELS, "elko": ELKO,
         "src": "openEtG serprex/openEtG src/vanilla/cards.csv (원작 vanilla 표)",
@@ -252,6 +306,13 @@ def main():
     noko = [c["en"] for c in cards if c["en"] not in KO]
     print(f"카드 {len(cards)}장 (기본 {len(base)} · 강화 {len(cards)-len(base)}) → {OUT}")
     print(f"능력 설명 {len(sktext)}종 · 설명 없는 능력 {len(missing)}종: {', '.join(missing) or '없음'}")
+    named = sum(1 for c in cards if c.get("abil"))
+    withtxt = sum(1 for c in cards if c.get("otxt"))
+    print(f"원문 이은 카드 {len(cards)-len(noorig)}/{len(cards)} (그중 글이 있는 것 {withtxt}장) · 능력 이름 {named}장")
+    if noorig:
+        print(f"  ⚠ 원문을 못 찾은 카드 {len(noorig)}장: {', '.join(sorted(set(noorig)))}")
+    if noname:
+        print(f"  ⚠ 한국어 이름 없는 능력: {', '.join(noname)}")
     if noko:
         print(f"⚠ 한국어 이름 없는 카드 {len(noko)}장: {', '.join(noko)}")
 

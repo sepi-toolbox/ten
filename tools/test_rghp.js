@@ -15,6 +15,12 @@ const P='file://'+path.join(__dirname,'..','prototype','index.html')+'?dev=1';
 
   /* 전투 노드로 진입해 멀리건까지 넘긴다 (⚠ rgEnter 는 '전투 시작'을 눌러야 층을 확정한다) */
   async function enter(){
+    /* ⚠⚠⚠ 지금 판에 **표식**을 찍고 들어간다. newGame() 이 S.me 를 새 객체로 갈아 끼우므로
+       표식이 사라진 순간이 곧 '새 판이 실제로 차려졌다' 는 뜻이다.
+       상태 플래그(RG.fighting·RG.entering)만 보면 안 된다 — 지난 전투가 끝난 뒤
+       fighting 이 아직 켜져 있고 entering 은 아직 안 켜진 **틈**이 있어서, 그 틈에
+       조건이 통과해 버리고 낡은 HP 를 읽는다. 전체 검사에서만 이따금 터진 원인이 이것이다. */
+    await p.evaluate(()=>{ if(typeof S!=='undefined'&&S&&S.me) S.me.__stale=1; });
     await p.evaluate(()=>{ const f=RG.floor+1;
       const i=RG.map[f].findIndex(n=>n.t!=='event'&&n.t!=='shop');
       rgEnter(f,i<0?0:i); });
@@ -31,7 +37,7 @@ const P='file://'+path.join(__dirname,'..','prototype','index.html')+'?dev=1';
        · 'RG.fighting 이 켜졌는가' 만 보면 지난 전투가 끝나며 남긴 값을 그대로 읽는다.
        · 'S.me.hp === RG.hp' 도 안 된다 — 이긴 직후엔 둘이 이미 같아서 **즉시 통과**해
          버리고, newGame 이 돌기 전의 낡은 판에 대고 검사를 이어 간다(실제로 그랬다). */
-    await p.waitForFunction(()=>RG.fighting&&!RG.entering&&S.me,null,{timeout:9000})
+    await p.waitForFunction(()=>RG.fighting&&!RG.entering&&S.me&&!S.me.__stale,null,{timeout:9000})
       .catch(()=>{});
     await p.evaluate(()=>{ const k=document.getElementById('keepBtn'); k&&k.click(); });
     await w(400);

@@ -90,6 +90,19 @@ h1.tt small{font-family:'Gowun Batang',serif;letter-spacing:0;font-size:10px;col
 .pctl b{font-family:'Cinzel',serif;font-size:12px;color:var(--gold-bright);min-width:12px;text-align:center}
 .deckpick button.elb{padding:4px 8px;font-family:'Gowun Batang',serif;font-size:11px;letter-spacing:0}
 
+/* ── 쓸 수 있는 능력 ──────────────────────────────────────────────────
+   ⚠ 본편의 '가호' 광채(.wardon)를 빌려 썼더니 다른 상태 표시와 구별이 안 됐다.
+     이건 **지금 누르면 된다** 는 신호라 따로 둔다 — 초록 테 + 맥동 + 비용 뱃지. */
+.slot.canuse{border-color:#6ee08a;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.3),0 0 12px rgba(110,224,138,.75);
+  animation:canuse 1.5s ease-in-out infinite}
+@keyframes canuse{50%{box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),0 0 20px rgba(110,224,138,1)}}
+.slot .usetag{position:absolute;left:2px;bottom:2px;z-index:5;font-style:normal;
+  font-family:'Gothic A1',sans-serif;font-size:7px;font-weight:700;
+  padding:1px 4px;border-radius:7px;background:rgba(8,24,12,.92);
+  color:#a9f5bd;border:1px solid #4c9a63;white-space:nowrap}
+@media (prefers-reduced-motion:reduce){.slot.canuse{animation:none}}
+
 /* ⚠⚠ 본편 `.main` 은 자식을 **id 로 재배열한다**(#foeHand:0 … #hand:8).
    그래서 HTML 에 적은 순서가 화면 순서가 아니다 — 처음에 이걸 모르고 붙였다가
    상대 판·내 판·기록이 뒤죽박죽으로 섞여 나왔다.
@@ -108,7 +121,7 @@ h1.tt small{font-family:'Gowun Batang',serif;letter-spacing:0;font-size:10px;col
 <script src="data.js"></script>
 <script>
 'use strict';
-const VERSION='0.4.0', BUILD='2026-08-05';
+const VERSION='0.6.0', BUILD='2026-08-05';
 /* 판 번호는 제목줄에 붙인다 — 아래 h1.tt 안 small */
 document.addEventListener('DOMContentLoaded',()=>{const t=document.querySelector('h1.tt small');
   if(t)t.insertAdjacentHTML('beforeend',` · v${VERSION}`);});
@@ -156,7 +169,12 @@ def('pend',null,'매 턴 끝에 자기 속성과 문장 속성을 번갈아 만�
 def('pillar1',null,'낼 때 자기 속성 퀀텀 1을 더 준다',(g,me,s)=>{
   const e=s.c.el; if(e===0) for(let i=0;i<3;i++) gain(me,1+rnd(12),1); else gain(me,e,1);
 });
-def('quanta',null,'문장 — 매 턴 끝에 퀀텀을 만든다',(g,me,s)=>{ gain(me,s.c.el||1+rnd(12),1); });
+/* ⚠ 값이 **속성 번호**다. 카드 자신의 속성이 아니다 —
+   반딧불(바람)은 [빛] 을, 정예 반딧불은 [불] 을 만든다. 카드 속성으로 읽으면 둘 다 바람이 된다. */
+def('quanta',null,'매 턴 끝에 {EL} 퀀텀 1을 만든다',(g,me,s,t,a)=>{
+  const e=(typeof a==='number')?a:s.c.el;
+  if(e===0){ for(let i=0;i<3;i++) gain(me,1+rnd(12),1); } else gain(me,e,1);
+});
 def('nova',null,'12속성 퀀텀을 1씩 얻는다. 한 턴에 3장 이상 쓰면 특이점이 나온다',(g,me)=>{
   for(let e=1;e<=12;e++) gain(me,e,1);
   me.nova=(me.nova||0)+1;
@@ -176,15 +194,19 @@ def('siphon',null,'상대 퀀텀 1을 빼앗아 어둠 퀀텀으로 바꾼다',(
 });
 
 /* ── 피해 ──────────────────────────────────────────────────────────────── */
-def('v_firebolt','any','불 퀀텀 10마다 피해 3씩. 기본 3',(g,me,s,t)=>{
-  spellDmg(me,t,3+3*Math.floor(me.q[6]/10));
+/* 원작 공식 그대로: 3 + 3 × ⌊(불 퀀텀 + 이 카드 비용) / 10⌋.
+   ⚠ **비용을 더해야 한다** — 계산 시점엔 이미 낸 뒤라, 빼먹으면 화염 창(1코)이 손해를 본다. */
+def('v_firebolt','any','불 퀀텀 10마다 피해 3씩 늘어난다 (기본 3)',(g,me,s,t,a)=>{
+  spellDmg(me,t,3+3*Math.floor((me.q[6]+(a||0))/10));
 });
-def('v_icebolt','any','물 퀀텀 10마다 피해 2씩. 기본 2 · 확률로 얼린다',(g,me,s,t)=>{
-  const d=2+2*Math.floor(me.q[7]/10); spellDmg(me,t,d);
-  if(t&&t.kind==='creature'&&Math.random()<0.25+0.05*d) freeze(t,3);
+def('v_icebolt','any','물 퀀텀 10마다 피해 2씩 늘어난다 (기본 2) · 확률로 얼린다',(g,me,s,t,a)=>{
+  const b=Math.floor((me.q[7]+(a||0))/10);
+  if(t&&t.kind==='creature'&&rnd(20)<7+b*2) freeze(t,s.up?4:3);
+  spellDmg(me,t,2+b*2);
 });
-def('v_drainlife','any','시간… 어둠 퀀텀 10마다 2씩 흡수한다. 기본 2',(g,me,s,t)=>{
-  const d=2+2*Math.floor(me.q[11]/10); heal(me,spellDmg(me,t,d));
+def('v_drainlife','any','어둠 퀀텀 10마다 2씩 더 빨아들인다 (기본 2)',(g,me,s,t,a)=>{
+  const b=Math.floor((me.q[11]+(a||0))/10);
+  heal(me,spellDmg(me,t,2+b*2));
 });
 def('lightning','any','피해 5',(g,me,s,t)=>{ spellDmg(me,t,5); });
 def('v_holylight','any','대상을 10 회복시킨다. 야행성이면 대신 10 피해',(g,me,s,t)=>{
@@ -256,12 +278,17 @@ def('v_stoneform',null,'+0|+20 을 얻고 능력을 잃는다',(g,me,s)=>{ buff(
    그래서 설명에 '언제' 를 적으면 한쪽이 반드시 거짓말이 된다 — '무엇을' 만 적고,
    '언제' 는 확대창의 머리말(능력 · N불 / 크리처가 죽을 때마다)이 말하게 둔다.
    성권이 "불의 정령은 공격할 때가 아니라 눌러서 쓰는 것 아니냐" 고 짚어 준 자리다. */
-def('growth',null,'+{N}|+{N} 을 얻는다',(g,me,s,t,a)=>{ buff(s,a||2,a||2); });
+def('growth',null,'+{A}|+{H} 를 얻는다',(g,me,s,t,a,ar)=>{
+  const A=(ar&&ar.length?ar[0]:(a||2)), H=(ar&&ar.length>1?ar[1]:A);
+  buff(s,A,H);
+});
 def('v_bblood','cr','대상에게 +0|+20, 5턴 동안 못 움직인다',(g,me,s,t)=>{ buff(t,0,20); t.delayed=5; });
 def('v_slow','cr','대상을 2턴 동안 못 움직이게 한다',(g,me,s,t)=>{ t.delayed=(t.delayed||0)+2; });
 def('freeze','crw','대상을 {N}턴 얼린다',(g,me,s,t,a)=>{ freeze(t,a||3); });
 def('v_cold',null,'때린 크리처를 확률로 3턴 얼린다',(g,me,s,t)=>{ if(t&&Math.random()<0.3) freeze(t,3); });
-def('purify','cr','독을 씻어내고 오히려 -2 를 준다',(g,me,s,t)=>{ t.poison=Math.min((t.poison||0)-2,-2); });
+def('purify','cr','독을 씻어내고 오히려 독 -{N} 을 준다',(g,me,s,t,a)=>{
+  const n=a||2; t.poison=Math.min((t.poison||0)-n,-n);
+});
 def('acceleration','cr','대상의 능력을 「공격할 때마다 +{N}|-1」 로 바꾼다',(g,me,s,t,a)=>{ t.sk=[{ev:'ownattack',id:'accel',arg:(a||2)}]; });
 def('accel',null,'공격할 때마다 +{N}|-1',(g,me,s,t,a)=>{ buff(s,a||2,-1); });
 def('adrenaline','cr','대상이 한 턴에 여러 번 공격한다. 약할수록 더 많이',(g,me,s,t)=>{ t.adren=1; });
@@ -292,12 +319,17 @@ def('v_heal',null,'체력을 20 회복한다',(g,me,s)=>{ heal(me,s.up?24:20); }
 def('miracle',null,'체력을 최대치보다 1 낮게 채운다. 빛 퀀텀을 모두 잃는다',(g,me)=>{
   me.q[8]=0; me.hp=Math.max(me.hp,me.maxhp-1);
 });
-def('regenerate',null,'턴 끝에 5 회복한다',(g,me)=>{ heal(me,5); });
+def('regenerate',null,'턴 끝에 {N} 회복한다',(g,me,s,t,a)=>{ heal(me,(typeof a==='number')?a:5); });
 def('v_hope',null,'빛을 내는 크리처 수만큼 피해를 막는다',()=>{});
 def('vampire',null,'준 피해만큼 주인이 회복한다',(g,me,s,t,a)=>{ heal(me,a||0); });
 
 /* ── 소환·복제 ─────────────────────────────────────────────────────────── */
-def('summon',null,'몸을 하나 부른다',(g,me,s,t,a)=>{ const c=BYNAME[a]; if(c) summon(me,s.up&&c.upcode?c.upcode:c.code); });
+/* ⚠⚠ 값이 **카드 번호**다(1908 = 반딧불). 이름으로 찾으려다 undefined 가 되어
+   반딧불 여왕·파라오가 **아무것도 안 불렀다** — 눌러도 조용히 아무 일이 없었다. */
+def('summon',null,'{SUM} 을(를) 부른다',(g,me,s,t,a)=>{
+  const c=(typeof a==='number')?CARD[a]:BYNAME[a];
+  if(c) summon(me,c.code);
+});
 def('v_hatch',null,'무작위 크리처로 변한다',(g,me,s)=>{
   const pool=ETG.cards.filter(c=>c.kind==='creature'&&!c.up&&playable(c));
   const c=pool[rnd(pool.length)]; morph(s,c.code);
@@ -372,7 +404,7 @@ def('v_dagger',null,'죽음·어둠 문장이면 공격력이 1 오른다',()=>{
 def('v_noluci',null,'방패를 무시한다',()=>{});
 
 /* ── 기타 지속 ─────────────────────────────────────────────────────────── */
-def('nightfall',null,'모든 야행성 크리처가 +1|+1',()=>{});
+def('nightfall',null,'모든 야행성 크리처가 +{N}|+{N}',()=>{});
 def('sanctuary',null,'상대가 이 편의 것을 겨눌 수 없다. 턴마다 1 회복',(g,me)=>{ heal(me,1); });
 def('stasis',null,'모든 공격을 막는다 (해시계)',()=>{});
 def('upkeep',null,'유지 비용을 못 내면 사라진다',(g,me,s)=>{
@@ -398,8 +430,8 @@ def('gas',null,'불안정한 기체를 놓는다',(g,me)=>{ const c=BYNAME['Unst
 def('steam',null,'+5 공격력을 얻는다. 매 턴 1씩 식는다',(g,me,s)=>{ s.steam=(s.steam||0)+5; buff(s,5,0); });
 /* 식는 쪽은 공격 차례에 돈다 — 설명에 적어 놓고 구현을 빼면 그게 곧 거짓말이다 */
 def('steamdecay',null,'',(g,me,s)=>{ if(s.steam>0){ s.steam--; buff(s,-1,0); } });
-def('immolate',null,'자기 크리처를 태워 퀀텀을 얻는다',(g,me,s,t)=>{
-  if(!t)return; for(let e=1;e<=12;e++) gain(me,e,1); gain(me,6,t.hp+(s.up?7:5)); kill(t);
+def('immolate','mycr','자기 크리처를 태운다. 12속성 1씩 + 불 퀀텀(체력 + {N})',(g,me,s,t,a)=>{
+  if(!t)return; for(let e=1;e<=12;e++) gain(me,e,1); gain(me,6,t.hp+(a||5)); kill(t);
 });
 def('fiery',null,'불 퀀텀 5마다 공격력 1',()=>{});
 def('lycanthropy',null,'+5|+5 를 얻는다',(g,me,s)=>{ buff(s,5,5); s.sk=s.sk.filter(k=>k.id!=='lycanthropy'); });
@@ -636,7 +668,8 @@ function trig(u,ev,tgt,extra){
   u.sk.forEach(s=>{
     if(s.ev!==ev)return;
     const h=SK[s.id]; if(!h)return;
-    h.f(G,u.own,u,tgt,typeof s.arg==='number'?s.arg:(extra!==undefined?extra:s.arg));
+    /* ⚠ 값이 여러 개인 능력이 있다(growth 2 0). 배열을 통째로 넘긴다. */
+    h.f(G,u.own,u,tgt,(typeof s.arg==='number'?s.arg:(extra!==undefined?extra:s.arg)),s.args||[]);
   });
 }
 function hasSk(u,ev){ return u&&u.sk&&u.sk.some(s=>s.ev===ev&&SK[s.id]); }
@@ -833,7 +866,7 @@ function useAbility(p,u,tgt){
   if(!pay(p,u.castel,u.cast))return false;
   u.used=true;
   log(`${u.c.ko} — ${SK[s.id].d.split('.')[0].replace(/\{N\}/g,typeof s.arg==='number'?s.arg:'N')}`,p===G.me?'b':'a');
-  SK[s.id].f(G,p,u,tgt,typeof s.arg==='number'?s.arg:s.arg);
+  SK[s.id].f(G,p,u,tgt,typeof s.arg==='number'?s.arg:s.arg,s.args||[]);
   checkEnd();
   return true;
 }
@@ -895,7 +928,23 @@ const KINDKO={creature:'크리처',spell:'주문',perm:'기물',weapon:'무기',
 /* 설명 속 {N} 은 **그 카드의 실제 수치**로 바꾼다.
    ⚠ 안 바꾸면 "+N|+N 을 얻는다" 가 그대로 카드에 찍힌다 — 읽는 사람에게는 아무 말도 아니다.
      수치를 설명에 손으로 박아 넣으면 카드마다 값이 다를 때(독수리 1 · 불의 정령 2) 틀린다. */
-const fillN=(d,s)=>d.replace(/\{N\}/g, typeof s.arg==='number'?s.arg:'N');
+function fillN(d,s){
+  const a=s.args||[], n=typeof s.arg==='number'?s.arg:null;
+  return d.replace(/\{N\}/g, n===null?'N':n)
+          .replace(/\{A\}/g, a.length?a[0]:'N')
+          .replace(/\{H\}/g, a.length>1?a[1]:(a.length?a[0]:'N'))
+          .replace(/\{EL\}/g, n!==null&&ELKO[n]?ELKO[n]:'자기 속성')
+          .replace(/\{SUM\}/g, (n!==null&&CARD[n])?CARD[n].ko:'몸 하나');
+}
+/* 카드에 붙은 능력 이름을 **맞는 능력에만** 붙인다.
+   한 카드에 이름은 하나뿐인데 능력은 여럿일 수 있다 —
+   발동형 이름은 cast 쪽에, 지속형 이름은 저절로 도는 쪽에 붙는다. */
+function abilName(c,s){
+  if(!c.abilko)return '';
+  const act=(s.ev==='cast'&&c.kind!=='spell');
+  if(c.abilkind==='act') return act?c.abilko:'';
+  return act?'':c.abilko;
+}
 const kindKo=k=>KINDKO[k]||k;
 const FLAGKO={airborne:'비행',momentum:'관성',immaterial:'실체 없음',poisonous:'유독',
   aquatic:'수생',ranged:'원거리',nocturnal:'야행성',burrowed:'굴속',reflective:'주문 반사',
@@ -945,10 +994,14 @@ function ruleText(c,u,full){
   sks.forEach(s=>{
     const h=SK[s.id]; if(!h)return;
     const d=fillN(full?h.d:h.d.split('.')[0],s);
+    /* ⚠ 원작에는 능력마다 **이름**이 있다(불의 정령 = 아블레이즈, 독수리 = 스캐빈저).
+       openEtG 는 능력을 일반화해 이름을 버렸고, 우리도 한동안 그대로 빠뜨렸다.
+       이름을 앞에 세워야 "그 능력" 을 부를 수 있다 — 성권이 짚은 자리다. */
+    const nm=abilName(c,s);
     if(s.ev==='cast'&&c.kind!=='spell'){
       const cst=u?u.cast:c.cast, ce=u?u.castel:c.castel;
-      out.push(`<b>[${cst?cst+ELKO[ce]:'무료'}]</b> ${d}`);
-    } else out.push(d);
+      out.push(`<b>[${cst?cst+ELKO[ce]:'무료'}]</b> ${nm?`<b>${nm}</b> · `:''}${d}`);
+    } else out.push((nm?`<b>${nm}</b> · `:'')+d);
   });
   if(u&&u.sk.length===0&&c.sk.length) out.push('<b>능력을 잃었다</b>');
   return out.join(' · ');
@@ -987,16 +1040,21 @@ function slotHTML(u,p){
   if(u.flags.includes('immaterial')) cls+=' veilon';
   if(u.frozen>0) cls+=' doomed';
   if(TGT&&isTarget(u)) cls+=' pick';
+  /* ⚠ 쓸 수 있는 능력이 있는데 그게 안 보이면 **없는 것과 같다.**
+     비용을 낼 수 있고 · 안 얼었고 · 이번 턴에 아직 안 썼을 때만 켠다 — 그래야 신호가 산다. */
   const act=activeSk(u);
-  if(p===G.me&&act&&!u.used&&!u.frozen&&canPay(p,u.castel,u.cast)&&G.turn===G.me&&!G.over)
-    cls+=' wardon';                       /* 쓸 수 있는 능력이 남았다 — 본편의 '가호' 광채 재활용 */
+  const usable=(p===G.me&&act&&!u.used&&!u.frozen&&canPay(p,u.castel,u.cast)
+                &&G.turn===G.me&&!G.over&&!(SK[act.id].t&&!targetsFor(SK[act.id].t,p).length));
+  if(usable) cls+=' canuse';
   const bs=[];
   if(u.poison>0) bs.push(`<b class="kb" style="color:#9f6">독 ${u.poison}</b>`);
   if(u.frozen>0) bs.push(`<b class="kb" style="color:#8cf">얼음 ${u.frozen}</b>`);
   if(u.delayed>0) bs.push(`<b class="kb" style="color:#fc8">지연 ${u.delayed}</b>`);
   if(u.charges>1) bs.push(`<b class="kb" style="color:#f2d488">×${u.charges}</b>`);
+  /* 쓸 수 있을 때만 비용 뱃지를 띄운다 — '얼마 내면 되는지' 까지 한눈에 */
+  const tip=usable?`<i class="usetag">${u.cast?u.cast+ELKO[u.castel]:'무료'}</i>`:'';
   return `<div class="${cls}" data-uid="${uid(u)}">`
-    +etgCardHTML(u.c,{size:'sm',unit:u})
+    +etgCardHTML(u.c,{size:'sm',unit:u})+tip
     +(bs.length?`<div class="kbs">${bs.join('')}</div>`:'')+'</div>';
 }
 /* 본편 packRow 와 같은 방식 — 가운데로 모으고 자리가 모자라면 오른쪽이 왼쪽을 덮는다.
@@ -1152,15 +1210,25 @@ function zoomHTML(c,u){
       attack:'공격할 때', buff:'지속', ownbuff:'지속', destroy:'기물이 부서질 때',
       prespell:'주문을 맞을 때', discard:'버려질 때', owndiscard:'손에서 버려질 때',
       ownhp:'체력 계산', hp:'체력 계산'};
-    const head=s.ev==='cast'?(c.kind==='spell'?'주문 효과':`능력 · ${cst?cst+' '+ELKO[ce]:'무료'}`)
+    const nm=abilName(c,s);
+    const when=s.ev==='cast'?(c.kind==='spell'?'주문 효과':`${cst?cst+' '+ELKO[ce]:'무료'}`)
       :(EVKO[s.ev]||'지속');
-    box.push(`<div class="zdef"><div class="k"><span class="kn">${head}</span>
-      <span class="kc">${esc(s.id)}</span></div><div class="kd">${fillN(h.d,s)}</div></div>`);
+    /* 이름이 있으면 이름을 머리에 세우고 '언제' 는 뒤에 작게 — 이름이 곧 그 능력이다 */
+    box.push(`<div class="zdef"><div class="k">
+      <span class="kn">${nm||when}</span>
+      <span class="kc">${nm?when+' · ':''}${esc(s.id)}</span></div>
+      <div class="kd">${fillN(h.d,s)}</div></div>`);
   });
   if(!sks.length) box.push('<div class="zdef"><div class="k"><span class="kn">효과</span></div><div class="kd">따로 없다. 몸으로 싸운다.</div></div>');
   (u?u.flags:c.flags).forEach(f=>{ if(!FLAGDEF[f])return;
     box.push(`<div class="zdef"><div class="k"><span class="kn">${FLAGKO[f]}</span>
       <span class="kc">${f}</span></div><div class="kd">${FLAGDEF[f]}</div></div>`);});
+  /* 원작에 실제로 인쇄된 글. **번역이 아니라 원문 그대로** 둔다 —
+     내 한국어 설명은 '이 엔진이 실제로 하는 일' 이고, 이쪽은 '원작이 뭐라고 적었나' 다.
+     둘이 어긋나면 그게 곧 구현이 원작과 다르다는 신호다. 성권이 대조할 수 있어야 한다. */
+  if(c.otxt) box.push(`<div class="zdef" style="border-left-color:var(--sapphire)">
+    <div class="k"><span class="kn">원문</span><span class="kc">ELEMENTS</span></div>
+    <div class="kd" style="white-space:pre-line;opacity:.92">${esc(c.otxt)}</div></div>`);
   if(u){
     const st=[];
     if(u.frozen>0) st.push(`얼어붙음 ${u.frozen}턴 — 공격도 능력도 못 쓴다`);

@@ -251,6 +251,74 @@ const TEN =path.join(__dirname,'..','data','cards.json');
      act.after.join()!==act.before.join()&&act.q===5-act.cost,
      `${act.before.join('|')} → ${act.after.join('|')} · 불 퀀텀 5→${act.q} (비용 ${act.cost})`);
 
+  /* ── 12d) 능력의 **값**을 안 버린다 ────────────────────────────────── */
+  /* ⚠⚠ 원작 표에는 값이 여러 개인 능력이 있다 — `growth 2 0` = 공격 +2, 체력 +0.
+     첫 값만 읽고 나머지를 버렸더니 불의 정령이 +2|+0 이 아니라 **+2|+2** 로 자랐다.
+     글만 틀린 게 아니라 수치가 틀렸다. `summon 1908` 은 값이 **카드 번호**라
+     이름으로 찾다 undefined 가 되어 반딧불 여왕이 아무것도 안 불렀다.
+     `quanta 8` 은 **속성 번호**라 카드 속성으로 읽으면 반딧불이 빛 대신 바람을 낸다. */
+  const args=await p.evaluate(()=>{
+    const D=window.ETGDBG;
+    D.startGame(D.deckList(D.autoDeck(6)),6);
+    const G=D.G; G.me.hand=[];G.ai.hand=[];
+    const o={};
+    /* 불의 정령 = +2|+0 · 숲의 정령 = +2|+2 — 같은 id 인데 값이 다르다 */
+    G.me.cr=new Array(23).fill(null); G.me.q=new Array(13).fill(0); G.me.q[6]=9; G.me.q[7]=9;
+    const fs=D.summon(G.me,D.BYNAME['Fire Spirit'].code);
+    const b1=[fs.atk,fs.hp]; D.useAbility(G.me,fs,null); o.fire=[b1,[fs.atk,fs.hp]];
+    const ls=D.summon(G.me,D.BYNAME['Forest Spirit'].code);
+    const b2=[ls.atk,ls.hp]; D.useAbility(G.me,ls,null); o.forest=[b2,[ls.atk,ls.hp]];
+    /* 반딧불 여왕 = 반딧불을 부른다(카드 번호로) */
+    G.me.cr=new Array(23).fill(null); G.me.q[5]=9;
+    const fq=D.summon(G.me,D.BYNAME['Firefly Queen'].code);
+    D.useAbility(G.me,fq,null);
+    o.summon=G.me.cr.filter(Boolean).map(u=>u.c.en);
+    /* 반딧불은 **빛** 퀀텀을 만든다(자기 속성인 바람이 아니라) */
+    G.me.cr=new Array(23).fill(null); G.me.pm=new Array(16).fill(null);
+    G.me.q=new Array(13).fill(0); G.me.mark=6;
+    D.summon(G.me,D.BYNAME['Firefly'].code);
+    D.endTurn();
+    o.q={빛:G.me.q[8], 바람:G.me.q[9]};
+    return o;});
+  ok('불의 정령은 +2|+0', args.fire[1][0]===args.fire[0][0]+2&&args.fire[1][1]===args.fire[0][1],
+     `${args.fire[0].join('|')} → ${args.fire[1].join('|')}`);
+  ok('숲의 정령은 +2|+2', args.forest[1][0]===args.forest[0][0]+2&&args.forest[1][1]===args.forest[0][1]+2,
+     `${args.forest[0].join('|')} → ${args.forest[1].join('|')}`);
+  ok('반딧불 여왕이 실제로 부른다', args.summon.filter(n=>/Firefly$/.test(n)).length>0,
+     args.summon.join(',')||'(아무것도 안 나왔다)');
+  ok('반딧불은 빛을 만든다', args.q.빛>0&&args.q.바람===0, JSON.stringify(args.q));
+
+  /* ── 12e) 능력에 원작 이름이 붙는다 ────────────────────────────────── */
+  const nm=await p.evaluate(()=>{
+    const D=window.ETGDBG;
+    const g=n=>{const c=D.BYNAME[n];return {ko:c.abilko||null,en:c.abil||null,otxt:!!c.otxt};};
+    return {fire:g('Fire Spirit'), vul:g('Vulture'), max:g("Maxwell's Demon"),
+      named:ETG.cards.filter(c=>c.abil).length,
+      orig:ETG.cards.filter(c=>c.otxt).length};});
+  ok('발동형 능력에 이름이 있다', nm.fire.ko==='아블레이즈'&&nm.max.ko==='역설',
+     `불의 정령 ${nm.fire.ko}(${nm.fire.en}) · 맥스웰의 악마 ${nm.max.ko}(${nm.max.en})`);
+  ok('지속형 능력에도 이름이 있다', nm.vul.ko==='시체 청소', `독수리 ${nm.vul.ko}(${nm.vul.en})`);
+  ok('원문이 카드에 붙어 있다', nm.orig>380&&nm.named>100,
+     `원문 ${nm.orig}장 · 이름 ${nm.named}장`);
+
+  /* ── 12f) 쓸 수 있는 능력은 눈에 띈다 ──────────────────────────────── */
+  const hl=await p.evaluate(()=>{
+    const D=window.ETGDBG;
+    D.startGame(D.deckList(D.autoDeck(6)),6);
+    const G=D.G; G.me.cr=new Array(23).fill(null); G.me.q=new Array(13).fill(0);
+    const u=D.summon(G.me,D.BYNAME['Fire Spirit'].code);
+    D.render();
+    const poor=document.querySelectorAll('#myBoard .slot.canuse').length;   /* 퀀텀 0 — 못 쓴다 */
+    G.me.q[6]=9; D.render();
+    const rich=document.querySelectorAll('#myBoard .slot.canuse').length;
+    const tag=document.querySelector('#myBoard .slot.canuse .usetag');
+    u.used=true; D.render();
+    const spent=document.querySelectorAll('#myBoard .slot.canuse').length;
+    return {poor,rich,spent,tag:tag?tag.textContent:''};});
+  ok('못 쓸 땐 안 빛난다', hl.poor===0, `${hl.poor}개`);
+  ok('쓸 수 있으면 빛나고 비용이 뜬다', hl.rich===1&&/불/.test(hl.tag), `${hl.rich}개 · "${hl.tag}"`);
+  ok('이번 턴 다 썼으면 꺼진다', hl.spent===0, `${hl.spent}개`);
+
   /* ── 13) 카드가 본편 규격으로 그려진다 ─────────────────────────────── */
   /* ⚠ 여기서 '보이냐' 가 아니라 **본편 클래스로 그려졌냐** 를 본다. 규격을 이 모드에서
      따로 그리기 시작하면 두 벌이 되어 반드시 어긋난다(옛 card_gallery 가 그렇게 낡았다). */
