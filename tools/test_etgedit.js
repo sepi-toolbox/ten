@@ -133,10 +133,25 @@ const ok = (name, cond, note) => {
       return d.querySelector('.teff').textContent.trim(); };
     E.putCard(c, 'txt', '내가 새로 쓴 글이다');
     const over = read();
+    /* ⚠⚠ 내가 적은 글의 대괄호도 **구슬이 되어야 한다.** 인쇄된 글만 구슬이 되고
+       에디터로 적은 글은 글자로 남으면, 고친 카드만 혼자 다르게 생긴다.
+       ⚠ 원래 이름(죽음)과 **바꾼 이름**(엔트로피→이상) 둘 다 먹어야 한다 —
+         성권이 화면에서 보고 있는 이름이 안 먹으면 그게 제일 헷갈린다. */
+    E.put('el', '1', '이상');
+    E.putCard(c, 'txt', '[이상] 과 [죽음] 을 쓴다');
+    const d = document.createElement('div');
+    d.innerHTML = D.etgCardHTML(D.CARD[c], { size: 'md' });
+    const pips = [...d.querySelectorAll('.teff .elp')].map(i => i.getAttribute('title'));
+    const mine = { pips, left: d.querySelector('.teff').textContent.trim() };
+    E.put('el', '1', '');
     E.putCard(c, 'txt', '');
-    return { over, back: read() };
+    return { over, mine, back: read() };
   }, code);
   ok('설명을 통째로 갈아 끼운다', txt.over === '내가 새로 쓴 글이다', txt.over);
+  ok('내가 적은 [속성]도 구슬이 된다',
+     txt.mine.pips.length === 2 && txt.mine.pips[0] === '이상' && txt.mine.pips[1] === '죽음'
+     && !/\[/.test(txt.mine.left),
+     `${txt.mine.pips.join(' · ')} · 남은 글 "${txt.mine.left}"`);
   ok('비우면 원래 카드 글로 돌아온다', /아블레이즈/.test(txt.back), txt.back);
 
   /* ── 6) 원본은 안 고쳐진다 — 되돌리면 처음 그대로 ────────────────── */

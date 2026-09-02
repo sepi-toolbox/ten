@@ -23,6 +23,8 @@ build_cards_page.py 로 같은 원칙을 세웠다).
 """
 import os
 import re
+import subprocess
+import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -104,6 +106,12 @@ def main():
     with open(EOUT, "w", encoding="utf-8") as f:
         f.write(eout)
     print(f"카드 에디터 생성: prototype/etg/edit.html ({len(eout)//1024} KB)")
+
+    # ── 지어낸 규칙 문서도 같이 ────────────────────────────────────────────
+    # ⚠ docs/invented.md 는 `@지어냄:` 표시의 **줄 번호**까지 적는다. 그래서 이 틀을
+    #   한 줄만 고쳐도 문서가 어긋나 검사가 빨간불을 낸다 — 정작 지어낸 규칙은 그대로인데.
+    #   손으로 다시 돌리는 걸 자꾸 잊어 빌드가 같이 한다. 내용이 같으면 파일은 안 바뀐다.
+    subprocess.run([sys.executable, os.path.join(HERE, "list_invented.py")], check=True)
 
 
 if __name__ == "__main__":

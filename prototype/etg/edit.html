@@ -1904,7 +1904,15 @@ let CUR=null;
 function autoText(c){
   /* 개조 글을 잠깐 걷고 **자동으로 지어지는 글**을 본다 — 무엇을 덮어쓰는지 알아야 한다 */
   const keep=c.txt; delete c.txt;
-  const t=D.ruleText(c,null).replace(/<[^>]+>/g,'');
+  /* ⚠⚠ 태그를 그냥 지우면 **속성 구슬이 통째로 사라진다.** 카드 글의 `[불]` 은 이제
+     `<i class="elp">` 로 그려지는데, 태그만 걷어내면 '내가 가진  10마다' 처럼
+     속성이 빠진 글이 남는다 — 그걸 보고 베껴 적으면 카드가 망가진다.
+     에디터는 **적는 자리**라서 대괄호로 되돌려 보여 준다. */
+  const box=document.createElement('div');
+  box.innerHTML=D.ruleText(c,null);
+  box.querySelectorAll('.elp').forEach(i=>
+    i.replaceWith(document.createTextNode('['+(i.getAttribute('title')||'')+']')));
+  const t=box.textContent;
   if(keep!==undefined) c.txt=keep;
   return t;
 }
@@ -1947,7 +1955,8 @@ function drawSheet(){
     <div class="ef"><label>카드 글 — 비우면 원래 글로 돌아간다</label>
       <textarea data-f="txt" rows="3" placeholder="${esc(autoText(c))}">${esc(c.txt||'')}</textarea>
       <div class="ehint">원래 글: ${esc(autoText(c))}</div>
-      <div class="ehint">대괄호 <b>[불]</b> 처럼 적으면 속성 이름이 바뀔 때 같이 따라온다.</div></div>
+      <div class="ehint">대괄호 <b>[불]</b> 처럼 적으면 <b>속성 구슬</b>로 바뀐다.
+        이름을 바꿨다면 바꾼 이름(<b>[이상]</b>)으로 적어도 되고, 원래 이름으로 적어도 된다.</div></div>
     ${drift.length?`<div class="warn">숫자를 바꿨는데 설명에 옛 값(${
         drift.map(f=>og[f]).join(' · ')})이 그대로 남아 있다. 설명도 같이 고칠 것.</div>`:''}
     <div class="ef"><label>원문 (Elements the Game)</label>

@@ -1657,7 +1657,7 @@ body.deckmode .wrap{height:auto}
 <script src="data.js"></script>
 <script>
 'use strict';
-const VERSION='0.35.0', BUILD='2026-09-02';
+const VERSION='0.36.0', BUILD='2026-09-02';
 /* ⚠ 제목줄은 없다 — 성권: "배틀 유아이에서도 헤더 지우고 넓게 써".
    판 번호는 덱 화면 발치 한 줄에만 남는다(배포 확인이 이 번호에 걸려 있다). */
 
@@ -1724,6 +1724,9 @@ function applyMod(){
     });
     if(o.txt) c.txt=o.txt;
   }
+  /* ⚠ 속성 이름이 바뀌었을 수 있다 — `[이상]` 처럼 **새 이름으로 적은 대괄호**가
+     바로 먹으려면 이름표를 여기서 다시 만들어야 한다. */
+  if(typeof buildElIdx==='function') buildElIdx();
 }
 /* 이 카드를 손댔나 — 에디터의 '고침' 표시와 '되돌리기' 가 쓴다 */
 function modded(code){
@@ -3171,7 +3174,11 @@ function ruleText(c,u,full){
      판을 보고 판단할 수 있어야 한다는 원칙이 개조보다 앞선다. */
   /* ⚠ 능력을 잃은 몸(뇌엽절제)은 무엇보다 먼저 그렇게 보여야 한다 — 판을 보고 판단해야 하니까 */
   if(u&&u.sk.length===0&&c.sk.length) return '<b>능력을 잃었다</b>';
-  if(c.txt) return esc(c.txt);                 /* 개조로 직접 적어 둔 글 */
+  /* 개조로 직접 적어 둔 글.
+     ⚠⚠ 여기서 fillCard 를 빠뜨렸었다 — 그래서 **에디터에서 적은 `[죽음]` 만 글자로 남았다.**
+       인쇄된 글은 구슬로 바뀌는데 내가 적은 글은 안 바뀌면, 에디터로 고친 카드가
+       다른 카드와 다르게 생긴다. 같은 길을 태운다. */
+  if(c.txt) return fillCard(c,esc(c.txt));
   /* ⚠⚠ 카드에 실리는 글은 **인쇄된 원문을 문장 그대로 옮긴 한국어**(kotxt)다.
      예전에는 능력 하나하나의 설명을 ' · ' 로 이어 붙여 만들었는데, 그건 원문이 아니라
      내가 쓴 요약이라 문장이 조각나고 무기의 첫 줄('무기 — 매 턴 피해를 준다') 같은
@@ -3224,8 +3231,21 @@ function ruleText(c,u,full){
 /* 카드 글 안의 [속성] 자리를 지금 이름으로 갈아 끼운다 —
    에디터에서 속성 이름을 바꾸면 카드 글도 따라 바뀌어야 한다. */
 const ELIDX={};
+/* ⚠⚠ 예전에는 이 표를 **원래 이름으로만** 한 번 만들고 말았다. 그래서 엔트로피를
+   '이상' 으로 바꾼 뒤 에디터에서 `[이상]` 이라고 적으면 아무 일도 안 일어났다 —
+   성권이 화면에서 보고 있는 이름이 정작 안 먹는 것이다.
+   **지금 이름과 원래 이름을 둘 다** 받는다(원래 이름을 살려 두는 이유는 239장의
+   카드 글이 원래 이름으로 적혀 있기 때문이다 — 그게 깨지면 전부 글자로 되돌아간다).
+   ⚠ 이름이 바뀌면 다시 만들어야 한다. applyMod 끝에서 부른다. */
+function buildElIdx(){
+  for(const k in ELIDX) delete ELIDX[k];
+  for(let e=1;e<=12;e++){
+    if(ORIG.el&&ORIG.el[e]) ELIDX[ORIG.el[e]]=e;
+    if(ELKO[e]) ELIDX[ELKO[e]]=e;
+  }
+}
 function fillCard(c,t){
-  if(!ELIDX['불']) for(let e=1;e<=12;e++) ELIDX[ORIG.el?ORIG.el[e]:ELKO[e]]=e;
+  if(!Object.keys(ELIDX).length) buildElIdx();
   /* ⚠⚠ 예전에는 `[불]` 을 **글자 그대로** 남겼다. 카드 글에 속성이 서너 번 나오는 카드가
      많은데(화염 화살·생명 흡수·얼음 화살…) 그때마다 이름이 길게 적혀 고정 상자를
      잡아먹었고, 정작 그 속성이 무슨 색인지는 판의 퀀텀줄과 따로 놀았다.
