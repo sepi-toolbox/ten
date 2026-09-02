@@ -333,6 +333,28 @@ const TEN =path.join(__dirname,'..','data','cards.json');
      `${hl.rich}개 · ${hl.lift}px 떠 있다`);
   ok('띄우느라 숫자를 가리지 않는다', hl.covered===false&&hl.atk!=='',
      `뱃지 ${hl.covered?'있음':'없음'} · 공격력 "${hl.atk}"`);
+  /* 손패도 같은 규칙 — 낼 수 있는 장만 뜬다 */
+  const hh=await p.evaluate(()=>{
+    const D=window.ETGDBG;
+    D.startGame(D.deckList(D.autoDeck(6)),6); const G=D.G;
+    G.me.q=new Array(13).fill(0); G.me.q[6]=3;
+    G.me.hand=['Burning Pillar','Crimson Dragon'].map(n=>D.mk(D.BYNAME[n].code,G.me));
+    D.render();
+    const read=i=>{
+      const w=document.querySelector(`#hand .hcw[data-h="${i}"]`);
+      const c=w.querySelector('.tcard'), cs=getComputedStyle(c);
+      return {cls:w.className, lift:Math.round(new DOMMatrix(cs.transform).m42),
+              glow:cs.boxShadow};};
+    return {cheap:read(0), dear:read(1)};});
+  ok('손패도 낼 수 있는 장만 뜬다',
+     / ok/.test(hh.cheap.cls)&&hh.cheap.lift<=-2
+     &&/ no/.test(hh.dear.cls)&&hh.dear.lift===0,
+     `${hh.cheap.cls.trim()} ${hh.cheap.lift}px · ${hh.dear.cls.trim()} ${hh.dear.lift}px`);
+  ok('손패 초록 테도 실제로 그려진다',
+     /rgba?\(1[0-9][0-9], 2[0-9][0-9], 1[0-9][0-9]/.test(hh.cheap.glow)
+     &&!/rgba?\(1[0-9][0-9], 2[0-9][0-9], 1[0-9][0-9]/.test(hh.dear.glow),
+     `${hh.cheap.glow.slice(0,40)}…`);
+
   /* 초록 링이 **실제로 칠해졌고**, 칸이 그걸 잘라 내지 않는지 */
   ok('초록 테가 실제로 그려진다',
      /rgba?\(1[0-9][0-9], 2[0-9][0-9], 1[0-9][0-9]/.test(hl.glow)&&hl.clip==='visible',

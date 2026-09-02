@@ -1552,10 +1552,36 @@ body.deckmode .wrap{height:auto}
 @keyframes canuseglow{
   50%{box-shadow:0 0 0 2px rgba(160,255,190,1),0 0 22px rgba(110,224,138,.95),
                  0 11px 15px rgba(0,0,0,.55)}}
+/* ── 손패도 같은 규칙 ────────────────────────────────────────────────
+   낼 수 있는 카드(퀀텀이 되고 · 겨눌 것이 있고 · 내 턴이고 · 자리가 있는)만 뜬다.
+   ⚠ 들어올리는 건 `.hcw` 가 아니라 **안쪽 카드**다 — `.hcw` 의 transform 은
+     부채꼴(--rot)과 드래그(--dy/--sc)가 이미 쓰고 있어서, 거기에 애니메이션을
+     얹으면 끌고 있는 동안 값이 서로를 덮어쓴다.
+   ⚠ 본편 주석의 경고("손패 카드를 들어올리면 옆 카드에 가려져 있던 데가 삐져나온다")는
+     **한 장만 눌러서 튀어나올 때**의 이야기다. 여기는 낼 수 있는 것들이 **함께** 뜨고
+     가림은 좌우로 생기므로 그 증상이 나지 않는다. 대신 폭은 판보다 얕게 잡는다. */
+.hcw.ok .tcard{
+  transform:translateY(calc(var(--cardw)*-0.04));
+  /* ⚠ 손패는 카드가 서로 겹쳐 있다 — 판에서 쓰던 만큼 번지게 두면 옆 장까지
+     초록으로 물들어 어느 게 낼 수 있는 건지 도로 흐려진다. 링은 또렷하게, 번짐은 얕게. */
+  box-shadow:0 0 0 2px rgba(110,224,138,.85),0 0 8px rgba(110,224,138,.3),
+             0 4px 8px rgba(0,0,0,.55);
+  animation:handbob 2.4s ease-in-out infinite}
+@keyframes handbob{
+  50%{transform:translateY(calc(var(--cardw)*-0.085));
+      box-shadow:0 0 0 2px rgba(160,255,190,1),0 0 12px rgba(110,224,138,.5),
+                 0 9px 12px rgba(0,0,0,.5)}}
+/* 여덟 장이 한 몸처럼 출렁이면 그게 더 어지럽다 — 위상을 어긋내 준다 */
+.hand .hcw:nth-child(3n+2) .tcard{animation-delay:-.8s}
+.hand .hcw:nth-child(3n+3) .tcard{animation-delay:-1.6s}
+/* 고르는 중이거나 끌고 있는 장은 멈춘다 — 신호가 둘이면 둘 다 안 읽힌다 */
+.hcw.sel .tcard,.hcw.dragging .tcard{animation:none;transform:none}
+
 /* 움직임을 싫어하는 사람에게는 **띄운 채로 멈춰 있게** 한다 — 신호는 남는다 */
 @media (prefers-reduced-motion:reduce){
   .slot.canuse{animation:none;transform:translateY(calc(var(--cardw)*-0.085))}
-  .slot.canuse .tcard{animation:none}}
+  .slot.canuse .tcard{animation:none}
+  .hcw.ok .tcard{animation:none;transform:translateY(calc(var(--cardw)*-0.06))}}
 
 /* ⚠⚠ 본편 `.main` 은 자식을 **id 로 재배열한다**(#foeHand:0 … #hand:8).
    그래서 HTML 에 적은 순서가 화면 순서가 아니다 — 처음에 이걸 모르고 붙였다가
@@ -1579,7 +1605,7 @@ body.deckmode .wrap{height:auto}
 <script src="data.js"></script>
 <script>
 'use strict';
-const VERSION='0.24.0', BUILD='2026-09-02';
+const VERSION='0.25.0', BUILD='2026-09-02';
 /* ⚠ 제목줄은 없다 — 성권: "배틀 유아이에서도 헤더 지우고 넓게 써".
    판 번호는 덱 화면 발치 한 줄에만 남는다(배포 확인이 이 번호에 걸려 있다). */
 
@@ -3034,9 +3060,11 @@ function packHand(){
 }
 function handHTML(p){
   return p.hand.map((u,i)=>{
-    const no=(!canPlay(p,u)||G.turn!==G.me||G.over)?' no':'';
+    /* 낼 수 있으면 `ok`, 아니면 `no` — 판의 `canuse` 와 같은 뜻이다.
+       (`canPlay` 가 퀀텀·겨눌 것·빈자리·안식일까지 이미 다 본다) */
+    const st=(!canPlay(p,u)||G.turn!==G.me||G.over)?' no':' ok';
     const sel=SEL===u?' sel':'';
-    return `<div class="hcw${no}${sel}" data-h="${i}">${etgCardHTML(u.c,{size:'md'})}</div>`;
+    return `<div class="hcw${st}${sel}" data-h="${i}">${etgCardHTML(u.c,{size:'md'})}</div>`;
   }).join('');
 }
 
