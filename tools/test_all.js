@@ -38,7 +38,11 @@ for(const f of files){
     const tail=out.trim().split('\n').slice(-3).join('\n      ');
     console.log(`      ${tail}`); }
   else if(bad){ fail.push(f); console.log(`❌ ${f.padEnd(22)} ${sec}s  ${bad}건 실패`);
-    out.split('\n').filter(l=>l.includes('❌')).slice(0,4).forEach(l=>console.log('      '+l.trim())); }
+    /* ⚠ ❌ 만 걸러 내면 **페이지 오류로 죽은 실패는 한 줄도 안 보인다** —
+       그 경우 검사가 찍는 건 `ERR [...]` 이지 ❌ 가 아니다(test_burnfx 가 실제로 그랬다).
+       무엇이 틀렸는지 모른 채 '1건 실패' 만 남아 재현에 한참 걸렸다. 둘 다 보여 준다. */
+    out.split('\n').filter(l=>l.includes('❌')||/^\s*ERR\b/.test(l))
+       .slice(0,6).forEach(l=>console.log('      '+l.trim())); }
   else { pass++; console.log(`✅ ${f.padEnd(22)} ${sec}s`); }
 }
 console.log('='.repeat(72));

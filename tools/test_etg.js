@@ -599,6 +599,35 @@ const TEN =path.join(__dirname,'..','data','cards.json');
   const cap=await p.evaluate(()=>+document.querySelector('.pcard .pctl b').textContent);
   ok('같은 카드는 6장까지', cap===6, `여덟 번 눌러 ${cap}장`);
 
+  /* ── 25) 카드에 **종류**가 적혀 있다 ──────────────────────────────── */
+  /* ⚠ 본편은 크리처가 대부분이라 테두리 모양만으로 갈렸다. 여기는 크리처·주문·기물·
+     무기·방패가 고루 섞여서 테두리로는 안 갈린다 — 글로 적어야 한다. */
+  const kd=await p.evaluate(()=>{
+    const D=window.ETGDBG;
+    const g=n=>{const d=document.createElement('div');
+      d.innerHTML=D.etgCardHTML(D.BYNAME[n],{size:'md'});
+      const t=d.querySelector('.tart .telm');
+      return t?{el:(t.querySelector('b')||{}).textContent||'',
+                kind:(t.querySelector('i')||{}).textContent||''}:null;};
+    return {cr:g('Crimson Dragon'), sp:g('Fire Bolt'), pm:g('Burning Pillar'),
+      wp:g('Fahrenheit'), sh:g('Fire Shield')};});
+  ok('카드에 종류가 적힌다',
+     kd.cr.kind==='크리처'&&kd.sp.kind==='주문'&&kd.pm.kind==='기물'
+     &&kd.wp.kind==='무기'&&kd.sh.kind==='방패',
+     [kd.cr,kd.sp,kd.pm,kd.wp,kd.sh].map(x=>x.kind).join(' · '));
+  ok('속성도 함께 남아 있다', kd.cr.el==='불'&&kd.sh.el==='불', `${kd.cr.el} · ${kd.sh.el}`);
+  /* 판 위·손패에서도 보여야 한다 — 확대해야만 보이면 소용이 없다 */
+  const kb=await p.evaluate(()=>{
+    const D=window.ETGDBG; D.startGame(D.deckList(D.autoDeck(6)),6);
+    const G=D.G; G.me.cr=new Array(23).fill(null); G.me.hand=[];
+    D.summon(G.me,D.BYNAME['Crimson Dragon'].code);
+    G.me.hand.push(D.mk(D.BYNAME['Fire Bolt'].code,G.me));
+    D.render();
+    const q=s=>{const e=document.querySelector(s);return e?e.textContent.trim():'';};
+    return {board:q('#myBoard .slot.occ .telm i'), hand:q('#hand .hcw .telm i')};});
+  ok('판과 손패에서도 보인다', kb.board==='크리처'&&kb.hand==='주문',
+     `판 "${kb.board}" · 손패 "${kb.hand}"`);
+
   if(errs.length){ bad++; console.log('   ERR',errs.slice(0,4)); }
   console.log(`\n미구현 능력 ${cov.miss.length}종: ${cov.miss.join(' ')}`);
   console.log(bad?`❌ ${bad}건 실패`:'✅ 전부 통과');

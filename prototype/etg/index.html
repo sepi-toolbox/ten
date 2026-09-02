@@ -1392,11 +1392,19 @@ h1.tt small{font-family:'Gowun Batang',serif;letter-spacing:0;font-size:10px;col
   background:linear-gradient(180deg,rgba(0,0,0,.3),rgba(0,0,0,.12))}
 
 /* 카드 그림 자리 — 이 모드는 일러스트가 없다. 원작 아트는 우리 것이 아니라 싣지 않았다.
-   빈 상자로 두면 어느 속성인지 안 보이므로 속성 이름을 크게 앉힌다. */
-.telm{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);
-  text-align:center;font-family:'Cinzel',serif;font-weight:700;
-  font-size:calc(var(--cw)*.14);letter-spacing:.08em;opacity:.85;
-  text-shadow:0 1px 3px rgba(0,0,0,.9)}
+   빈 상자로 두면 무슨 카드인지 알 수가 없으므로 **속성과 종류**를 앉힌다.
+   ⚠ 종류(주문·크리처·기물·무기·방패)는 테두리 모양만으로는 안 갈린다 — 본편은 크리처가
+     대부분이라 테두리로 됐지만 여기는 다섯 종류가 고루 섞인다. 글로 적어야 한다. */
+.telm{position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:calc(var(--cw)*.012);
+  text-shadow:0 1px 3px rgba(0,0,0,.9);pointer-events:none}
+.telm b{font-family:'Cinzel',serif;font-weight:700;color:var(--ec);
+  font-size:calc(var(--cw)*.14);letter-spacing:.08em;line-height:1}
+.telm i{font-style:normal;font-family:'Gothic A1',sans-serif;font-weight:700;
+  font-size:calc(var(--cw)*.085);letter-spacing:.18em;line-height:1;
+  color:#efe3c6;opacity:.7;
+  padding:calc(var(--cw)*.018) calc(var(--cw)*.05);border-radius:99px;
+  border:1px solid rgba(239,227,198,.28);background:rgba(0,0,0,.3)}
 /* 비용이 7 이상이면 구슬 대신 숫자 — 구슬 15개는 머리줄을 넘친다 */
 .cpn{font-family:'Cinzel',serif;font-weight:700;font-size:calc(var(--cw)*.095);
   color:var(--ink);margin-left:calc(var(--cw)*.03);line-height:1}
@@ -1474,7 +1482,7 @@ h1.tt small{font-family:'Gowun Batang',serif;letter-spacing:0;font-size:10px;col
 <script src="data.js"></script>
 <script>
 'use strict';
-const VERSION='0.9.0', BUILD='2026-08-05';
+const VERSION='0.10.0', BUILD='2026-08-05';
 /* 판 번호는 제목줄에 붙인다 — 아래 h1.tt 안 small */
 document.addEventListener('DOMContentLoaded',()=>{const t=document.querySelector('h1.tt small');
   if(t)t.insertAdjacentHTML('beforeend',` · v${VERSION}`);});
@@ -2379,7 +2387,8 @@ function etgCardHTML(c,opt){
   const gem=`<i class="rgem ${rarKo(c.rarity)}"></i>`;
   return `<div class="tcard ${cardCls(c,u)} ${opt.size||'md'}" style="--el:${ec}">
     <div class="thead"><div class="tname">${esc(c.ko)}</div><div class="tcost">${pipsHTML(c)}</div></div>
-    <div class="tart"><span class="telm" style="color:${ec}">${ELKO[c.el]}</span>${gem}</div>
+    <div class="tart"><span class="telm" style="--ec:${ec}">
+      <b>${ELKO[c.el]}</b><i>${kindKo(c.kind)}</i></span>${gem}</div>
     <div class="tbody"><div class="teff">${ruleText(c,u)}</div></div>
     ${statHTML(c,u)}
   </div>`;
