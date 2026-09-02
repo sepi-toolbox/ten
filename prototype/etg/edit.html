@@ -1419,6 +1419,16 @@ body{padding:0;height:100dvh;overflow:hidden;
 }
 body{padding:calc(var(--safeT) + 3px) calc(var(--safeR) + 4px)
               calc(var(--safeB) + 8px) calc(var(--safeL) + 4px)}
+/* ⚠⚠ **판이 위로 밀려 올라가는 증상.** 판은 한 화면에 딱 맞으므로 스크롤할 것이 없는데도
+   iOS 에서는 자꾸 위로 밀린다. 원인이 하나가 아니라 셋이라 셋 다 막는다.
+   ① 본편 CSS 가 `html,body{touch-action:pan-x pan-y}` 로 **패닝을 허용**해 둔다.
+      본편은 그게 맞지만 이 판은 한 화면이라 패닝할 것이 없다 — 손가락이 미끄러지면
+      화면만 흔들린다. 전투 중에는 패닝을 끈다(덱 화면은 스크롤해야 하므로 그대로 둔다).
+   ② 겹쳐 뜨는 확대창을 끝까지 끌면 스크롤이 **바깥으로 이어져** 판을 민다.
+   ③ 두 번 두드리기 확대(iOS)는 `user-scalable=no` 로 안 막힌다 — manipulation 이 막는다. */
+html,body{overscroll-behavior:none}
+body:not(.deckmode){touch-action:manipulation}
+.zoom,.logbox{overscroll-behavior:contain}
 
 /* ══ 덱 편집 화면만은 **스크롤한다** ═══════════════════════════════════════
    ⚠⚠ 본편 CSS 는 html·body 를 `height:100dvh; overflow:hidden` 으로 묶는다 —

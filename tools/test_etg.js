@@ -1228,6 +1228,55 @@ const TEN =path.join(__dirname,'..','data','cards.json');
   ok('기록줄에 {틀}이 남지 않는다', braces.length===0,
      braces.length?braces[0]:LG.lines[LG.lines.length-1]);
 
+  /* ── 36) 확대창이 **효과로 붙은 것**까지 보여 준다 ────────────────
+     성권: "카드 효과로 상태가 부여되면 그 효과도 확대했을 때 나와야 하는데 안 나온다."
+     ⚠ 인쇄된 것만 보여 주면, 판 위에서 "이 몸이 왜 방패를 무시하지?" 를 알 방법이 없다. */
+  const Z=await p.evaluate(()=>{
+    const D=window.ETGDBG;
+    D.startGame(D.deckList(D.autoDeck(3)),3);
+    const G=D.G; G.me.q=new Array(13).fill(30);
+    const u=D.summon(G.me,D.BYNAME['Ash'].code);
+    /* 관성(+1|+1·방패 무시) · 정수(실체 없음) · 유동(흡혈로 바꾸고 독) · 아드레날린 */
+    D.SK.momentum.f(D.G,G.me,null,u);
+    D.SK.quint.f(D.G,G.me,null,u);
+    D.SK.adrenaline.f(D.G,G.me,null,u);
+    u.poison=2; u.frozen=1; G.me.gpull=u; u.dive=true;
+    D.showZoom(u.c,u);
+    const t=document.getElementById('zoom').textContent;
+    const green=document.querySelectorAll('#zoom .zdef .kc b').length;
+    return {t,green};});
+  ok('확대창이 효과로 얻은 표식을 보여 준다',
+     /관성/.test(Z.t)&&/실체 없음/.test(Z.t)&&/효과로 얻음/.test(Z.t)&&Z.green>=2,
+     `초록 표시 ${Z.green}개`);
+  ok('확대창이 지금 걸린 상태를 보여 준다',
+     /중력 견인/.test(Z.t)&&/아드레날린/.test(Z.t)&&/급강하/.test(Z.t)
+     &&/독 2/.test(Z.t)&&/얼어붙음/.test(Z.t)&&/공격력이 \+/.test(Z.t),
+     ['중력 견인','아드레날린','급강하','독','얼음','공격력'].filter((k,i)=>
+       [/중력 견인/,/아드레날린/,/급강하/,/독 2/,/얼어붙음/,/공격력이 \+/][i].test(Z.t)).join(' · '));
+
+  /* ── 37) 판이 위로 밀려 올라가지 않는다 ────────────────────────────
+     성권: "게임하다보면 화면이 상단으로 밀려 올라가는 증상이 자꾸 생겨."
+     ⚠ 원인은 iOS 쪽(패닝·핀치)이라 여기서 그대로 재현할 수는 없다. 대신 **밀렸을 때
+       스스로 되돌아오는지**를 잰다 — 원인이 무엇이든 증상은 그걸로 끝난다. */
+  const SC=await p.evaluate(async()=>{
+    const D=window.ETGDBG;
+    const wait=ms=>new Promise(r=>setTimeout(r,ms));
+    D.startGame(D.deckList(D.autoDeck(6)),6); D.render();
+    document.documentElement.style.height='2000px';   /* 억지로 스크롤할 거리를 만든다 */
+    window.scrollTo(0,400); await wait(120);
+    const battle=window.scrollY;
+    document.documentElement.style.height='';
+    D.G=null;
+    return {battle};});
+  ok('전투 중에는 화면이 도로 제자리로', SC.battle===0, `밀린 뒤 scrollY ${SC.battle}`);
+  const SD=await p.evaluate(async()=>{
+    const wait=ms=>new Promise(r=>setTimeout(r,ms));
+    document.getElementById('quit').click();      /* '덱으로' — 실제 경로로 돌아간다 */
+    await wait(150);
+    window.scrollTo(0,300); await wait(150);
+    return {deck:window.scrollY,cls:document.body.className};});
+  ok('덱 화면은 그대로 스크롤된다', SD.deck>0, `scrollY ${SD.deck} · ${SD.cls}`);
+
   if(errs.length){ bad++; console.log('   ERR',errs.slice(0,4)); }
   console.log(`\n미구현 능력 ${cov.miss.length}종: ${cov.miss.join(' ')}`);
   console.log(bad?`❌ ${bad}건 실패`:'✅ 전부 통과');

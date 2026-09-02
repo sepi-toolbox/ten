@@ -1408,6 +1408,16 @@ body{padding:0;height:100dvh;overflow:hidden;
 }
 body{padding:calc(var(--safeT) + 3px) calc(var(--safeR) + 4px)
               calc(var(--safeB) + 8px) calc(var(--safeL) + 4px)}
+/* ⚠⚠ **판이 위로 밀려 올라가는 증상.** 판은 한 화면에 딱 맞으므로 스크롤할 것이 없는데도
+   iOS 에서는 자꾸 위로 밀린다. 원인이 하나가 아니라 셋이라 셋 다 막는다.
+   ① 본편 CSS 가 `html,body{touch-action:pan-x pan-y}` 로 **패닝을 허용**해 둔다.
+      본편은 그게 맞지만 이 판은 한 화면이라 패닝할 것이 없다 — 손가락이 미끄러지면
+      화면만 흔들린다. 전투 중에는 패닝을 끈다(덱 화면은 스크롤해야 하므로 그대로 둔다).
+   ② 겹쳐 뜨는 확대창을 끝까지 끌면 스크롤이 **바깥으로 이어져** 판을 민다.
+   ③ 두 번 두드리기 확대(iOS)는 `user-scalable=no` 로 안 막힌다 — manipulation 이 막는다. */
+html,body{overscroll-behavior:none}
+body:not(.deckmode){touch-action:manipulation}
+.zoom,.logbox{overscroll-behavior:contain}
 
 /* ══ 덱 편집 화면만은 **스크롤한다** ═══════════════════════════════════════
    ⚠⚠ 본편 CSS 는 html·body 를 `height:100dvh; overflow:hidden` 으로 묶는다 —
@@ -1605,7 +1615,7 @@ body.deckmode .wrap{height:auto}
 <script src="data.js"></script>
 <script>
 'use strict';
-const VERSION='0.26.0', BUILD='2026-09-02';
+const VERSION='0.27.0', BUILD='2026-09-02';
 /* ⚠ 제목줄은 없다 — 성권: "배틀 유아이에서도 헤더 지우고 넓게 써".
    판 번호는 덱 화면 발치 한 줄에만 남는다(배포 확인이 이 번호에 걸려 있다). */
 
@@ -2217,7 +2227,10 @@ def('neuro',null,'때릴 때마다 독 1. 신경독에 걸린 쪽은 카드를 �
     addPoison(t,1);
     if(t.c) t.neuro=true; else t.neuro=true;   /* 몸이든 얼굴이든 표시를 남긴다 */
   });
-def('singularity',null,'특이점 — 매 턴 주인에게 나쁜 일이 일어난다',(g,me,s)=>{
+/* ⚠ 원문은 "This object is not defined and not well-behaved" 한 줄뿐이고,
+   openEtG 도 "That was a bad idea" 로 넘긴다 — **원작이 무엇을 하는지 안 적어 놨다.**
+   그래서 이 넷은 내가 채운 것이다. 설명에 그대로 적어 둔다(설명은 곧 규칙). */
+def('singularity',null,'매 턴 주인에게 나쁜 일이 하나 일어난다 — 공격력 −1 · 주인이 2 피해 · 무작위 퀀텀 2 · 공격력 부호 뒤집기 중 하나',(g,me,s)=>{
   const r=rnd(4);
   if(r===0) buff(s,-1,0); else if(r===1) spellDmg(me,me,2);
   else if(r===2) gain(me,1+rnd(12),2); else s.atk=-s.atk;
@@ -3219,6 +3232,11 @@ function zoomHTML(c,u){
     <div class="kd">${ELKO[c.el]} · ${kindKo(c.kind)} · 비용 ${c.cost?c.cost+' '+ELKO[c.costel]:'없음'}
     ${c.upcode&&CARD[c.upcode]?`<br>강화판: ${esc(CARD[c.upcode].ko)}`:''}</div></div>`);
   const sks=u?u.sk:c.sk;
+  /* ⚠⚠ **효과로 얻은 것을 표시해 준다.** 관성·정수·유동·나비 효과처럼 능력과 표식을
+     나중에 붙이는 카드가 많은데, 확대창이 인쇄된 것과 얻은 것을 구별 없이 보여 주면
+     "이 몸이 왜 방패를 무시하지?" 를 판에서 알 수가 없다. */
+  const printed=new Set(c.sk.map(x=>x.id));
+  const GOT=' <b style="color:#6ee08a">효과로 얻음</b>';
   sks.forEach(s=>{ const h=SK[s.id]; if(!h)return;
     const cst=u?u.cast:c.cast, ce=u?u.castel:c.castel;
     /* ⚠ 'death' 는 **아무 크리처나 죽었을 때**(전역), 'owndeath' 는 **이 몸이 죽었을 때**다.
@@ -3232,29 +3250,61 @@ function zoomHTML(c,u){
     const when=s.ev==='cast'?(c.kind==='spell'?'주문 효과':`${cst?cst+' '+ELKO[ce]:'무료'}`)
       :(EVKO[s.ev]||'지속');
     /* 이름이 있으면 이름을 머리에 세우고 '언제' 는 뒤에 작게 — 이름이 곧 그 능력이다 */
-    box.push(`<div class="zdef"><div class="k">
+    const got=(u&&!printed.has(s.id))?GOT:'';
+    box.push(`<div class="zdef"${got?' style="border-left-color:#6ee08a"':''}><div class="k">
       <span class="kn">${nm||when}</span>
-      <span class="kc">${nm?when+' · ':''}${esc(s.id)}</span></div>
+      <span class="kc">${nm?when+' · ':''}${esc(s.id)}${got}</span></div>
       <div class="kd">${fillN(h.d,s)}</div></div>`);
   });
-  if(!sks.length) box.push('<div class="zdef"><div class="k"><span class="kn">효과</span></div><div class="kd">따로 없다. 몸으로 싸운다.</div></div>');
-  (u?u.flags:c.flags).forEach(f=>{ if(!FLAGDEF[f])return;
-    box.push(`<div class="zdef"><div class="k"><span class="kn">${FLAGKO[f]}</span>
-      <span class="kc">${f}</span></div><div class="kd">${FLAGDEF[f]}</div></div>`);});
+  if(!sks.length) box.push(`<div class="zdef"><div class="k"><span class="kn">효과</span></div>
+    <div class="kd">${(u&&c.sk.length)?'<b>능력을 잃었다</b> — 인쇄된 능력이 지워졌다.'
+      :'따로 없다. 몸으로 싸운다.'}</div></div>`);
+  /* ⚠ 예전에는 `FLAGDEF[f]` 가 있는 표식만 실었다 — 풀이가 없는 표식(염동·부두·인내…)은
+     **통째로 사라져서**, 효과로 붙은 상태가 확대창에 안 보였다. 이제 빠짐없이 싣는다. */
+  const pflags=new Set(c.flags);
+  (u?u.flags:c.flags).forEach(f=>{
+    if(!FLAGKO[f]||['stackable','additive','token'].includes(f))return;
+    const got=(u&&!pflags.has(f))?GOT:'';
+    box.push(`<div class="zdef"${got?' style="border-left-color:#6ee08a"':''}>
+      <div class="k"><span class="kn">${FLAGKO[f]}</span>
+      <span class="kc">${f}${got}</span></div>
+      <div class="kd">${FLAGDEF[f]||'—'}</div></div>`);});
   /* 원작에 실제로 인쇄된 글. **번역이 아니라 원문 그대로** 둔다 —
      내 한국어 설명은 '이 엔진이 실제로 하는 일' 이고, 이쪽은 '원작이 뭐라고 적었나' 다.
      둘이 어긋나면 그게 곧 구현이 원작과 다르다는 신호다. 성권이 대조할 수 있어야 한다. */
   if(c.otxt) box.push(`<div class="zdef" style="border-left-color:var(--sapphire)">
     <div class="k"><span class="kn">원문</span><span class="kc">ELEMENTS</span></div>
     <div class="kd" style="white-space:pre-line;opacity:.92">${esc(c.otxt)}</div></div>`);
+  /* ⚠⚠ **지금 이 몸에 걸린 것 전부.** 예전에는 얼음·지연·독·사용·쌓임 다섯뿐이라,
+     중력 견인·아드레날린·급강하·굴속·증기·아플라톡신·신성한 방패처럼 **효과로 붙은 상태**가
+     확대창 어디에도 안 나왔다(성권: "카드 효과로 상태가 부여되면 그 효과도 나와야 하는데").
+     여기 빠진 상태는 판에서 읽을 방법이 없다 — 하나도 빠뜨리지 않는다. */
   if(u){
     const st=[];
+    const da=trueAtk(u)-c.atk, dh=u.hp-c.hp, dm=u.maxhp-c.hp;
+    if(u.kind==='creature'||u.kind==='weapon'){
+      if(da) st.push(`공격력이 ${da>0?'+'+da:da} — 카드에 적힌 ${c.atk} 에서 ${trueAtk(u)}`);
+      if(dm) st.push(`최대 체력이 ${dm>0?'+'+dm:dm} — 카드에 적힌 ${c.hp} 에서 ${u.maxhp}`);
+      else if(dh) st.push(`체력이 ${u.hp} / ${u.maxhp}`);
+    }
     if(u.frozen>0) st.push(`얼어붙음 ${u.frozen}턴 — 공격도 능력도 못 쓴다`);
-    if(u.delayed>0) st.push(`지연 ${u.delayed}턴`);
+    if(u.delayed>0) st.push(`지연 ${u.delayed}턴 — 공격도 능력도 못 쓴다`);
     if(u.poison>0) st.push(`독 ${u.poison} — 자기 턴마다 그만큼 깎인다`);
+    if(u.poison<0) st.push(`정화 ${-u.poison} — 독을 그만큼 먼저 지운다`);
+    if(u.own&&u.own.gpull===u) st.push('중력 견인 — 이 편이 받는 공격을 혼자 대신 맞는다');
+    if(u.adren) st.push('아드레날린 — 한 턴에 여러 번 공격한다 (약할수록 더 자주)');
+    if(u.dive) st.push('급강하 — 다음 공격의 공격력이 두 배');
+    if(u.burrowed) st.push('굴속 — 겨눌 수 없지만 공격력이 절반');
+    if(u.steam>0) st.push(`증기 ${u.steam} — 매 턴 공격력이 1씩 식는다`);
+    if(u.afla) st.push('아플라톡신 — 죽으면 그 자리에 악성 세포가 남는다');
+    if(u.dshield) st.push('신성한 방패 — 다음 내 턴까지 겨눌 수 없다');
+    if(u.silenced) st.push('뇌엽절제 — 능력이 지워졌다');
+    if(u.pat&&(u.pat.a||u.pat.h)) st.push(`인내의 파편 — 공격하지 않는 대신 +${u.pat.a}|+${u.pat.h}`);
+    if(u.nf) st.push(`땅거미 — 야행성이라 +${u.nf} 체력`);
     if(u.used) st.push('이번 턴 능력을 이미 썼다');
     if(u.charges>1) st.push(`${u.charges}개 쌓여 있다`);
-    if(st.length) box.push(`<div class="zdef"><div class="k"><span class="kn">지금 상태</span></div>
+    if(st.length) box.push(`<div class="zdef" style="border-left-color:var(--gold-bright)">
+      <div class="k"><span class="kn">지금 상태</span></div>
       <div class="kd">${st.join('<br>')}</div></div>`);
   }
   return `<div class="zwrap">${etgCardHTML(c,{size:'lg',unit:u})}
@@ -3572,6 +3622,32 @@ function isTarget(u){
 window.addEventListener('resize',()=>{ if(!G)return;
   ['foePm','foeBoard','myBoard','myPm'].forEach(id=>packRow(document.getElementById(id)));
   packHand(); });
+
+/* ⚠⚠ 위의 CSS 로도 안 잡히는 경우가 남는다(핀치 확대 뒤의 패닝, 잠깐 뜬 키보드 등).
+   그래서 **스스로 되돌린다** — 전투 중에 문서가 조금이라도 밀리면 즉시 0 으로 돌린다.
+   덱 화면과 에디터는 스크롤해야 하므로 건드리지 않는다.
+   ⚠ `scroll` 은 아주 잦게 오므로 여기서는 값 비교만 하고 아무것도 다시 그리지 않는다. */
+function snapTop(){
+  /* ⚠⚠ 카드 에디터도 이 엔진 파일을 쓴다 — 거기서 이걸 돌리면 **목록이 스크롤이 안 된다.**
+     같은 코드를 두 페이지가 쓰는 이상, '이 페이지가 판인가' 를 반드시 물어야 한다. */
+  if(window.ETG_NOBOOT)return;
+  if(document.body.classList.contains('deckmode'))return;
+  const de=document.scrollingElement||document.documentElement;
+  if(de.scrollTop||window.scrollY||document.body.scrollTop){ window.scrollTo(0,0); }
+}
+addEventListener('scroll',snapTop,{passive:true});
+addEventListener('orientationchange',()=>setTimeout(snapTop,120));
+if(window.visualViewport){
+  visualViewport.addEventListener('scroll',snapTop);
+  visualViewport.addEventListener('resize',snapTop);
+}
+/* iOS 는 `user-scalable=no` 를 무시한다 — 핀치 확대는 이 손짓을 막아야 안 열린다.
+   한 번 확대되면 그 뒤로는 화면이 계속 밀린 것처럼 보인다(성권이 겪은 증상). */
+['gesturestart','gesturechange','gestureend'].forEach(ev=>
+  document.addEventListener(ev,e=>{
+    if(window.ETG_NOBOOT)return;
+    if(!document.body.classList.contains('deckmode'))e.preventDefault(); },
+    {passive:false}));
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 window.ETGDBG={get G(){return G;},SK,MISS,POOLS,CARD,BYNAME,playable,startGame,autoDeck,
