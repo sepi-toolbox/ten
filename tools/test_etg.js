@@ -230,7 +230,8 @@ const TEN =path.join(__dirname,'..','data','cards.json');
     return out;});
   ok('불사조는 잿더미를 남긴다', dth.ash.includes('Ash'), dth.ash.join(',')||'(아무것도 안 남았다)');
   ok('무덤은 해골을 낸다', dth.bone.includes('Skeleton'), dth.bone.join(',')||'(안 나왔다)');
-  ok('영혼 포집기가 퀀텀을 얻는다', dth.soul===2, `죽음 퀀텀 ${dth.soul}`);
+  /* ⚠ 원문은 죽음 3 이다 — 2 로 굳혀 뒀던 것을 원문 대조에서 잡았다. */
+  ok('영혼 포집기가 퀀텀을 얻는다', dth.soul===3, `죽음 퀀텀 ${dth.soul}`);
   ok('독수리는 시체를 먹고 큰다', dth.vul[1]!==dth.vul[0], `${dth.vul[0]} → ${dth.vul[1]}`);
 
   /* ── 12c) '눌러서 쓰는 능력' 과 '저절로 도는 것' 을 안 헷갈린다 ─────── */
@@ -780,6 +781,114 @@ const TEN =path.join(__dirname,'..','data','cards.json');
      `${truth.sskin.before} → ${truth.sskin.after} (대지 10 − 비용 ${truth.sskin.cost} × 2)`);
   ok('없는 능력을 지어내지 않는다', truth.sword==='', `단검류 소검 "${truth.sword}"`);
   ok('평범한 방패도 설명이 있다', /깎는다/.test(truth.shield), truth.shield);
+
+  /* ── 30) 전수검사에서 잡힌 것들 ──────────────────────────────────────
+     ⚠⚠ 여기 있는 카드는 전부 **원문에 적혀 있는데 구현이 아예 없던** 것들이다.
+     터지지도 않고 이상해 보이지도 않아서 눈으로는 절대 안 잡힌다 — 검사로 못 박는다. */
+  const A=await p.evaluate(()=>{
+    const D=window.ETGDBG, o={};
+    const setup=(el,mark)=>{ D.startGame(D.deckList(D.autoDeck(el)),mark||el);
+      const G=D.G; G.me.hand=[]; G.ai.hand=[]; G.me.q=new Array(13).fill(30);
+      G.ai.q=new Array(13).fill(30); return G; };
+    const put=(G,p,n)=>{ const u=D.mk(D.BYNAME[n].code,p); D.playPerm(p,u); return u; };
+    const cast=(G,p,n,t)=>{ const u=D.mk(D.BYNAME[n].code,p); p.hand=[u];
+      D.playCard(p,u,t); return u; };
+
+    /* ① 범람 — 가장자리 칸을 쓸어버린다. 물·무속성은 무사하다 */
+    {const G=setup(7);
+     const fire=D.mk(D.BYNAME['Fire Spirit'].code,G.me);       // 불
+     const water=D.mk(D.BYNAME['Blue Crawler'].code,G.me);     // 물
+     G.me.cr[6]=fire; G.me.cr[7]=water;
+     const near=D.mk(D.BYNAME['Fire Spirit'].code,G.me); G.me.cr[0]=near;
+     put(G,G.me,'Flooding');
+     D.endTurn();
+     o.flood={edge:!!G.me.cr[6], water:!!G.me.cr[7], inner:!!G.me.cr[0]};}
+
+    /* ② 인내의 파편 — 공격하지 않는다. 대신 +1|+0, 물은 +2|+2 */
+    {const G=setup(7);
+     const c=D.mk(D.BYNAME['Fire Spirit'].code,G.me); G.me.cr[0]=c;
+     const w=D.mk(D.BYNAME['Blue Crawler'].code,G.me); G.me.cr[1]=w;
+     const a0=c.atk, w0=[w.atk,w.hp];
+     put(G,G.me,'Shard of Patience'); D.syncAuras();
+     const foehp=G.ai.hp; D.endTurn();
+     o.pat={atk:c.atk-a0, wa:w.atk-w0[0], wh:w.hp-w0[1], hit:foehp-G.ai.hp};}
+
+    /* ③ 반사 방패 — 주문 피해가 되돌아온다 */
+    {const G=setup(8);
+     put(G,G.ai,'Reflective Shield');
+     const my=G.me.hp, his=G.ai.hp;
+     D.spellDmg(G.me,G.ai,7);
+     o.reflect={me:my-G.me.hp, foe:his-G.ai.hp};}
+
+    /* ④ 파괴·강탈이 안 통한다 */
+    {const G=setup(4);
+     const sh=put(G,G.ai,'Reflective Shield');
+     cast(G,G.me,'Steal',sh);
+     o.nosteal=(G.ai.shield===sh&&G.me.shield!==sh);}
+
+    /* ⑤ 님프의 눈물 — 내 기둥이 그 속성 님프가 된다 */
+    {const G=setup(7);
+     const pil=put(G,G.me,'Water Pillar');
+     cast(G,G.me,"Nymph's Tears",pil);
+     o.nymph={pillar:G.me.pm.filter(Boolean).length,
+              cr:(G.me.cr.find(Boolean)||{c:{}}).c.en||''};}
+
+    /* ⑥ 준비의 파편 — 능력 비용이 0 이 된다 */
+    {const G=setup(10);
+     const c=D.mk(D.BYNAME['Fire Spirit'].code,G.me); G.me.cr[0]=c;
+     const b4=c.cast; cast(G,G.me,'Shard of Readiness',c);
+     o.ready={before:b4, after:c.cast};}
+
+    /* ⑦ 성전사 — 겨눈 무기의 능력과 +X|+2 */
+    {const G=setup(8);
+     const w=D.mk(D.BYNAME['Dagger'].code,G.ai); G.ai.weapon=w; w.own=G.ai;
+     const c=D.mk(D.BYNAME['Crusader'].code,G.me); G.me.cr[0]=c;
+     const a0=c.atk,h0=c.hp,n0=c.sk.length;
+     D.useAbility(G.me,c,w);
+     o.endow={da:c.atk-a0, dh:c.hp-h0, gained:c.sk.length>n0};}
+
+    /* ⑧ 완전의 파편 — 손에 있는 파편을 모두 먹는다 */
+    {const G=setup(12);
+     G.me.hand=['Shard of Bravery','Shard of Freedom','Shard of Patience']
+       .map(n=>D.mk(D.BYNAME[n].code,G.me));
+     const u=D.mk(D.BYNAME['Shard of Integrity'].code,G.me); G.me.hand.push(u);
+     D.playCard(G.me,u,null);
+     const g=G.me.cr.find(Boolean);
+     o.golem={hand:G.me.hand.length, atk:g?g.atk:0, en:g?g.c.en:''};}
+
+    /* ⑨ 루시페린 — 능력 없는 크리처가 발광을 얻는다 */
+    {const G=setup(8);
+     const c=D.mk(D.BYNAME['Photon'].code,G.me); G.me.cr[0]=c;   // 능력 없음
+     cast(G,G.me,'Luciferin',null);
+     o.luci=c.sk.some(s=>s.id==='quanta'&&s.arg===8);}
+
+    /* ⑩ 지진 — 겨눈 더미를 부순다(제일 큰 더미를 코드가 고르지 않는다) */
+    {const G=setup(4);
+     o.quake=(D.SK['earthquake'].t==='foepillar');}
+    return o;});
+
+  ok('범람이 가장자리를 쓸어버린다',
+     A.flood.edge===false&&A.flood.water===true&&A.flood.inner===true,
+     `가장자리 ${A.flood.edge?'살아남음':'잠김'} · 물 ${A.flood.water?'무사':'죽음'} · 안쪽 ${A.flood.inner?'무사':'죽음'}`);
+  ok('인내의 파편 — 안 때리고 커진다',
+     A.pat.hit===0&&A.pat.atk===1&&A.pat.wa===2&&A.pat.wh===2,
+     `피해 ${A.pat.hit} · +${A.pat.atk}|+0 · 물 +${A.pat.wa}|+${A.pat.wh}`);
+  ok('반사 방패가 주문을 되돌린다', A.reflect.me===7&&A.reflect.foe===0,
+     `나 ${A.reflect.me} · 상대 ${A.reflect.foe}`);
+  ok('파괴·강탈되지 않는다', A.nosteal===true, A.nosteal?'그대로':'빼앗겼다');
+  ok('님프의 눈물 — 기둥이 님프가 된다',
+     A.nymph.pillar===0&&A.nymph.cr==='Nymph Queen',
+     `남은 기둥 ${A.nymph.pillar} · ${A.nymph.cr}`);
+  ok('준비의 파편 — 능력 비용이 0', A.ready.before>0&&A.ready.after===0,
+     `${A.ready.before} → ${A.ready.after}`);
+  ok('성전사가 무기 능력을 베낀다',
+     A.endow.da>0&&A.endow.dh===2&&A.endow.gained===true,
+     `+${A.endow.da}|+${A.endow.dh} · 능력 ${A.endow.gained?'복사됨':'없음'}`);
+  ok('완전의 파편이 손패를 먹는다',
+     A.golem.hand===0&&A.golem.atk===6&&A.golem.en==='Shard Golem',
+     `손패 ${A.golem.hand}장 · ${A.golem.en} ${A.golem.atk}|${A.golem.atk}`);
+  ok('루시페린이 발광을 준다', A.luci===true, A.luci?'quanta 8 부여':'아무것도 안 줬다');
+  ok('지진은 쓰는 사람이 고른다', A.quake===true, A.quake?'foepillar':'자동 선택');
 
   if(errs.length){ bad++; console.log('   ERR',errs.slice(0,4)); }
   console.log(`\n미구현 능력 ${cov.miss.length}종: ${cov.miss.join(' ')}`);
