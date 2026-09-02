@@ -3,7 +3,7 @@
    게임(index.html)과 카드 에디터(edit.html)가 **이 한 벌**을 같이 쓴다. */
 'use strict';
 
-const VERSION='0.34.0', BUILD='2026-09-02';
+const VERSION='0.35.0', BUILD='2026-09-02';
 /* ⚠ 제목줄은 없다 — 성권: "배틀 유아이에서도 헤더 지우고 넓게 써".
    판 번호는 덱 화면 발치 한 줄에만 남는다(배포 확인이 이 번호에 걸려 있다). */
 
@@ -1572,11 +1572,25 @@ function ruleText(c,u,full){
 const ELIDX={};
 function fillCard(c,t){
   if(!ELIDX['불']) for(let e=1;e<=12;e++) ELIDX[ORIG.el?ORIG.el[e]:ELKO[e]]=e;
-  return t.replace(/\[([^\[\]]{1,6})\]/g,(m,n)=>ELIDX[n]?'['+ELKO[ELIDX[n]]+']':m);
+  /* ⚠⚠ 예전에는 `[불]` 을 **글자 그대로** 남겼다. 카드 글에 속성이 서너 번 나오는 카드가
+     많은데(화염 화살·생명 흡수·얼음 화살…) 그때마다 이름이 길게 적혀 고정 상자를
+     잡아먹었고, 정작 그 속성이 무슨 색인지는 판의 퀀텀줄과 따로 놀았다.
+     비용은 이미 구슬로 보여 주고 있으므로 **글 속의 속성도 같은 구슬**로 통일한다.
+     ⚠ 색만으로는 못 읽는 사람이 있다 — aria-label/title 에 이름을 남긴다.
+     ⚠ 이름은 에디터에서 바뀔 수 있으므로 반드시 지금 이름(ELKO)을 esc 해서 쓴다. */
+  return t.replace(/\[([^\[\]]{1,6})\]/g,(m,n)=>{
+    const e=ELIDX[n]; if(!e) return m;
+    const nm=esc(ELKO[e]);
+    return `<i class="elp" style="--ec:${ELC[e]}" title="${nm}" aria-label="${nm}"></i>`;
+  });
 }
 /* 글이 길수록 작게 — **자르지 않기 위해서** 줄인다. 칸을 넘치면 잘리므로 넉넉히 잡는다. */
 function effClass(t){
-  const n=t.replace(/<[^>]+>/g,'').length;
+  /* ⚠⚠ 태그를 지우고 글자만 세면 **속성 구슬이 0자로 세어진다.** 구슬은 폭을 차지하는데
+     길이에서 빠지니 글자가 한 단 커지고, 그러면 고정 상자를 넘겨 글이 잘린다.
+     구슬 하나를 글자 두 개로 친다(폭 .82em + 여백 .2em ≒ 한글 한 자보다 조금 작다). */
+  const pips=(t.match(/class="elp"/g)||[]).length;
+  const n=t.replace(/<[^>]+>/g,'').length+pips*2;
   /* 본편 기본 글자(.079)로 세 줄에 드는 건 대략 33자다. 그보다 길면 한 단씩 줄인다.
      ⚠ 상자를 키우는 선택지는 없다 — 텍스트 박스는 고정 크기다. */
   return n>90?' xl':n>66?' l':n>48?' m':n>33?' s':'';

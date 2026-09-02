@@ -89,18 +89,27 @@ const ok = (name, cond, note) => {
     d.innerHTML = D.etgCardHTML(card, { size: 'md' });
     const d2 = document.createElement('div');
     d2.innerHTML = D.etgCardHTML(D.BYNAME['Fire Bolt'], { size: 'md' });
+    const pips = [...d2.querySelectorAll('.teff .elp')];
     return { ko: card.ko, atk: card.atk, cost: card.cost, el6: D.ELKO[6],
              txt: d.querySelector('.teff').textContent.trim(),
-             bolt: d2.querySelector('.teff').textContent.trim() };
+             bolt: d2.querySelector('.teff').textContent.trim(),
+             /* v0.35.0 — 글 속의 속성은 글자가 아니라 **구슬**이다. 이름은 구슬에 붙는다. */
+             boltPips: pips.map(i => i.getAttribute('title')),
+             boltColor: pips.length ? pips[0].style.getPropertyValue('--ec').trim() : '' };
   }, code);
   ok('이름을 고치면 게임에도 그대로', g.ko === '불꽃 요정', g.ko);
   ok('수치를 고치면 게임에도 그대로', g.atk === 3 && g.cost === 4, `${g.cost}비용 ${g.atk}공격`);
   ok('키워드가 카드 글까지 간다', /날개/.test(g.txt) && !/비행/.test(g.txt), g.txt);
   /* ⚠ v0.31.0 부터 카드 글은 **카드마다 한 줄**(원문을 옮긴 kotxt)이다.
      속성 이름은 글 안에 `[불]` 같은 자리가 있는 카드에서만 바뀌고,
-     능력 글(SK 설명)은 카드 앞면이 아니라 **확대창**에 나온다. */
-  ok('속성 이름은 [자리]가 있는 카드에서 바뀐다', g.el6 === '화염' && /화염/.test(g.bolt),
-     g.bolt);
+     능력 글(SK 설명)은 카드 앞면이 아니라 **확대창**에 나온다.
+     ⚠⚠ v0.35.0 부터 그 자리는 **글자가 아니라 속성 구슬**이다. 그러니 여기서 재야 하는 것은
+       "글에 '화염' 이라고 적혔나" 가 아니라 **구슬이 새 이름을 달고 있나** 다.
+       글자로 재면 구슬로 바뀐 순간 거짓으로 실패한다. */
+  ok('속성 구슬이 새 이름을 단다',
+     g.el6 === '화염' && g.boltPips.length > 0 && g.boltPips.every(t => t === '화염')
+     && !/화염/.test(g.bolt),
+     `구슬 ${g.boltPips.length}개 · ${g.boltPips[0]} · ${g.boltColor}`);
 
   /* ── 4) 판에서도 그 이름으로 논다 ──────────────────────────────────
      ⚠ 카드 글만 바뀌고 실제 판이 옛 이름을 쓰면 반쪽이다. 소환해서 확인한다. */

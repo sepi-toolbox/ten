@@ -1413,6 +1413,45 @@ const TEN =path.join(__dirname,'..','data','cards.json');
      &&/감염 —/.test(KT.virus),
      KT.discord);
 
+  /* ── 40.5) 글 속의 속성은 **구슬**로 나온다 ────────────────────────
+     성권: "[엔트로피] 이런식으로 텍스트에 입력된건 아이콘으로 치환할 수 없을까?"
+     ⚠⚠ 여기서 진짜 위험한 것은 '구슬이 뜨나' 가 아니다. **고정 상자를 넘기는가** 다.
+       구슬은 글자보다 폭이 넓은데 글자 수 계산(effClass)에서 0 자로 세어지면 글꼴이
+       한 단 커지고, 그 순간 글이 상자 밖으로 잘린다. 그래서 실제로 그려서 높이를 잰다. */
+  const PIP=await p.evaluate(()=>{
+    const D=window.ETGDBG;
+    const box=document.createElement('div');
+    /* 판과 같은 폭으로 그린다 — 카드 규격은 --cw 가 정한다 */
+    box.style.cssText='position:fixed;left:-9999px;top:0;--cw:96px;width:400px';
+    document.body.appendChild(box);
+    const brk=[],over=[];
+    let pips=0,cards=0;
+    ETG.cards.filter(c=>!c.up&&D.playable(c)).forEach(c=>{
+      box.innerHTML=D.etgCardHTML(c,{size:'md'});
+      const eff=box.querySelector('.teff'), body=box.querySelector('.tbody');
+      if(!eff||!body)return;
+      const n=eff.querySelectorAll('.elp').length;
+      if(n){ cards++; pips+=n; }
+      /* 대괄호가 글자로 남아 있으면 치환이 안 된 것이다 */
+      if(/\[[^\]]{1,6}\]/.test(eff.textContent)) brk.push(c.en);
+      /* 고정 상자를 넘겼는가 — 1px 은 반올림 여유 */
+      if(eff.scrollHeight>body.clientHeight+1) over.push(`${c.en}(${eff.scrollHeight}>${body.clientHeight})`);
+    });
+    const one=(()=>{ box.innerHTML=D.etgCardHTML(D.BYNAME['Fire Bolt'],{size:'md'});
+      const i=box.querySelector('.teff .elp');
+      return i?{t:i.getAttribute('title'),
+                w:+getComputedStyle(i).width.replace('px',''),
+                fs:+getComputedStyle(i.parentNode).fontSize.replace('px','')}:null; })();
+    box.remove();
+    return {pips,cards,brk,over,one};});
+  ok('글 속 속성이 구슬로 바뀐다', PIP.pips>0&&PIP.brk.length===0,
+     `구슬 ${PIP.pips}개 · ${PIP.cards}장 · 안 바뀐 카드 ${PIP.brk.slice(0,3).join(',')||'없음'}`);
+  ok('구슬이 글자 크기를 따라간다', !!PIP.one&&PIP.one.w<PIP.one.fs&&PIP.one.w>PIP.one.fs*0.6,
+     PIP.one?`구슬 ${PIP.one.w.toFixed(1)}px / 글자 ${PIP.one.fs.toFixed(1)}px · ${PIP.one.t}`:'구슬 없음');
+  /* ⚠⚠⚠ 텍스트 박스는 고정 크기다. 구슬을 넣었다고 글이 넘치면 그건 개선이 아니다. */
+  ok('구슬을 넣어도 글이 상자를 안 넘친다', PIP.over.length===0,
+     PIP.over.slice(0,3).join(' · ')||`${PIP.cards}장 확인`);
+
   /* ── 41) 판은 **고정 자리**다 ──────────────────────────────────────
      성권: "게임 배틀 유아이가 고정 위치여야 하는데 가운데 텍스트가 길어지면 막 움직이는데?
      그리고 이게 자꾸 모바일에서 유아이가 위로 말려들어가는 원인 같아."
