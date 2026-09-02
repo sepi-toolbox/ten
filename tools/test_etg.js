@@ -848,8 +848,10 @@ const TEN =path.join(__dirname,'..','data','cards.json');
   ok('돌 피부는 내 최대 체력을 올린다',
      truth.sskin.after===truth.sskin.before+(10-truth.sskin.cost*2),
      `${truth.sskin.before} → ${truth.sskin.after} (대지 10 − 비용 ${truth.sskin.cost} × 2)`);
-  ok('없는 능력을 지어내지 않는다', truth.sword==='', `단검류 소검 "${truth.sword}"`);
-  ok('평범한 방패도 설명이 있다', /깎는다/.test(truth.shield), truth.shield);
+  /* ⚠ 단검류 소검의 `v_noluci` 는 아무 일도 안 하는 표식이다 — '방패를 무시한다' 는
+     내가 지어냈던 말이다. 지금은 원문 그대로 '무기 — 매 턴 끝에 피해를 준다' 만 실린다. */
+  ok('없는 능력을 지어내지 않는다', !/무시/.test(truth.sword), `단검류 소검 "${truth.sword}"`);
+  ok('평범한 방패도 설명이 있다', /줄인다|깎는다/.test(truth.shield), truth.shield);
 
   /* ── 30) 전수검사에서 잡힌 것들 ──────────────────────────────────────
      ⚠⚠ 여기 있는 카드는 전부 **원문에 적혀 있는데 구현이 아예 없던** 것들이다.
@@ -1352,6 +1354,30 @@ const TEN =path.join(__dirname,'..','data','cards.json');
   ok('못 먹는 몸은 겨냥 목록에 없다',
      TG.pool.includes('Photon')&&!TG.pool.includes('Crimson Dragon'),
      TG.pool.join(' · ')||'(빈 목록)');
+
+  /* ── 40) 카드 글은 **원문을 옮긴 것**이어야 한다 ──────────────────
+     성권: "니 멋대로 축약하고 정리하니까 … 문장형 효과 텍스트들 다 원문 그대로
+     가져온 거 맞아?" — 아니었다. 능력별 요약을 ' · ' 로 이어 붙인 내 글이었고,
+     그래서 무기의 첫 줄('무기 — 매 턴 피해를 준다') 같은 게 통째로 빠져
+     불협화음이 '상대 퀀텀을 뒤섞는다' 한 줄로만 보였다.
+     ⚠ 다시 요약으로 돌아가지 않게 못 박는다. */
+  const KT=await p.evaluate(()=>{
+    const D=window.ETGDBG;
+    const play=ETG.cards.filter(c=>!c.up&&D.playable(c));
+    const miss=play.filter(c=>c.kotxt===undefined).map(c=>c.en);
+    const txt=n=>{const d=document.createElement('div');
+      d.innerHTML=D.etgCardHTML(D.BYNAME[n],{size:'md'});
+      return d.querySelector('.teff').textContent.trim();};
+    return {n:play.length, miss,
+      /* 무기는 '매 턴 피해를 준다' 는 첫 줄이 살아 있어야 한다 */
+      weapon:play.filter(c=>c.kind==='weapon'&&!/무기 —/.test(c.kotxt||'')).map(c=>c.en),
+      discord:txt('Discord'), virus:txt('Virus')};});
+  ok('카드 글이 239장 전부 있다', KT.miss.length===0, KT.miss.slice(0,4).join(',')||`${KT.n}장`);
+  ok('무기 글에 첫 줄이 살아 있다', KT.weapon.length===0, KT.weapon.join(',')||'전부 확인');
+  ok('원문 문장 그대로 읽힌다',
+     /무기 — 매 턴 끝에 피해를 준다/.test(KT.discord)&&/뒤섞는다/.test(KT.discord)
+     &&/감염 —/.test(KT.virus),
+     KT.discord);
 
   if(errs.length){ bad++; console.log('   ERR',errs.slice(0,4)); }
   console.log(`\n미구현 능력 ${cov.miss.length}종: ${cov.miss.join(' ')}`);

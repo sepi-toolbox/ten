@@ -78,14 +78,20 @@ const ok = (name, cond, note) => {
     const D = window.ETGDBG, card = D.CARD[c];
     const d = document.createElement('div');
     d.innerHTML = D.etgCardHTML(card, { size: 'md' });
+    const d2 = document.createElement('div');
+    d2.innerHTML = D.etgCardHTML(D.BYNAME['Fire Bolt'], { size: 'md' });
     return { ko: card.ko, atk: card.atk, cost: card.cost, el6: D.ELKO[6],
-             txt: d.querySelector('.teff').textContent.trim() };
+             txt: d.querySelector('.teff').textContent.trim(),
+             bolt: d2.querySelector('.teff').textContent.trim() };
   }, code);
   ok('이름을 고치면 게임에도 그대로', g.ko === '불꽃 요정', g.ko);
   ok('수치를 고치면 게임에도 그대로', g.atk === 3 && g.cost === 4, `${g.cost}비용 ${g.atk}공격`);
-  ok('속성 이름이 카드 글까지 간다', g.el6 === '화염' && /화염/.test(g.txt), g.txt);
-  ok('키워드도 바뀐다', /날개/.test(g.txt) && !/비행/.test(g.txt), g.txt);
-  ok('능력 글도 바뀐다', /만큼 자란다/.test(g.txt), g.txt);
+  ok('키워드가 카드 글까지 간다', /날개/.test(g.txt) && !/비행/.test(g.txt), g.txt);
+  /* ⚠ v0.31.0 부터 카드 글은 **카드마다 한 줄**(원문을 옮긴 kotxt)이다.
+     속성 이름은 글 안에 `[불]` 같은 자리가 있는 카드에서만 바뀌고,
+     능력 글(SK 설명)은 카드 앞면이 아니라 **확대창**에 나온다. */
+  ok('속성 이름은 [자리]가 있는 카드에서 바뀐다', g.el6 === '화염' && /화염/.test(g.bolt),
+     g.bolt);
 
   /* ── 4) 판에서도 그 이름으로 논다 ──────────────────────────────────
      ⚠ 카드 글만 바뀌고 실제 판이 옛 이름을 쓰면 반쪽이다. 소환해서 확인한다. */
@@ -113,7 +119,7 @@ const ok = (name, cond, note) => {
     return { over, back: read() };
   }, code);
   ok('설명을 통째로 갈아 끼운다', txt.over === '내가 새로 쓴 글이다', txt.over);
-  ok('비우면 저절로 지어지는 글로 돌아온다', /만큼 자란다/.test(txt.back), txt.back);
+  ok('비우면 원래 카드 글로 돌아온다', /아블레이즈/.test(txt.back), txt.back);
 
   /* ── 6) 원본은 안 고쳐진다 — 되돌리면 처음 그대로 ────────────────── */
   const rev = await p.evaluate(c => {

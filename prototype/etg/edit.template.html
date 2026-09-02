@@ -230,7 +230,9 @@ function skTab(){
     .sort();
   return `<div class="edrow"><input type="search" id="q" placeholder="능력 이름·글로 찾기"
       value="${esc(Q)}"><span class="ehint">${ids.length}종</span></div>
-    <div class="ehint" style="margin-bottom:8px">중괄호는 <b>카드마다 다른 값이 들어가는 자리</b>다 —
+    <div class="ehint" style="margin-bottom:8px"><b>여기서 고친 글은 카드 앞면이 아니라
+      길게 눌러 보는 <b>확대창</b>에 나온다.</b> 카드 앞면 글은 [카드] 탭에서 한 장씩 고친다.<br>
+      중괄호는 <b>카드마다 다른 값이 들어가는 자리</b>다 —
       <b>{N}</b> 숫자 · <b>{A}|{H}</b> 공격|체력 · <b>{EL}</b> 속성 · <b>{SUM}</b> 불러내는 카드.
       그대로 두면 카드마다 알맞은 값이 들어간다.</div>
     <div class="list">${ids.map(id=>{
@@ -318,9 +320,10 @@ function drawSheet(){
       <input data-f="hp" type="number" inputmode="numeric" value="${c.hp}"></div></div>`
       :(c.kind==='shield'?`<div class="ef"><label>막는 양</label>
         <input data-f="hp" type="number" inputmode="numeric" value="${c.hp}"></div>`:'')}
-    <div class="ef"><label>설명 — 비우면 능력에서 저절로 지어진다</label>
+    <div class="ef"><label>카드 글 — 비우면 원래 글로 돌아간다</label>
       <textarea data-f="txt" rows="3" placeholder="${esc(autoText(c))}">${esc(c.txt||'')}</textarea>
-      <div class="ehint">저절로 지어지는 글: ${esc(autoText(c))}</div></div>
+      <div class="ehint">원래 글: ${esc(autoText(c))}</div>
+      <div class="ehint">대괄호 <b>[불]</b> 처럼 적으면 속성 이름이 바뀔 때 같이 따라온다.</div></div>
     ${drift.length?`<div class="warn">숫자를 바꿨는데 설명에 옛 값(${
         drift.map(f=>og[f]).join(' · ')})이 그대로 남아 있다. 설명도 같이 고칠 것.</div>`:''}
     <div class="ef"><label>원문 (Elements the Game)</label>

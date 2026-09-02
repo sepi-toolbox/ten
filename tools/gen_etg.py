@@ -238,6 +238,11 @@ def main():
     rows = [l.split("|") for l in open(os.path.join(SRC, "cards.csv"), encoding="utf-8").read().split("\n") if l]
     sktext = json.load(open(os.path.join(SRC, "skilltext.json"), encoding="utf-8"))
     rev = json.load(open(os.path.join(SRC, "revival.json"), encoding="utf-8"))
+    # ⚠⚠ 카드에 실릴 한국어 글. 예전에는 **능력별 설명을 이어 붙여** 만들었는데,
+    #   그건 원문을 옮긴 것이 아니라 내가 쓴 요약이라 문장이 조각나고 읽기 어려웠다
+    #   (성권: "니 멋대로 축약하고 정리하니까 … 읽어봐도 뭔 말인지 모르겠어").
+    #   이제 카드마다 **인쇄된 글을 문장 그대로 옮긴 한국어**를 붙인다.
+    kotxt = json.load(open(os.path.join(ROOT, "data", "etg_kotxt.json"), encoding="utf-8"))
     cards, byname = [], {}
     for r in rows:
         if len(r) != 10:
@@ -263,6 +268,13 @@ def main():
             "flags": flags, "stats": stats, "up": upped,
         }
         # ── 원작에 인쇄된 글과 능력 이름을 붙인다 ────────────────────────────
+        kt = kotxt.get(name)
+        if kt is None:
+            kt = kotxt.get(ALIAS.get(name, ""))
+        # ⚠ 빈 글("")도 **적을 것이 없다는 답**이다 — 없는 것과 구별해서 넣는다.
+        #   `if kt:` 로 적어 두면 빈 글이 통째로 빠져 옛 요약으로 되돌아간다.
+        if kt is not None:
+            c["kotxt"] = kt
         r = rev.get(name) or rev.get(ALIAS.get(name, ""))
         if r:
             c["otxt"] = r["txt"]                      # 원문 그대로(속성 아이콘만 글자로)
