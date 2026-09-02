@@ -1244,10 +1244,14 @@ const TEN =path.join(__dirname,'..','data','cards.json');
     D.showZoom(u.c,u);
     const t=document.getElementById('zoom').textContent;
     const green=document.querySelectorAll('#zoom .zdef .kc b').length;
-    return {t,green};});
+    /* 원문은 확대창에 없어야 한다 — 놀 때 보는 창이지 대조하는 창이 아니다 */
+    const otxt=D.CARD[u.code].otxt||'';
+    return {t,green,otxt,hasOtxt:otxt?t.includes(otxt.split('\n')[0].slice(0,18)):false};});
   ok('확대창이 효과로 얻은 표식을 보여 준다',
      /관성/.test(Z.t)&&/실체 없음/.test(Z.t)&&/효과로 얻음/.test(Z.t)&&Z.green>=2,
      `초록 표시 ${Z.green}개`);
+  ok('확대창에 원문은 안 싣는다', Z.hasOtxt===false&&!/ELEMENTS/.test(Z.t),
+     Z.otxt?`원문 "${Z.otxt.split('\n')[0].slice(0,20)}…" 안 보임`:'(원문 없는 카드)');
   ok('확대창이 지금 걸린 상태를 보여 준다',
      /중력 견인/.test(Z.t)&&/아드레날린/.test(Z.t)&&/급강하/.test(Z.t)
      &&/독 2/.test(Z.t)&&/얼어붙음/.test(Z.t)&&/공격력이 \+/.test(Z.t),
