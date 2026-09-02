@@ -21,15 +21,30 @@ const P='file://'+path.join(__dirname,'..','prototype','index.html')+'?dev=1';
        fighting 이 아직 켜져 있고 entering 은 아직 안 켜진 **틈**이 있어서, 그 틈에
        조건이 통과해 버리고 낡은 HP 를 읽는다. 전체 검사에서만 이따금 터진 원인이 이것이다. */
     await p.evaluate(()=>{ if(typeof S!=='undefined'&&S&&S.me) S.me.__stale=1; });
-    await p.evaluate(()=>{ const f=RG.floor+1;
-      const i=RG.map[f].findIndex(n=>n.t!=='event'&&n.t!=='shop');
-      rgEnter(f,i<0?0:i); });
+    /* ⚠⚠ 전투 칸이 **없으면 들어가면 안 된다.** 예전엔 못 찾으면 `i<0?0:i` 로 0번을
+       그냥 골랐는데, 그게 이벤트·상점 칸이면 rgEvent()/rgShop() 이 열려 **전투가
+       아예 시작되지 않는다.** 그런데도 아래 기다림이 전부 `.catch(()=>{})` 라
+       조용히 지나가고, 그 뒤 검사가 **지난 판의 낡은 HP**(22)를 읽어
+       "회복분이 이월 안 됐다" 로 나왔다. 실패를 삼키던 자리다. */
+    /* ⚠ 지도는 **무작위**다. 바로 윗층이 전부 이벤트·상점인 판도 나온다 —
+       한 층만 보고 '전투 칸이 없다' 로 끝내면 그 판에서는 검사가 통째로 못 돈다.
+       사람이 하듯 **위로 올라가며** 처음 나오는 전투 칸을 고른다. */
+    const picked=await p.evaluate(()=>{
+      for(let f=RG.floor+1;f<RG.map.length;f++){
+        if(!RG.map[f])continue;
+        const i=RG.map[f].findIndex(n=>n.t!=='event'&&n.t!=='shop');
+        if(i>=0){ rgEnter(f,i); return {ok:true,f,i}; }
+      }
+      return {ok:false,why:`${RG.floor+1}층 위로 전투 칸이 하나도 없다`};});
+    if(!picked.ok){ bad++; console.log('❌ '+'전투 칸을 못 찾음'.padEnd(22)+' '+picked.why); return; }
     /* ⚠⚠ **버튼이 뜰 때까지 기다린다.** 400ms 만 쉬고 `if(있으면 누른다)` 로 두면,
        느린 판에서 아직 안 뜬 버튼을 조용히 건너뛴다 → 전투가 아예 안 시작되고
        그 뒤 검사가 전부 **지난 판의 낡은 HP** 를 읽는다(전체 검사에서만 이따금 잡혔다).
        '있으면' 이라는 말이 곧 '없으면 그냥 넘어간다' 라는 뜻이었다. */
-    await p.waitForSelector('#rgGo',{timeout:9000}).catch(()=>{});
-    if(await p.evaluate(()=>!!document.getElementById('rgGo')))await p.click('#rgGo');
+    const sawGo=await p.waitForSelector('#rgGo',{timeout:9000}).then(()=>true).catch(()=>false);
+    if(!sawGo){ bad++; console.log('❌ '+'전투 시작 버튼이 안 뜸'.padEnd(22)
+      +' '+JSON.stringify(await p.evaluate(()=>({floor:RG.floor,열린창:!!document.querySelector('#rg.on')})))); return; }
+    await p.click('#rgGo');
     /* ⚠ **시간으로 기다리지 않는다.** 느린 판에서 전투가 아직 안 열렸는데 HP 를 읽어
        "회복분이 이월 안 됐다" 로 읽혔다(전체 검사에서 두 번 잡혔다).
        전투가 실제로 열릴 때까지 기다린다. */
@@ -37,8 +52,14 @@ const P='file://'+path.join(__dirname,'..','prototype','index.html')+'?dev=1';
        · 'RG.fighting 이 켜졌는가' 만 보면 지난 전투가 끝나며 남긴 값을 그대로 읽는다.
        · 'S.me.hp === RG.hp' 도 안 된다 — 이긴 직후엔 둘이 이미 같아서 **즉시 통과**해
          버리고, newGame 이 돌기 전의 낡은 판에 대고 검사를 이어 간다(실제로 그랬다). */
-    await p.waitForFunction(()=>RG.fighting&&!RG.entering&&S.me&&!S.me.__stale,null,{timeout:9000})
-      .catch(()=>{});
+    /* ⚠ 여기서도 삼키지 않는다 — 전투가 안 열렸는데 넘어가면 그 뒤 검사가 전부
+       엉뚱한 값을 보고, 사람은 'HP 가 22 다' 라는 **결과만** 보게 된다. */
+    const started=await p.waitForFunction(
+      ()=>RG.fighting&&!RG.entering&&S.me&&!S.me.__stale,null,{timeout:9000})
+      .then(()=>true).catch(()=>false);
+    if(!started){ bad++; console.log('❌ '+'전투가 안 열림'.padEnd(22)+' '
+      +JSON.stringify(await p.evaluate(()=>({f:RG.fighting,ent:RG.entering,
+        stale:!!(S.me&&S.me.__stale),rg:RG.hp,me:S.me&&S.me.hp})))); return; }
     await p.evaluate(()=>{ const k=document.getElementById('keepBtn'); k&&k.click(); });
     await w(400);
   }

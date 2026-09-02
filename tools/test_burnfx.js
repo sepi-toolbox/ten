@@ -9,7 +9,10 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
 (async()=>{
   const b=await chromium.launch();
   const p=await b.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
-  const errs=[]; p.on('pageerror',e=>errs.push(e.message));
+  const errs=[]; /* ⚠ 메시지만 모으면 **어디서 터졌는지 알 수가 없다.** 전체 검사에서만 이따금 나는
+   오류를 며칠씩 못 잡은 게 이것 때문이다 — 스택도 같이 찍는다. */
+p.on('pageerror',e=>{ errs.push(e.message);
+  console.log('   ⛔ '+e.message+'\n      '+String(e.stack||'').split('\n').slice(1,5).join('\n      ')); });
   let bad=0; const ok=(k,v,d)=>{ if(!v)bad++; console.log((v?'\u2705':'\u274c')+' '+k.padEnd(24)+' '+d); };
   await p.goto(FILE+'?dev=1'); await p.waitForTimeout(800);
   await p.evaluate(()=>{const k=document.getElementById('keepBtn');k&&k.click();}); await p.waitForTimeout(300);

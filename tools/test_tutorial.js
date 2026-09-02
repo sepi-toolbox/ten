@@ -21,7 +21,10 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
     while(S.me.lands.length<5){S.me.landPlayed=false;playLand('me','불지옥');}
     S.me.lands.forEach(l=>{l.used=false;l.entering=false;}); render(); });
 
-  await p.goto(FILE+'?dev=1'); await p.waitForTimeout(800);
+  /* ⚠ 튜토리얼은 지금 **기본으로 꺼져 있다**(성권 지시 — 더 다듬은 뒤 다시 켠다).
+     대본과 코드는 한 줄도 안 지웠으므로 `?tut=1` 로 열어 **검사는 그대로 살려 둔다** —
+     끄면서 검사까지 지우면, 다시 켜는 날 무엇이 썩었는지 알 방법이 없다. */
+  await p.goto(FILE+'?dev=1&tut=1'); await p.waitForTimeout(800);
   await p.evaluate(()=>{const k=document.getElementById('keepBtn');k&&k.click();}); await p.waitForTimeout(250);
   await p.evaluate(()=>{SPEED=60;RG.on=false;rgStart('fire');}); await p.waitForTimeout(700);
 

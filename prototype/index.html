@@ -2205,7 +2205,16 @@ const TUTS={
     info:true, last:true},
   ]},
 };
-const tutHas=el=>!!TUTS[el];
+/* ══ 튜토리얼 잠금 ══════════════════════════════════════════════════════
+   성권: "튜토리얼은 일단 다 지워줘. 아주 지우는건 아니고 좀더 완성되면 넣게"
+   그래서 **대본도 코드도 한 줄 안 지웠다.** 이 스위치 하나만 끈다 —
+   `true` 로 되돌리면 그날로 불·물 대본이 다시 돈다.
+   ⚠ TUTS 를 비우거나 tutStart 를 지우는 식으로 껐다면 되살릴 때 그 코드를 다시 짜야 한다.
+     '나중에 넣는다' 는 말은 '지금 지우지 않는다' 는 뜻이다. */
+/* 주소 끝에 ?tut=1 을 붙이면 켜진다 — 성권이 언제든 지금 상태를 볼 수 있게.
+   모두에게 다시 열 때는 이 줄을 `const TUT_ON=true;` 로 바꾸면 끝이다. */
+const TUT_ON=/[?&]tut=1/.test(location.search);
+const tutHas=el=>TUT_ON&&!!TUTS[el];
 const tutS=()=>TUTS[TUT.el]||TUTS.fire;
 function tutStart(el){
   TUT.on=true; TUT.step=0; TUT.shown=-1; TUT.el=el||'fire';
@@ -6247,7 +6256,7 @@ document.getElementById('restart').onclick=()=>{
        엘리멘츠 대전은 규칙이 다른 게임이라 여기 흐름을 안 타고 etg/ 페이지로 나간다.
      패배 → 다시 도전하기(덱 선택으로) · 초기 화면(모드 선택으로)
    ⚠ ?dev=1 로 열면 페이지를 건너뛰고 바로 대전으로 들어간다(자동 테스트용). */
-const VERSION='0.45.0', BUILD='2026-08-05';
+const VERSION='0.46.0', BUILD='2026-08-05';
 const DEV=/[?&]dev=1/.test(location.search);
 let PAGE=null, FLOW={mode:'battle', my:null, foe:null};
 function pageOpen(html){

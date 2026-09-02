@@ -53,21 +53,27 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
   // 원정 흐름
   await p.click('#page .chsi[data-m="rogue"]'); await p.waitForTimeout(700);
   ok('원정 → 덱 선택', await pg()==='deck', '');
-  /* ⚠ 원정은 **대본이 있는 속성**(불·물)만 튜토리얼 전투로 시작한다. 안내판이 떠야 정상이고,
-     '건너뛰기' 를 눌러야 지도가 나온다 — 사람이 밟는 길 그대로 확인한다.
-     ⚠ 속성 이름을 여기에 박지 않는다 — tutHas 에게 물어본다. 대본이 늘고 줄 때마다
-       검사가 조용히 틀린 걸 보게 되면 안 된다. */
-  await p.click('#page .chsi[data-e="fire"]'); await p.waitForTimeout(900);
-  ok('원정 → 튜토리얼 전투', await p.evaluate(()=>TUT.on&&!!document.getElementById('tutbox')),
-     `튜토 ${await p.evaluate(()=>TUT.on)}`);
-  await p.click('#tutSkip'); await p.waitForTimeout(1100);
-  ok('건너뛰면 지도', await p.evaluate(()=>RG.on&&document.getElementById('rg').classList.contains('on')),
+  /* ⚠ 튜토리얼은 지금 **꺼져 있다**(TUT_ON — 성권 지시로 더 다듬은 뒤 다시 켠다).
+     그래서 어느 속성으로 시작하든 **곧장 지도**여야 한다. 대본이 있는 불도 마찬가지다.
+     ⚠ 속성 이름을 박지 않는다 — 스위치와 tutHas 에게 물어본다. 다시 켜는 날
+       이 검사가 조용히 틀린 걸 보게 되면 안 된다. */
+  ok('튜토리얼은 지금 꺼져 있다',
+     await p.evaluate(()=>TUT_ON===false&&Object.keys(TUTS).length>0),
+     `TUT_ON ${await p.evaluate(()=>TUT_ON)} · 대본은 ${await p.evaluate(()=>Object.keys(TUTS).join('·'))} 남아 있음`);
+  await p.click('#page .chsi[data-e="fire"]'); await p.waitForTimeout(1200);
+  ok('원정 → 바로 지도',
+     await p.evaluate(()=>!TUT.on&&RG.on&&document.getElementById('rg').classList.contains('on')),
      `층 ${await p.evaluate(()=>RG.map?RG.map.length:0)}개`);
-  /* 대본이 없는 속성은 튜토리얼을 건너뛰고 곧장 지도로 */
-  await p.evaluate(()=>{RG.on=false;rgStart(Object.keys(EL).find(e=>!tutHas(e)));});
-  await p.waitForTimeout(1000);
-  ok('대본 없는 속성은 바로 지도',
-     await p.evaluate(()=>!TUT.on&&document.getElementById('rg').classList.contains('on')), '');
+  /* ?tut=1 로 열면 대본이 그대로 돈다 — 지운 게 아니라 잠가 둔 것이라는 증거 */
+  /* ⚠ p.context().newPage() 는 기본 컨텍스트에서 막힌다 — 브라우저에서 직접 연다. */
+  const tp=await b.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+  await tp.goto(FILE+'?tut=1'); await tp.waitForTimeout(1200);
+  await tp.click('#page .chsi[data-m="rogue"]'); await tp.waitForTimeout(700);
+  await tp.click('#page .chsi[data-e="fire"]'); await tp.waitForTimeout(1200);
+  ok('?tut=1 이면 대본이 돈다',
+     await tp.evaluate(()=>TUT.on&&!!document.getElementById('tutbox')),
+     `튜토 ${await tp.evaluate(()=>TUT.on)}`);
+  await tp.close();
 
   // 설정 팝업 — 가운데 사각 + 버전
   await p.evaluate(()=>{rgClose();}); await p.waitForTimeout(200);
