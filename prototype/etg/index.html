@@ -1372,6 +1372,18 @@ body{padding:0;height:100dvh;overflow:hidden;
      규격이 두 벌이 되고, 본편 카드가 바뀌어도 이쪽이 안 따라온다. */
 :root{ --cardw:66px; --foecw:52px; }   /* 판이 넓어서(크리처 23칸) 본편보다 조금 작게 */
 body{padding:8px 8px 24px}
+
+/* ══ 덱 편집 화면만은 **스크롤한다** ═══════════════════════════════════════
+   ⚠⚠ 본편 CSS 는 html·body 를 `height:100dvh; overflow:hidden` 으로 묶는다 —
+     전투 화면이 한 화면에서 끝나야 하기 때문이다(그게 본편의 설계다).
+     그걸 통째로 물려받는 바람에 **덱 목록이 잘린 채 스크롤도 안 됐다.**
+     한 속성에 카드가 20장인데 첫 화면에 들어가는 건 열 몇 장뿐이라, 나머지는
+     손가락을 아무리 끌어도 닿을 수가 없었다. 성권이 "덱목록에서 드래그가 안 된다"
+     고 한 것이 이것이다.
+   ⚠ html 에도 걸어야 한다 — body 만 풀면 html 의 overflow:hidden 이 그대로 자른다. */
+html.deckmode,body.deckmode{height:auto;min-height:100dvh;overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch}
+body.deckmode .wrap{height:auto}
 h1.tt{font-family:'Cinzel',serif;font-size:15px;letter-spacing:.1em;color:var(--gold-bright);
   text-align:center;margin:2px 0 1px}
 h1.tt small{font-family:'Gowun Batang',serif;letter-spacing:0;font-size:10px;color:var(--gold);opacity:.7}
@@ -1422,6 +1434,8 @@ h1.tt small{font-family:'Gowun Batang',serif;letter-spacing:0;font-size:10px;col
 .pcard{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px}
 .pcard .tcard{opacity:.55;transition:opacity .15s}
 .pcard.has .tcard{opacity:1;box-shadow:0 0 0 2px var(--gold-bright),0 2px 8px rgba(0,0,0,.5)}
+.pcard.full .tcard{box-shadow:0 0 0 2px #6ee08a,0 2px 8px rgba(0,0,0,.5)}   /* 6장 꽉 참 */
+.pcard{cursor:pointer}
 .pctl{display:flex;align-items:center;gap:5px}
 .pctl button{padding:1px 8px;font-size:12px;border-radius:4px}
 .pctl b{font-family:'Cinzel',serif;font-size:12px;color:var(--gold-bright);min-width:12px;text-align:center}
@@ -1460,7 +1474,7 @@ h1.tt small{font-family:'Gowun Batang',serif;letter-spacing:0;font-size:10px;col
 <script src="data.js"></script>
 <script>
 'use strict';
-const VERSION='0.8.0', BUILD='2026-08-05';
+const VERSION='0.9.0', BUILD='2026-08-05';
 /* 판 번호는 제목줄에 붙인다 — 아래 h1.tt 안 small */
 document.addEventListener('DOMContentLoaded',()=>{const t=document.querySelector('h1.tt small');
   if(t)t.insertAdjacentHTML('beforeend',` · v${VERSION}`);});
@@ -2478,8 +2492,15 @@ function handHTML(p){
 }
 
 /* ── 전투 화면 ─────────────────────────────────────────────────────────── */
+/* 전투는 한 화면에서 끝난다(본편과 같다) · 덱 편집은 스크롤한다 */
+function deckMode(on){
+  document.documentElement.classList.toggle('deckmode',on);
+  document.body.classList.toggle('deckmode',on);
+  if(!on)window.scrollTo(0,0);
+}
 function render(){
   if(!G){ screenBuild(); return; }
+  deckMode(false);
   const m=G.me,a=G.ai;
   SCR.innerHTML=`<div class="main">
     <div class="hand foe" id="foeHand">${a.hand.map(()=>'<div class="hcw back"><div class="cback"></div></div>').join('')}</div>
@@ -2803,6 +2824,7 @@ document.addEventListener('touchmove',e=>{ if(e.touches.length>1)e.preventDefaul
 let BUILD_EL=6, BUILD_MARK=6, DKB={};
 function deckList(b){ const a=[]; Object.keys(b).forEach(c=>{ for(let i=0;i<b[c];i++)a.push(+c); }); return a; }
 function screenBuild(){
+  deckMode(true);
   const pool=POOLS[BUILD_EL].concat(POOLS[0]);
   const n=Object.values(DKB).reduce((a,b)=>a+b,0);
   const elbtn=(i,cur,attr)=>`<button data-${attr}="${i}" class="elb${i===cur?' on':''}"
@@ -2830,12 +2852,12 @@ function screenBuild(){
   </div>
   <div class="pickgrid">
     ${pool.map(c=>{const k=DKB[c.code]||0;
-      return `<div class="pcard${k?' has':''}" data-code="${c.code}">
+      return `<div class="pcard${k?' has':''}${k>=COPYMAX?' full':''}" data-code="${c.code}">
         ${etgCardHTML(c,{size:'md'})}
         <div class="pctl"><button data-m="${c.code}">−</button><b>${k}</b><button data-p="${c.code}">+</button></div>
       </div>`;}).join('')}
   </div>
-  <p class="foot">카드를 <b>길게 누르면</b> 효과 전문이 뜬다.</p>`;
+  <p class="foot">카드를 <b>누르면</b> 덱에 한 장 들어가고, <b>길게 누르면</b> 효과 전문이 뜬다.</p>`;
   SCR.querySelectorAll('[data-el]').forEach(b=>b.onclick=()=>{BUILD_EL=+b.dataset.el;screenBuild();});
   SCR.querySelectorAll('[data-mk]').forEach(b=>b.onclick=()=>{BUILD_MARK=+b.dataset.mk;screenBuild();});
   SCR.querySelectorAll('[data-p]').forEach(b=>b.onclick=ev=>{ev.stopPropagation();
@@ -2843,6 +2865,23 @@ function screenBuild(){
     if((DKB[c]||0)<COPYMAX&&t<DECKMAX){DKB[c]=(DKB[c]||0)+1;screenBuild();}});
   SCR.querySelectorAll('[data-m]').forEach(b=>b.onclick=ev=>{ev.stopPropagation();
     const c=+b.dataset.m; if(DKB[c]){DKB[c]--;if(!DKB[c])delete DKB[c];screenBuild();}});
+  /* 카드를 그냥 눌러도 한 장 들어간다 — 폰에서 작은 ＋ 단추만 노리는 건 고역이다.
+     ⚠ **손가락이 움직였으면 넣지 않는다.** 목록을 훑어 넘기는 중에 카드가 슬금슬금
+       쌓이면 그게 더 나쁘다(10px 안에서 뗐을 때만 넣는다). */
+  SCR.querySelectorAll('.pcard[data-code]').forEach(el=>{
+    let x0=null,y0=null;
+    el.addEventListener('pointerdown',e=>{ x0=e.clientX; y0=e.clientY; });
+    el.addEventListener('pointerup',e=>{
+      if(x0===null)return;
+      const moved=Math.hypot(e.clientX-x0,e.clientY-y0)>10; x0=null;
+      if(moved||lpFired){ lpFired=false; return; }
+      if(e.target.closest('.pctl'))return;                 /* ＋/− 단추는 제 일을 한다 */
+      const c=+el.dataset.code, t=Object.values(DKB).reduce((a,x)=>a+x,0);
+      if((DKB[c]||0)>=COPYMAX){ toast(`같은 카드는 ${COPYMAX}장까지`); return; }
+      if(t>=DECKMAX){ toast(`덱은 ${DECKMAX}장까지`); return; }
+      DKB[c]=(DKB[c]||0)+1; screenBuild();
+    });
+  });
   $('#clr').onclick=()=>{DKB={};screenBuild();};
   $('#home').onclick=()=>{ location.href='../index.html';   /* ⚠ '../' 는 file:// 에서 목록이 뜬다 */ };
   $('#auto').onclick=()=>{DKB=autoDeck(BUILD_EL);screenBuild();};

@@ -548,6 +548,57 @@ const TEN =path.join(__dirname,'..','data','cards.json');
   const left=await p.evaluate(()=>document.querySelectorAll('.qp.need,.qp.short').length);
   ok('놓으면 표시가 지워진다', left===0, `${left}개 남음`);
 
+  /* ── 23) 덱 목록이 **스크롤된다** ──────────────────────────────────── */
+  /* ⚠⚠ 본편 CSS 는 html·body 를 `height:100dvh; overflow:hidden` 으로 묶는다 —
+     전투가 한 화면에서 끝나야 하기 때문이다. 그걸 통째로 물려받는 바람에
+     **덱 목록이 잘린 채 스크롤도 안 됐다**(445px 가 손에 닿지 않았다).
+     성권이 "덱목록에서 드래그가 안 된다" 고 한 것이 이것이다. */
+  await p.evaluate(()=>{ const D=window.ETGDBG; D.render&&0; });
+  await p.goto(FILE); await p.waitForTimeout(700);
+  const scr=await p.evaluate(()=>({h:document.documentElement.scrollHeight,w:window.innerHeight,
+    deck:document.body.classList.contains('deckmode')}));
+  await p.evaluate(()=>window.scrollTo(0,document.documentElement.scrollHeight));
+  await p.waitForTimeout(200);
+  const bot=await p.evaluate(()=>({y:window.scrollY,
+    last:(()=>{const e=[...document.querySelectorAll('.pcard')].pop(); if(!e)return false;
+      const r=e.getBoundingClientRect(); return r.top<window.innerHeight&&r.bottom>0;})()}));
+  ok('덱 목록이 스크롤된다', scr.deck&&scr.h>scr.w&&bot.y>0&&bot.last,
+     `문서 ${scr.h} / 창 ${scr.w} · 맨 아래 카드 보임 ${bot.last}`);
+
+  /* 전투 화면은 반대로 **한 화면에서 끝나야 한다**(본편과 같다) */
+  await p.evaluate(()=>{const D=window.ETGDBG;D.startGame(D.deckList(D.autoDeck(6)),6);});
+  await p.waitForTimeout(300);
+  const onescr=await p.evaluate(()=>({h:document.documentElement.scrollHeight,w:window.innerHeight,
+    deck:document.body.classList.contains('deckmode')}));
+  ok('전투는 한 화면에서 끝난다', !onescr.deck&&onescr.h<=onescr.w+2, `문서 ${onescr.h} / 창 ${onescr.w}`);
+
+  /* ── 24) 덱 목록 — 눌러서 넣고, 훑어 넘길 땐 안 들어간다 ───────────── */
+  await p.evaluate(()=>{ETGDBG.render();document.querySelector('#quit')&&document.querySelector('#quit').click();});
+  await p.waitForTimeout(300);
+  const cnt=()=>p.evaluate(()=>[...document.querySelectorAll('.pcard .pctl b')]
+    .reduce((a,e)=>a+ +e.textContent,0));
+  const c0=await cnt();
+  let pb=await (await p.$('.pcard .tcard')).boundingBox();
+  await p.mouse.move(pb.x+pb.width/2,pb.y+pb.height/2);
+  await p.mouse.down(); await p.mouse.up(); await p.waitForTimeout(200);
+  const c1=await cnt();
+  ok('카드를 누르면 덱에 들어간다', c1===c0+1, `${c0} → ${c1}`);
+  /* ⚠ 훑어 넘기는 중에 슬금슬금 쌓이면 그게 더 나쁘다 — 손가락이 움직였으면 안 넣는다 */
+  const cdp=await p.context().newCDPSession(p);
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:60,y:600}]});
+  for(let i=1;i<=10;i++)
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:60,y:600-i*40}]});
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  await p.waitForTimeout(400);
+  const c2=await cnt();
+  ok('훑어 넘길 땐 안 들어간다', c2===c1, `${c1} → ${c2}`);
+  await p.evaluate(()=>window.scrollTo(0,0)); await p.waitForTimeout(200);
+  for(let i=0;i<8;i++){ pb=await (await p.$('.pcard .tcard')).boundingBox();
+    await p.mouse.move(pb.x+pb.width/2,pb.y+pb.height/2);
+    await p.mouse.down(); await p.mouse.up(); await p.waitForTimeout(90); }
+  const cap=await p.evaluate(()=>+document.querySelector('.pcard .pctl b').textContent);
+  ok('같은 카드는 6장까지', cap===6, `여덟 번 눌러 ${cap}장`);
+
   if(errs.length){ bad++; console.log('   ERR',errs.slice(0,4)); }
   console.log(`\n미구현 능력 ${cov.miss.length}종: ${cov.miss.join(' ')}`);
   console.log(bad?`❌ ${bad}건 실패`:'✅ 전부 통과');
