@@ -39,7 +39,12 @@
 /* ══ 여기부터는 이 모드에만 있는 것 — 본편에 없는 것만 더한다 ════════════════
    ⚠ 위 본편 CSS 를 **덮어쓰는 규칙은 최소로 유지할 것.** 덮어쓰기 시작하면
      규격이 두 벌이 되고, 본편 카드가 바뀌어도 이쪽이 안 따라온다. */
-:root{ --cardw:66px; --foecw:52px; }   /* 판이 넓어서(크리처 23칸) 본편보다 조금 작게 */
+/* ⚠ 본편보다 카드가 **커야 한다** — 이 모드는 카드 안에 규칙 전문을 싣기 때문이다.
+   판은 packRow 가 겹쳐 주므로 23칸이어도 넘치지 않는다.
+   ⚠⚠ 다만 **화면 높이에 묶어야 한다.** 78px 로 못 박았더니 740px·667px 짜리 폰에서
+     손패가 화면 밖으로 잘렸다(전투 화면은 스크롤하지 않으므로 잘리면 못 만진다).
+     줄이 넷(상대 기물·상대 판·내 판·내 기물) + 손패 = 카드 다섯 줄이 세로로 들어가야 한다. */
+:root{ --cardw:min(78px, 8.4dvh, 21vw); --foecw:min(52px, 5.6dvh); }
 body{padding:8px 8px 24px}
 
 /* ══ 덱 편집 화면만은 **스크롤한다** ═══════════════════════════════════════
@@ -60,20 +65,35 @@ h1.tt small{font-family:'Gowun Batang',serif;letter-spacing:0;font-size:10px;col
 .panel{border:1px solid var(--rule);border-radius:8px;padding:9px 10px;margin-bottom:8px;
   background:linear-gradient(180deg,rgba(0,0,0,.3),rgba(0,0,0,.12))}
 
+/* ══ 카드 규격은 **본편 그대로** 둔다 ══════════════════════════════════
+   ⚠⚠⚠ **텍스트 박스는 고정 크기다. 일러스트 영역을 절대 침범하지 않는다.**
+     한 번 그림 자리를 얇은 띠로 줄이고 그 높이를 설명란에 넘겼다가 되돌렸다.
+     글이 길다고 상자를 키우면 카드마다 규격이 달라지고, 그건 더 이상 같은 카드가 아니다.
+   그래서 **상자는 그대로 두고 글자를 줄인다**(effClass). 잘라 내지도, 상자를 키우지도 않는다.
+   ⚠ 줄 수 제한(-webkit-line-clamp:3)만 푼다 — 그건 크기가 아니라 '몇 줄까지 보일지'라,
+     글자를 줄여 네 줄이 들어가도 세 줄에서 잘라 버린다. 높이는 여전히 .tbody 가 묶는다. */
+.tcard .teff{-webkit-line-clamp:unset;display:block}
+/* 글이 길수록 작게 — **고정된 상자 안에** 전문이 들어가도록. 상자는 손대지 않는다. */
+.tcard .teff.s {font-size:calc(var(--cw)*.066);line-height:1.24}
+.tcard .teff.m {font-size:calc(var(--cw)*.056);line-height:1.2}
+.tcard .teff.l {font-size:calc(var(--cw)*.048);line-height:1.17}
+.tcard .teff.xl{font-size:calc(var(--cw)*.042);line-height:1.14}
+
 /* 카드 그림 자리 — 이 모드는 일러스트가 없다. 원작 아트는 우리 것이 아니라 싣지 않았다.
    빈 상자로 두면 무슨 카드인지 알 수가 없으므로 **속성과 종류**를 앉힌다.
    ⚠ 종류(주문·크리처·기물·무기·방패)는 테두리 모양만으로는 안 갈린다 — 본편은 크리처가
      대부분이라 테두리로 됐지만 여기는 다섯 종류가 고루 섞인다. 글로 적어야 한다. */
-.telm{position:absolute;inset:0;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:calc(var(--cw)*.012);
-  text-shadow:0 1px 3px rgba(0,0,0,.9);pointer-events:none}
-.telm b{font-family:'Cinzel',serif;font-weight:700;color:var(--ec);
-  font-size:calc(var(--cw)*.14);letter-spacing:.08em;line-height:1}
-.telm i{font-style:normal;font-family:'Gothic A1',sans-serif;font-weight:700;
-  font-size:calc(var(--cw)*.085);letter-spacing:.18em;line-height:1;
-  color:#efe3c6;opacity:.7;
-  padding:calc(var(--cw)*.018) calc(var(--cw)*.05);border-radius:99px;
-  border:1px solid rgba(239,227,198,.28);background:rgba(0,0,0,.3)}
+/* 속성·종류 — **발치 줄 가운데**. 이미 있는 줄이라 카드 높이가 하나도 안 늘어난다.
+   ⚠ 그림 자리(.tart)에는 아무것도 얹지 않는다. 나중에 일러스트가 들어갈 자리다. */
+/* ⚠ 속성 글자를 뺐으면 **남은 글도 자리를 다시 잡아야 한다.** 두 줄짜리 자리에
+   한 줄만 덜렁 남겨 두면 공/체 숫자와 같은 높이에서 맞붙어 세 번째 수치처럼 읽힌다.
+   아래로 내려 바닥선에 붙이고, 숫자보다 작게 해서 '이름표' 로 읽히게 한다. */
+.ttag{font-style:normal;flex:1;min-width:0;text-align:center;align-self:flex-end;
+  font-family:'Gothic A1',sans-serif;font-weight:700;line-height:1;
+  font-size:calc(var(--cw)*.068);letter-spacing:.06em;
+  color:var(--ink-faint);white-space:nowrap;overflow:hidden;
+  padding:0 calc(var(--cw)*.015) calc(var(--cw)*.012)}
+.tb.sp{border:none;background:none;box-shadow:none}   /* 자리만 잡는 빈 칸 */
 /* 비용이 7 이상이면 구슬 대신 숫자 — 구슬 15개는 머리줄을 넘친다 */
 .cpn{font-family:'Cinzel',serif;font-weight:700;font-size:calc(var(--cw)*.095);
   color:var(--ink);margin-left:calc(var(--cw)*.03);line-height:1}
@@ -101,7 +121,8 @@ h1.tt small{font-family:'Gowun Batang',serif;letter-spacing:0;font-size:10px;col
 .board.pmrow.empty::after{content:'기물 · 무기 · 방패'}
 .board.empty::after{content:'크리처'}
 
-.logbox{height:74px;overflow-y:auto;font-family:'Gowun Batang',serif;font-size:11px;line-height:1.55;
+/* 기록도 화면 높이에 맞춰 준다 — 여기가 넘치면 손패가 밀려 나간다 */
+.logbox{height:clamp(40px,7.5dvh,74px);overflow-y:auto;font-family:'Gowun Batang',serif;font-size:11px;line-height:1.55;
   border:1px solid var(--rule);border-radius:6px;padding:5px 8px;margin-top:8px;
   background:rgba(0,0,0,.3);color:var(--parch)}
 .logbox .a{color:var(--gold-bright)}.logbox .b{color:#9ecbff}.logbox .c{color:#ff9a9a}
@@ -151,7 +172,7 @@ h1.tt small{font-family:'Gowun Batang',serif;letter-spacing:0;font-size:10px;col
 <script src="data.js"></script>
 <script>
 'use strict';
-const VERSION='0.10.0', BUILD='2026-08-05';
+const VERSION='0.12.0', BUILD='2026-08-05';
 /* 판 번호는 제목줄에 붙인다 — 아래 h1.tt 안 small */
 document.addEventListener('DOMContentLoaded',()=>{const t=document.querySelector('h1.tt small');
   if(t)t.insertAdjacentHTML('beforeend',` · v${VERSION}`);});
@@ -1016,6 +1037,10 @@ function cardCls(c,u){
 }
 /* 카드 설명란 — **인쇄된 글이 아니라 지금 그 개체의 상태**를 보여 준다(본편과 같은 원칙).
    능력을 잃은 몸(뇌엽절제 맞은 크리처)은 설명도 같이 사라져야 판을 보고 판단할 수 있다. */
+/* ⚠⚠ 예전엔 `h.d.split('.')[0]` 로 **첫 문장만** 실었다. 두 문장짜리 능력은
+   뒷문장이 통째로 사라져서, 카드만 보고는 무슨 일이 일어나는지 알 수가 없었다
+   (성권: "카드 안에 카드 설명이 약식으로 들어가면 어떡해"). 이제 언제나 전문이다.
+   대신 **글이 길면 글자를 줄인다**(effClass) — 잘라 내는 대신 작게 적는다. */
 function ruleText(c,u,full){
   const out=[];
   const flags=(u?u.flags:c.flags).filter(f=>FLAGKO[f]&&!['stackable','additive','token'].includes(f));
@@ -1023,7 +1048,7 @@ function ruleText(c,u,full){
   const sks=u?u.sk:c.sk;
   sks.forEach(s=>{
     const h=SK[s.id]; if(!h)return;
-    const d=fillN(full?h.d:h.d.split('.')[0],s);
+    const d=fillN(h.d,s);
     /* ⚠ 원작에는 능력마다 **이름**이 있다(불의 정령 = 아블레이즈, 독수리 = 스캐빈저).
        openEtG 는 능력을 일반화해 이름을 버렸고, 우리도 한동안 그대로 빠뜨렸다.
        이름을 앞에 세워야 "그 능력" 을 부를 수 있다 — 성권이 짚은 자리다. */
@@ -1036,17 +1061,34 @@ function ruleText(c,u,full){
   if(u&&u.sk.length===0&&c.sk.length) out.push('<b>능력을 잃었다</b>');
   return out.join(' · ');
 }
+/* 글이 길수록 작게 — **자르지 않기 위해서** 줄인다. 칸을 넘치면 잘리므로 넉넉히 잡는다. */
+function effClass(t){
+  const n=t.replace(/<[^>]+>/g,'').length;
+  /* 본편 기본 글자(.079)로 세 줄에 드는 건 대략 33자다. 그보다 길면 한 단씩 줄인다.
+     ⚠ 상자를 키우는 선택지는 없다 — 텍스트 박스는 고정 크기다. */
+  return n>90?' xl':n>66?' l':n>48?' m':n>33?' s':'';
+}
+/* ⚠⚠ 속성·종류는 **일러스트 영역에 얹지 않는다.** 그림 자리는 그림 자리다.
+   높이를 새로 만들지도 않는다(그러면 그림이나 설명 상자를 먹는다) —
+   이미 있는 **발치 줄** 가운데의 빈 자리를 쓴다. 크리처는 좌우에 공/체가 있고
+   가운데가 비어 있고, 주문·기물은 줄 전체가 비어 있다. */
+function typeTag(c){
+  /* ⚠ 속성은 **테두리 색이 이미 말하고 있다.** 글로 또 적으면 자리만 먹고
+     '엔트로피' 같은 긴 이름은 발치 줄을 넘친다. 종류만 적는다. */
+  return `<i class="ttag">${kindKo(c.kind)}</i>`;
+}
 function statHTML(c,u){
+  const tag=typeTag(c);
   if(c.kind==='creature'||c.kind==='weapon'){
     const a=u?trueAtk(u):c.atk, h=u?u.hp:c.hp;
     const ac=u&&a!==c.atk?(a>c.atk?'buf':'dmg'):'', hc=u&&h!==c.hp?(h>c.hp?'buf':'dmg'):'';
-    return `<div class="tstat"><span class="tb a ${ac}">${a}</span><span class="tb h ${hc}">${h}</span></div>`;
+    return `<div class="tstat"><span class="tb a ${ac}">${a}</span>${tag}<span class="tb h ${hc}">${h}</span></div>`;
   }
   if(c.kind==='shield'&&(u?u.hp:c.hp))
-    return `<div class="tstat"><span></span><span class="tb h">-${u?u.hp:c.hp}</span></div>`;
+    return `<div class="tstat"><span class="tb sp"></span>${tag}<span class="tb h">-${u?u.hp:c.hp}</span></div>`;
   const ch=u?u.charges:(c.stats.charges||0);
-  if(ch) return `<div class="tstat"><span></span><span class="tb ch">${ch}</span></div>`;
-  return '<div class="tstat"></div>';
+  if(ch) return `<div class="tstat"><span class="tb sp"></span>${tag}<span class="tb ch">${ch}</span></div>`;
+  return `<div class="tstat"><span class="tb sp"></span>${tag}<span class="tb sp"></span></div>`;
 }
 /* 희귀도 보석 — 원작 rarity(0 기둥 · 2 커먼 · 3~4 레어 · 6+ 울트라)를 본편 4단계에 맞췄다 */
 function rarKo(r){ return r>=6?'legendary':r>=4?'rare':r>=3?'uncommon':'common'; }
@@ -1054,11 +1096,11 @@ function etgCardHTML(c,opt){
   opt=opt||{}; const u=opt.unit||null;
   const ec=ELC[c.el]||ELC[0];
   const gem=`<i class="rgem ${rarKo(c.rarity)}"></i>`;
+  const eff=ruleText(c,u);
   return `<div class="tcard ${cardCls(c,u)} ${opt.size||'md'}" style="--el:${ec}">
     <div class="thead"><div class="tname">${esc(c.ko)}</div><div class="tcost">${pipsHTML(c)}</div></div>
-    <div class="tart"><span class="telm" style="--ec:${ec}">
-      <b>${ELKO[c.el]}</b><i>${kindKo(c.kind)}</i></span>${gem}</div>
-    <div class="tbody"><div class="teff">${ruleText(c,u)}</div></div>
+    <div class="tart">${gem}</div>
+    <div class="tbody"><div class="teff${effClass(eff)}">${eff}</div></div>
     ${statHTML(c,u)}
   </div>`;
 }

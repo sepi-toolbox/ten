@@ -602,20 +602,33 @@ const TEN =path.join(__dirname,'..','data','cards.json');
   /* ── 25) 카드에 **종류**가 적혀 있다 ──────────────────────────────── */
   /* ⚠ 본편은 크리처가 대부분이라 테두리 모양만으로 갈렸다. 여기는 크리처·주문·기물·
      무기·방패가 고루 섞여서 테두리로는 안 갈린다 — 글로 적어야 한다. */
+  /* ⚠ 종류는 **발치 줄 가운데**에 적는다 — 이미 있는 줄이라 카드 높이가 안 늘어난다.
+     그림 자리에 얹지 않고, 설명 상자를 밀어내지도 않는다.
+     속성은 안 적는다 — **테두리 색이 이미 말하고 있고**, '엔트로피' 같은 긴 이름은 넘친다. */
   const kd=await p.evaluate(()=>{
     const D=window.ETGDBG;
     const g=n=>{const d=document.createElement('div');
       d.innerHTML=D.etgCardHTML(D.BYNAME[n],{size:'md'});
-      const t=d.querySelector('.tart .telm');
-      return t?{el:(t.querySelector('b')||{}).textContent||'',
-                kind:(t.querySelector('i')||{}).textContent||''}:null;};
+      const t=d.querySelector('.tstat .ttag');
+      return t?t.textContent.trim():null;};
     return {cr:g('Crimson Dragon'), sp:g('Fire Bolt'), pm:g('Burning Pillar'),
       wp:g('Fahrenheit'), sh:g('Fire Shield')};});
   ok('카드에 종류가 적힌다',
-     kd.cr.kind==='크리처'&&kd.sp.kind==='주문'&&kd.pm.kind==='기물'
-     &&kd.wp.kind==='무기'&&kd.sh.kind==='방패',
-     [kd.cr,kd.sp,kd.pm,kd.wp,kd.sh].map(x=>x.kind).join(' · '));
-  ok('속성도 함께 남아 있다', kd.cr.el==='불'&&kd.sh.el==='불', `${kd.cr.el} · ${kd.sh.el}`);
+     kd.cr==='크리처'&&kd.sp==='주문'&&kd.pm==='기물'&&kd.wp==='무기'&&kd.sh==='방패',
+     [kd.cr,kd.sp,kd.pm,kd.wp,kd.sh].join(' · '));
+  const wide=await p.evaluate(()=>{
+    const D=window.ETGDBG;
+    const host=document.createElement('div');
+    host.style.cssText='position:absolute;left:-9999px;top:0;display:flex;flex-wrap:wrap';
+    document.body.appendChild(host);
+    let bad=0;
+    for(const c of ETG.cards.filter(x=>!x.up&&D.playable(x))){
+      const w=document.createElement('div'); w.innerHTML=D.etgCardHTML(c,{size:'md'});
+      host.appendChild(w);
+      const t=w.querySelector('.ttag'); if(t.scrollWidth>t.clientWidth+1)bad++;
+    }
+    host.remove(); return bad;});
+  ok('종류가 가로로 안 넘친다', wide===0, `${wide}장 넘침`);
   /* 판 위·손패에서도 보여야 한다 — 확대해야만 보이면 소용이 없다 */
   const kb=await p.evaluate(()=>{
     const D=window.ETGDBG; D.startGame(D.deckList(D.autoDeck(6)),6);
@@ -624,9 +637,81 @@ const TEN =path.join(__dirname,'..','data','cards.json');
     G.me.hand.push(D.mk(D.BYNAME['Fire Bolt'].code,G.me));
     D.render();
     const q=s=>{const e=document.querySelector(s);return e?e.textContent.trim():'';};
-    return {board:q('#myBoard .slot.occ .telm i'), hand:q('#hand .hcw .telm i')};});
+    return {board:q('#myBoard .slot.occ .ttag'), hand:q('#hand .hcw .ttag')};});
   ok('판과 손패에서도 보인다', kb.board==='크리처'&&kb.hand==='주문',
      `판 "${kb.board}" · 손패 "${kb.hand}"`);
+
+  /* ── 26) 카드에 규칙 **전문**이 실린다 ────────────────────────────── */
+  /* ⚠⚠ 예전엔 두 군데서 잘랐다 — `h.d.split('.')[0]` 로 첫 문장만 싣고,
+     `.teff` 의 3줄 클램프로 또 잘랐다. 두 문장짜리 능력은 뒷문장이 통째로 사라져
+     카드만 보고는 무슨 일이 일어나는지 알 수가 없었다.
+     여기서는 **잘리는 카드가 한 장도 없어야** 한다. */
+  const fulltext=await p.evaluate(()=>{
+    const D=window.ETGDBG;
+    const host=document.createElement('div');
+    host.style.cssText='display:flex;flex-wrap:wrap;gap:8px';
+    document.getElementById('screen').innerHTML=''; document.getElementById('screen').appendChild(host);
+    const cut=[]; let max=0;
+    for(const c of ETG.cards.filter(x=>!x.up&&D.playable(x))){
+      const w=document.createElement('div'); w.innerHTML=D.etgCardHTML(c,{size:'md'});
+      host.appendChild(w);
+      const t=w.querySelector('.teff'), bd=w.querySelector('.tbody');
+      const n=t.textContent.trim().length; if(n>max)max=n;
+      if(t.scrollHeight>bd.clientHeight+1) cut.push(c.ko+'('+n+'자)');
+    }
+    /* 뒷문장이 실제로 실렸는지 — 마침표 뒤가 살아 있어야 한다 */
+    const d=document.createElement('div');
+    d.innerHTML=D.etgCardHTML(D.BYNAME['Shard of Focus'],{size:'md'});
+    return {cut, max, focus:d.querySelector('.teff').textContent.trim()};});
+  ok('잘리는 카드가 없다', fulltext.cut.length===0,
+     `최장 ${fulltext.max}자${fulltext.cut.length?' · 잘림 '+fulltext.cut.slice(0,4).join(', '):''}`);
+
+  /* ⚠⚠⚠ 성권이 여러 번 말한 두 가지. 검사로 박아 둔다 — 말로만 지키면 또 어긴다.
+       ① **텍스트 박스는 고정 크기다.** 글이 길다고 상자를 키우면 카드마다 규격이
+          달라지고, 그건 더 이상 같은 카드가 아니다. 상자를 키우는 대신 글자를 줄인다.
+       ② **일러스트 영역에 아무것도 얹지 않는다.** 그림 자리는 그림 자리다.
+          한 번은 상자로 덮었고, 한 번은 속성·종류 글자를 얹었다. 둘 다 되돌렸다.
+     상자 높이는 본편 공식 그대로여야 한다: cw × (.03 + .079×1.3×3). */
+  const geom=await p.evaluate(()=>{
+    const D=window.ETGDBG;
+    const w=document.createElement('div');
+    w.style.cssText='position:absolute;left:-9999px;top:0';
+    w.innerHTML=D.etgCardHTML(D.BYNAME['Scarab'],{size:'md'});   /* 글이 가장 긴 카드 */
+    document.body.appendChild(w);
+    const card=w.querySelector('.tcard');
+    const cw=parseFloat(getComputedStyle(card).getPropertyValue('--cw'))
+           ||card.getBoundingClientRect().width;
+    const h=s=>w.querySelector(s).getBoundingClientRect().height;
+    const r={cw, body:h('.tbody'), art:h('.tart'),
+             want:cw*(0.03+0.079*1.3*3), min:cw*0.30,
+             artText:w.querySelector('.tart').textContent.replace(/\s/g,'')};
+    w.remove(); return r;});
+  ok('텍스트 박스가 고정 크기다', Math.abs(geom.body-geom.want)<1.5,
+     `상자 ${geom.body.toFixed(1)}px · 본편 공식 ${geom.want.toFixed(1)}px`);
+  ok('일러스트 영역을 안 먹는다', geom.art>=geom.min-0.5,
+     `그림 ${geom.art.toFixed(1)}px ≥ 최소 ${geom.min.toFixed(1)}px`);
+  ok('일러스트 영역에 글이 없다', geom.artText==='', `"${geom.artText}"`);
+
+  ok('두 번째 문장까지 실린다', /45를 넘으면/.test(fulltext.focus), fulltext.focus.slice(0,50));
+
+  /* ── 27) 전투 화면이 작은 폰에서도 안 잘린다 ───────────────────────── */
+  /* ⚠ 전투는 스크롤하지 않는다 — **잘리면 만질 수가 없다.** 카드를 키운 뒤
+     740·667 짜리 폰에서 손패가 화면 밖으로 나갔다. 세 크기를 다 잰다. */
+  const fits=[];
+  for(const h of [844,740,667]){
+    await p.setViewportSize({width:390,height:h});
+    await p.evaluate(()=>{const D=window.ETGDBG;D.startGame(D.deckList(D.autoDeck(6)),6);
+      const G=D.G;G.me.cr=new Array(23).fill(null);
+      ['Crimson Dragon','Guardian Angel','Fire Spirit'].forEach(n=>D.summon(G.me,D.BYNAME[n].code));
+      D.summon(G.ai,D.BYNAME['Scarab'].code); D.render();});
+    await p.waitForTimeout(200);
+    const r=await p.evaluate(()=>({hand:Math.round(document.querySelector('#hand').getBoundingClientRect().bottom),
+      log:Math.round(document.querySelector('#log').getBoundingClientRect().bottom),
+      win:window.innerHeight}));
+    fits.push(`${h}:${r.hand<=r.win&&r.log<=r.win?'OK':'잘림('+r.hand+'/'+r.log+')'}`);
+  }
+  await p.setViewportSize({width:390,height:844});
+  ok('작은 폰에서도 안 잘린다', fits.every(x=>x.endsWith('OK')), fits.join(' · '));
 
   if(errs.length){ bad++; console.log('   ERR',errs.slice(0,4)); }
   console.log(`\n미구현 능력 ${cov.miss.length}종: ${cov.miss.join(' ')}`);
