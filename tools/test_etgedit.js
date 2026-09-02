@@ -38,9 +38,18 @@ const ok = (name, cond, note) => {
     ver: document.getElementById('ver').textContent,
     /* ⚠ 에디터는 **판을 열면 안 된다** — 같은 엔진을 쓰되 게임은 시작하지 않는다 */
     started: !!window.ETGDBG.G,
+    play: window.ETG.cards.filter(c => !c.up && window.ETGDBG.playable(c)).length,
+    mark: window.ETG.cards.filter(c => !c.up && window.ETGDBG.playable(c)
+                                       && /^Mark of /.test(c.en)).length,
   }));
-  ok('에디터가 뜬다', boot.cards === 239 && boot.tabs === 4 && /^v\d/.test(boot.ver),
-     `${boot.cards}장 · 탭 ${boot.tabs} · ${boot.ver}`);
+  /* ⚠ 장수를 숫자로 박아 두지 않는다 — 카드를 빼면 여기가 먼저 거짓으로 실패한다.
+     대신 **에디터 목록과 게임이 같은 카드를 본다**(playable 한 벌)는 것을 잰다. */
+  ok('에디터가 뜬다', boot.cards === boot.play && boot.cards > 200
+     && boot.tabs === 4 && /^v\d/.test(boot.ver),
+     `${boot.cards}장(놀 수 있는 카드 ${boot.play}장) · 탭 ${boot.tabs} · ${boot.ver}`);
+  /* ⚠⚠ 문장 카드(Mark of X) 12장은 기둥과 완전히 같아 목록에서 뺐다. 에디터에도 안 떠야
+     한다 — 못 노는 카드를 고치게 두면 고쳐도 판에 안 나온다. */
+  ok('문장 카드는 어디에도 안 뜬다', boot.mark === 0, `문장 카드 ${boot.mark}장`);
   ok('에디터는 판을 열지 않는다', boot.started === false, boot.started ? '판이 떴다' : '안 열림');
 
   /* ── 2) 미리보기가 게임과 **같은 규격**이다 ────────────────────────

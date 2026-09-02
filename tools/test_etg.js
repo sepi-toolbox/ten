@@ -1403,7 +1403,10 @@ const TEN =path.join(__dirname,'..','data','cards.json');
       /* 무기는 '매 턴 피해를 준다' 는 첫 줄이 살아 있어야 한다 */
       weapon:play.filter(c=>c.kind==='weapon'&&!/무기 —/.test(c.kotxt||'')).map(c=>c.en),
       discord:txt('Discord'), virus:txt('Virus')};});
-  ok('카드 글이 239장 전부 있다', KT.miss.length===0, KT.miss.slice(0,4).join(',')||`${KT.n}장`);
+  /* ⚠ 장수를 숫자로 박아 두면 카드를 하나 뺄 때마다 여기가 거짓으로 실패한다.
+     재야 하는 것은 '몇 장인가' 가 아니라 **놀 수 있는 카드에 글이 빠진 게 없는가** 다. */
+  ok('놀 수 있는 카드에 글이 다 있다', KT.miss.length===0,
+     KT.miss.slice(0,4).join(',')||`${KT.n}장`);
   ok('무기 글에 첫 줄이 살아 있다', KT.weapon.length===0, KT.weapon.join(',')||'전부 확인');
   ok('원문 문장 그대로 읽힌다',
      /무기 — 매 턴 끝에 피해를 준다/.test(KT.discord)&&/뒤섞는다/.test(KT.discord)

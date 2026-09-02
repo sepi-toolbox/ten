@@ -36,6 +36,10 @@ const OUT = path.join(__dirname, '..', 'docs', 'etg_cards.md');
     return {
       els: window.ETG.els, elko: G.ELKO, src: window.ETG.src, ver: G.VERSION,
       cards: window.ETG.cards, sk,
+      /* ⚠ 데이터에는 남아 있지만 **덱에 못 넣는** 카드가 있다(문장 카드 12장·토큰).
+         문서가 그걸 실으면 밖에서 보는 사람은 쓸 수 있는 줄 안다. 갈라서 싣는다. */
+      out: window.ETG.cards.filter(c => !c.up && !G.playable(c))
+        .map(c => ({ ko: c.ko, en: c.en, el: c.el })),
       flagko: G.FLAGKO, flagdef: G.FLAGDEF, kindko: G.KINDKO,
     };
   });
@@ -49,7 +53,8 @@ const OUT = path.join(__dirname, '..', 'docs', 'etg_cards.md');
   const TGTKO = { cr: '크리처', mycr: '내 크리처', foecr: '상대 크리처', pm: '기물',
                   foepm: '상대 기물', crw: '크리처·무기', any: '아무거나' };
 
-  const base = D.cards.filter(c => !c.up);
+  /* 표에 싣는 것은 **실제로 덱에 넣을 수 있는 카드**만이다 */
+  const base = D.cards.filter(c => !c.up && !D.out.some(o => o.en === c.en));
   const byCode = {}; D.cards.forEach(c => { byCode[c.code] = c; });
 
   /* 강화판은 따로 싣지 않는다 — 수치만 다르고 컨셉이 같아서 논의에 방해만 된다.
@@ -74,8 +79,18 @@ const OUT = path.join(__dirname, '..', 'docs', 'etg_cards.md');
   s += '# 엘리멘츠 카드·능력 전서\n\n';
   s += `자동 생성 문서다 — 손으로 고치지 말 것. \`node tools/dump_etg_md.js\` 로 다시 뽑는다.\n\n`;
   s += `- 판: **${D.ver}** · 기준 데이터: ${D.src}\n`;
-  s += `- 기본 카드 **${base.length}장** (강화판 ${D.cards.length - base.length}장은 표에 싣지 않고 "강화" 칸에 차이만 적었다)\n`;
-  s += `- 능력 **${Object.keys(D.sk).length}종**\n\n`;
+  /* ⚠ 강화판 수를 (전체 - 기본) 로 세면 안 된다 — 뺀 카드가 강화판으로 둔갑한다 */
+  const ups = D.cards.filter(c => c.up).length;
+  s += `- 기본 카드 **${base.length}장** (강화판 ${ups}장은 표에 싣지 않고 "강화" 칸에 차이만 적었다)\n`;
+  s += `- 능력 **${Object.keys(D.sk).length}종**\n`;
+  if (D.out.length) {
+    s += `- 데이터에는 있지만 **덱에 못 넣는 카드 ${D.out.length}장**은 표에서 뺐다: `
+       + D.out.map(o => `${o.ko}(${o.en})`).join(', ') + '\n';
+    s += '  <br><sub>문장 카드 12장은 자기 속성 기둥과 비용·능력·표식이 한 글자도 다르지 않다. '
+       + '원작에서 둘을 갈라놓은 것은 희귀도뿐이었는데(님프와 같은 최상위 등급) '
+       + '이 판에는 희귀도도 수집도 없어 완전한 중복이라 뺐다. 나머지는 능력이 만들어 내는 토큰이다.</sub>\n';
+  }
+  s += '\n';
   s += '## 이 게임이 어떻게 굴러가나 (표를 읽기 전에)\n\n';
   s += [
     '자원은 **퀀텀**이라고 부르고 12속성이 각각 따로 쌓인다. 마나 총량 하나가 아니라 색깔별 통이 열둘이다.',

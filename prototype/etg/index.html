@@ -1647,7 +1647,7 @@ body.deckmode .wrap{height:auto}
 <script src="data.js"></script>
 <script>
 'use strict';
-const VERSION='0.33.0', BUILD='2026-09-02';
+const VERSION='0.34.0', BUILD='2026-09-02';
 /* ⚠ 제목줄은 없다 — 성권: "배틀 유아이에서도 헤더 지우고 넓게 써".
    판 번호는 덱 화면 발치 한 줄에만 남는다(배포 확인이 이 번호에 걸려 있다). */
 
@@ -2498,7 +2498,20 @@ def('evade100',null,'상대 공격을 통째로 막는다',()=>{});
    2. 카드가 놀 수 있는가 — 능력이 하나라도 없으면 덱에 안 넣는다
    ═══════════════════════════════════════════════════════════════════════════ */
 const MISS=new Set();
+/* ⚠⚠ 문장 카드(Mark of X) 12장을 뺀다.
+   원작 표에서 이 카드들은 **자기 속성 기둥과 한 글자도 다르지 않다** — 비용·능력(pillar)·
+   표식(쌓임·합산)이 같고, 기둥을 부수는 카드(지진·해일)도 이름이 아니라 `pillar` 표식을
+   보고 때리므로 판 위에서 갈라지는 구석이 하나도 없다. 원작에서 둘을 갈라놓은 것은
+   **희귀도뿐**이었다(15 — 님프와 같은 최상위 등급). 우리에겐 희귀도도 수집도 없으니
+   그냥 중복 카드 12장이 된다.
+   성권: "데이터상에 남기는건 상관없는데 노출되는 경우는 완전히 지워."
+   → 그래서 **데이터는 그대로 둔다**(원작 대조용 기준이라 파내면 다시 못 맞춘다).
+     대신 '놀 수 있는 카드' 에서만 빼면 덱 편성·자동 덱·적 덱·에디터 목록이 전부
+     이 함수 하나를 거치므로 한 번에 사라진다.
+   ⚠ 이름(ko)으로 거르면 안 된다 — 에디터에서 이름을 바꾸는 순간 되살아난다. 원어로 건다. */
+const MARKCARD=new Set(ETG.cards.filter(c=>/^Mark of /.test(c.en)).map(c=>c.code));
 function playable(c){
+  if(MARKCARD.has(c.code)) return false;
   if(c.kind==='perm'&&c.flags.includes('token')) return false;
   for(const s of c.sk){ if(!SK[s.id]){ MISS.add(s.id); return false; } }
   return true;
