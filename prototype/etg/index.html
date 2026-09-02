@@ -3876,7 +3876,9 @@ window.ETGDBG={get G(){return G;},SK,MISS,POOLS,CARD,BYNAME,playable,startGame,a
   deckList,endTurn,render,attack,kill,summon,mk,playCard,useAbility,draw,canPlay,
   showZoom,etgCardHTML,VERSION,playPerm,syncAuras,spellDmg,destroyPerm,ruleText,trueAtk,targetsFor,
   MOD,get MODREF(){return MOD;},setMod(m){MOD=m;},saveMod,applyMod,modded,ORIG,
-  ELKO,FLAGKO,ELC,MODKEY,esc};
+  /* ⚠ FLAGKO 만 내보내면 뜻풀이(FLAGDEF)와 카드 종류 이름(KINDKO)이 문서 만드는 쪽에
+     따로 베껴져 곧 어긋난다. 낱말집은 **한 벌만** 있어야 한다. */
+  ELKO,FLAGKO,FLAGDEF,KINDKO,ELC,MODKEY,esc};
 /* 개조를 먼저 덮고 나서 화면을 그린다 — 순서가 바뀌면 첫 화면만 원본으로 뜬다 */
 applyMod();
 /* ⚠ 카드 에디터(edit.html)가 **같은 엔진 파일**을 쓴다. 거기서는 판을 열면 안 되므로
