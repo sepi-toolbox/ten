@@ -1038,6 +1038,63 @@ const TEN =path.join(__dirname,'..','data','cards.json');
   ok('땅거미가 +1|+1 을 준다', B.night.dh===1&&B.night.tatk===B.night.da+1||B.night.dh===1,
      `+${B.night.da}|+${B.night.dh} (실공격력 ${B.night.tatk})`);
 
+  /* ── 32) 무기·방패 자리 ─────────────────────────────────────────────
+     ⚠ 성권: "배틀 유아이에 무기, 방패 슬롯이 없는데 어디에 놔?"
+     기물과 같은 줄에 그냥 섞여 있어서 어느 게 무기인지 알 수가 없었다.
+     양 끝에 못박되 **줄을 새로 만들지 않는다**(전투는 한 화면 안에서 끝나야 한다). */
+  const E=await p.evaluate(()=>{
+    const D=window.ETGDBG, o={};
+    D.startGame(D.deckList(D.autoDeck(6)),6);
+    const G=D.G; G.me.q=new Array(13).fill(30); G.ai.q=new Array(13).fill(30);
+    D.render();
+    const row0=document.getElementById('myPm').getBoundingClientRect().height;
+    o.emptyH=row0;
+    /* 비어 있을 때도 두 자리가 보인다 */
+    o.emptyTags=[...document.querySelectorAll('#myPm .eq.mt')].map(e=>
+      getComputedStyle(e,'::after').content).join('|');
+    o.emptyCount=document.querySelectorAll('#myPm .eq.mt').length;
+
+    /* 기물을 잔뜩 깔고 무기·방패를 놓는다 */
+    for(const n of ['Burning Pillar','Fire Pendulum','Quantum Pillar','Stone Pillar',
+                    'Gravity Pillar','Light Pillar','Wind Pillar'])
+      D.playPerm(G.me,D.mk(D.BYNAME[n].code,G.me));
+    const w=D.mk(D.BYNAME['Owl\'s Eye'].code,G.me); G.me.weapon=w; w.own=G.me;
+    const sh=D.mk(D.BYNAME['Bone Wall'].code,G.me); G.me.shield=sh; sh.own=G.me;
+    D.render();
+    const row=document.getElementById('myPm');
+    o.rowH=row.getBoundingClientRect().height;
+    const rr=row.getBoundingClientRect();
+    const we=row.querySelector('.eq.wpn').getBoundingClientRect();
+    const se=row.querySelector('.eq.shd').getBoundingClientRect();
+    o.leftmost=we.left-rr.left<8;
+    o.rightmost=rr.right-se.right<8;
+    /* 기물이 무기·방패를 덮지 않는다 */
+    const pms=[...row.querySelectorAll(':scope > .slot')].map(x=>x.getBoundingClientRect());
+    o.pmCount=pms.length;
+    o.overlap=pms.some(r=>r.left<we.right-1||r.right>se.left+1);
+    /* 무기·방패 카드가 기물 줄의 slot 목록에 섞여 있지 않다 */
+    o.mixed=[...row.querySelectorAll(':scope > .slot .tt')].some(t=>/올빼미|뼈 장벽/.test(t.textContent));
+    /* 눌러서 능력을 쓸 수 있다 — 무기 자리도 여전히 카드다 */
+    o.clickable=!!row.querySelector('.eq.wpn [data-uid]');
+    /* 새로 내면 조용히 교체된다 */
+    const w2=D.mk(D.BYNAME['Short Sword'].code,G.me); G.me.hand=[w2];
+    D.playCard(G.me,w2,null); D.render();
+    o.replaced=(G.me.weapon===w2)&&document.querySelectorAll('#myPm .eq.wpn .tcard').length===1;
+    /* 한 화면 규칙 — 무기·방패 자리가 세로를 새로 먹지 않았다 */
+    o.docH=document.documentElement.scrollHeight; o.winH=innerHeight;
+    return o;});
+
+  ok('빈 무기·방패 자리가 보인다', E.emptyCount===2&&/무기/.test(E.emptyTags)&&/방패/.test(E.emptyTags),
+     `${E.emptyCount}자리 ${E.emptyTags}`);
+  ok('무기는 왼쪽 끝, 방패는 오른쪽 끝', E.leftmost&&E.rightmost,
+     `왼쪽 ${E.leftmost} · 오른쪽 ${E.rightmost}`);
+  ok('기물이 그 자리를 덮지 않는다', E.overlap===false&&E.pmCount===7,
+     `기물 ${E.pmCount}장 · 겹침 ${E.overlap}`);
+  ok('무기·방패가 기물에 섞이지 않는다', E.mixed===false, E.mixed?'섞였다':'분리됨');
+  ok('무기 자리도 눌러서 쓸 수 있다', E.clickable===true, E.clickable?'data-uid 있음':'없음');
+  ok('새로 내면 조용히 교체된다', E.replaced===true, E.replaced?'한 장만 남음':'교체 안 됨');
+  ok('자리를 만들어도 한 화면', E.docH<=E.winH+1, `문서 ${E.docH} / 창 ${E.winH}`);
+
   if(errs.length){ bad++; console.log('   ERR',errs.slice(0,4)); }
   console.log(`\n미구현 능력 ${cov.miss.length}종: ${cov.miss.join(' ')}`);
   console.log(bad?`❌ ${bad}건 실패`:'✅ 전부 통과');

@@ -1456,10 +1456,28 @@ h1.tt small{font-family:'Gowun Batang',serif;letter-spacing:0;font-size:10px;col
 .mkl{font-style:normal;font-family:'Gowun Batang',serif;font-size:9px;margin-left:4px;opacity:.9}
 
 /* 기물줄은 크리처줄보다 낮게 — 세로 예산을 아끼려고 */
-.board.pmrow{min-height:calc(var(--cardw)*1.0 + 8px);margin-bottom:8px}
+.board.pmrow{min-height:calc(var(--cardw)*1.0 + 8px);margin-bottom:8px;--eqw:calc(var(--cardw)*0.78)}
 .board.pmrow>.slot{width:calc(var(--cardw)*0.78)}
-.board.pmrow.empty::after{content:'기물 · 무기 · 방패'}
+.board.pmrow.empty::after{content:'기물'}
 .board.empty::after{content:'크리처'}
+
+/* ⚠⚠ 무기·방패는 **판에 하나씩뿐인 자리**다 — 새로 내면 앞의 것이 사라진다.
+   그런데 기둥·기물과 같은 줄에 그냥 섞여 있어서, 어느 게 무기인지 알 수가 없었다
+   (성권: "무기, 방패 슬롯이 없는데 어디에 놔?").
+   줄을 새로 만들지 않고(전투는 한 화면 안에서 끝나야 한다) **양 끝에 못박는다.**
+   비어 있을 때도 테두리와 이름이 보여서 '여기가 그 자리' 라는 게 늘 보인다. */
+.pmrow .eq{position:absolute;bottom:5px;width:var(--eqw);z-index:30}
+.pmrow .eq.wpn{left:4px}
+.pmrow .eq.shd{right:4px}
+.pmrow .eq>.slot{position:static;width:100%;left:auto;bottom:auto}
+.pmrow .eq.mt{height:calc(var(--eqw)*1.4);border:1px dashed var(--rule);border-radius:4px;
+  display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.22)}
+.pmrow .eq.mt::after{font-family:'Gowun Batang',serif;letter-spacing:.08em;
+  font-size:calc(var(--eqw)*.17);color:var(--parch);opacity:.42}
+.pmrow .eq.wpn.mt::after{content:'무기'}
+.pmrow .eq.shd.mt::after{content:'방패'}
+/* ⚠ 카드가 놓이면 이름표를 따로 붙이지 않는다 — 카드 발치 줄이 이미 '무기'·'방패' 라고
+   적고 있고, 위에 겹쳐 놓으면 카드 이름을 덮는다. 자리는 위치가 말한다. */
 
 /* 기록도 화면 높이에 맞춰 준다 — 여기가 넘치면 손패가 밀려 나간다 */
 .logbox{height:clamp(40px,7.5dvh,74px);overflow-y:auto;font-family:'Gowun Batang',serif;font-size:11px;line-height:1.55;
@@ -1512,7 +1530,7 @@ h1.tt small{font-family:'Gowun Batang',serif;letter-spacing:0;font-size:10px;col
 <script src="data.js"></script>
 <script>
 'use strict';
-const VERSION='0.19.0', BUILD='2026-09-02';
+const VERSION='0.20.0', BUILD='2026-09-02';
 /* 판 번호는 제목줄에 붙인다 — 아래 h1.tt 안 small */
 document.addEventListener('DOMContentLoaded',()=>{const t=document.querySelector('h1.tt small');
   if(t)t.insertAdjacentHTML('beforeend',` · v${VERSION}`);});
@@ -2890,19 +2908,28 @@ function packRow(el){
   el.classList.toggle('packed',!!n);
   if(!n)return;
   const cw=cards[0].offsetWidth||60;
-  const avail=Math.max(40,el.clientWidth-8);
+  /* 무기·방패 자리는 양 끝에 못박혀 있다 — 기물이 그 위로 올라가면 안 된다 */
+  const eq=el.querySelector('.eq');
+  const pad=eq?(eq.offsetWidth||0)+8:0;
+  const avail=Math.max(40,el.clientWidth-8-pad*2);
   let step=cw+4;
   if(n>1&&cw+(n-1)*step>avail){
     const minShow=Math.max(20,cw*0.30);
     step=Math.max(minShow,(avail-cw)/(n-1));
   }
   const vis=cw+(n-1)*step;
-  const x0=Math.max(4,(el.clientWidth-vis)/2);
+  const x0=Math.max(4+pad,(el.clientWidth-vis)/2);
   cards.forEach((c,i)=>{ c.style.left=(x0+i*step).toFixed(1)+'px'; c.style.zIndex=String(10+i); });
 }
 function boardHTML(p,k){
-  const arr=k==='cr'?p.cr:p.pm.concat([p.weapon,p.shield]);
+  const arr=k==='cr'?p.cr:p.pm;
   return arr.filter(Boolean).map(u=>slotHTML(u,p)).join('');
+}
+/* 무기·방패 — 기물 줄의 양 끝에 붙는 전용 자리 */
+function eqHTML(p){
+  const one=(u,cls)=> u ? `<div class="eq ${cls}">${slotHTML(u,p)}</div>`
+                        : `<div class="eq ${cls} mt"></div>`;
+  return one(p.weapon,'wpn')+one(p.shield,'shd');
 }
 /* 퀀텀 — 본편 마나줄과 같은 자리, 같은 눈높이. 0 인 속성은 흐리게 둔다. */
 /* 지금 손에 쥔 카드가 **어느 퀀텀을 얼마나** 먹는지 내 줄에 표시한다.
@@ -2975,10 +3002,10 @@ function render(){
   SCR.innerHTML=`<div class="main">
     <div class="hand foe" id="foeHand">${a.hand.map(()=>'<div class="hcw back"><div class="cback"></div></div>').join('')}</div>
     ${barHTML(a,true)}
-    <div class="board pmrow" id="foePm">${boardHTML(a,'pm')}</div>
+    <div class="board pmrow" id="foePm">${boardHTML(a,'pm')}${eqHTML(a)}</div>
     <div class="board" id="foeBoard">${boardHTML(a,'cr')}</div>
     <div class="board" id="myBoard">${boardHTML(m,'cr')}</div>
-    <div class="board pmrow" id="myPm">${boardHTML(m,'pm')}</div>
+    <div class="board pmrow" id="myPm">${boardHTML(m,'pm')}${eqHTML(m)}</div>
     ${barHTML(m,false)}
     <div class="hand" id="hand">${handHTML(m)}</div>
     <div class="ctl">
