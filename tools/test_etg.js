@@ -312,12 +312,31 @@ const TEN =path.join(__dirname,'..','data','cards.json');
     const poor=document.querySelectorAll('#myBoard .slot.canuse').length;   /* 퀀텀 0 — 못 쓴다 */
     G.me.q[6]=9; D.render();
     const rich=document.querySelectorAll('#myBoard .slot.canuse').length;
-    const tag=document.querySelector('#myBoard .slot.canuse .usetag');
+    /* ⚠ 뜨는 것이 신호다 — 클래스만 보지 말고 **실제로 올라갔는지**와
+       **아무것도 안 가리는지**(공격력이 그대로 읽히는지)를 같이 본다. */
+    const el=document.querySelector('#myBoard .slot.canuse');
+    const st=el?getComputedStyle(el):null;
+    const lift=st?new DOMMatrix(st.transform).m42:0;
+    const covered=!!(el&&el.querySelector('.usetag'));
+    const atk=el?el.querySelector('.tb.a').textContent.trim():'';
+    /* ⚠⚠ 클래스가 붙었는지만 보면 아무것도 못 잡는다 — 본편에
+       `.slot.occ{box-shadow:none!important}` 가 있어서 `.slot` 에 건 빛은
+       **한 줄도 그려지지 않고 있었다.** 실제로 칠해진 값을 잰다. */
+    const card=el?el.querySelector('.tcard'):null;
+    const glow=card?getComputedStyle(card).boxShadow:'';
+    const clip=el?getComputedStyle(el).overflow:'';
     u.used=true; D.render();
     const spent=document.querySelectorAll('#myBoard .slot.canuse').length;
-    return {poor,rich,spent,tag:tag?tag.textContent:''};});
+    return {poor,rich,spent,lift:Math.round(lift),covered,atk,glow,clip};});
   ok('못 쓸 땐 안 빛난다', hl.poor===0, `${hl.poor}개`);
-  ok('쓸 수 있으면 빛나고 비용이 뜬다', hl.rich===1&&/불/.test(hl.tag), `${hl.rich}개 · "${hl.tag}"`);
+  ok('쓸 수 있으면 카드가 뜬다', hl.rich===1&&hl.lift<=-2,
+     `${hl.rich}개 · ${hl.lift}px 떠 있다`);
+  ok('띄우느라 숫자를 가리지 않는다', hl.covered===false&&hl.atk!=='',
+     `뱃지 ${hl.covered?'있음':'없음'} · 공격력 "${hl.atk}"`);
+  /* 초록 링이 **실제로 칠해졌고**, 칸이 그걸 잘라 내지 않는지 */
+  ok('초록 테가 실제로 그려진다',
+     /rgba?\(1[0-9][0-9], 2[0-9][0-9], 1[0-9][0-9]/.test(hl.glow)&&hl.clip==='visible',
+     `${hl.glow.slice(0,46)}… · overflow ${hl.clip}`);
   ok('이번 턴 다 썼으면 꺼진다', hl.spent===0, `${hl.spent}개`);
 
   /* ── 13) 카드가 본편 규격으로 그려진다 ─────────────────────────────── */
