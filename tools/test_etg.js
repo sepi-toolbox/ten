@@ -740,6 +740,47 @@ const TEN =path.join(__dirname,'..','data','cards.json');
   ok('캐시 이름이 게임과 다르다', nameOf(swtxt)&&nameOf(swtxt)!==nameOf(gm),
      `${nameOf(swtxt)} ↔ ${nameOf(gm)}`);
 
+  /* ── 29) 설명이 **원문과 어긋나지 않는가** ─────────────────────────── */
+  /* ⚠⚠ 성권이 "용기의 파편은 대체 무슨 공격력을 올린다는 뜻이야?" 라고 물어 잡혔다.
+     원문은 "상대가 2장 뽑고, 나도 그만큼 뽑는다" — **공격력과 아무 상관이 없었다.**
+     내가 지어낸 설명이었고 구현도 상대는 안 뽑았다. 같은 식으로 지어낸 것이 셋 더 있었다.
+     원문이 카드에 붙어 있으니(otxt) 이런 건 검사로 못 박아 둘 수 있다. */
+  const truth=await p.evaluate(()=>{
+    const D=window.ETGDBG;
+    const o={};
+    /* 용기의 파편 — 상대가 먼저 뽑는다. 내 문장이 불이면 셋. */
+    for(const mark of [6,8]){
+      D.startGame(D.deckList(D.autoDeck(6)),mark);
+      const G=D.G; G.me.hand=[];G.ai.hand=[];G.me.q=new Array(13).fill(20);
+      const u=D.mk(D.BYNAME['Shard of Bravery'].code,G.me); G.me.hand=[u];
+      D.playCard(G.me,u,null);
+      o[mark===6?'불':'빛']={me:G.me.hand.length, foe:G.ai.hand.length};
+    }
+    /* 돌 피부 — 크리처가 아니라 **내 최대 체력**이 오른다 */
+    D.startGame(D.deckList(D.autoDeck(4)),4);
+    const G=D.G; G.me.hand=[];G.me.q=new Array(13).fill(0); G.me.q[4]=10;
+    const u=D.mk(D.BYNAME['Stone Skin'].code,G.me); G.me.hand=[u];
+    const b4=G.me.maxhp; D.playCard(G.me,u,null);
+    o.sskin={before:b4, after:G.me.maxhp, cost:u.c.cost};
+    /* 지어낸 설명이 남아 있지 않은가 */
+    const txt=n=>{const d=document.createElement('div');
+      d.innerHTML=D.etgCardHTML(D.BYNAME[n],{size:'md'});
+      return d.querySelector('.teff').textContent.trim();};
+    o.sword=txt('Short Sword'); o.shield=txt('Shield');
+    o.bravery=txt('Shard of Bravery');
+    return o;});
+  ok('용기의 파편 — 상대가 먼저 뽑는다',
+     truth.불.foe===3&&truth.불.me===3&&truth.빛.foe===2&&truth.빛.me===2,
+     `문장 불 나${truth.불.me}/상대${truth.불.foe} · 문장 빛 나${truth.빛.me}/상대${truth.빛.foe}`);
+  ok('용기의 파편 설명에 공격력이 없다', !/공격력/.test(truth.bravery), truth.bravery.slice(0,40));
+  /* ⚠ 비용은 **이미 낸 뒤**라 남은 대지가 10−비용이고, openEtG vanilla 는 거기서
+     비용을 한 번 더 뺀다. 10−2−2 = 6. 처음엔 10−2 로 기대했다가 헛짚었다. */
+  ok('돌 피부는 내 최대 체력을 올린다',
+     truth.sskin.after===truth.sskin.before+(10-truth.sskin.cost*2),
+     `${truth.sskin.before} → ${truth.sskin.after} (대지 10 − 비용 ${truth.sskin.cost} × 2)`);
+  ok('없는 능력을 지어내지 않는다', truth.sword==='', `단검류 소검 "${truth.sword}"`);
+  ok('평범한 방패도 설명이 있다', /깎는다/.test(truth.shield), truth.shield);
+
   if(errs.length){ bad++; console.log('   ERR',errs.slice(0,4)); }
   console.log(`\n미구현 능력 ${cov.miss.length}종: ${cov.miss.join(' ')}`);
   console.log(bad?`❌ ${bad}건 실패`:'✅ 전부 통과');
