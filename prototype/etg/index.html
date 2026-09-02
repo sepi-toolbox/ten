@@ -1615,7 +1615,7 @@ body.deckmode .wrap{height:auto}
 <script src="data.js"></script>
 <script>
 'use strict';
-const VERSION='0.29.0', BUILD='2026-09-02';
+const VERSION='0.30.0', BUILD='2026-09-02';
 /* ⚠ 제목줄은 없다 — 성권: "배틀 유아이에서도 헤더 지우고 넓게 써".
    판 번호는 덱 화면 발치 한 줄에만 남는다(배포 확인이 이 번호에 걸려 있다). */
 
@@ -1793,7 +1793,7 @@ def('v_thorn',null,'때린 크리처가 75% 확률로 독에 걸린다',(g,me,s,
   if(Math.random()<0.75) addPoison(t,1);
 });
 def('v_firewall',null,'때린 크리처에게 피해 1',(g,me,s,t)=>{ if(t) spellDmg(me,t,1); });
-def('snipe','foecr','대상 크리처에게 피해 3',(g,me,s,t)=>{ spellDmg(me,t,3); });
+def('snipe','cr','대상 크리처에게 피해 3',(g,me,s,t)=>{ spellDmg(me,t,3); });
 /* ⚠ 원문: "Frozen creatures deal **50% more** damage. Poisoned creatures **transfer poisons**."
    얼면 두 배로 때리고 있었고(1.5배다), 독은 옮기지 않았다. */
 def('catapult','mycr','자기 크리처를 던진다. 체력이 클수록 큰 피해. 얼어 있으면 1.5배, 독은 상대에게 옮긴다',
@@ -1822,7 +1822,12 @@ def('poisonfoe',null,'상대에게 독 {N} 을 준다',(g,me,s,t,a)=>{ foe(me).p
 def('aflatoxin','cr','대상에게 독 2. 그 몸이 죽으면 악성 세포가 된다',(g,me,s,t)=>{
   addPoison(t,2); t.afla=true;
 });
-def('virusinfect',null,'자신을 희생해 대상에게 독을 준다',(g,me,s,t)=>{ addPoison(t,1); kill(s); });
+/* ⚠⚠⚠ **대상 종류를 안 적어 놨었다.** 그래서 누르면 바이러스만 죽고 독은
+   아무에게도 안 걸렸다 — 오류도 안 나고 카드만 사라진다.
+   openEtG: `Self::virusinfect => Tgt::crea`. 성권이 "작동을 안 하는 것 같은데" 로 잡아 줬다. */
+def('virusinfect','cr','자신을 희생해 겨눈 크리처에게 독 1을 준다',(g,me,s,t)=>{
+  if(!t)return; kill(s); addPoison(t,1);
+});
 /* ⚠ 원문은 "every **enemy** creature" 다. 내 크리처까지 굴리면 제 발등을 찍는 카드가 된다. */
 /* ⚠⚠ 예전에 '상대 크리처만' 으로 고쳐 놨는데 그건 **강화판**이다.
    원작판 기본은 `masscc(foe, owner, …)` — **양쪽 크리처 전부**에 떨어진다. */
@@ -1871,7 +1876,7 @@ def('lobotomize','cr','대상의 능력과 관성·염동을 지운다',(g,me,s,
 });
 def('v_silence',null,'상대는 다음 턴에 카드를 낼 수 없다',(g,me)=>{ foe(me).sabbath=true; });
 def('appease','mycr','자기 크리처를 희생하고 +1|+1 을 얻는다',(g,me,s,t)=>{ kill(t); buff(s,1,1); });
-def('devour','foecr','체력이 자기보다 작은 크리처를 먹고 +1|+1. 유독한 몸을 먹으면 자기도 중독된다',
+def('devour','devour','체력이 자기보다 작은 크리처를 먹고 +1|+1. 유독한 몸을 먹으면 자기도 중독된다',
   (g,me,s,t)=>{
     if(!t||t.hp>=s.hp)return;
     const venom=t.flags.includes('poisonous');
@@ -1917,7 +1922,7 @@ def('quint','cr','대상이 실체를 잃는다 (겨눌 수 없고 얼지 않는
   if(!t.flags.includes('immaterial'))t.flags.push('immaterial'); t.frozen=0;
   /* ⚠ 얼음만 푼다 — 지연까지 푸는 건 내가 얹은 것이었다 */
 });
-def('liquid','foecr','대상의 능력을 흡혈로 바꾸고 독 1을 준다',(g,me,s,t)=>{
+def('liquid','cr','대상의 능력을 흡혈로 바꾸고 독 1을 준다',(g,me,s,t)=>{
   t.sk=[{ev:'hit',id:'vampire',arg:null}]; addPoison(t,1);
 });
 /* ⚠ openEtG: `incrAtk(t, trueatk(t) * -2)` — **버프까지 포함한 지금 공격력**을 뒤집는다.
@@ -1925,7 +1930,7 @@ def('liquid','foecr','대상의 능력을 흡혈로 바꾸고 독 1을 준다',(
 def('antimatter','cr','대상의 공격력 부호를 뒤집는다',(g,me,s,t)=>{ if(t) t.atk-=trueAtk(t)*2; });
 def('gpullspell','foecr','대상이 그 편의 모든 공격을 대신 맞는다',(g,me,s,t)=>{ owner(t).gpull=t; });
 def('gpull',null,'그 편의 모든 공격을 대신 맞는다',(g,me,s)=>{ me.gpull=s; });
-def('nightmare','foecr','상대 손패를 그 카드로 채우고, 채운 만큼 피해를 준다',(g,me,s,t)=>{
+def('nightmare','cr','상대 손패를 그 카드로 채우고, 채운 만큼 피해를 준다',(g,me,s,t)=>{
   const f=foe(me), n=HANDMAX-f.hand.length;
   for(let i=0;i<n;i++) f.hand.push(mk(t.c.code,f));
   spellDmg(me,f,n*2); heal(me,n*2);
@@ -2047,7 +2052,7 @@ def('mitosisspell','mycr','대상이 +0|+1 과 유사분열 능력을 얻는다 
 def('parallel','cr','대상을 그대로 복제해 자기 편에 놓는다',(g,me,s,t)=>{
   const u=summon(me,t.c.code); if(u){ u.atk=t.atk; u.hp=u.maxhp=t.hp; u.flags=t.flags.slice(); }
 });
-def('fractal','foecr','손패를 그 크리처로 채운다',(g,me,s,t)=>{
+def('fractal','cr','손패를 그 크리처로 채운다',(g,me,s,t)=>{
   me.q[12]=0; while(me.hand.length<HANDMAX) me.hand.push(mk(t.c.code,me));
 });
 def('phoenix',null,'죽으면 잿더미가 남는다',(g,me,s)=>{
@@ -2287,14 +2292,16 @@ def('burrow',null,'땅에 숨는다 (공격력 절반, 겨눌 수 없다)',(g,me
 });
 /* ⚠ 원문: "Delay target creature **& this creature**. If target isn't airborne **or this
    creature is airborne**, deal damage." 자기 지연도, 비행 조건도 빠져 있었다. */
-def('guard',null,'대상과 자신을 한 턴 묶는다. 대상이 날지 않으면 공격력만큼 때린다',
+/* ⚠ 파수꾼도 같은 사고였다 — `Tgt::crea` 인데 대상 종류가 비어 있어서, 누르면
+   자기만 묶이고 아무도 안 때렸다. */
+def('guard','cr','대상과 자신을 한 턴 묶는다. 대상이 날지 않으면 공격력만큼 때린다',
   (g,me,s,t)=>{
     if(!t)return;
     t.delayed=(t.delayed||0)+1; s.delayed=(s.delayed||0)+1;
     /* ⚠ '내가 날면 날아다니는 몸도 때린다' 는 신판 전용이다. 원작판은 대상이 안 날 때만. */
     if(!t.flags.includes('airborne')) spellDmg(me,t,trueAtk(s));
   });
-def('paradox','foecr','공격력이 체력보다 큰 크리처를 죽인다',(g,me,s,t)=>{ if(t&&trueAtk(t)>t.hp) kill(t); });
+def('paradox','paradox','공격력이 체력보다 큰 크리처를 죽인다',(g,me,s,t)=>{ if(t&&trueAtk(t)>t.hp) kill(t); });
 def('deadalive',null,'이 몸이 죽는다 — 죽음 효과가 터진다. 그래도 살아남는다',(g,me,s)=>{
   everyThing().forEach(x=>{ if(x&&x!==s&&!x.dead) trig(x,'death',s); });
 });
@@ -2304,7 +2311,7 @@ def('undead',null,'시간 역행을 맞으면 무작위 크리처로 변한다',
 def('sanctify',null,'상대 턴에는 내 퀀텀과 손패를 건드릴 수 없다',()=>{});
 def('voodoo',null,'이 몸이 받은 피해를 상대도 똑같이 받는다',()=>{});
 def('mummy',null,'시간 역행을 맞으면 파라오로 변한다',()=>{});
-def('web','foecr','대상이 비행을 잃는다',(g,me,s,t)=>{ t.flags=t.flags.filter(f=>f!=='airborne'); });
+def('web','cr','대상이 비행을 잃는다',(g,me,s,t)=>{ t.flags=t.flags.filter(f=>f!=='airborne'); });
 def('ignite',null,'터져서 상대에게 20, 모든 크리처에게 1',(g,me,s)=>{
   spellDmg(me,foe(me),20); all().forEach(u=>{ if(u&&u.kind==='creature') spellDmg(me,u,1); });
   destroyPerm(s);
@@ -2374,13 +2381,14 @@ def('chimera',null,'자기 크리처를 하나로 합친다. 관성 · 중력 �
 def('skyblitz',null,'바람 퀀텀을 모두 쓰고 비행 크리처가 급강하한다',(g,me)=>{
   me.q[9]=0; me.cr.forEach(u=>{ if(u&&u.flags.includes('airborne')&&!u.flags.includes('immaterial')) u.dive=true; });
 });
-def('butterfly','cr','대상이 기물 파괴 능력을 얻는다',(g,me,s,t)=>{
-  if(t.atk<3||t.hp<3){ t.sk=[{ev:'cast',id:'destroy',arg:null}]; t.cast=3; t.castel=1; }
+/* ⚠ 원작판 조건은 **공격력 3 미만**뿐이다(체력 조건은 신판). 겨냥 목록이 조건을 안다. */
+def('butterfly','butterfly','대상의 능력이 「3엔트로피 : 기물 파괴」 로 바뀐다',(g,me,s,t)=>{
+  if(!t)return; t.sk=[{ev:'cast',id:'destroy',arg:null,args:[]}]; t.cast=3; t.castel=1;
 });
 /* ⚠ 원문: "Mutate target creature into an abomination, **unless it dies**… or turn into
    something weird." 죽을 확률이 반반이었다 — 원작은 훨씬 낮다(20%). 나머지는 흉물,
    가끔 '이상한 것'(무작위 강화 크리처)이 된다. */
-def('v_mutation','foecr','대상이 흉물이 된다. 낮은 확률로 죽거나 엉뚱한 것이 된다',(g,me,s,t)=>{
+def('v_mutation','cr','대상이 흉물이 된다. 낮은 확률로 죽거나 엉뚱한 것이 된다',(g,me,s,t)=>{
   if(!t)return;
   /* openEtG: upto(10) — 10% 죽음 · 40% 개량 돌연변이 · 50% 흉물 */
   const r=rnd(10);
@@ -2390,7 +2398,7 @@ def('v_mutation','foecr','대상이 흉물이 된다. 낮은 확률로 죽거나
 });
 /* 개량 돌연변이(강화) — 죽지 않고 더 나은 것이 된다 */
 /* ⚠ openEtG 는 **강화판이 아니라 기본 크리처** 아무거나로 바꾼다(`random_card(false, …)`). */
-def('v_improve','foecr','대상이 무작위 크리처로 바뀐다',(g,me,s,t)=>{
+def('v_improve','cr','대상이 무작위 크리처로 바뀐다',(g,me,s,t)=>{
   if(!t)return;
   const pool=ETG.cards.filter(c=>c.kind==='creature'&&!c.up&&playable(c));
   if(pool.length) morph(t,pool[rnd(pool.length)].code);
@@ -2420,7 +2428,7 @@ def('swave','any','대상에게 주문 피해 4. 얼어붙은 크리처는 그�
 def('enchant','pm','대상 기물이 실체를 잃는다 (겨눌 수 없다)',(g,me,s,t)=>{
   if(t&&!t.flags.includes('immaterial')) t.flags.push('immaterial');
 });
-def('v_rewind','foecr','대상 크리처를 주인의 덱 맨 위로 되돌린다',(g,me,s,t)=>{
+def('v_rewind','cr','대상 크리처를 주인의 덱 맨 위로 되돌린다',(g,me,s,t)=>{
   if(!t||t.kind!=='creature')return;
   const p=t.own;
   /* 원작의 특수 처리 — 해골은 아무 크리처로, 미이라는 파라오로 되돌아간다 */
@@ -2863,7 +2871,10 @@ function checkEnd(){
    6. 카드 내기
    ═══════════════════════════════════════════════════════════════════════════ */
 function costOf(u){ return {n:u.c.cost,e:u.c.costel}; }
-function targetsFor(kind,p){
+/* ⚠⚠ `src` 를 받는다 — 포식(나보다 체력이 낮은 몸)처럼 **누가 쓰느냐에 따라 겨눌 것이
+   달라지는** 능력이 있다. 조건을 능력 함수 안에서만 보면, 못 먹는 몸도 겨눠지고
+   눌러도 아무 일이 안 일어난다(성권이 바이러스에서 겪은 것과 같은 종류의 답답함). */
+function targetsFor(kind,p,src){
   const f=foe(p);
   const cr=x=>x&&x.kind==='creature'&&!x.flags.includes('immaterial');
   const pm=x=>x&&x.kind!=='creature'&&!x.flags.includes('immaterial');
@@ -2880,6 +2891,10 @@ function targetsFor(kind,p){
   if(kind==='weapon')return [p.weapon,f.weapon].filter(x=>x&&!x.flags.includes('immaterial'));
   if(kind==='crw')return f.cr.filter(cr).concat([f.weapon].filter(Boolean));
   if(kind==='any')return [f].concat(p.cr.filter(cr),f.cr.filter(cr));
+  /* 조건이 붙은 겨냥 — openEtG 의 Tgt::devour / Tgt::paradox / Tgt::butterfly 그대로 */
+  if(kind==='devour')return p.cr.concat(f.cr).filter(x=>cr(x)&&src&&x.hp<src.hp);
+  if(kind==='paradox')return p.cr.concat(f.cr).filter(x=>cr(x)&&x.hp<trueAtk(x));
+  if(kind==='butterfly')return p.cr.concat(f.cr).filter(x=>cr(x)&&trueAtk(x)<3);
   return [];
 }
 function canPlay(p,u){
@@ -2888,7 +2903,7 @@ function canPlay(p,u){
   if(!canPay(p,c.e,c.n))return false;
   /* 겨눌 것이 없으면 낼 수 없다 — 손패에서 회색으로 보인다 */
   const t=needsTarget(u);
-  if(t&&!targetsFor(t,p).length)return false;
+  if(t&&!targetsFor(t,p,u).length)return false;
   if(u.kind==='creature'&&p.cr.indexOf(null)<0)return false;
   if(u.kind==='perm'&&!u.c.flags.includes('stackable')&&p.pm.indexOf(null)<0)return false;
   return true;
@@ -2971,25 +2986,42 @@ function aiTurn(){
     const pick=(pillars.length&&p.pm.filter(Boolean).length<6)?pillars[0]
               :opts.sort((a,b)=>a.c.cost-b.c.cost)[0];
     const t=needsTarget(pick);
-    const tg=t?aiTarget(t,p):null;
+    const tg=t?aiTarget(t,p,(pick.sk.find(k=>k.ev==='cast')||{}).id,pick):null;
     if(t&&!tg){ p.hand.splice(p.hand.indexOf(pick),1); continue; }   /* 겨눌 게 없다 — 버린다 */
     if(!playCard(p,pick,tg))break;
     if(G.over)return;
   }
   p.cr.concat(p.pm).concat([p.weapon,p.shield]).forEach(u=>{
     if(u&&activeSk(u)&&!u.used&&!u.frozen){
-      const t=SK[activeSk(u).id].t;
-      useAbility(p,u,t?aiTarget(t,p):null);
+      const a=activeSk(u), t=SK[a.id].t;
+      useAbility(p,u,t?aiTarget(t,p,a.id,u):null);
     }
   });
   if(G.over)return;
   endTurn(); render();
 }
-function aiTarget(kind,p){
+/* 해로운 것은 상대에게 · 이로운 것은 제 편에 — 겨냥 목록이 양쪽을 다 담게 된 뒤로
+   무작위로 고르면 제 크리처에 저격을 쏘게 된다.
+   (원작 AI 는 판을 점수 매겨 고르지만 여기서는 '해롭냐 이롭냐' 두 갈래만 본다 —
+   상대의 수읽기를 내가 정했다는 것은 7절 머리말에 이미 적어 뒀다.) */
+const AIHARM=new Set(['snipe','v_rewind','lobotomize','v_mutation','v_improve','liquid',
+  'nightmare','poison','freeze','v_bblood','v_slow','v_cseed','paradox','web','antimatter',
+  'v_icebolt','v_firebolt','v_drainlife','lightning','swave','devour','butterfly',
+  'gpullspell','virusinfect','guard','fractal','destroy','v_steal','earthquake']);
+const AIHELP=new Set(['bless','mend','platearmor','momentum','quint','adrenaline','cpower',
+  'wisdom','v_readiness','mitosisspell','acceleration','purify','parallel','rage','v_endow',
+  'v_nymph','immolate','catapult','v_flyingweapon']);
+function aiTarget(kind,p,id,src){
   /* ⚠ 사람이 고를 수 있는 것과 **같은 목록**에서 고른다. 예전엔 여기만 따로 짜서
      실체 없는 몸을 겨누거나, 빈 목록에서 null 을 돌려주고 그대로 발동했다. */
-  const pool=targetsFor(kind,p);
-  return pool.length?pool[rnd(pool.length)]:null;
+  const pool=targetsFor(kind,p,src);
+  if(!pool.length)return null;
+  const f=foe(p);
+  const side=x=>(x===f||x===p)?x:(x.own||null);
+  const want=AIHARM.has(id)?pool.filter(x=>side(x)===f)
+            :AIHELP.has(id)?pool.filter(x=>side(x)===p):[];
+  const use=want.length?want:pool;
+  return use[rnd(use.length)];
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -3175,7 +3207,7 @@ function slotHTML(u,p){
      비용을 낼 수 있고 · 안 얼었고 · 이번 턴에 아직 안 썼을 때만 켠다 — 그래야 신호가 산다. */
   const act=activeSk(u);
   const usable=(p===G.me&&act&&!u.used&&!u.frozen&&!u.delayed&&canPay(p,u.castel,u.cast)
-                &&G.turn===G.me&&!G.over&&!(SK[act.id].t&&!targetsFor(SK[act.id].t,p).length));
+                &&G.turn===G.me&&!G.over&&!(SK[act.id].t&&!targetsFor(SK[act.id].t,p,u).length));
   if(usable) cls+=' canuse';
   const bs=[];
   if(u.poison>0) bs.push(`<b class="kb" style="color:#9f6">독 ${u.poison}</b>`);
@@ -3509,7 +3541,7 @@ function whyNot(p,u){
   if(u.kind==='creature'&&p.cr.indexOf(null)<0) return '크리처 자리가 없다';
   if(u.kind==='perm'&&!u.c.flags.includes('stackable')&&p.pm.indexOf(null)<0) return '기물 자리가 없다';
   const t=needsTarget(u);
-  if(t&&!targetsFor(t,p).length) return '겨눌 대상이 없다';
+  if(t&&!targetsFor(t,p,u).length) return '겨눌 대상이 없다';
   return '';
 }
 /* ── 손패에서 끌어내기 ── */
@@ -3789,7 +3821,7 @@ if(window.visualViewport){
 /* ═══════════════════════════════════════════════════════════════════════════ */
 window.ETGDBG={get G(){return G;},SK,MISS,POOLS,CARD,BYNAME,playable,startGame,autoDeck,
   deckList,endTurn,render,attack,kill,summon,mk,playCard,useAbility,draw,canPlay,
-  showZoom,etgCardHTML,VERSION,playPerm,syncAuras,spellDmg,destroyPerm,ruleText,trueAtk,
+  showZoom,etgCardHTML,VERSION,playPerm,syncAuras,spellDmg,destroyPerm,ruleText,trueAtk,targetsFor,
   MOD,get MODREF(){return MOD;},setMod(m){MOD=m;},saveMod,applyMod,modded,ORIG,
   ELKO,FLAGKO,ELC,MODKEY,esc};
 /* 개조를 먼저 덮고 나서 화면을 그린다 — 순서가 바뀌면 첫 화면만 원본으로 뜬다 */

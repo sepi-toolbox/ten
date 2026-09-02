@@ -1315,6 +1315,44 @@ const TEN =path.join(__dirname,'..','data','cards.json');
     ok('지어낸 규칙이 문서와 일치한다', code===0, out.trim().split('\n').pop());
   }
 
+  /* ── 39) **발동형 능력이 진짜로 일하는가** ─────────────────────────
+     성권: "바이러스가 작동을 안 하는 것 같은데 … 내가 못 본 건지"
+     ⚠⚠ 봤다. `def('virusinfect', null, …)` — **대상 종류를 안 적어 놨다.**
+       그러면 대상을 안 고르고 t=null 로 발동해, 바이러스만 죽고 독은 아무에게도
+       안 걸린다. **오류도 안 나고 카드만 사라진다** — 눈으로는 '왜 안 되지' 뿐이다.
+       이 부류를 통째로 막는다: openEtG 가 대상을 요구하는 능력은 우리도 요구해야 한다. */
+  const TG=await p.evaluate(()=>{
+    const D=window.ETGDBG;
+    /* ① openEtG 가 `Tgt::crea` 인 발동형은 우리도 대상을 받아야 한다 */
+    const need=['virusinfect','guard','snipe','liquid','lobotomize','quint','rage','mend',
+      'poison','v_bblood','v_cseed','parallel','v_rewind','v_mutation','v_improve',
+      'acceleration','adrenaline','nightmare','fractal','v_readiness'];
+    const noTgt=need.filter(id=>D.SK[id]&&!D.SK[id].t);
+    /* ② 바이러스가 진짜로 독을 건다 */
+    D.startGame(D.deckList(D.autoDeck(2)),2);
+    const G=D.G; G.me.q=new Array(13).fill(20);
+    const v=D.summon(G.me,D.BYNAME['Virus'].code);
+    const t=D.summon(G.ai,D.BYNAME['Crimson Dragon'].code);
+    const before=D.useAbility(G.me,v,null);      /* 대상 없이는 안 나가야 한다 */
+    const stillAlive=!v.dead;
+    D.useAbility(G.me,v,t);
+    const after={dead:!!v.dead,poison:t.poison};
+    /* ③ 포식은 **못 먹는 몸이 겨냥 목록에 없어야** 한다 */
+    D.startGame(D.deckList(D.autoDeck(3)),3);
+    const G2=D.G; G2.me.q=new Array(13).fill(20);
+    const dv=D.summon(G2.me,D.BYNAME['Scarab'].code); dv.hp=3;
+    const small=D.summon(G2.ai,D.BYNAME['Photon'].code);     /* 1|1 */
+    const big=D.summon(G2.ai,D.BYNAME['Crimson Dragon'].code);/* 12|3 */
+    const pool=D.targetsFor('devour',G2.me,dv).map(x=>x.c.en);
+    return {noTgt,before,stillAlive,after,pool};});
+  ok('대상이 필요한 능력은 대상을 받는다', TG.noTgt.length===0, TG.noTgt.join(',')||'20종 확인');
+  ok('바이러스가 진짜로 독을 건다',
+     TG.before===false&&TG.stillAlive&&TG.after.dead&&TG.after.poison===1,
+     `대상 없이 발동 ${TG.before} · 독 ${TG.after.poison}`);
+  ok('못 먹는 몸은 겨냥 목록에 없다',
+     TG.pool.includes('Photon')&&!TG.pool.includes('Crimson Dragon'),
+     TG.pool.join(' · ')||'(빈 목록)');
+
   if(errs.length){ bad++; console.log('   ERR',errs.slice(0,4)); }
   console.log(`\n미구현 능력 ${cov.miss.length}종: ${cov.miss.join(' ')}`);
   console.log(bad?`❌ ${bad}건 실패`:'✅ 전부 통과');
