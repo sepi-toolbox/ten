@@ -1438,7 +1438,28 @@ html,body{overscroll-behavior:none}
 .hint>span{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
   overflow:hidden;line-height:1.35;width:100%}
 .ctl button{flex:none;white-space:nowrap}
-body:not(.deckmode){touch-action:manipulation}
+/* ⚠⚠⚠ **판은 화면에 못박는다.** 앞서 '밀리면 되돌린다' 로 잡으려다 스크롤과 싸워서
+   화면이 떨었다(성권: "계속 위아래로 화면이 움직여"). 되돌리는 게 아니라
+   **애초에 밀릴 수 없게** 만든다 — 자리 잡힌(fixed) 상자 안에 판을 넣으면
+   문서가 어떻게 되든 판은 제자리다.
+   ① `position:fixed` — 문서 스크롤과 완전히 무관해진다
+   ② 안전영역 여백을 여기서 준다(이 상자가 곧 화면 전부이므로)
+   ③ `touch-action:none` — 판 위에서는 손가락으로 화면을 끌 수 없다.
+      `manipulation` 은 **패닝을 여전히 허용한다** — 그게 모자랐다.
+   ⚠ 덱 화면과 카드 에디터는 스크롤해야 하므로 `body.deckmode` 에서는 풀린다. */
+body.playmode{touch-action:none}
+body.playmode .wrap{
+  position:fixed;
+  top:var(--safeT); right:var(--safeR); bottom:var(--safeB); left:var(--safeL);
+  height:auto; max-width:none; padding:3px 4px 8px;
+  display:flex; flex-direction:column; overflow:hidden}
+/* 이제 판의 높이는 **화면이 정한다** — 글이 길어지든 카드가 많아지든 밖으로 못 나간다.
+   예전에는 `#screen` 이 안 늘어나서 `.main{flex:1}` 이 놀고 있었고, 판 높이를 **내용**이
+   정했다. 그래서 내용이 커지면 화면을 넘쳤다. */
+body.playmode #screen{flex:1;min-height:0;display:flex;flex-direction:column}
+body.playmode .main{flex:1;min-height:0}
+/* 확대창은 제 안에서 세로로 굴러야 한다 — 몸통의 touch-action:none 이 그것까지 막는다 */
+.zoom{touch-action:pan-y}
 .zoom,.logbox{overscroll-behavior:contain}
 
 /* ══ 덱 편집 화면만은 **스크롤한다** ═══════════════════════════════════════

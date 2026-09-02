@@ -1281,19 +1281,50 @@ const TEN =path.join(__dirname,'..','data','cards.json');
 
   /* ── 37) 판이 위로 밀려 올라가지 않는다 ────────────────────────────
      성권: "게임하다보면 화면이 상단으로 밀려 올라가는 증상이 자꾸 생겨."
-     ⚠ 원인은 iOS 쪽(패닝·핀치)이라 여기서 그대로 재현할 수는 없다. 대신 **밀렸을 때
-       스스로 되돌아오는지**를 잰다 — 원인이 무엇이든 증상은 그걸로 끝난다. */
+           "똑같이 발생하네.. 모바일에서 계속 위아래로 화면이 움직여"
+
+     ⚠⚠ 처음엔 **밀리면 되돌리는** 코드(snapTop)로 막으려 했다. 그게 오히려 떨림의
+       원인이었다 — 밀림 → scrollTo(0,0) → 그게 또 scroll 을 낳음 → 다시 당김 …
+       핀치 뒤에는 visualViewport 가 0 으로 안 돌아와 되먹임이 안 멈췄다.
+
+     그래서 이제 재는 것이 **바뀌었다**. '되돌아오는가' 가 아니라
+     **애초에 밀릴 수 있는 문서가 아닌가** 를 본다(구조적 보장).
+       ① 판의 겉틀이 position:fixed 로 뷰포트에 못박혀 있다
+       ② 그래서 스크롤할 거리가 0 이다 — 억지로 늘려도 판은 그대로다
+       ③ touch-action:none 이라 손가락으로 끌 수도 없다
+     ⚠ 이 셋 중 하나라도 깨지면 성권의 증상이 돌아온다. 스크롤 교정 코드로 때우지 말 것. */
   const SC=await p.evaluate(async()=>{
     const D=window.ETGDBG;
     const wait=ms=>new Promise(r=>setTimeout(r,ms));
     D.startGame(D.deckList(D.autoDeck(6)),6); D.render();
-    document.documentElement.style.height='2000px';   /* 억지로 스크롤할 거리를 만든다 */
+    const wrap=document.querySelector('.wrap');
+    const cs=getComputedStyle(wrap), bs=getComputedStyle(document.body);
+    const de=document.scrollingElement||document.documentElement;
+    const room=de.scrollHeight-de.clientHeight;      /* 스크롤할 거리 자체가 없어야 한다 */
+    /* 억지로 문서를 늘려 봐도 판(고정된 겉틀)은 제자리여야 한다 */
+    const before=wrap.getBoundingClientRect().top;
+    const pad=document.createElement('div');
+    pad.style.cssText='height:2000px'; document.body.appendChild(pad);
     window.scrollTo(0,400); await wait(120);
-    const battle=window.scrollY;
-    document.documentElement.style.height='';
+    const after=wrap.getBoundingClientRect().top;
+    pad.remove(); window.scrollTo(0,0);
     D.G=null;
-    return {battle};});
-  ok('전투 중에는 화면이 도로 제자리로', SC.battle===0, `밀린 뒤 scrollY ${SC.battle}`);
+    return {pos:cs.position, ta:bs.touchAction, play:document.body.classList.contains('playmode'),
+            room, before, after};});
+  ok('전투 판은 뷰포트에 못박혀 있다', SC.play&&SC.pos==='fixed',
+     `playmode ${SC.play} · position ${SC.pos}`);
+  ok('전투 중에는 스크롤할 거리가 없다', SC.room<=0, `여유 ${SC.room}px`);
+  ok('문서가 밀려도 판은 안 움직인다', Math.abs(SC.after-SC.before)<0.5,
+     `${SC.before.toFixed(1)} → ${SC.after.toFixed(1)}`);
+  ok('전투 중에는 손가락으로 못 끈다', SC.ta==='none', `touch-action ${SC.ta}`);
+  /* ⚠⚠ 되먹임 재발 방지 — `scroll` 이벤트를 받아서 스크롤 위치를 되돌리는 코드가
+     다시 들어오면 성권의 떨림이 그대로 돌아온다. 소스에서 아예 막는다. */
+  const fs=require('fs');
+  const SRC=fs.readFileSync(path.join(__dirname,'..','prototype','etg','etg.template.html'),'utf8');
+  const feedback=/addEventListener\(\s*['"]scroll['"][^)]*\)/.test(SRC)
+                 ||/visualViewport\.addEventListener/.test(SRC);
+  ok('스크롤을 코드로 되돌리지 않는다', !feedback,
+     feedback?'scroll 되먹임 코드가 되살아났다':'없음');
   const SD=await p.evaluate(async()=>{
     const wait=ms=>new Promise(r=>setTimeout(r,ms));
     document.getElementById('quit').click();      /* '덱으로' — 실제 경로로 돌아간다 */

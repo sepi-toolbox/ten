@@ -1033,3 +1033,56 @@ openEtG 의 `Tgt::devour` / `Tgt::paradox` / `Tgt::butterfly` 그대로 **겨냥
 
 최악의 판(손패 8 · 크리처 12 · 독 12 · 기록 20줄 · 360px 폭)에서도
 667 / 844 / 932 세 높이 모두 화면 안에 든다.
+
+---
+
+## 21. 화면이 떨던 진짜 원인은 내 코드였다 (v0.33.0)
+
+성권: "똑같이 발생하네.. 이 문제 어떻게든 찾아서 해결해야 해.
+모바일에서 계속 위아래로 화면이 움직여."
+
+### 범인
+
+16절에서 내가 넣은 `snapTop` 이다.
+
+```js
+function snapTop(){ if(scrollY) window.scrollTo(0,0); }
+addEventListener('scroll', snapTop);
+visualViewport.addEventListener('scroll', snapTop);
+visualViewport.addEventListener('resize', snapTop);
+```
+
+"밀리면 되돌린다" 는 생각이었는데, 되돌리는 행동이 **다시 `scroll` 을 낳는다.**
+밀림 → 내가 당김 → 그게 또 이벤트 → 또 당김 … 그리고 핀치로 한 번 확대되고 나면
+`visualViewport.offsetTop` 이 0 으로 돌아오지 않아서 **이 되먹임이 영영 안 멈춘다.**
+성권 눈에는 화면이 위아래로 계속 떠는 것으로 보였다.
+
+즉 17절·20절에서 고친 것들은 다 맞는 수리였지만, 증상이 남은 이유는 따로 있었다 —
+**증상을 지우려고 넣은 코드가 증상을 만들고 있었다.**
+
+### 고친 방식 — 되돌리지 않고, 못 밀리게 한다
+
+스크롤 위치를 코드로 교정하는 일은 **항상 브라우저와의 싸움**이 된다. 그래서 전부 지우고,
+판이 애초에 스크롤될 수 없는 물건이 되게 했다.
+
+```css
+body.playmode      { touch-action:none }              /* 손가락으로 끌 수도 없다 */
+body.playmode .wrap{ position:fixed;                  /* 뷰포트에 못박는다 */
+  top:var(--safeT); right:var(--safeR); bottom:var(--safeB); left:var(--safeL);
+  display:flex; flex-direction:column; overflow:hidden }
+```
+
+`playmode` 는 **'지금 판이다'** 를 뜻하는 표시다.
+⚠ 처음에 `body:not(.deckmode)` 로 적었더니 **카드 에디터에도 걸려서** 목록이 안 굴러갔다 —
+에디터는 같은 엔진 파일을 쓰지만 덱 화면이 아니기 때문이다. 그래서 따로 켠다.
+
+### 못 박은 것
+
+검사가 재는 것도 바뀌었다. '밀린 뒤 돌아오는가' 가 아니라 **밀릴 수 있는 물건인가** 를 본다.
+
+- 겉틀이 `position:fixed` 이고 `playmode` 가 켜져 있다
+- 스크롤할 거리가 0 이다 — 문서를 2000px 늘려서 `scrollTo(0,400)` 해도 판은 0.0px 그대로
+- `touch-action:none` 이다
+- **소스에 `scroll` 되먹임 코드가 다시 생기면 빨간불** (같은 실수를 두 번 하지 않으려고)
+
+덱 화면과 에디터는 그대로 스크롤된다(검사에 있음).
