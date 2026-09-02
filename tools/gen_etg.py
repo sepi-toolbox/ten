@@ -177,7 +177,7 @@ ABILKO = {
 "Gravity Pull":"중력 견인","Growth":"성장","Guard":"수문","Hasten":"재촉","Hatch":"부화",
 "Heal":"치유","Ignite (Sacrifice card)":"점화","Immortality":"불멸","Improved Mutation":"개량 돌연변이",
 "Infection":"감염","Inflate":"팽창","Liquid Shadow":"액체 그림자","Luciferin":"루시페린",
-"Lycanthropy":"수화","Mutation":"돌연변이","Nymph's tears":"님프의 눈물","Paradox":"역설",
+"Lycanthropy":"변이","Mutation":"돌연변이","Nymph's tears":"님프의 눈물","Paradox":"역설",
 "Petrify":"석화","Photosynthesis":"광합성","Poison":"독","Precognition":"예지",
 "Psionic wave":"정신파","Rage":"분노","Rebirth":"환생","Scarab":"스카라브 소환","Steam":"증기",
 "Stone form":"돌 형상","Unstable gas":"불안정한 기체","Web":"거미줄","Sniper":"저격",

@@ -209,6 +209,55 @@ const ok = (name, cond, note) => {
   });
   ok('개조가 없으면 원본 그대로', clean === 0, `어긋난 값 ${clean}개`);
 
+  /* ── 10) 굵게·기울임 ──────────────────────────────────────────────
+     성권: "** 이거 넣으면 굵은거, * 넣으면 이탤릭 이런거 적용좀 해줘"
+     ⚠⚠ 여기서 같이 재야 하는 것이 **글자 그대로 나가지 않는가** 다. 마크다운을 붙이면
+       esc 순서를 틀리기 쉬운데, 그러면 성권이 적은 태그가 진짜 태그가 되어 카드가 깨진다. */
+  const md = await p.evaluate(() => {
+    const D = window.ETGDBG, E = window.EDDBG;
+    D.setMod({}); D.applyMod();
+    const c = D.BYNAME['Fire Bolt'].code;
+    E.putCard(c, 'txt', '**굵게** 와 *기울임* 과 <b>손으로 쓴 태그</b>');
+    const d = document.createElement('div');
+    d.innerHTML = D.etgCardHTML(D.CARD[c], { size: 'md' });
+    const eff = d.querySelector('.teff');
+    const r = { b: [...eff.querySelectorAll('b')].map(x => x.textContent),
+                i: [...eff.querySelectorAll('i:not(.elp)')].map(x => x.textContent),
+                text: eff.textContent, star: /\*/.test(eff.textContent) };
+    D.setMod({}); D.saveMod(); D.applyMod();
+    return r;
+  });
+  ok('**굵게** 가 굵어진다', md.b.length === 1 && md.b[0] === '굵게', md.b.join(','));
+  ok('*기울임* 이 기운다', md.i.length === 1 && md.i[0] === '기울임', md.i.join(','));
+  ok('별표는 글에 안 남는다', md.star === false, md.text);
+  /* ⚠ 손으로 적은 <b> 는 **글자로 보여야 한다** — 태그로 살아나면 남의 개조를 받았을 때
+     카드 한 장이 판 전체를 헤집을 수 있다. */
+  ok('손으로 쓴 태그는 글자로 남는다', /<b>손으로 쓴 태그<\/b>/.test(md.text), md.text);
+
+  /* ── 11) 주소로 받은 개조가 열자마자 걸린다 ───────────────────────
+     개조는 이 기기에만 산다. 링크 한 번으로 옮길 수 없으면 폰에서 JSON 을 붙여넣어야 한다. */
+  const payload = { card: { 1101: { ko: '아포리아 집행자', txt: '**변이** [이상] 하나' } },
+                    el: { 1: '이상' } };
+  const b64 = Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
+  await p.goto(EDIT + '#mod=' + b64);
+  await p.waitForFunction(() => window.EDDBG);
+  const hash = await p.evaluate(() => {
+    const D = window.ETGDBG;
+    const d = document.createElement('div');
+    d.innerHTML = D.etgCardHTML(D.CARD[1101], { size: 'md' });
+    return { el1: D.ELKO[1], ko: D.CARD[1101].ko,
+             pip: (d.querySelector('.teff .elp') || {}).title,
+             bold: (d.querySelector('.teff b') || {}).textContent,
+             left: location.hash, saved: !!localStorage.getItem(D.MODKEY) };
+  });
+  ok('주소로 받은 개조가 걸린다',
+     hash.el1 === '이상' && hash.ko === '아포리아 집행자' && hash.bold === '변이'
+     && hash.pip === '이상' && hash.saved,
+     `${hash.ko} · ${hash.el1} · 구슬 ${hash.pip}`);
+  /* ⚠⚠ 주소에 남겨 두면 새로고침할 때마다 옛 개조가 그 뒤 작업을 덮어쓴다. */
+  ok('쓰고 나면 주소에서 지운다', hash.left === '', `남은 주소 "${hash.left}"`);
+  await p.evaluate(() => { const D = window.ETGDBG; D.setMod({}); D.saveMod(); D.applyMod(); });
+
   if (errs.length) { bad++; console.log('   ERR', errs.slice(0, 3)); }
   console.log(bad ? `❌ ${bad}건 실패` : '✅ 전부 통과');
   await b.close();

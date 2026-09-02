@@ -1380,7 +1380,7 @@ body{padding:0;height:100dvh;overflow:hidden;
   ■ 원작 규칙 중 여기서 지킨 것
     · 퀀텀은 **속성별로 쌓인다**(최대 75). 턴마다 초기화되지 않는다. ← TEN 과 가장 큰 차이
     · 기둥/탑/진자와 문장은 **자기 턴이 끝날 때** 퀀텀을 만든다 (openEtG v_endturn 순서 그대로)
-    · **막기가 없다.** 유닛는 언제나 상대 얼굴을 때리고, 실드만 그 피해를 깎는다
+    · **막기가 없다.** 유닛은 언제나 상대 얼굴을 때리고, 실드만 그 피해를 깎는다
     · 소환 멀미가 없다 — 낸 턴에 바로 때리고 능력도 쓴다
     · 체력 100, 덱 30~60장, 같은 카드 6장까지, 손패 8장 상한, 덱이 마르면 패배
     · 유닛 23칸 · 노드 16칸 · 웨폰 1 · 실드 1
@@ -1494,7 +1494,7 @@ body.deckmode .wrap{height:auto}
 
 /* 카드 그림 자리 — 이 모드는 일러스트가 없다. 원작 아트는 우리 것이 아니라 싣지 않았다.
    빈 상자로 두면 무슨 카드인지 알 수가 없으므로 **속성과 종류**를 앉힌다.
-   ⚠ 종류(액션·유닛·노드·웨폰·실드)는 테두리 모양만으로는 안 갈린다 — 본편은 유닛가
+   ⚠ 종류(액션·유닛·노드·웨폰·실드)는 테두리 모양만으로는 안 갈린다 — 본편은 유닛이
      대부분이라 테두리로 됐지만 여기는 다섯 종류가 고루 섞인다. 글로 적어야 한다. */
 /* 속성·종류 — **발치 줄 가운데**. 이미 있는 줄이라 카드 높이가 하나도 안 늘어난다.
    ⚠ 그림 자리(.tart)에는 아무것도 얹지 않는다. 나중에 일러스트가 들어갈 자리다. */
@@ -1517,6 +1517,11 @@ body.deckmode .wrap{height:auto}
   background:var(--ec);border:1px solid rgba(0,0,0,.5);
   box-shadow:inset 0 0 0 .5px rgba(255,255,255,.28);
   vertical-align:-.06em;margin:0 .1em}
+/* 글 속의 **굵게** · *기울임* — 성권이 카드 글을 직접 쓰기 때문에 받는다.
+   ⚠⚠ 속성 구슬도 `<i>` 다(.elp). 기울임을 그냥 `i` 로 잡으면 **구슬까지 기운다.**
+     그래서 구슬을 뺀 i 만 기울인다. */
+.teff i:not(.elp),.kd i:not(.elp){font-style:italic}
+.teff b,.kd b{font-weight:800}
 /* 비용이 7 이상이면 구슬 대신 숫자 — 구슬 15개는 머리줄을 넘친다 */
 .cpn{font-family:'Cinzel',serif;font-weight:700;font-size:calc(var(--cw)*.095);
   color:var(--ink);margin-left:calc(var(--cw)*.03);line-height:1}
@@ -1545,7 +1550,7 @@ body.deckmode .wrap{height:auto}
 .board.empty::after{content:'유닛'}
 
 /* ⚠⚠ 웨폰·실드는 **판에 하나씩뿐인 자리**다 — 새로 내면 앞의 것이 사라진다.
-   그런데 기둥·노드과 같은 줄에 그냥 섞여 있어서, 어느 게 웨폰인지 알 수가 없었다
+   그런데 기둥·노드와 같은 줄에 그냥 섞여 있어서, 어느 게 웨폰인지 알 수가 없었다
    (성권: "무기, 방패 슬롯이 없는데 어디에 놔?").
    줄을 새로 만들지 않고(전투는 한 화면 안에서 끝나야 한다) **양 끝에 못박는다.**
    비어 있을 때도 테두리와 이름이 보여서 '여기가 그 자리' 라는 게 늘 보인다. */
@@ -1956,7 +1961,8 @@ function drawSheet(){
       <textarea data-f="txt" rows="3" placeholder="${esc(autoText(c))}">${esc(c.txt||'')}</textarea>
       <div class="ehint">원래 글: ${esc(autoText(c))}</div>
       <div class="ehint">대괄호 <b>[불]</b> 처럼 적으면 <b>속성 구슬</b>로 바뀐다.
-        이름을 바꿨다면 바꾼 이름(<b>[이상]</b>)으로 적어도 되고, 원래 이름으로 적어도 된다.</div></div>
+        이름을 바꿨다면 바꾼 이름(<b>[이상]</b>)으로 적어도 되고, 원래 이름으로 적어도 된다.</div>
+      <div class="ehint">별 두 개 <b>**굵게**</b> · 별 하나 <b>*기울임*</b>.</div></div>
     ${drift.length?`<div class="warn">숫자를 바꿨는데 설명에 옛 값(${
         drift.map(f=>og[f]).join(' · ')})이 그대로 남아 있다. 설명도 같이 고칠 것.</div>`:''}
     <div class="ef"><label>원문 (Elements the Game)</label>
@@ -2040,6 +2046,35 @@ $('#io').onclick=()=>{
     D.setMod({}); D.saveMod(); D.applyMod(); closeSheet();
   };
 };
+
+/* ── 주소로 받기 ────────────────────────────────────────────────────
+   개조는 이 기기의 localStorage 에만 산다. 그래서 남이(내가) 만든 개조를 성권 폰에
+   넣을 방법이 '글을 복사해 붙여넣기' 뿐이었다 — 폰에서 JSON 을 다루는 건 고역이다.
+   주소 뒤에 `#mod=<base64(JSON)>` 을 붙이면 **열자마자 적용**한다. 링크 한 번이면 끝.
+   ⚠ 적용한 뒤 주소에서 지운다 — 남겨 두면 새로고침할 때마다 성권이 그 뒤로 고친 것을
+     이 옛 개조가 덮어써 버린다(그게 제일 억울한 버그다).
+   ⚠ 한글이 들어가므로 base64 는 UTF-8 로 풀어야 한다 — atob 만 쓰면 글자가 깨진다. */
+function fromHash(){
+  const m=/[#&]mod=([^&]+)/.exec(location.hash||''); if(!m)return;
+  try{
+    /* ⚠ base64url 은 흔히 `=` 채움을 뗀 채로 온다(Buffer.toString('base64url') 이 그렇다).
+       그대로 atob 에 주면 길이가 안 맞아 통째로 실패한다 — 다시 채워 준다. */
+    let b=decodeURIComponent(m[1]).replace(/-/g,'+').replace(/_/g,'/');
+    while(b.length%4) b+='=';
+    const bin=atob(b);
+    const txt=new TextDecoder().decode(Uint8Array.from(bin,ch=>ch.charCodeAt(0)));
+    const mod=JSON.parse(txt);
+    if(typeof mod!=='object'||!mod) throw 0;
+    D.setMod(mod); D.saveMod(); D.applyMod();
+    history.replaceState(null,'',location.pathname+location.search);
+    if(window.EDDBG) draw();          /* 이미 열려 있던 화면이면 다시 그린다 */
+  }catch(e){ console.warn('주소로 받은 개조를 못 읽었다',e); }
+}
+fromHash();
+/* ⚠⚠ **에디터를 이미 열어 둔 채로** 링크를 누르면 주소의 해시만 바뀌고 페이지는 다시
+   열리지 않는다(같은 문서 이동이다). 그러면 링크를 눌렀는데 아무 일도 안 일어난다 —
+   받는 사람 눈에는 그냥 고장이다. 해시가 바뀌는 것도 듣는다. */
+addEventListener('hashchange',fromHash);
 
 draw();
 window.EDDBG={get MOD(){return D.MODREF;},draw,openCard,closeSheet,put,putCard,

@@ -38,7 +38,7 @@
   ■ 원작 규칙 중 여기서 지킨 것
     · 퀀텀은 **속성별로 쌓인다**(최대 75). 턴마다 초기화되지 않는다. ← TEN 과 가장 큰 차이
     · 기둥/탑/진자와 문장은 **자기 턴이 끝날 때** 퀀텀을 만든다 (openEtG v_endturn 순서 그대로)
-    · **막기가 없다.** 유닛는 언제나 상대 얼굴을 때리고, 실드만 그 피해를 깎는다
+    · **막기가 없다.** 유닛은 언제나 상대 얼굴을 때리고, 실드만 그 피해를 깎는다
     · 소환 멀미가 없다 — 낸 턴에 바로 때리고 능력도 쓴다
     · 체력 100, 덱 30~60장, 같은 카드 6장까지, 손패 8장 상한, 덱이 마르면 패배
     · 유닛 23칸 · 노드 16칸 · 웨폰 1 · 실드 1
@@ -152,7 +152,7 @@ body.deckmode .wrap{height:auto}
 
 /* 카드 그림 자리 — 이 모드는 일러스트가 없다. 원작 아트는 우리 것이 아니라 싣지 않았다.
    빈 상자로 두면 무슨 카드인지 알 수가 없으므로 **속성과 종류**를 앉힌다.
-   ⚠ 종류(액션·유닛·노드·웨폰·실드)는 테두리 모양만으로는 안 갈린다 — 본편은 유닛가
+   ⚠ 종류(액션·유닛·노드·웨폰·실드)는 테두리 모양만으로는 안 갈린다 — 본편은 유닛이
      대부분이라 테두리로 됐지만 여기는 다섯 종류가 고루 섞인다. 글로 적어야 한다. */
 /* 속성·종류 — **발치 줄 가운데**. 이미 있는 줄이라 카드 높이가 하나도 안 늘어난다.
    ⚠ 그림 자리(.tart)에는 아무것도 얹지 않는다. 나중에 일러스트가 들어갈 자리다. */
@@ -175,6 +175,11 @@ body.deckmode .wrap{height:auto}
   background:var(--ec);border:1px solid rgba(0,0,0,.5);
   box-shadow:inset 0 0 0 .5px rgba(255,255,255,.28);
   vertical-align:-.06em;margin:0 .1em}
+/* 글 속의 **굵게** · *기울임* — 성권이 카드 글을 직접 쓰기 때문에 받는다.
+   ⚠⚠ 속성 구슬도 `<i>` 다(.elp). 기울임을 그냥 `i` 로 잡으면 **구슬까지 기운다.**
+     그래서 구슬을 뺀 i 만 기울인다. */
+.teff i:not(.elp),.kd i:not(.elp){font-style:italic}
+.teff b,.kd b{font-weight:800}
 /* 비용이 7 이상이면 구슬 대신 숫자 — 구슬 15개는 머리줄을 넘친다 */
 .cpn{font-family:'Cinzel',serif;font-weight:700;font-size:calc(var(--cw)*.095);
   color:var(--ink);margin-left:calc(var(--cw)*.03);line-height:1}
@@ -203,7 +208,7 @@ body.deckmode .wrap{height:auto}
 .board.empty::after{content:'유닛'}
 
 /* ⚠⚠ 웨폰·실드는 **판에 하나씩뿐인 자리**다 — 새로 내면 앞의 것이 사라진다.
-   그런데 기둥·노드과 같은 줄에 그냥 섞여 있어서, 어느 게 웨폰인지 알 수가 없었다
+   그런데 기둥·노드와 같은 줄에 그냥 섞여 있어서, 어느 게 웨폰인지 알 수가 없었다
    (성권: "무기, 방패 슬롯이 없는데 어디에 놔?").
    줄을 새로 만들지 않고(전투는 한 화면 안에서 끝나야 한다) **양 끝에 못박는다.**
    비어 있을 때도 테두리와 이름이 보여서 '여기가 그 자리' 라는 게 늘 보인다. */
@@ -326,7 +331,7 @@ body.deckmode .wrap{height:auto}
 <script src="data.js"></script>
 <script>
 'use strict';
-const VERSION='0.37.0', BUILD='2026-09-02';
+const VERSION='0.38.0', BUILD='2026-09-02';
 /* ⚠ 제목줄은 없다 — 성권: "배틀 유아이에서도 헤더 지우고 넓게 써".
    판 번호는 덱 화면 발치 한 줄에만 남는다(배포 확인이 이 번호에 걸려 있다). */
 
@@ -462,7 +467,7 @@ def('photosynthesis',null,'생명 퀀텀 2를 얻고, 이 능력을 다시 쓸 �
 });
 /* ⚠⚠ 원작 카드 글은 3 이라 적혀 있는데 **openEtG 원작판 코드는 기본 2 · 강화 3** 이다
    (`if cardset==Original && !Upped {2} else {3}`). 수치는 코드를 따른다. */
-def('soulcatch',null,'유닛가 죽을 때마다 죽음 퀀텀 {N} 을 얻는다',(g,me,s)=>{ gain(me,2,s.up?3:2); });
+def('soulcatch',null,'유닛이 죽을 때마다 죽음 퀀텀 {N} 을 얻는다',(g,me,s)=>{ gain(me,2,s.up?3:2); });
 /* ⚠⚠ 유지 비용(유닛 8마리마다 1)은 **openEtG 신판 전용**이다
    (`if ctx.cardset() == CardSet::Open`). 이 모드는 원작판이라 값을 내지 않는다.
    skilltext.json 의 설명만 보고 넣었다가, 소스를 읽고 되돌렸다. */
@@ -502,7 +507,7 @@ def('v_storm',null,'상대 유닛 전부에게 피해 {N}',(g,me,s,t,a)=>{
 });
 /* ⚠ 원문: "attacking creatures have a 75% chance to be **infected**" — 피해는 없다.
    피해 2 를 얹어 두는 바람에 원작보다 훨씬 센 실드가 돼 있었다. */
-def('v_thorn',null,'때린 유닛가 75% 확률로 독에 걸린다',(g,me,s,t)=>{
+def('v_thorn',null,'때린 유닛이 75% 확률로 독에 걸린다',(g,me,s,t)=>{
   if(!t||t.kind!=='creature')return;
   if(Math.random()<0.75) addPoison(t,1);
 });
@@ -510,7 +515,7 @@ def('v_firewall',null,'때린 유닛에게 피해 1',(g,me,s,t)=>{ if(t) spellDm
 def('snipe','cr','대상 유닛에게 피해 3',(g,me,s,t)=>{ spellDmg(me,t,3); });
 /* ⚠ 원문: "Frozen creatures deal **50% more** damage. Poisoned creatures **transfer poisons**."
    얼면 두 배로 때리고 있었고(1.5배다), 독은 옮기지 않았다. */
-def('catapult','mycr','자기 유닛를 던진다. 체력이 클수록 큰 피해. 얼어 있으면 1.5배, 독은 상대에게 옮긴다',
+def('catapult','mycr','자기 유닛을 던진다. 체력이 클수록 큰 피해. 얼어 있으면 1.5배, 독은 상대에게 옮긴다',
   (g,me,s,t)=>{
     if(!t)return;
     /* openEtG 공식 그대로: (체력 × (얼었으면 151, 아니면 101) + 99) / (체력 + 100), 내림 */
@@ -555,11 +560,11 @@ def('v_cseed','cr','대상에게 무작위 효과',(g,me,s,t)=>{ randomEffect(me
 /* ⚠ 원문에 "Can not be destroyed or stolen" 이라 적힌 카드는 여기서 걸러진다.
    노드 스스로 사라지는 길(유지 비용·희생)까지 막으면 안 되므로 **바깥에서 손대는
    두 길**에서만 막는다. */
-def('destroy','pm','대상 노드을 파괴한다',(g,me,s,t)=>{
+def('destroy','pm','대상 노드를 파괴한다',(g,me,s,t)=>{
   if(isFixed(t)){ log(`${t.c.ko} 은(는) 파괴되지 않는다`,'c'); return; }
   destroyPerm(t,me);
 });
-def('v_steal','pm','대상 노드을 빼앗는다',(g,me,s,t)=>{
+def('v_steal','pm','대상 노드를 빼앗는다',(g,me,s,t)=>{
   if(isFixed(t)){ log(`${t.c.ko} 은(는) 빼앗기지 않는다`,'c'); return; }
   stealPerm(me,t);
 });
@@ -589,8 +594,8 @@ def('lobotomize','cr','대상의 능력과 관성·염동을 지운다',(g,me,s,
   t.flags=t.flags.filter(f=>f!=='momentum'&&f!=='psionic');
 });
 def('v_silence',null,'상대는 다음 턴에 카드를 낼 수 없다',(g,me)=>{ foe(me).sabbath=true; });
-def('appease','mycr','자기 유닛를 희생하고 +1|+1 을 얻는다',(g,me,s,t)=>{ kill(t); buff(s,1,1); });
-def('devour','devour','체력이 자기보다 작은 유닛를 먹고 +1|+1. 유독한 몸을 먹으면 자기도 중독된다',
+def('appease','mycr','자기 유닛을 희생하고 +1|+1 을 얻는다',(g,me,s,t)=>{ kill(t); buff(s,1,1); });
+def('devour','devour','체력이 자기보다 작은 유닛을 먹고 +1|+1. 유독한 몸을 먹으면 자기도 중독된다',
   (g,me,s,t)=>{
     if(!t||t.hp>=s.hp)return;
     const venom=t.flags.includes('poisonous');
@@ -609,9 +614,9 @@ def('rage','cr','대상에게 +{N} 공격력. 그만큼 액션 피해를 입는�
 def('platearmor','cr','대상에게 +0|+{N}',(g,me,s,t,a)=>{ buff(t,0,a||4); });
 def('v_stoneform',null,'+0|+20 을 얻고 능력을 잃는다',(g,me,s)=>{ buff(s,0,20); s.sk=[]; });
 /* ⚠ 이건 **눌러서 쓰는 능력**이다(불의 정령·숲의 정령·중력자 불먹보 — 비용을 낸다).
-   독수리·콘도르에서는 같은 id 가 **유닛가 죽을 때마다** 도는 쪽으로 붙는다.
+   독수리·콘도르에서는 같은 id 가 **유닛이 죽을 때마다** 도는 쪽으로 붙는다.
    그래서 설명에 '언제' 를 적으면 한쪽이 반드시 거짓말이 된다 — '무엇을' 만 적고,
-   '언제' 는 확대창의 머리말(능력 · N불 / 유닛가 죽을 때마다)이 말하게 둔다.
+   '언제' 는 확대창의 머리말(능력 · N불 / 유닛이 죽을 때마다)이 말하게 둔다.
    성권이 "불의 정령은 공격할 때가 아니라 눌러서 쓰는 것 아니냐" 고 짚어 준 자리다. */
 def('growth',null,'+{A}|+{H} 를 얻는다',(g,me,s,t,a,ar)=>{
   const A=(ar&&ar.length?ar[0]:(a||2)), H=(ar&&ar.length>1?ar[1]:A);
@@ -621,7 +626,7 @@ def('v_bblood','cr','대상에게 +0|+20. 6턴 동안 공격도 능력도 못 �
 /* ⚠ openEtG 는 `delay(t, 2)` — **두 턴**이다. 한 턴으로 적어 뒀었다. */
 def('v_slow','cr','대상을 2턴 동안 못 움직이게 한다 (겹쳐 쌓인다)',(g,me,s,t)=>{ if(t) t.delayed=(t.delayed||0)+2; });
 def('freeze','crw','대상을 {N}턴 얼린다',(g,me,s,t,a)=>{ freeze(t,a||3); });
-def('v_cold',null,'때린 유닛를 확률로 3턴 얼린다',(g,me,s,t)=>{ if(t&&Math.random()<0.3) freeze(t,3); });
+def('v_cold',null,'때린 유닛을 확률로 3턴 얼린다',(g,me,s,t)=>{ if(t&&Math.random()<0.3) freeze(t,3); });
 def('purify','cr','독을 씻어내고 오히려 독 -{N} 을 준다',(g,me,s,t,a)=>{
   const n=a||2; t.poison=Math.min((t.poison||0)-n,-n);
 });
@@ -732,7 +737,7 @@ def('v_integrity',null,'손에 있는 파편을 모두 합쳐 골렘 하나를 �
   });
 
 /* ── 회복 ──────────────────────────────────────────────────────────────── */
-def('mend','cr','대상 유닛를 5 회복시킨다',(g,me,s,t)=>{ healThing(t,s.up?10:5); });
+def('mend','cr','대상 유닛을 5 회복시킨다',(g,me,s,t)=>{ healThing(t,s.up?10:5); });
 def('v_heal',null,'체력을 20 회복한다',(g,me,s)=>{ heal(me,s.up?24:20); });
 def('miracle',null,'체력을 최대치보다 1 낮게 채운다. 빛 퀀텀을 모두 잃는다',(g,me)=>{
   me.q[8]=0; me.hp=Math.max(me.hp,me.maxhp-1);
@@ -749,7 +754,7 @@ def('summon',null,'{SUM} 을(를) 부른다',(g,me,s,t,a)=>{
   if(c) summon(me,c.code);
 });
 /* ⚠ 원문은 "random **elite** creature" — 강화판으로 부화한다. */
-def('v_hatch',null,'무작위 강화 유닛로 변한다',(g,me,s)=>{
+def('v_hatch',null,'무작위 강화 유닛으로 변한다',(g,me,s)=>{
   const base=ETG.cards.filter(c=>c.kind==='creature'&&!c.up&&playable(c)&&c.upcode);
   const c=base[rnd(base.length)];
   morph(s,CARD[c.upcode]?c.upcode:c.code);
@@ -766,7 +771,7 @@ def('mitosisspell','mycr','대상이 +0|+1 과 유사분열 능력을 얻는다 
 def('parallel','cr','대상을 그대로 복제해 자기 편에 놓는다',(g,me,s,t)=>{
   const u=summon(me,t.c.code); if(u){ u.atk=t.atk; u.hp=u.maxhp=t.hp; u.flags=t.flags.slice(); }
 });
-def('fractal','cr','손패를 그 유닛로 채운다',(g,me,s,t)=>{
+def('fractal','cr','손패를 그 유닛으로 채운다',(g,me,s,t)=>{
   me.q[12]=0; while(me.hand.length<HANDMAX) me.hand.push(mk(t.c.code,me));
 });
 def('phoenix',null,'죽으면 잿더미가 남는다',(g,me,s)=>{
@@ -808,17 +813,17 @@ def('v_serendipity',null,'무작위 카드 3장을 손에 넣는다 (적어도 �
 });
 /* ⚠ openEtG: "Whenever a creature **which isn't a Skeleton** dies". 해골이 죽어도
    또 해골이 나와서, 해골 한 마리가 판이 찰 때까지 불어나고 있었다. */
-def('boneyard',null,'해골이 아닌 유닛가 죽을 때마다 해골이 나온다',(g,me,s,t)=>{
+def('boneyard',null,'해골이 아닌 유닛이 죽을 때마다 해골이 나온다',(g,me,s,t)=>{
   if(t&&t.c&&/Skeleton$/.test(t.c.en))return;
   const c=BYNAME['Skeleton']; if(c) summon(me,s.up&&c.upcode?c.upcode:c.code);
 });
-def('v_flyingweapon','pm','웨폰가 유닛가 되어 날아오른다',(g,me,s,t)=>{
+def('v_flyingweapon','pm','웨폰이 유닛이 되어 날아오른다',(g,me,s,t)=>{
   if(!t||t.kind!=='weapon')return;
   const u=summon(me,t.c.code); if(u){ u.kind='creature'; u.flags=u.flags.concat(['airborne']); }
   me.weapon=null;
 });
 /* ⚠⚠ 원문: "Gain the target weapon's **ability** and +X|+2. X is the weapon's attack."
-   ① 겨누는 것은 판 위의 웨폰다(상대 웨폰로 굳혀 놨었다)
+   ① 겨누는 것은 판 위의 웨폰다(상대 웨폰으로 굳혀 놨었다)
    ② **능력을 통째로 베낀다** — 이게 성전사의 본체인데 통째로 빠져 있었다
    ③ 체력도 +2 붙는다 */
 def('v_endow','weapon','겨눈 웨폰의 능력과 +X|+2 를 얻는다 (X 는 그 웨폰의 공격력)',(g,me,s,t)=>{
@@ -835,7 +840,7 @@ def('hasten',null,'카드를 1장 뽑는다',(g,me)=>{ draw(me); });
 /* ⚠⚠ 원문: "The target creature's skill cost is now **zero**.
    [시간] creatures can use their skill twice this turn."
    '이번 턴에 한 번 더' 만 구현돼 있었다 — 비용이 0 이 되는 쪽이 이 카드의 본체다. */
-def('v_readiness','mycr','겨눈 유닛의 능력 비용이 0 이 된다. 시간 유닛는 이번 턴에 한 번 더 쓸 수 있다',
+def('v_readiness','mycr','겨눈 유닛의 능력 비용이 0 이 된다. 시간 유닛은 이번 턴에 한 번 더 쓸 수 있다',
   (g,me,s,t)=>{
     if(!t)return;
     t.cast=0;
@@ -844,11 +849,11 @@ def('v_readiness','mycr','겨눈 유닛의 능력 비용이 0 이 된다. 시간
 /* ⚠⚠ 원문: "Passive: whenever a permanent is destroyed, gain 1|1. Once per turn, when
    **opponent** destroys a permanent, add a copy of that permanent to your hand."
    내가 적어 둔 '상대가 버린 카드를 손에 넣는다' 는 원문에 없는 말이었고, 함수는 `()=>{}` 였다. */
-def('salvage',null,'노드이 부서질 때마다 +1|+1. 상대가 부순 노드은 턴에 한 번 사본이 손에 들어온다',
+def('salvage',null,'노드가 부서질 때마다 +1|+1. 상대가 부순 노드는 턴에 한 번 사본이 손에 들어온다',
   (g,me,s,t,by)=>{
     if(!t)return;
     /* ⚠ '+1|+1' 은 신판 전용이다(`if is_open`). 원작판 조건은
-       **내 턴이 아니고 · 부서진 노드이 내 것이 아닐 때 · 턴에 한 번**. */
+       **내 턴이 아니고 · 부서진 노드가 내 것이 아닐 때 · 턴에 한 번**. */
     if(G.turn===me)return;
     if(t.own===me)return;
     if(!s.salvaged&&me.hand.length<HANDMAX){
@@ -875,18 +880,18 @@ def('v_dshield',null,'한 턴 동안 겨눌 수 없다',(g,me,s)=>{
    (강화판은 원거리도 걸린다). */
 /* ⚠ '원거리는 안 걸린다' 는 **신판 전용**이다. 원작판은 원거리도 걸리고,
    대신 **이미 해골인 몸은 다시 안 걸린다**. */
-def('skull',null,'때린 유닛가 확률로 해골이 된다 (체력이 낮을수록 잘 걸린다)',(g,me,s,t)=>{
+def('skull',null,'때린 유닛이 확률로 해골이 된다 (체력이 낮을수록 잘 걸린다)',(g,me,s,t)=>{
   if(!t||t.kind!=='creature')return;
   if(/Skeleton$/.test(t.c.en))return;
   if(t.hp<=0||rnd(Math.max(1,t.hp*2))===0){ const c=BYNAME['Skeleton']; if(c) morph(t,c.code); }
 });
 def('wings',null,'날지도 원거리도 아닌 공격을 전부 막는다',()=>{});
 def('evade',null,'{N}% 확률로 공격을 흘린다',()=>{});
-def('v_freeevade',null,'내 문장이 바람이면, 날아다니는 내 유닛가 확률로 겨냥을 흘린다 (쌓을수록 확률이 오른다)',()=>{});
+def('v_freeevade',null,'내 문장이 바람이면, 날아다니는 내 유닛이 확률로 겨냥을 흘린다 (쌓을수록 확률이 오른다)',()=>{});
 def('disshield',null,'모든 피해를 막는다. 막은 피해 3마다 엔트로피 퀀텀 1을 쓰고, 못 내면 엔트로피를 다 잃고 부서진다',()=>{});
 def('disfield',null,'모든 피해를 막는다. 막은 피해 1마다 아무 퀀텀 1을 쓰고, 못 내면 퀀텀을 다 잃고 부서진다',()=>{});
 def('blockwithcharge',null,'뼈 하나로 공격 하나를 통째로 막는다',()=>{});
-def('gaincharge',null,'유닛가 죽을 때마다 뼈가 {N} 늘어난다',(g,me,s,t,a)=>{ s.charges=(s.charges||0)+(a||2); });
+def('gaincharge',null,'유닛이 죽을 때마다 뼈가 {N} 늘어난다',(g,me,s,t,a)=>{ s.charges=(s.charges||0)+(a||2); });
 /* ⚠ openEtG 는 **줄이기 전 값이 0 일 때** 사라진다. `줄이고 나서 0` 으로 적어 둬서
    날개·해시계·차원 실드가 전부 한 턴씩 짧게 살았다. */
 def('losecharge',null,'턴마다 한 번씩 닳고, 다 닳으면 사라진다',(g,me,s)=>{
@@ -905,19 +910,19 @@ def('v_dagger',null,'죽음·어둠 문장이면 공격력이 1 오른다',()=>{
 def('v_noluci',null,'',()=>{});
 
 /* ── 기타 지속 ─────────────────────────────────────────────────────────── */
-def('nightfall',null,'모든 야행성 유닛가 +{N}|+1',()=>{});
+def('nightfall',null,'모든 야행성 유닛이 +{N}|+1',()=>{});
 /* ⚠⚠ 성역의 실제 능력 id 는 `sanctuary` 가 아니라 **`regenerate 5,sanctify`** 다.
    그걸 모르고 'sanctuary' 라는 이름으로 새 능력을 만들어 뒀더니, 그 코드는 **아무 카드도
    안 쓰는 죽은 코드**였다(회복은 regenerate 가 1 도 아닌 5 로 하고 있었고, 보호는 없었다).
    id 를 지어내지 말고 표에 적힌 것을 볼 것. */
 def('regenerate',null,'턴 끝에 {N} 회복한다',(g,me,s,t,a)=>{ heal(me,regenN(a)); });
-def('stasis',null,'양쪽 유닛가 턴 끝에 공격하지 않는다 (웨폰는 그대로 때린다)',()=>{});
+def('stasis',null,'양쪽 유닛이 턴 끝에 공격하지 않는다 (웨폰은 그대로 때린다)',()=>{});
 /* ⚠ 내는 것은 **카드 속성**이다(`ctx.get_card(...).element`) — 비용 속성이 아니다. */
 def('upkeep',null,'매 턴 자기 속성 퀀텀 1을 낸다. 못 내면 사라진다',(g,me,s)=>{
   if(!pay(me,s.c.el,1)) destroyPerm(s);
 });
 /* ⚠⚠ 원문: "Add X HP's to your maximum life points. X is the number of [대지] that you own."
-   **유닛가 아니라 내 최대 체력**이다. 유닛에 +0|+N 을 주고 있었다 — 대상이 아예 틀렸다.
+   **유닛이 아니라 내 최대 체력**이다. 유닛에 +0|+N 을 주고 있었다 — 대상이 아예 틀렸다.
    openEtG 원작판은 거기서 이 카드의 비용을 한 번 더 뺀다(vanilla 전용 보정). */
 def('sskin',null,'남은 대지 퀀텀에서 이 카드 비용을 뺀 만큼 내 최대 체력이 늘어난다',(g,me,s)=>{
   const n=Math.max(0,me.q[4]-(s.c.cost||0));
@@ -933,7 +938,7 @@ def('dive',null,'다음 공격의 공격력이 두 배가 된다',(g,me,s)=>{ s.
    @지어냄: 원작은 범람을 깐 **첫 턴만 일곱 칸**을 봐준다(floodingIndex 7). 우리는 늘 여섯
    칸으로 뒀다 — 첫 턴만 다른 규칙은 판에서 읽어 낼 방법이 없어서 혼란만 준다고 봤다. */
 const EDGE=6;
-def('flood',null,'매 턴, 여섯 칸째부터의 유닛를 죽인다. 물 속성 유닛는 무사하다',(g)=>{
+def('flood',null,'매 턴, 여섯 칸째부터의 유닛을 죽인다. 물 속성 유닛은 무사하다',(g)=>{
   [g.me,g.ai].forEach(p=>{
     p.cr.forEach((u,i)=>{
       if(!u||i<EDGE)return;
@@ -946,8 +951,8 @@ def('flood',null,'매 턴, 여섯 칸째부터의 유닛를 죽인다. 물 속�
 });
 /* ⚠⚠⚠ 인내의 파편 — 카드 글("+1/+0; 물 +2/+2, 범람하면 +4/+4")을 보고 **한 번 붙는
    고정 강화**로 만들어 뒀는데, openEtG 원작판(game.rs 공격 차례)은 전혀 다르다:
-     매 턴 **내 유닛를 한 턴 묶고**(그래서 공격하지 않는다) **+2|+2 씩 쌓아 준다.**
-     범람한 칸의 물 유닛는 **+5|+5**.
+     매 턴 **내 유닛을 한 턴 묶고**(그래서 공격하지 않는다) **+2|+2 씩 쌓아 준다.**
+     범람한 칸의 물 유닛은 **+5|+5**.
    즉 이건 '버티면 자란다' 는 카드다. 고정 강화로 두면 카드의 뜻이 통째로 사라진다.
    그래서 aura(syncPatience) 를 걷고, 턴마다 도는 것으로 옮겼다. */
 function patienceTick(p){
@@ -987,7 +992,7 @@ function syncAuras(){
   if(!(G&&G.me&&G.ai))return;
   [G.me,G.ai].forEach(p=>{ syncPatience(p); syncNightfall(p); syncSwarm(p); });
 }
-def('patience',null,'매 턴 내 유닛를 한 턴 묶고 +2|+2 를 쌓아 준다. 범람한 칸의 물 유닛는 +5|+5',()=>{});
+def('patience',null,'매 턴 내 유닛을 한 턴 묶고 +2|+2 를 쌓아 준다. 범람한 칸의 물 유닛은 +5|+5',()=>{});
 /* ⚠⚠ 원문: "Your opponent draws 2 cards, 3 if your mark is [불]. Draw an equal amount of cards."
    **공격력과는 아무 상관이 없다.** 예전 설명("카드를 2장 뽑고 공격력을 올린다")은
    내가 지어낸 것이고, 구현도 내 카드만 두 장 뽑고 상대는 아무것도 안 뽑았다.
@@ -999,7 +1004,7 @@ def('bravery',null,'상대가 카드 2장을 뽑는다(내 문장이 불이면 3
     for(let i=0;i<n;i++){ const b=f.hand.length; draw(f); if(f.hand.length>b)drew++; }
     for(let i=0;i<drew;i++) draw(me);
   });
-def('v_freedom',null,'날아다니는 내 유닛가 확률로 피해 1.5배 · 실드 무시로 때린다 (쌓을수록 확률이 오른다)',()=>{});
+def('v_freedom',null,'날아다니는 내 유닛이 확률로 피해 1.5배 · 실드 무시로 때린다 (쌓을수록 확률이 오른다)',()=>{});
 def('evolve',null,'굴에서 나와 비명벌레로 자란다',(g,me,s)=>{ const c=BYNAME['Shrieker']; if(c) morph(s,s.up&&c.upcode?c.upcode:c.code); s.burrowed=false; });
 def('burrow',null,'땅에 숨는다 (공격력 절반, 겨눌 수 없다)',(g,me,s)=>{
   s.burrowed=!s.burrowed;
@@ -1015,13 +1020,13 @@ def('guard','cr','대상과 자신을 한 턴 묶는다. 대상이 날지 않으
     /* ⚠ '내가 날면 날아다니는 몸도 때린다' 는 신판 전용이다. 원작판은 대상이 안 날 때만. */
     if(!t.flags.includes('airborne')) spellDmg(me,t,trueAtk(s));
   });
-def('paradox','paradox','공격력이 체력보다 큰 유닛를 죽인다',(g,me,s,t)=>{ if(t&&trueAtk(t)>t.hp) kill(t); });
+def('paradox','paradox','공격력이 체력보다 큰 유닛을 죽인다',(g,me,s,t)=>{ if(t&&trueAtk(t)>t.hp) kill(t); });
 def('deadalive',null,'이 몸이 죽는다 — 죽음 효과가 터진다. 그래도 살아남는다',(g,me,s)=>{
   everyThing().forEach(x=>{ if(x&&x!==s&&!x.dead) trig(x,'death',s); });
 });
 /* 해골·미이라의 '시간 역행을 맞으면 변신한다' 는 v_rewind 안에 들어 있는데, 카드에는
    아무 글도 안 떠서 **없는 능력처럼 보였다.** 표시 전용 능력을 붙여 글로 알린다. */
-def('undead',null,'시간 역행을 맞으면 무작위 유닛로 변한다',()=>{});
+def('undead',null,'시간 역행을 맞으면 무작위 유닛으로 변한다',()=>{});
 def('sanctify',null,'상대 턴에는 내 퀀텀과 손패를 건드릴 수 없다',()=>{});
 def('voodoo',null,'이 몸이 받은 피해를 상대도 똑같이 받는다',()=>{});
 def('mummy',null,'시간 역행을 맞으면 파라오로 변한다',()=>{});
@@ -1037,7 +1042,7 @@ def('steamdecay',null,'',(g,me,s)=>{ if(s.steam>0){ s.steam--; buff(s,-1,0); } }
 /* ⚠⚠ 원문(양쪽 다): "Gain {N}:6 plus 1 quanta of **each other element**."
    유닛 체력을 불 퀀텀에 더하고 있었다 — 표에도 원문에도 없는 값이다.
    12속성 1씩 + 불 {N} → 불은 합쳐서 {N}+1 (분신 6, 화장 8). 원문의 "6 [불]" 과 맞는다. */
-def('immolate','mycr','자기 유닛를 태운다. 12속성 퀀텀 1씩과 불 퀀텀 {N} 을 더 얻는다',(g,me,s,t,a)=>{
+def('immolate','mycr','자기 유닛을 태운다. 12속성 퀀텀 1씩과 불 퀀텀 {N} 을 더 얻는다',(g,me,s,t,a)=>{
   if(!t)return; for(let e=1;e<=12;e++) gain(me,e,1); gain(me,6,(a||5)); kill(t);
 });
 def('fiery',null,'불 퀀텀 5마다 공격력 1',()=>{});
@@ -1085,14 +1090,14 @@ def('singularity',null,
     else if(r<9){ s.adren=1; }
     else { SK.parallel.f(g,me,s,s); }
   });
-def('chimera',null,'자기 유닛를 하나로 합친다. 관성 · 중력 견인을 얻는다',(g,me)=>{
+def('chimera',null,'자기 유닛을 하나로 합친다. 관성 · 중력 견인을 얻는다',(g,me)=>{
   let a=0,h=0; me.cr.forEach(u=>{ if(u){a+=u.atk;h+=u.hp;} });
   me.cr=new Array(MAXCR).fill(null);
   const c=BYNAME['Chimera']; const u=mk(c.code,me);
   u.kind='creature'; u.atk=a; u.hp=u.maxhp=h; u.flags=['momentum']; u.slot=0; me.cr[0]=u;
   me.gpull=u;                      /* ⚠ 원문에 중력 견인도 있다 — 합친 몸이 전부 대신 맞는다 */
 });
-def('skyblitz',null,'바람 퀀텀을 모두 쓰고 비행 유닛가 급강하한다',(g,me)=>{
+def('skyblitz',null,'바람 퀀텀을 모두 쓰고 비행 유닛이 급강하한다',(g,me)=>{
   me.q[9]=0; me.cr.forEach(u=>{ if(u&&u.flags.includes('airborne')&&!u.flags.includes('immaterial')) u.dive=true; });
 });
 /* ⚠ 원작판 조건은 **공격력 3 미만**뿐이다(체력 조건은 신판). 겨냥 목록이 조건을 안다. */
@@ -1112,7 +1117,7 @@ def('v_mutation','cr','대상이 흉물이 된다. 낮은 확률로 죽거나 �
 });
 /* 개량 돌연변이(강화) — 죽지 않고 더 나은 것이 된다 */
 /* ⚠ openEtG 는 **강화판이 아니라 기본 유닛** 아무거나로 바꾼다(`random_card(false, …)`). */
-def('v_improve','cr','대상이 무작위 유닛로 바뀐다',(g,me,s,t)=>{
+def('v_improve','cr','대상이 무작위 유닛으로 바뀐다',(g,me,s,t)=>{
   if(!t)return;
   const pool=ETG.cards.filter(c=>c.kind==='creature'&&!c.up&&playable(c));
   if(pool.length) morph(t,pool[rnd(pool.length)].code);
@@ -1135,17 +1140,17 @@ def('v_dessication',null,'상대 유닛에게 피해 2. 준 피해만큼 물 퀀
 def('v_swarm',null,'체력이 내 스카라브 수와 같다',()=>{});
 
 /* ── 마지막 아홉 — 여기까지 넣어야 기본 239장이 전부 논다 ─────────────── */
-def('swave','any','대상에게 액션 피해 4. 얼어붙은 유닛는 그대로 죽는다',(g,me,s,t)=>{
+def('swave','any','대상에게 액션 피해 4. 얼어붙은 유닛은 그대로 죽는다',(g,me,s,t)=>{
   if(t&&t.c&&t.frozen>0){ kill(t); return; }
   spellDmg(me,t,4);
 });
-def('enchant','pm','대상 노드이 실체를 잃는다 (겨눌 수 없다)',(g,me,s,t)=>{
+def('enchant','pm','대상 노드가 실체를 잃는다 (겨눌 수 없다)',(g,me,s,t)=>{
   if(t&&!t.flags.includes('immaterial')) t.flags.push('immaterial');
 });
-def('v_rewind','cr','대상 유닛를 주인의 덱 맨 위로 되돌린다',(g,me,s,t)=>{
+def('v_rewind','cr','대상 유닛을 주인의 덱 맨 위로 되돌린다',(g,me,s,t)=>{
   if(!t||t.kind!=='creature')return;
   const p=t.own;
-  /* 원작의 특수 처리 — 해골은 아무 유닛로, 미이라는 파라오로 되돌아간다 */
+  /* 원작의 특수 처리 — 해골은 아무 유닛으로, 미이라는 파라오로 되돌아간다 */
   let code=t.c.code;
   if(/^(Skeleton|Elite Skeleton)$/.test(t.c.en)){
     const pool=ETG.cards.filter(c=>c.kind==='creature'&&!c.up&&playable(c));
@@ -1168,7 +1173,7 @@ def('sosa',null,'체력 48을 바치고 죽음 외 퀀텀을 모두 잃는다. �
     for(let e=1;e<=12;e++) if(e!==2) me.q[e]=0;
     me.sosa=2;
   });
-def('accretion','pm','대상 노드을 부수고 +0|+15. 체력이 45를 넘으면 스스로 무너져 블랙홀이 손에 들어온다',
+def('accretion','pm','대상 노드를 부수고 +0|+15. 체력이 45를 넘으면 스스로 무너져 블랙홀이 손에 들어온다',
   (g,me,s,t)=>{
     destroyPerm(t,me); buff(s,0,15);
     if(s.hp>45){ kill(s); const c=BYNAME['Black Hole'];
@@ -1346,7 +1351,7 @@ function kill(u){
     everyThing().forEach(x=>{ if(x&&x!==u&&!x.dead) trig(x,'death',u); });
   } else destroyPerm(u);
 }
-/* ⚠ 해체공(salvage)은 **노드이 부서지는 순간**에 걸려 있다. 그 사건이 아예 없어서
+/* ⚠ 해체공(salvage)은 **노드가 부서지는 순간**에 걸려 있다. 그 사건이 아예 없어서
    두 장 다 아무 일도 안 하는 카드였다. 죽음과 같은 방식으로 한 통로에서 알린다 —
    `by` 는 부순 쪽(스스로 사라진 것이면 없다). */
 function destroyPerm(u,by){
@@ -1542,7 +1547,7 @@ function nightfallArgs(p){
 const nightfallAtk=p=>nightfallArgs(p).atk;
 function nightfallOn(p){ return nightfallArgs(p).atk>0||nightfallArgs(p).hp>0; }
 /* ⚠ 원문: "Creatures do not attack at the end of **each player's** turn" —
-   해시계는 양쪽 유닛를 다 멈춘다(웨폰는 멈추지 않는다). */
+   해시계는 양쪽 유닛을 다 멈춘다(웨폰은 멈추지 않는다). */
 function stasisOn(f){ return [G.me,G.ai].some(q=>q.pm.some(x=>x&&x.sk.some(s=>s.id==='stasis')&&x.charges>0)); }
 
 /* 실드 — 원작의 특수 실드를 이름이 아니라 **능력 id** 로 가른다 */
@@ -1552,7 +1557,7 @@ function shieldReduce(sh,atk,dmg){
   let dr=sh.hp||0;      /* 평범한 실드는 체력칸이 곧 감소량이다 */
   const p=sh.own;
   /* ⚠ 원문: "Evade all **non-airborne, non-ranged** attackers." 원거리를 빠뜨려
-     올빼미의 눈 같은 원거리 웨폰가 날개에 막히고 있었다. */
+     올빼미의 눈 같은 원거리 웨폰이 날개에 막히고 있었다. */
   if(id==='wings')
     return (atk.flags.includes('airborne')||atk.flags.includes('ranged'))
       ?{dmg,blocked:0}:{dmg:0,blocked:dmg};
@@ -1575,7 +1580,7 @@ function shieldReduce(sh,atk,dmg){
   }
   if(id==='blockwithcharge'){ if(sh.charges>0){ sh.charges--; return {dmg:0,blocked:dmg}; } return {dmg,blocked:0}; }
   /* 희망은 shield 가 아니라 ownattack 으로 걸려 있다 — id 로만 찾으면 0 이 된다 */
-  /* ⚠ 원문: "reduced by **1 + N**". 1 을 빼먹어 빛 유닛가 없으면 아무것도 안 막았다. */
+  /* ⚠ 원문: "reduced by **1 + N**". 1 을 빼먹어 빛 유닛이 없으면 아무것도 안 막았다. */
   /* ⚠⚠ 카드 글은 "1 + N" 이라 적혀 있지만 **openEtG 원작판은 N**(강화판만 +1)이다
      (`set(c, hp, dr + Upped)`). 세는 것은 '공격할 때 빛 퀀텀을 만드는 내 유닛'. */
   if(sh.sk.some(s=>s.id==='v_hope'))
@@ -1642,8 +1647,8 @@ function needsTarget(u){
 }
 function playCard(p,u,tgt){
   /* ⚠⚠ **대상이 필요한 카드를 대상 없이 내면 안 된다.** 막지 않으면 능력 함수가
-     null 을 받아 그 자리에서 판이 죽는다(정화가 겨눌 유닛가 없을 때 실제로 그랬다).
-     한 판에 유닛가 하나도 없을 때 상대가 그 액션을 뽑으면 바로 터진다. */
+     null 을 받아 그 자리에서 판이 죽는다(정화가 겨눌 유닛이 없을 때 실제로 그랬다).
+     한 판에 유닛이 하나도 없을 때 상대가 그 액션을 뽑으면 바로 터진다. */
   if(needsTarget(u)&&!tgt)return false;
   const c=costOf(u);
   if(!pay(p,c.e,c.n))return false;
@@ -1847,7 +1852,7 @@ function ruleText(c,u,full){
      ⚠⚠ 여기서 fillCard 를 빠뜨렸었다 — 그래서 **에디터에서 적은 `[죽음]` 만 글자로 남았다.**
        인쇄된 글은 구슬로 바뀌는데 내가 적은 글은 안 바뀌면, 에디터로 고친 카드가
        다른 카드와 다르게 생긴다. 같은 길을 태운다. */
-  if(c.txt) return fillCard(c,esc(c.txt));
+  if(c.txt) return fillCard(c,mdText(esc(c.txt)));
   /* ⚠⚠ 카드에 실리는 글은 **인쇄된 원문을 문장 그대로 옮긴 한국어**(kotxt)다.
      예전에는 능력 하나하나의 설명을 ' · ' 로 이어 붙여 만들었는데, 그건 원문이 아니라
      내가 쓴 요약이라 문장이 조각나고 웨폰의 첫 줄('웨폰 — 매 턴 피해를 준다') 같은
@@ -1857,7 +1862,7 @@ function ruleText(c,u,full){
     const shid0=[SHOWSK[c.en]].concat((ADDSK[c.en]||[]).map(x=>x.id));
     const fl=(u?u.flags:c.flags)
       .filter(f=>FLAGKO[f]&&shid0.indexOf(f)<0&&!['stackable','additive','token'].includes(f));
-    let body=fillCard(c,esc(c.kotxt));
+    let body=fillCard(c,mdText(esc(c.kotxt)));
     /* 앞에 세운 표식을 글이 또 부르면 한 번만 — '관성 · 관성 — 실드를…' 이 되지 않게 */
     fl.forEach(f=>{ const k=FLAGKO[f];
       if(body.startsWith(k+' — ')) body=body.slice(k.length+3); });
@@ -1896,6 +1901,17 @@ function ruleText(c,u,full){
     if(dr) out.push(`받는 피해를 ${dr} 깎는다`);
   }
   return out.join(' · ');
+}
+/* 글 속의 **굵게·기울임** — 성권이 카드 글을 직접 쓰기 때문에 필요하다.
+   `**굵게**` `*기울임*` 두 가지만 받는다. 마크다운 전부를 들이면 카드 글에 제목이나
+   목록이 생길 수 있는데, 그건 고정 상자에 들어갈 물건이 아니다.
+   ⚠⚠ 반드시 **esc 한 뒤에** 부른다 — 먼저 부르면 성권이 적은 `<script>` 가 태그가 된다.
+     그래서 여기서는 이미 안전해진 글에 <b>/<i> 만 얹는다.
+   ⚠ `**` 를 `*` 보다 먼저 본다. 순서가 바뀌면 `**굵게**` 가 `<i>*굵게*</i>` 가 된다.
+   ⚠ 별 사이에 줄바꿈이나 별이 또 들어오지 못하게 막는다 — 안 그러면 글 전체를 삼킨다. */
+function mdText(t){
+  return t.replace(/\*\*([^*\n]+)\*\*/g,'<b>$1</b>')
+          .replace(/\*([^*\n]+)\*/g,'<i>$1</i>');
 }
 /* 카드 글 안의 [속성] 자리를 지금 이름으로 갈아 끼운다 —
    에디터에서 속성 이름을 바꾸면 카드 글도 따라 바뀌어야 한다. */
@@ -1940,8 +1956,8 @@ function effClass(t){
 }
 /* ⚠⚠ 속성·종류는 **일러스트 영역에 얹지 않는다.** 그림 자리는 그림 자리다.
    높이를 새로 만들지도 않는다(그러면 그림이나 설명 상자를 먹는다) —
-   이미 있는 **발치 줄** 가운데의 빈 자리를 쓴다. 유닛는 좌우에 공/체가 있고
-   가운데가 비어 있고, 액션·노드은 줄 전체가 비어 있다. */
+   이미 있는 **발치 줄** 가운데의 빈 자리를 쓴다. 유닛은 좌우에 공/체가 있고
+   가운데가 비어 있고, 액션·노드는 줄 전체가 비어 있다. */
 function typeTag(c){
   /* ⚠ 속성은 **테두리 색이 이미 말하고 있다.** 글로 또 적으면 자리만 먹고
      '엔트로피' 같은 긴 이름은 발치 줄을 넘친다. 종류만 적는다. */
@@ -2010,7 +2026,7 @@ function packRow(el){
   el.classList.toggle('packed',!!n);
   if(!n)return;
   const cw=cards[0].offsetWidth||60;
-  /* 웨폰·실드 자리는 양 끝에 못박혀 있다 — 노드이 그 위로 올라가면 안 된다 */
+  /* 웨폰·실드 자리는 양 끝에 못박혀 있다 — 노드가 그 위로 올라가면 안 된다 */
   const eq=el.querySelector('.eq');
   const pad=eq?(eq.offsetWidth||0)+8:0;
   const avail=Math.max(40,el.clientWidth-8-pad*2);
@@ -2195,9 +2211,9 @@ function zoomHTML(c,u){
     const cst=u?u.cast:c.cast, ce=u?u.castel:c.castel;
     /* ⚠ 'death' 는 **아무 유닛나 죽었을 때**(전역), 'owndeath' 는 **이 몸이 죽었을 때**다.
        예전에 이 둘을 뒤집어 적어 뒀다 — 카드를 눌러 봐도 언제 도는지 알 수가 없었다. */
-    const EVKO={cast:'', ownattack:'매 턴', hit:'때릴 때', death:'유닛가 죽을 때마다',
+    const EVKO={cast:'', ownattack:'매 턴', hit:'때릴 때', death:'유닛이 죽을 때마다',
       owndeath:'이 몸이 죽을 때', shield:'맞을 때', ownplay:'낼 때', postauto:'공격을 마치고',
-      attack:'공격할 때', buff:'지속', ownbuff:'지속', destroy:'노드이 부서질 때',
+      attack:'공격할 때', buff:'지속', ownbuff:'지속', destroy:'노드가 부서질 때',
       prespell:'액션을 맞을 때', discard:'버려질 때', owndiscard:'손에서 버려질 때',
       ownhp:'체력 계산', hp:'체력 계산'};
     const nm=abilName(c,s);
