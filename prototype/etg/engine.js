@@ -3,7 +3,7 @@
    게임(index.html)과 카드 에디터(edit.html)가 **이 한 벌**을 같이 쓴다. */
 'use strict';
 
-const VERSION='0.31.0', BUILD='2026-09-02';
+const VERSION='0.32.0', BUILD='2026-09-02';
 /* ⚠ 제목줄은 없다 — 성권: "배틀 유아이에서도 헤더 지우고 넓게 써".
    판 번호는 덱 화면 발치 한 줄에만 남는다(배포 확인이 이 번호에 걸려 있다). */
 
@@ -1743,10 +1743,10 @@ function render(){
     ${barHTML(m,false)}
     <div class="hand" id="hand">${handHTML(m)}</div>
     <div class="ctl">
-      <div class="hint ${TGT?'act':'idle'}" id="hint">${
+      <div class="hint ${TGT?'act':'idle'}" id="hint"><span>${
         G.over?(G.win?'★ 이겼다':'☠ 졌다')
         :TGT?`${esc(TGT.src.c.ko)} — 대상을 고르세요`
-        :G.turn===m?'카드를 내거나, 길게 눌러 효과를 보세요':'상대 턴…'}</div>
+        :G.turn===m?'카드를 내거나, 길게 눌러 효과를 보세요':'상대 턴…'}</span></div>
       ${G.over?'<button id="again">다시</button>'
               :`<button id="end"${G.turn!==m?' disabled':''}>턴 종료 →</button>`}
       <button class="ghost" id="quit">덱으로</button>

@@ -1416,6 +1416,17 @@ body{padding:calc(var(--safeT) + 3px) calc(var(--safeR) + 4px)
    ② 겹쳐 뜨는 확대창을 끝까지 끌면 스크롤이 **바깥으로 이어져** 판을 민다.
    ③ 두 번 두드리기 확대(iOS)는 `user-scalable=no` 로 안 막힌다 — manipulation 이 막는다. */
 html,body{overscroll-behavior:none}
+/* ⚠⚠⚠ **판은 고정 자리다.** 가운데 알림줄이 길어지면 줄 수가 늘고, 그만큼 아래가
+   통째로 밀린다 — 크리처 줄도 손패도 매번 다른 자리에 온다(성권: "가운데 텍스트가
+   길어지면 막 움직이는데?"). 그리고 그렇게 늘어난 만큼 판이 화면을 넘치면
+   모바일에서 위로 말려 올라간다. **높이를 글에 맡기지 않는다** —
+   두 줄 자리를 늘 잡아 두고, 넘치는 글은 그 안에서 줄여 넣는다. */
+.ctl{flex-wrap:nowrap;align-items:center}
+.hint{height:calc(2.7em + 10px);min-height:0;padding-top:0;padding-bottom:0;
+  display:flex;align-items:center;overflow:hidden}
+.hint>span{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+  overflow:hidden;line-height:1.35;width:100%}
+.ctl button{flex:none;white-space:nowrap}
 body:not(.deckmode){touch-action:manipulation}
 .zoom,.logbox{overscroll-behavior:contain}
 
@@ -1615,7 +1626,7 @@ body.deckmode .wrap{height:auto}
 <script src="data.js"></script>
 <script>
 'use strict';
-const VERSION='0.31.0', BUILD='2026-09-02';
+const VERSION='0.32.0', BUILD='2026-09-02';
 /* ⚠ 제목줄은 없다 — 성권: "배틀 유아이에서도 헤더 지우고 넓게 써".
    판 번호는 덱 화면 발치 한 줄에만 남는다(배포 확인이 이 번호에 걸려 있다). */
 
@@ -3355,10 +3366,10 @@ function render(){
     ${barHTML(m,false)}
     <div class="hand" id="hand">${handHTML(m)}</div>
     <div class="ctl">
-      <div class="hint ${TGT?'act':'idle'}" id="hint">${
+      <div class="hint ${TGT?'act':'idle'}" id="hint"><span>${
         G.over?(G.win?'★ 이겼다':'☠ 졌다')
         :TGT?`${esc(TGT.src.c.ko)} — 대상을 고르세요`
-        :G.turn===m?'카드를 내거나, 길게 눌러 효과를 보세요':'상대 턴…'}</div>
+        :G.turn===m?'카드를 내거나, 길게 눌러 효과를 보세요':'상대 턴…'}</span></div>
       ${G.over?'<button id="again">다시</button>'
               :`<button id="end"${G.turn!==m?' disabled':''}>턴 종료 →</button>`}
       <button class="ghost" id="quit">덱으로</button>

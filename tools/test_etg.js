@@ -1379,6 +1379,35 @@ const TEN =path.join(__dirname,'..','data','cards.json');
      &&/감염 —/.test(KT.virus),
      KT.discord);
 
+  /* ── 41) 판은 **고정 자리**다 ──────────────────────────────────────
+     성권: "게임 배틀 유아이가 고정 위치여야 하는데 가운데 텍스트가 길어지면 막 움직이는데?
+     그리고 이게 자꾸 모바일에서 유아이가 위로 말려들어가는 원인 같아."
+     ⚠⚠ 맞았다. 가운데 알림줄에 높이를 안 정해 놔서 **글이 길면 줄이 늘고**, 그만큼
+       아래가 통째로 밀렸다. 크리처 줄도 손패도 매번 다른 자리에 왔고, 늘어난 만큼
+       판이 화면을 넘치면 위로 말려 올라갔다. 높이를 글에 맡기지 않는다. */
+  const FIX=await p.evaluate(()=>{
+    const D=window.ETGDBG;
+    D.startGame(D.deckList(D.autoDeck(6)),6);
+    const G=D.G;
+    for(let i=0;i<5;i++) G.me.cr[i]=D.mk(D.BYNAME['Crimson Dragon'].code,G.me);
+    D.render();
+    const read=()=>{
+      const c=document.querySelector('.ctl').getBoundingClientRect();
+      const m=document.getElementById('myBoard').getBoundingClientRect();
+      const h=document.getElementById('hand').getBoundingClientRect();
+      return [Math.round(c.height),Math.round(m.top),Math.round(h.top)];
+    };
+    const sp=document.querySelector('.hint span');
+    const msgs=['상대 턴…','카드를 내거나, 길게 눌러 효과를 보세요',
+      '슈뢰딩거의 고양이 — 대상을 고르세요','★ 이겼다',
+      '아주아주 긴 이름이 들어와도 절대 흔들리지 않아야 한다 — 대상을 고르세요'];
+    const rows=msgs.map(m=>{ sp.textContent=m; return read(); });
+    return {rows, wrapped:!!document.querySelector('.hint span')};
+  });
+  const same=FIX.rows.every(r=>r.join()===FIX.rows[0].join());
+  ok('알림줄이 길어져도 판이 안 움직인다', same&&FIX.wrapped,
+     FIX.rows.map(r=>r[0]+'px').join(' · '));
+
   if(errs.length){ bad++; console.log('   ERR',errs.slice(0,4)); }
   console.log(`\n미구현 능력 ${cov.miss.length}종: ${cov.miss.join(' ')}`);
   console.log(bad?`❌ ${bad}건 실패`:'✅ 전부 통과');
