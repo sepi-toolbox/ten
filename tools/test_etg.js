@@ -231,7 +231,8 @@ const TEN =path.join(__dirname,'..','data','cards.json');
   ok('불사조는 잿더미를 남긴다', dth.ash.includes('Ash'), dth.ash.join(',')||'(아무것도 안 남았다)');
   ok('무덤은 해골을 낸다', dth.bone.includes('Skeleton'), dth.bone.join(',')||'(안 나왔다)');
   /* ⚠ 원문은 죽음 3 이다 — 2 로 굳혀 뒀던 것을 원문 대조에서 잡았다. */
-  ok('영혼 포집기가 퀀텀을 얻는다', dth.soul===3, `죽음 퀀텀 ${dth.soul}`);
+  /* ⚠ 카드 글은 3 이지만 openEtG **원작판 코드는 기본 2**(강화 3). 수치는 코드를 따른다. */
+  ok('영혼 포집기가 퀀텀을 얻는다', dth.soul===2, `죽음 퀀텀 ${dth.soul}`);
   ok('독수리는 시체를 먹고 큰다', dth.vul[1]!==dth.vul[0], `${dth.vul[0]} → ${dth.vul[1]}`);
 
   /* ── 12c) '눌러서 쓰는 능력' 과 '저절로 도는 것' 을 안 헷갈린다 ─────── */
@@ -872,14 +873,16 @@ const TEN =path.join(__dirname,'..','data','cards.json');
      D.endTurn();
      o.flood={edge:!!G.me.cr[6], water:!!G.me.cr[7], inner:!!G.me.cr[0]};}
 
-    /* ② 인내의 파편 — 공격하지 않는다. 대신 +1|+0, 물은 +2|+2 */
+    /* ② 인내의 파편 — openEtG 원작판(game.rs 공격 차례): **매 턴 묶고 +2|+2 쌓아 준다.**
+       카드 글의 '+1/+0' 은 신판 글이라 안 쓴다. 두 턴 두면 두 번 쌓여야 한다. */
     {const G=setup(7);
      const c=D.mk(D.BYNAME['Fire Spirit'].code,G.me); G.me.cr[0]=c;
-     const w=D.mk(D.BYNAME['Blue Crawler'].code,G.me); G.me.cr[1]=w;
-     const a0=c.atk, w0=[w.atk,w.hp];
-     put(G,G.me,'Shard of Patience'); D.syncAuras();
+     const a0=c.atk, h0=c.hp;
+     put(G,G.me,'Shard of Patience');
      const foehp=G.ai.hp; D.endTurn();
-     o.pat={atk:c.atk-a0, wa:w.atk-w0[0], wh:w.hp-w0[1], hit:foehp-G.ai.hp};}
+     const one={a:c.atk-a0,h:c.hp-h0,hit:foehp-G.ai.hp};
+     G.turn=G.me; D.endTurn();
+     o.pat={one, twoA:c.atk-a0, twoH:c.hp-h0};}
 
     /* ③ 반사 방패 — 주문 피해가 되돌아온다 */
     {const G=setup(8);
@@ -917,12 +920,14 @@ const TEN =path.join(__dirname,'..','data','cards.json');
 
     /* ⑧ 완전의 파편 — 손에 있는 파편을 모두 먹는다 */
     {const G=setup(12);
-     G.me.hand=['Shard of Bravery','Shard of Freedom','Shard of Patience']
+     /* openEtG 표 그대로: 물 파편 셋 → 물 3단계 = 3턴 얼림(비용 2 대지) */
+     G.me.hand=['Shard of Patience','Shard of Patience','Shard of Patience']
        .map(n=>D.mk(D.BYNAME[n].code,G.me));
      const u=D.mk(D.BYNAME['Shard of Integrity'].code,G.me); G.me.hand.push(u);
      D.playCard(G.me,u,null);
      const g=G.me.cr.find(Boolean);
-     o.golem={hand:G.me.hand.length, atk:g?g.atk:0, en:g?g.c.en:''};}
+     o.golem={hand:G.me.hand.length, atk:g?g.atk:0, hp:g?g.hp:0, en:g?g.c.en:'',
+              sk:g?g.sk.map(k=>k.id).join(','):'', cast:g?g.cast:-1};}
 
     /* ⑨ 루시페린 — 능력 없는 크리처가 발광을 얻는다 */
     {const G=setup(8);
@@ -938,9 +943,10 @@ const TEN =path.join(__dirname,'..','data','cards.json');
   ok('범람이 가장자리를 쓸어버린다',
      A.flood.edge===false&&A.flood.water===true&&A.flood.inner===true,
      `가장자리 ${A.flood.edge?'살아남음':'잠김'} · 물 ${A.flood.water?'무사':'죽음'} · 안쪽 ${A.flood.inner?'무사':'죽음'}`);
-  ok('인내의 파편 — 안 때리고 커진다',
-     A.pat.hit===0&&A.pat.atk===1&&A.pat.wa===2&&A.pat.wh===2,
-     `피해 ${A.pat.hit} · +${A.pat.atk}|+0 · 물 +${A.pat.wa}|+${A.pat.wh}`);
+  ok('인내의 파편 — 안 때리고 매 턴 쌓인다',
+     A.pat.one.hit===0&&A.pat.one.a===2&&A.pat.one.h===2
+     &&A.pat.twoA===4&&A.pat.twoH===4,
+     `피해 ${A.pat.one.hit} · 한 턴 +${A.pat.one.a}|+${A.pat.one.h} · 두 턴 +${A.pat.twoA}|+${A.pat.twoH}`);
   ok('반사 방패가 주문을 되돌린다', A.reflect.me===7&&A.reflect.foe===0,
      `나 ${A.reflect.me} · 상대 ${A.reflect.foe}`);
   ok('파괴·강탈되지 않는다', A.nosteal===true, A.nosteal?'그대로':'빼앗겼다');
@@ -952,9 +958,10 @@ const TEN =path.join(__dirname,'..','data','cards.json');
   ok('성전사가 무기 능력을 베낀다',
      A.endow.da>0&&A.endow.dh===2&&A.endow.gained===true,
      `+${A.endow.da}|+${A.endow.dh} · 능력 ${A.endow.gained?'복사됨':'없음'}`);
-  ok('완전의 파편이 손패를 먹는다',
-     A.golem.hand===0&&A.golem.atk===6&&A.golem.en==='Shard Golem',
-     `손패 ${A.golem.hand}장 · ${A.golem.en} ${A.golem.atk}|${A.golem.atk}`);
+  ok('완전의 파편이 표대로 골렘을 만든다',
+     A.golem.hand===0&&A.golem.en==='Shard Golem'
+     &&A.golem.atk===10&&A.golem.hp===7&&A.golem.sk==='freeze'&&A.golem.cast===2,
+     `${A.golem.en} ${A.golem.atk}|${A.golem.hp} · ${A.golem.sk}(비용 ${A.golem.cast})`);
   ok('루시페린이 발광을 준다', A.luci===true, A.luci?'quanta 8 부여':'아무것도 안 줬다');
   ok('지진은 쓰는 사람이 고른다', A.quake===true, A.quake?'foepillar':'자동 선택');
 
@@ -991,14 +998,22 @@ const TEN =path.join(__dirname,'..','data','cards.json');
 
     /* ③ 해체공 — 상대가 내 기물을 부수면 사본이 손에 들어온다 */
     {const G=setup(3);
+     /* openEtG 원작판 조건: **내 턴이 아니고 · 부서진 기물이 내 것이 아닐 때** 턴에 한 번.
+        (+1|+1 은 신판 전용이라 없다.) */
      const sv=D.mk(D.BYNAME['Graviton Salvager'].code,G.me); G.me.cr[0]=sv;
-     const pil=put(G.me,'Gravity Pillar');
      const a0=sv.atk;
-     const sp=D.mk(D.BYNAME['Steal'].code,G.ai);   /* 상대가 부순 건 아니지만 destroy 경로 */
+     const pil=put(G.ai,'Gravity Pillar');
+     G.turn=G.ai;
      const de=D.mk(D.BYNAME['Deflagration'].code,G.ai); G.ai.hand=[de];
      D.playCard(G.ai,de,pil);
      o.salvage={hand:G.me.hand.length, grew:sv.atk-a0,
-                got:(G.me.hand[0]||{c:{}}).c.en||''};}
+                got:(G.me.hand[0]||{c:{}}).c.en||''};
+     const G2=setup(3);
+     const sv2=D.mk(D.BYNAME['Graviton Salvager'].code,G2.me); G2.me.cr[0]=sv2;
+     const p2=put(G2.ai,'Gravity Pillar');
+     const de2=D.mk(D.BYNAME['Deflagration'].code,G2.me); G2.me.hand=[de2];
+     D.playCard(G2.me,de2,p2);
+     o.salvage.myturn=G2.me.hand.length;}
 
     /* ④ 소산 방패 — 막은 피해 3마다 엔트로피 1 */
     {const G=setup(1);
@@ -1007,7 +1022,7 @@ const TEN =path.join(__dirname,'..','data','cards.json');
      G.me.q=new Array(13).fill(0); G.me.q[1]=2;      /* 엔트로피 2 → 6 까지 막는다 */
      const atk=D.mk(D.BYNAME['Crimson Dragon'].code,G.ai); G.ai.cr[0]=atk; atk.atk=9;
      const hp=G.me.hp; D.attack(atk);
-     o.diss={dealt:hp-G.me.hp, left:G.me.q[1]};}
+     o.diss={dealt:hp-G.me.hp, left:G.me.q[1], gone:!G.me.shield};}
 
     /* ⑤ 날개 — 원거리는 통과한다 */
     {const G=setup(9);
@@ -1084,12 +1099,15 @@ const TEN =path.join(__dirname,'..','data','cards.json');
   ok('스카라브는 체력이 늘어난다',
      B.swarm.one.h===1&&B.swarm.twoHp===2&&B.swarm.twoAtk===B.swarm.one.a,
      `한 마리 ${B.swarm.one.a}|${B.swarm.one.h} → 두 마리 ${B.swarm.twoAtk}|${B.swarm.twoHp}`);
-  ok('해체공이 부서진 기물을 줍는다',
-     B.salvage.hand===1&&B.salvage.grew===1&&/Pillar/.test(B.salvage.got),
-     `손패 ${B.salvage.hand}장(${B.salvage.got}) · +${B.salvage.grew}|+${B.salvage.grew}`);
-  ok('소산 방패는 낼 수 있는 만큼만 막는다',
-     B.diss.dealt===3&&B.diss.left===0,
-     `9 중 ${B.diss.dealt} 통과 · 엔트로피 ${B.diss.left} 남음`);
+  ok('해체공이 상대 턴에만 줍는다',
+     B.salvage.hand===1&&/Pillar/.test(B.salvage.got)&&B.salvage.grew===0
+     &&B.salvage.myturn===0,
+     `상대 턴 ${B.salvage.hand}장(${B.salvage.got}) · 내 턴 ${B.salvage.myturn}장`);
+  /* ⚠ openEtG 는 **언제나 통째로 막고**, 값을 못 내면 엔트로피를 다 잃고 방패가 부서진다.
+     '낼 수 있는 만큼만' 은 내가 지어냈던 규칙이다. */
+  ok('소산 방패는 통째로 막고 값을 못 내면 부서진다',
+     B.diss.dealt===0&&B.diss.left===0&&B.diss.gone===true,
+     `9 중 ${B.diss.dealt} 통과 · 엔트로피 ${B.diss.left} · 방패 ${B.diss.gone?'부서짐':'남음'}`);
   ok('날개는 원거리를 못 막는다', B.wings.ranged>0&&B.wings.ground===0,
      `원거리 ${B.wings.ranged} · 지상 ${B.wings.ground}`);
   ok('중력 방패는 5를 넘는 몸만 막는다', B.weight.five>0&&B.weight.six===0,
@@ -1100,7 +1118,8 @@ const TEN =path.join(__dirname,'..','data','cards.json');
      `내 ${B.dry.a} · 상대 ${B.dry.b} · 물 +${B.dry.water}`);
   ok('분신에 크리처 체력이 안 섞인다', B.immo.fire===6&&B.immo.other===1,
      `불 ${B.immo.fire} · 다른 속성 ${B.immo.other}`);
-  ok('교감의 유대가 유지비를 낸다', B.empathy.healed===8&&B.empathy.paid===1,
+  /* ⚠ 유지 비용은 **신판 전용**이다. 원작판은 값을 안 낸다. */
+  ok('교감의 유대는 값을 안 낸다', B.empathy.healed===8&&B.empathy.paid===0,
      `회복 ${B.empathy.healed} · 낸 퀀텀 ${B.empathy.paid}`);
   ok('땅거미가 +1|+1 을 준다', B.night.dh===1&&B.night.tatk===B.night.da+1||B.night.dh===1,
      `+${B.night.da}|+${B.night.dh} (실공격력 ${B.night.tatk})`);
@@ -1280,6 +1299,21 @@ const TEN =path.join(__dirname,'..','data','cards.json');
     window.scrollTo(0,300); await wait(150);
     return {deck:window.scrollY,cls:document.body.className};});
   ok('덱 화면은 그대로 스크롤된다', SD.deck>0, `scrollY ${SD.deck} · ${SD.cls}`);
+
+  /* ── 38) 지어낸 규칙은 문서에 올라 있어야 한다 ─────────────────────
+     성권: "왜 내가 물어봐야 그런 걸 말해 주는 거야? 자의적으로 규칙을 바꾼 건데
+     당연히 보고는 해야 하는 거 아냐?"
+     ⚠⚠ 맞는 말이고, **'다음부터 잘 보고하겠다' 는 약속은 잊힌다.** 그래서 기계가 센다.
+       코드의 `@지어냄:` 표시를 긁어 docs/invented.md 를 만들고, 여기서 어긋나면 빨간불.
+       지어낸 규칙은 문서에 오르지 않고서는 배포될 수 없다. */
+  {
+    const cp=require('child_process'), pth2=require('path');
+    let out='', code=0;
+    try{ out=cp.execFileSync('python3',
+      [pth2.join(__dirname,'list_invented.py'),'--check'],{encoding:'utf8'}); }
+    catch(e){ code=1; out=(e.stdout||'')+(e.stderr||''); }
+    ok('지어낸 규칙이 문서와 일치한다', code===0, out.trim().split('\n').pop());
+  }
 
   if(errs.length){ bad++; console.log('   ERR',errs.slice(0,4)); }
   console.log(`\n미구현 능력 ${cov.miss.length}종: ${cov.miss.join(' ')}`);

@@ -3,7 +3,7 @@
    게임(index.html)과 카드 에디터(edit.html)가 **이 한 벌**을 같이 쓴다. */
 'use strict';
 
-const VERSION='0.28.0', BUILD='2026-09-02';
+const VERSION='0.29.0', BUILD='2026-09-02';
 /* ⚠ 제목줄은 없다 — 성권: "배틀 유아이에서도 헤더 지우고 넓게 써".
    판 번호는 덱 화면 발치 한 줄에만 남는다(배포 확인이 이 번호에 걸려 있다). */
 
@@ -111,8 +111,8 @@ def('quanta',null,'매 턴 끝에 {EL} 퀀텀 1을 만든다',(g,me,s,t,a)=>{
   const e=(typeof a==='number')?a:s.c.el;
   if(e===0){ for(let i=0;i<3;i++) gain(me,1+rnd(12),1); } else gain(me,e,1);
 });
-def('cpower','cr','대상에게 +1~5|+1~5',(g,me,s,t)=>{
-  if(!t)return; buff(t,1+rnd(5),1+rnd(5));
+def('cpower','cr','대상에게 무작위 강화 (체력 +1~6 · 공격 +1~5, 두 값은 한 번에 뽑는다)',(g,me,s,t)=>{
+  if(!t)return; const b=rnd(25); buff(t,b%5+1,Math.floor(b/5)+1);
 });
 def('nova2',null,'12속성 퀀텀을 2씩 얻는다. 한 턴에 2장 이상 쓰면 특이점이 나온다',(g,me)=>{
   for(let e=1;e<=12;e++) gain(me,e,2);
@@ -128,17 +128,20 @@ def('nova',null,'12속성 퀀텀을 1씩 얻는다. 한 턴에 3장 이상 쓰�
   me.nova=(me.nova||0)+1;
   if(me.nova>=3&&BYNAME['Singularity']) summon(me,BYNAME['Singularity'].code);
 });
-def('v_relic',null,'아무 일도 하지 않는다 (팔아서 값을 받는 카드)',()=>{});
+def('v_relic',null,'아무 일도 하지 않는다 — 도로 손에 들어온다',(g,me,s)=>{
+  if(me.hand.length<HANDMAX) me.hand.push(mk(s.c.code,me));
+});
 def('photosynthesis',null,'생명 퀀텀 2를 얻고, 이 능력을 다시 쓸 수 있게 된다',(g,me,s)=>{
   gain(me,5,2); s.used=false;
 });
-def('soulcatch',null,'크리처가 죽을 때마다 죽음 퀀텀 3을 얻는다',(g,me,s)=>{ gain(me,2,3); });
-/* ⚠ 원문: "For every 8 creatures you own (rounded down), pay 1:0 at the end of your turn."
-   회복만 있고 값은 안 내고 있었다(강화판은 공짜다). */
-def('empathy',null,'턴 끝에 자기 크리처 수만큼 회복한다. 크리처 8마리마다 아무 퀀텀 1을 낸다',(g,me,s)=>{
-  const n=me.cr.filter(Boolean).length;
-  heal(me,n);
-  if(!s.up){ const need=Math.floor(n/8); for(let i=0;i<need;i++) pay(me,0,1); }
+/* ⚠⚠ 원작 카드 글은 3 이라 적혀 있는데 **openEtG 원작판 코드는 기본 2 · 강화 3** 이다
+   (`if cardset==Original && !Upped {2} else {3}`). 수치는 코드를 따른다. */
+def('soulcatch',null,'크리처가 죽을 때마다 죽음 퀀텀 {N} 을 얻는다',(g,me,s)=>{ gain(me,2,s.up?3:2); });
+/* ⚠⚠ 유지 비용(크리처 8마리마다 1)은 **openEtG 신판 전용**이다
+   (`if ctx.cardset() == CardSet::Open`). 이 모드는 원작판이라 값을 내지 않는다.
+   skilltext.json 의 설명만 보고 넣었다가, 소스를 읽고 되돌렸다. */
+def('empathy',null,'턴 끝에 자기 크리처 수만큼 회복한다',(g,me,s)=>{
+  heal(me,me.cr.filter(Boolean).length);
 });
 def('v_gratitude',null,'턴 끝에 3 회복한다 (내 문장이 생명이면 5)',(g,me,s)=>{ heal(me,(me.mark===5)?5:3); });
 def('v_divinity',null,'최대 체력이 16 늘고 그만큼 회복한다 (내 문장이 빛이면 24)',(g,me,s)=>{
@@ -184,11 +187,15 @@ def('snipe','foecr','대상 크리처에게 피해 3',(g,me,s,t)=>{ spellDmg(me,
 def('catapult','mycr','자기 크리처를 던진다. 체력이 클수록 큰 피해. 얼어 있으면 1.5배, 독은 상대에게 옮긴다',
   (g,me,s,t)=>{
     if(!t)return;
-    const hp=t.hp; let d=Math.ceil(hp*100/(hp+100));
-    if(t.frozen>0) d=Math.ceil(d*1.5);
-    spellDmg(me,foe(me),d);
-    if(t.poison>0) foe(me).poison=(foe(me).poison||0)+t.poison;
+    /* openEtG 공식 그대로: (체력 × (얼었으면 151, 아니면 101) + 99) / (체력 + 100), 내림 */
+    const hp=Math.max(0,t.hp), fz=t.frozen>0;
+    const d=Math.floor((hp*(fz?151:101)+99)/(hp+100));
+    const ps=t.poison>0?t.poison:0;
     kill(t);
+    const f=foe(me);
+    spellDmg(me,f,d);
+    if(ps) f.poison=(f.poison||0)+ps;
+    if(fz) f.frozen=3;               /* 언 몸을 던지면 상대도 3턴 언다 */
   });
 def('v_blackhole',null,'상대 속성마다 퀀텀을 최대 3씩 빨아들이고, 빨아들인 만큼 회복한다',(g,me)=>{
   const f=foe(me); if(!canTouchQuanta(f))return; let tot=0;
@@ -205,8 +212,11 @@ def('aflatoxin','cr','대상에게 독 2. 그 몸이 죽으면 악성 세포가 
 });
 def('virusinfect',null,'자신을 희생해 대상에게 독을 준다',(g,me,s,t)=>{ addPoison(t,1); kill(s); });
 /* ⚠ 원문은 "every **enemy** creature" 다. 내 크리처까지 굴리면 제 발등을 찍는 카드가 된다. */
-def('v_pandemonium',null,'상대 크리처 전부에게 무작위 효과',(g,me)=>{
-  foe(me).cr.forEach(u=>{ if(u) randomEffect(foe(me),u); });
+/* ⚠⚠ 예전에 '상대 크리처만' 으로 고쳐 놨는데 그건 **강화판**이다.
+   원작판 기본은 `masscc(foe, owner, …)` — **양쪽 크리처 전부**에 떨어진다. */
+def('v_pandemonium',null,'판 위 모든 크리처에게 무작위 효과 (내 크리처도 맞는다)',(g,me,s)=>{
+  const list=s&&s.up?foe(me).cr.slice():foe(me).cr.concat(me.cr);
+  list.forEach(u=>{ if(u) randomEffect(owner(u),u); });
 });
 def('v_cseed','cr','대상에게 무작위 효과',(g,me,s,t)=>{ randomEffect(me,t); });
 
@@ -241,7 +251,12 @@ def('void',null,'매 턴 끝에 상대 최대 체력을 2 깎는다 (내 문장�
   const f=foe(me), n=(me.mark===11)?3:2;
   f.maxhp-=n; if(f.hp>f.maxhp)f.hp=f.maxhp;
 });
-def('lobotomize','cr','대상의 능력을 지운다',(g,me,s,t)=>{ t.sk=[]; t.silenced=true; });
+/* ⚠ 원작판은 능력만이 아니라 **관성·염동·돌연변이 표식과 남은 사용 횟수까지** 지운다. */
+def('lobotomize','cr','대상의 능력과 관성·염동을 지운다',(g,me,s,t)=>{
+  if(!t)return;
+  t.sk=[]; t.silenced=true; t.used=true;
+  t.flags=t.flags.filter(f=>f!=='momentum'&&f!=='psionic');
+});
 def('v_silence',null,'상대는 다음 턴에 카드를 낼 수 없다',(g,me)=>{ foe(me).sabbath=true; });
 def('appease','mycr','자기 크리처를 희생하고 +1|+1 을 얻는다',(g,me,s,t)=>{ kill(t); buff(s,1,1); });
 def('devour','foecr','체력이 자기보다 작은 크리처를 먹고 +1|+1. 유독한 몸을 먹으면 자기도 중독된다',
@@ -254,8 +269,11 @@ def('devour','foecr','체력이 자기보다 작은 크리처를 먹고 +1|+1. �
 
 /* ── 강화·약화 ─────────────────────────────────────────────────────────── */
 def('bless','cr','대상에게 +3|+3',(g,me,s,t)=>{ buff(t,3,3); });
-def('rage','cr','대상에게 +5|-5. 얼어붙은 상태를 푼다',(g,me,s,t)=>{
-  const n=s.up?6:5; buff(t,n,-n); if(t)t.frozen=0;
+/* ⚠⚠ openEtG: `incrAtk(t, n)` 다음 `spelldmg(t, n)` — **최대 체력은 안 깎이고**
+   지금 체력만 n 줄어든다(그래서 죽을 수도 있다). `buff(t,n,-n)` 은 최대 체력까지
+   깎아서 다른 카드였다. 얼음을 푸는 것도 신판 전용이라 뺐다. */
+def('rage','cr','대상에게 +{N} 공격력. 그만큼 주문 피해를 입는다',(g,me,s,t)=>{
+  if(!t)return; const n=s.up?6:5; t.atk+=n; spellDmg(me,t,n);
 });
 def('platearmor','cr','대상에게 +0|+{N}',(g,me,s,t,a)=>{ buff(t,0,a||4); });
 def('v_stoneform',null,'+0|+20 을 얻고 능력을 잃는다',(g,me,s)=>{ buff(s,0,20); s.sk=[]; });
@@ -269,7 +287,8 @@ def('growth',null,'+{A}|+{H} 를 얻는다',(g,me,s,t,a,ar)=>{
   buff(s,A,H);
 });
 def('v_bblood','cr','대상에게 +0|+20. 6턴 동안 공격도 능력도 못 쓴다',(g,me,s,t)=>{ buff(t,0,20); t.delayed=6; });
-def('v_slow','cr','대상을 1턴 동안 못 움직이게 한다 (겹쳐 쌓인다)',(g,me,s,t)=>{ t.delayed=(t.delayed||0)+1; });
+/* ⚠ openEtG 는 `delay(t, 2)` — **두 턴**이다. 한 턴으로 적어 뒀었다. */
+def('v_slow','cr','대상을 2턴 동안 못 움직이게 한다 (겹쳐 쌓인다)',(g,me,s,t)=>{ if(t) t.delayed=(t.delayed||0)+2; });
 def('freeze','crw','대상을 {N}턴 얼린다',(g,me,s,t,a)=>{ freeze(t,a||3); });
 def('v_cold',null,'때린 크리처를 확률로 3턴 얼린다',(g,me,s,t)=>{ if(t&&Math.random()<0.3) freeze(t,3); });
 def('purify','cr','독을 씻어내고 오히려 독 -{N} 을 준다',(g,me,s,t,a)=>{
@@ -283,12 +302,15 @@ def('momentum','cr','대상이 방패를 무시하고 +1|+1 을 얻는다',(g,me
   if(!t.flags.includes('momentum'))t.flags.push('momentum'); buff(t,1,1);
 });
 def('quint','cr','대상이 실체를 잃는다 (겨눌 수 없고 얼지 않는다)',(g,me,s,t)=>{
-  if(!t.flags.includes('immaterial'))t.flags.push('immaterial'); t.frozen=0; t.delayed=0;
+  if(!t.flags.includes('immaterial'))t.flags.push('immaterial'); t.frozen=0;
+  /* ⚠ 얼음만 푼다 — 지연까지 푸는 건 내가 얹은 것이었다 */
 });
 def('liquid','foecr','대상의 능력을 흡혈로 바꾸고 독 1을 준다',(g,me,s,t)=>{
   t.sk=[{ev:'hit',id:'vampire',arg:null}]; addPoison(t,1);
 });
-def('antimatter','cr','대상의 공격력 부호를 뒤집는다',(g,me,s,t)=>{ t.atk=-t.atk; });
+/* ⚠ openEtG: `incrAtk(t, trueatk(t) * -2)` — **버프까지 포함한 지금 공격력**을 뒤집는다.
+   기본값만 뒤집고 있어서, 강화된 몸에 쓰면 절반만 뒤집혔다. */
+def('antimatter','cr','대상의 공격력 부호를 뒤집는다',(g,me,s,t)=>{ if(t) t.atk-=trueAtk(t)*2; });
 def('gpullspell','foecr','대상이 그 편의 모든 공격을 대신 맞는다',(g,me,s,t)=>{ owner(t).gpull=t; });
 def('gpull',null,'그 편의 모든 공격을 대신 맞는다',(g,me,s)=>{ me.gpull=s; });
 def('nightmare','foecr','상대 손패를 그 카드로 채우고, 채운 만큼 피해를 준다',(g,me,s,t)=>{
@@ -296,19 +318,87 @@ def('nightmare','foecr','상대 손패를 그 카드로 채우고, 채운 만큼
   for(let i=0;i<n;i++) f.hand.push(mk(t.c.code,f));
   spellDmg(me,f,n*2); heal(me,n*2);
 });
-def('v_obsession',null,'손패가 넘쳐 이 카드가 버려지면 주인이 13 피해를 받는다',(g,me)=>{ dmgP(me,13); });
-/* ⚠⚠ 원문: "Combine **all the shards in your hand** to form a shard golem."
-   손패를 쓰지 않고 4|4 를 고정으로 뱉고 있었다 — 파편을 모을 이유가 없어진다.
-   손에 있는 파편을 전부 먹고, 한 장마다 +2|+2 로 커진다. */
-def('v_integrity',null,'손에 있는 파편을 모두 합쳐 골렘 하나를 만든다 (파편 한 장마다 +2|+2)',(g,me)=>{
-  const c=BYNAME['Shard Golem']; if(!c)return;
-  const sh=me.hand.filter(x=>/^Shard of /.test(x.c.en));
-  if(!sh.length)return;
-  me.hand=me.hand.filter(x=>!/^Shard of /.test(x.c.en));
-  const u=summon(me,c.code);
-  if(!u){ me.hand=me.hand.concat(sh); return; }
-  u.atk=u.hp=u.maxhp=2*sh.length;
-});
+/* ⚠ 카드 글은 13 이지만 openEtG 원작판 코드는 **기본 10 · 강화 13** 이다. */
+def('v_obsession',null,'손패가 넘쳐 이 카드가 버려지면 주인이 {N} 피해를 받는다',(g,me,s)=>{ dmgP(me,s&&s.up?13:10); });
+/* ⚠⚠⚠ 완전의 파편 — 예전에는 '파편 한 장마다 +2|+2' 라고 **내가 정한 규칙**이었다.
+   실제 openEtG 원작판(`Self::v_integrity`)은 **표 한 장**이다:
+     · 손에 있는 파편을 전부 먹고, 속성마다 몸값이 다르다
+       (대지 +4공|+1체 · 중력 +6공 · 불 +3체 · 나머지 +2|+2, 강화 파편은 +1|+1 더)
+     · 시작값은 4공|1체 (파편의 파편 자신이 대지 하나로 센다)
+     · **가장 많이 넣은 속성**과 **그 개수**로 능력이 정해진다 (12속성 × 6단계 표)
+     · 바람 하나라도 → 비행 · 어둠 둘 → 부두, 하나 → 흡수 · 에테르 둘 → 실체 없음
+       중력 둘 → 관성 · 생명 둘 → 아드레날린
+   표를 옮겨 적는다. 값이 음수인 것은 발동형이 아니라 **저절로 도는 능력**이다. */
+const SHARDSK=[
+  ['deadalive','v_mutation','paradox','v_improve','v_scramble','antimatter'],   /* 엔트로피 */
+  ['poison','growth','growth','poison','aflatoxin','poison'],                    /* 죽음 */
+  ['devour','devour','devour','devour','devour','v_blackhole'],                  /* 중력 */
+  ['burrow','v_stoneform','guard','guard','v_bblood','v_bblood'],                /* 대지 */
+  ['growth','adrenaline','adrenaline','adrenaline','adrenaline','mitosis'],      /* 생명 */
+  ['growth','growth','fiery','destroy','destroy','rage'],                        /* 불 */
+  ['steam','steam','freeze','freeze','v_nymph','v_nymph'],                       /* 물 */
+  ['mend','v_endow','v_endow','luciferin','luciferin','luciferin'],              /* 빛 */
+  ['summon','summon','snipe','dive','gas','gas'],                                /* 바람 */
+  ['summon','summon','deja','deja','precognition','precognition'],               /* 시간 */
+  ['vampire','vampire','vampire','vampire','liquid','v_steal'],                  /* 어둠 */
+  ['lobotomize','lobotomize','lobotomize','quint','quint','quint']];             /* 에테르 */
+/* 표 안에서 값이 붙는 자리 — 위 표는 id 만 적었으므로 여기서 값을 준다 */
+const SHARDARG={
+  '2:0':1,'2:3':1,'2:5':2,                       /* 죽음: 독 1 · 1 · 2 */
+  '2:1':[1,1],'2:2':[1,1],                       /* 죽음: +1|+1 */
+  '5:0':[2,2],                                   /* 생명: +2|+2 */
+  '6:0':[2,0],'6:1':[2,0],                       /* 불: +2|+0 */
+  '7:2':3,'7:3':3,                               /* 물: 3턴 얼림 */
+  '9:0':1908,'9:1':1908,                         /* 바람: 반딧불 */
+  '10:0':2010,'10:1':2010};                      /* 시간: 스카라브 */
+/* 발동 비용. 음수는 '저절로 도는 자리' — −4 죽을 때 · −3 지속 · −2 때릴 때 · −1 매 턴 */
+const SHARDCOST={deadalive:1,v_mutation:2,paradox:2,v_improve:2,v_scramble:-2,antimatter:4,
+  poison1:1,poisonN:-2,growth11:-4,aflatoxin:2,devour:3,v_blackhole:4,growth22:2,
+  adrenaline:2,mitosis:4,growth20:1,fiery:-3,destroy:3,rage:2,steam:2,freeze:2,v_nymph:4,
+  mend:1,v_endow:2,luciferin:4,summon:2,snipe:2,dive:2,gas:2,deja:4,precognition:2,
+  vampire:-2,liquid:2,v_steal:3,lobotomize:2,quint:2,burrow:1,v_stoneform:1,guard:1,v_bblood:2};
+const SHARDEV={'-4':'death','-3':'buff','-2':'hit','-1':'ownattack'};
+def('v_integrity',null,'손에 있는 파편을 모두 합쳐 골렘 하나를 만든다. 가장 많이 넣은 속성이 골렘의 능력을 정한다',
+  (g,me,s)=>{
+    const gc=BYNAME['Shard Golem']; if(!gc)return;
+    const tally=new Array(13).fill(0);
+    tally[4]=1;                                   /* 파편의 파편 자신이 대지 하나 */
+    let hp=(s&&s.up)?2:1, atk=hp+3;
+    const keep=[];
+    me.hand.forEach(x=>{
+      if(!/^Shard of /.test(x.c.en)){ keep.push(x); return; }
+      const e=x.c.el; tally[e]++;
+      const b=(e===4)?[4,1]:(e===3)?[6,0]:(e===6)?[0,3]:[2,2];
+      atk+=b[0]; hp+=b[1];
+      if(x.c.up){ atk++; hp++; }
+    });
+    if(keep.length===me.hand.length)return;       /* 파편이 하나도 없으면 아무 일도 없다 */
+    me.hand=keep;
+    let pick=4, max=0;
+    for(let e=1;e<=12;e++) if(tally[e]>max){ max=tally[e]; pick=e; }
+    const step=Math.min(max-1,5);
+    const id=SHARDSK[pick-1][step];
+    const arg=SHARDARG[pick+':'+step];
+    const u=summon(me,gc.code);
+    if(!u)return;
+    u.atk=atk; u.hp=u.maxhp=hp;
+    /* 능력을 어디에 다는가 — 비용이 음수면 저절로 도는 자리다 */
+    let key=id;
+    if(id==='poison') key=(step===0)?'poison1':'poisonN';
+    if(id==='growth') key=(String(arg)==='1,1')?'growth11':(String(arg)==='2,2'?'growth22':'growth20');
+    const cost=SHARDCOST[key]!==undefined?SHARDCOST[key]:0;
+    const sk={ev:'cast',id,arg:Array.isArray(arg)?arg[0]:(arg===undefined?null:arg),
+              args:Array.isArray(arg)?arg:(arg===undefined?[]:[arg])};
+    if(cost<0){ sk.ev=SHARDEV[String(cost)]; u.sk=[sk]; }
+    else { u.sk=[sk]; u.cast=cost; u.castel=4; }
+    if(tally[9]>0&&!u.flags.includes('airborne')) u.flags.push('airborne');
+    if(tally[11]>1){ if(!u.flags.includes('voodoo')) u.flags.push('voodoo'); }
+    else if(tally[11]>0) u.sk.push({ev:'ownattack',id:'siphon',arg:null,args:[]});
+    if(tally[12]>1&&!u.flags.includes('immaterial')) u.flags.push('immaterial');
+    if(tally[3]>1&&!u.flags.includes('momentum')) u.flags.push('momentum');
+    if(tally[5]>1) u.adren=1;
+    log(`${ELKO[pick]} 골렘 ${atk}|${hp}`,'a');
+  });
 
 /* ── 회복 ──────────────────────────────────────────────────────────────── */
 def('mend','cr','대상 크리처를 5 회복시킨다',(g,me,s,t)=>{ healThing(t,s.up?10:5); });
@@ -352,8 +442,10 @@ def('phoenix',null,'죽으면 잿더미가 남는다',(g,me,s)=>{
   const c=BYNAME['Ash']; if(c) summonAt(me,s.up&&c.upcode?c.upcode:c.code,s.slot);
 });
 /* ⚠ 원문은 "Turn this card into a **Minor** Phoenix" — 작은 불사조다. */
-def('rebirth',null,'작은 불사조로 되돌아간다',(g,me,s)=>{
-  const c=CARD[(BYNAME['Phoenix']||{}).upcode]||BYNAME['Phoenix']; if(c) morph(s,c.code);
+/* ⚠ 'Minor Phoenix' 는 신판 이름이다. 원작판(`card::As(card, v_Phoenix)`)에서는
+   기본 잿더미 → **기본 불사조**다. 강화판으로 되돌리고 있었다. */
+def('rebirth',null,'불사조로 되돌아간다',(g,me,s)=>{
+  const c=BYNAME['Phoenix']; if(c) morph(s,s.up&&c.upcode?c.upcode:c.code);
 });
 /* ⚠⚠ 원문: "Turn one of **your pillars or pendulums** into a Nymph.
    The Nymph will inherit the target's element."
@@ -371,10 +463,13 @@ def('v_nymph','mypillar','겨눈 내 기둥·진자를 그 속성의 님프로 �
   log(`${t.c.ko} → ${u.c.ko}`,'a');
 });
 /* ⚠ 원문: "up to 3 random **upgraded** cards. The first one will be an [엔트로피] card." */
-def('v_serendipity',null,'무작위 강화 카드 3장을 손에 넣는다 (첫 장은 엔트로피)',(g,me)=>{
-  const up=c=>CARD[c.upcode]||c;
-  const ent=ETG.cards.filter(c=>!c.up&&playable(c)&&c.el===1&&c.kind!=='perm');
-  const any=ETG.cards.filter(c=>!c.up&&playable(c)&&c.kind!=='perm');
+/* ⚠ '강화 카드' 는 **강화판 우연의 파편** 이야기다(`random_card(Upped(ccard), …)`).
+   기본판은 기본 카드를 준다. 파편·유물·기적은 나오지 않는다. */
+def('v_serendipity',null,'무작위 카드 3장을 손에 넣는다 (적어도 한 장은 엔트로피)',(g,me,s)=>{
+  const up=c=>(s&&s.up&&CARD[c.upcode])?CARD[c.upcode]:c;
+  const okc=c=>!c.up&&playable(c)&&!/^Shard of |^Relic$|^Miracle$/.test(c.en);
+  const ent=ETG.cards.filter(c=>okc(c)&&c.el===1);
+  const any=ETG.cards.filter(okc);
   for(let i=0;i<3&&me.hand.length<HANDMAX;i++){
     const pool=(i===0&&ent.length)?ent:any;
     me.hand.push(mk(up(pool[rnd(pool.length)]).code,me));
@@ -421,8 +516,11 @@ def('v_readiness','mycr','겨눈 크리처의 능력 비용이 0 이 된다. 시
 def('salvage',null,'기물이 부서질 때마다 +1|+1. 상대가 부순 기물은 턴에 한 번 사본이 손에 들어온다',
   (g,me,s,t,by)=>{
     if(!t)return;
-    if(!s.up) buff(s,1,1);                 /* 강화판은 사본만 챙긴다 */
-    if(by&&by!==me&&!s.salvaged&&me.hand.length<HANDMAX){
+    /* ⚠ '+1|+1' 은 신판 전용이다(`if is_open`). 원작판 조건은
+       **내 턴이 아니고 · 부서진 기물이 내 것이 아닐 때 · 턴에 한 번**. */
+    if(G.turn===me)return;
+    if(t.own===me)return;
+    if(!s.salvaged&&me.hand.length<HANDMAX){
       s.salvaged=true; me.hand.push(mk(t.c.code,me));
       log(`${t.c.ko} 을(를) 주워 담았다`,'a');
     }
@@ -444,23 +542,29 @@ def('v_dshield',null,'한 턴 동안 겨눌 수 없다',(g,me,s)=>{
 });
 /* ⚠ 원문: "Attacking **non-ranged** creatures may randomly die". 원거리는 안 걸린다
    (강화판은 원거리도 걸린다). */
-def('skull',null,'때린 크리처가 확률로 해골이 된다 (원거리는 걸리지 않는다)',(g,me,s,t)=>{
+/* ⚠ '원거리는 안 걸린다' 는 **신판 전용**이다. 원작판은 원거리도 걸리고,
+   대신 **이미 해골인 몸은 다시 안 걸린다**. */
+def('skull',null,'때린 크리처가 확률로 해골이 된다 (체력이 낮을수록 잘 걸린다)',(g,me,s,t)=>{
   if(!t||t.kind!=='creature')return;
-  if(!s.up&&t.flags.includes('ranged'))return;
-  if(Math.random()<0.5/Math.max(1,t.hp)){ const c=BYNAME['Skeleton']; if(c) morph(t,c.code); }
+  if(/Skeleton$/.test(t.c.en))return;
+  if(t.hp<=0||rnd(Math.max(1,t.hp*2))===0){ const c=BYNAME['Skeleton']; if(c) morph(t,c.code); }
 });
 def('wings',null,'날지도 원거리도 아닌 공격을 전부 막는다',()=>{});
 def('evade',null,'{N}% 확률로 공격을 흘린다',()=>{});
-def('v_freeevade',null,'내 문장이 바람이면, 날아다니는 내 크리처가 25% 확률로 겨냥을 흘린다',()=>{});
-def('disshield',null,'막은 피해 3마다 엔트로피 퀀텀 1을 쓴다. 못 내면 그만큼은 들어온다',()=>{});
-def('disfield',null,'막은 피해 1마다 아무 퀀텀 1을 쓴다. 못 내면 그만큼은 들어온다',()=>{});
+def('v_freeevade',null,'내 문장이 바람이면, 날아다니는 내 크리처가 확률로 겨냥을 흘린다 (쌓을수록 확률이 오른다)',()=>{});
+def('disshield',null,'모든 피해를 막는다. 막은 피해 3마다 엔트로피 퀀텀 1을 쓰고, 못 내면 엔트로피를 다 잃고 부서진다',()=>{});
+def('disfield',null,'모든 피해를 막는다. 막은 피해 1마다 아무 퀀텀 1을 쓰고, 못 내면 퀀텀을 다 잃고 부서진다',()=>{});
 def('blockwithcharge',null,'뼈 하나로 공격 하나를 통째로 막는다',()=>{});
 def('gaincharge',null,'크리처가 죽을 때마다 뼈가 {N} 늘어난다',(g,me,s,t,a)=>{ s.charges=(s.charges||0)+(a||2); });
+/* ⚠ openEtG 는 **줄이기 전 값이 0 일 때** 사라진다. `줄이고 나서 0` 으로 적어 둬서
+   날개·해시계·차원 방패가 전부 한 턴씩 짧게 살았다. */
 def('losecharge',null,'턴마다 한 번씩 닳고, 다 닳으면 사라진다',(g,me,s)=>{
-  s.charges=(s.charges||0)-1; if(s.charges<=0) destroyPerm(s);
+  if((s.charges||0)<=0){ destroyPerm(s); return; }
+  s.charges--;
 });
 def('weight',null,'체력이 5를 넘는 크리처의 공격을 막는다',()=>{});
-def('solar',null,'막을 때마다 빛 퀀텀을 얻는다',(g,me)=>{ gain(me,8,1); });
+/* ⚠ openEtG: `spend(owner, Light, -data.blocked)` — **막은 피해만큼** 얻는다. 1 이 아니다. */
+def('solar',null,'막은 피해만큼 빛 퀀텀을 얻는다',(g,me,s,t,a)=>{ gain(me,8,(typeof a==='number'&&a>0)?a:1); });
 def('bow',null,'바람 문장이면 공격력이 1 오른다 (강화판은 빛 문장도)',()=>{});
 def('hammer',null,'중력·대지 문장이면 공격력이 1 오른다',()=>{});
 def('v_dagger',null,'죽음·어둠 문장이면 공격력이 1 오른다',()=>{});
@@ -477,8 +581,9 @@ def('nightfall',null,'모든 야행성 크리처가 +{N}|+1',()=>{});
    id 를 지어내지 말고 표에 적힌 것을 볼 것. */
 def('regenerate',null,'턴 끝에 {N} 회복한다',(g,me,s,t,a)=>{ heal(me,regenN(a)); });
 def('stasis',null,'양쪽 크리처가 턴 끝에 공격하지 않는다 (무기는 그대로 때린다)',()=>{});
-def('upkeep',null,'유지 비용을 못 내면 사라진다',(g,me,s)=>{
-  if(!pay(me,s.c.costel,1)) destroyPerm(s);
+/* ⚠ 내는 것은 **카드 속성**이다(`ctx.get_card(...).element`) — 비용 속성이 아니다. */
+def('upkeep',null,'매 턴 자기 속성 퀀텀 1을 낸다. 못 내면 사라진다',(g,me,s)=>{
+  if(!pay(me,s.c.el,1)) destroyPerm(s);
 });
 /* ⚠⚠ 원문: "Add X HP's to your maximum life points. X is the number of [대지] that you own."
    **크리처가 아니라 내 최대 체력**이다. 크리처에 +0|+N 을 주고 있었다 — 대상이 아예 틀렸다.
@@ -492,31 +597,39 @@ def('dive',null,'다음 공격의 공격력이 두 배가 된다',(g,me,s)=>{ s.
    Water and neutral creatures are immune. Absorb [물] per turn."
    표에는 유지 비용(upkeep)만 잡혀 있어서, **가장자리를 쓸어버리는 본체가 통째로 없었다.**
    물 기둥 하나 값을 매 턴 내면서 아무 일도 안 하는 카드였다. */
-const EDGE=5;                       /* 앞 다섯 칸 바깥이 가장자리다(openEtG 와 같다) */
-def('flood',null,'매 턴, 가장자리 칸의 크리처를 죽인다. 물·무속성 크리처는 무사하다',(g)=>{
+/* openEtG 원작판(game.rs 의 공격 차례): `i > floodingIndex && element != Water` 면 죽는다.
+   floodingIndex 는 5 라서 **여섯 칸째(0부터 세어 6번 자리)부터** 잠긴다.
+   @지어냄: 원작은 범람을 깐 **첫 턴만 일곱 칸**을 봐준다(floodingIndex 7). 우리는 늘 여섯
+   칸으로 뒀다 — 첫 턴만 다른 규칙은 판에서 읽어 낼 방법이 없어서 혼란만 준다고 봤다. */
+const EDGE=6;
+def('flood',null,'매 턴, 여섯 칸째부터의 크리처를 죽인다. 물 속성 크리처는 무사하다',(g)=>{
   [g.me,g.ai].forEach(p=>{
     p.cr.forEach((u,i)=>{
       if(!u||i<EDGE)return;
-      if(u.c.el===7||u.c.el===0)return;
+      if(u.c.el===7)return;            /* ⚠ '수생 표식' 이 아니라 **물 속성** 이다(원작판) */
+      if(u.flags.includes('immaterial'))return;
       log(`${u.c.ko} 이(가) 물에 잠겼다`,'c');
       kill(u);
     });
   });
 });
-/* ⚠⚠ 인내의 파편 — 원문: "Your creatures do not attack and gain +1/+0;
-   [물] creatures +2/+2, +4/+4 if in a flooded area. Click to remove."
-   표에는 '스스로 부순다(die)' 만 잡혀 있었다 — 그 '클릭해서 없앤다' 한 줄만 있고
-   **버티는 동안 하는 일이 통째로 없었다.** 판 위에 있는 동안 늘 맞춰 준다. */
-function syncPatience(p){
-  const on=patienceOn(p), fl=floodOn(p);
-  p.cr.forEach(u=>{
+/* ⚠⚠⚠ 인내의 파편 — 카드 글("+1/+0; 물 +2/+2, 범람하면 +4/+4")을 보고 **한 번 붙는
+   고정 강화**로 만들어 뒀는데, openEtG 원작판(game.rs 공격 차례)은 전혀 다르다:
+     매 턴 **내 크리처를 한 턴 묶고**(그래서 공격하지 않는다) **+2|+2 씩 쌓아 준다.**
+     범람한 칸의 물 크리처는 **+5|+5**.
+   즉 이건 '버티면 자란다' 는 카드다. 고정 강화로 두면 카드의 뜻이 통째로 사라진다.
+   그래서 aura(syncPatience) 를 걷고, 턴마다 도는 것으로 옮겼다. */
+function patienceTick(p){
+  if(!patienceOn(p))return;
+  const fl=floodOn(p);
+  p.cr.forEach((u,i)=>{
     if(!u)return;
-    const w=(u.c.el===7);
-    const a=on?(w?(fl?4:2):1):0, h=on?(w?(fl?4:2):0):0;
-    const cur=u.pat||{a:0,h:0};
-    if(cur.a!==a||cur.h!==h){ u.pat={a,h}; buff(u,a-cur.a,h-cur.h); }
+    const n=(fl&&i>=EDGE&&u.c.el===7)?5:2;
+    buff(u,n,n);
+    if(!u.delayed) u.delayed=1;          /* 그래서 이번 턴은 안 때린다 */
   });
 }
+function syncPatience(p){}                /* (더는 쓰지 않는다 — 위 tick 이 대신한다) */
 /* 땅거미·개기일식 — 야행성 크리처의 체력 몫. 공격력은 trueAtk 가 그때그때 센다. */
 function syncNightfall(p){
   const n=nightfallArgs(p).hp;
@@ -543,7 +656,7 @@ function syncAuras(){
   if(!(G&&G.me&&G.ai))return;
   [G.me,G.ai].forEach(p=>{ syncPatience(p); syncNightfall(p); syncSwarm(p); });
 }
-def('patience',null,'내 크리처는 공격하지 않는 대신 +1|+0 을 얻는다. 물 크리처는 +2|+2, 범람한 곳에서는 +4|+4',()=>{});
+def('patience',null,'매 턴 내 크리처를 한 턴 묶고 +2|+2 를 쌓아 준다. 범람한 칸의 물 크리처는 +5|+5',()=>{});
 /* ⚠⚠ 원문: "Your opponent draws 2 cards, 3 if your mark is [불]. Draw an equal amount of cards."
    **공격력과는 아무 상관이 없다.** 예전 설명("카드를 2장 뽑고 공격력을 올린다")은
    내가 지어낸 것이고, 구현도 내 카드만 두 장 뽑고 상대는 아무것도 안 뽑았다.
@@ -555,20 +668,21 @@ def('bravery',null,'상대가 카드 2장을 뽑는다(내 문장이 불이면 3
     for(let i=0;i<n;i++){ const b=f.hand.length; draw(f); if(f.hand.length>b)drew++; }
     for(let i=0;i<drew;i++) draw(me);
   });
-def('v_freedom',null,'날아다니는 내 크리처가 25% 확률로 피해 1.5배 · 방패 무시로 때린다',()=>{});
+def('v_freedom',null,'날아다니는 내 크리처가 확률로 피해 1.5배 · 방패 무시로 때린다 (쌓을수록 확률이 오른다)',()=>{});
 def('evolve',null,'굴에서 나와 비명벌레로 자란다',(g,me,s)=>{ const c=BYNAME['Shrieker']; if(c) morph(s,s.up&&c.upcode?c.upcode:c.code); s.burrowed=false; });
 def('burrow',null,'땅에 숨는다 (공격력 절반, 겨눌 수 없다)',(g,me,s)=>{
   s.burrowed=!s.burrowed;
 });
 /* ⚠ 원문: "Delay target creature **& this creature**. If target isn't airborne **or this
    creature is airborne**, deal damage." 자기 지연도, 비행 조건도 빠져 있었다. */
-def('guard',null,'대상과 자신을 한 턴 묶는다. 대상이 날지 않거나 자신이 날면 공격력만큼 때린다',
+def('guard',null,'대상과 자신을 한 턴 묶는다. 대상이 날지 않으면 공격력만큼 때린다',
   (g,me,s,t)=>{
     if(!t)return;
     t.delayed=(t.delayed||0)+1; s.delayed=(s.delayed||0)+1;
-    if(!t.flags.includes('airborne')||s.flags.includes('airborne')) spellDmg(me,t,s.atk);
+    /* ⚠ '내가 날면 날아다니는 몸도 때린다' 는 신판 전용이다. 원작판은 대상이 안 날 때만. */
+    if(!t.flags.includes('airborne')) spellDmg(me,t,trueAtk(s));
   });
-def('paradox','foecr','공격력이 체력보다 큰 크리처를 죽인다',(g,me,s,t)=>{ if(t.atk>t.hp) kill(t); });
+def('paradox','foecr','공격력이 체력보다 큰 크리처를 죽인다',(g,me,s,t)=>{ if(t&&trueAtk(t)>t.hp) kill(t); });
 def('deadalive',null,'이 몸이 죽는다 — 죽음 효과가 터진다. 그래도 살아남는다',(g,me,s)=>{
   everyThing().forEach(x=>{ if(x&&x!==s&&!x.dead) trig(x,'death',s); });
 });
@@ -594,10 +708,10 @@ def('immolate','mycr','자기 크리처를 태운다. 12속성 퀀텀 1씩과 �
   if(!t)return; for(let e=1;e<=12;e++) gain(me,e,1); gain(me,6,(a||5)); kill(t);
 });
 def('fiery',null,'불 퀀텀 5마다 공격력 1',()=>{});
-/* ⚠ 원문(기본판): "Remove this ability, gain 5|5, **& become nocturnal**." */
-def('lycanthropy',null,'+5|+5 를 얻고 야행성이 된다',(g,me,s)=>{
+/* ⚠⚠ '야행성이 된다' 는 **신판 전용**이다(`if cardset == Open`). skilltext 만 보고
+   넣었다가 소스에서 확인하고 되돌렸다. 원작판은 +5|+5 와 능력 상실뿐이다. */
+def('lycanthropy',null,'+5|+5 를 얻고 이 능력을 잃는다',(g,me,s)=>{
   buff(s,5,5); s.sk=s.sk.filter(k=>k.id!=='lycanthropy');
-  if(!s.flags.includes('nocturnal')) s.flags.push('nocturnal');
 });
 /* ⚠⚠ 원문: "All of your creatures **without a skill** gain 'bioluminescence'."
    회복만 하고 능력은 아무에게도 안 주고 있었다.
@@ -605,7 +719,11 @@ def('lycanthropy',null,'+5|+5 를 얻고 야행성이 된다',(g,me,s)=>{
 def('luciferin',null,'체력을 10 회복하고, 능력이 없는 내 크리처 전부가 발광을 얻는다 (매 턴 빛 1)',
   (g,me)=>{
     heal(me,10);
-    me.cr.forEach(u=>{ if(u&&u.sk.length===0) u.sk.push({ev:'ownattack',id:'quanta',arg:8,args:[8]}); });
+    /* ⚠ openEtG 기준은 '능력이 없다' 가 아니라 **'스스로 하는 일이 없다'** 이다 —
+       지속(문장 보너스·불꽃 등)만 가진 몸도 받는다. */
+    const PASSIVE=new Set(['buff','ownbuff','hp','ownhp','show','ownplay','owndiscard']);
+    me.cr.forEach(u=>{ if(u&&u.sk.every(k=>PASSIVE.has(k.ev)))
+      u.sk.push({ev:'ownattack',id:'quanta',arg:8,args:[8]}); });
   });
 /* ⚠⚠ 원문: "Add 1 poison damage to each successful attack, **1 extra poison for each
    card played by afflicted player**." 뒷문장이 통째로 없어서 그냥 전갈이었다. */
@@ -615,14 +733,25 @@ def('neuro',null,'때릴 때마다 독 1. 신경독에 걸린 쪽은 카드를 �
     addPoison(t,1);
     if(t.c) t.neuro=true; else t.neuro=true;   /* 몸이든 얼굴이든 표시를 남긴다 */
   });
-/* ⚠ 원문은 "This object is not defined and not well-behaved" 한 줄뿐이고,
-   openEtG 도 "That was a bad idea" 로 넘긴다 — **원작이 무엇을 하는지 안 적어 놨다.**
-   그래서 이 넷은 내가 채운 것이다. 설명에 그대로 적어 둔다(설명은 곧 규칙). */
-def('singularity',null,'매 턴 주인에게 나쁜 일이 하나 일어난다 — 공격력 −1 · 주인이 2 피해 · 무작위 퀀텀 2 · 공격력 부호 뒤집기 중 하나',(g,me,s)=>{
-  const r=rnd(4);
-  if(r===0) buff(s,-1,0); else if(r===1) spellDmg(me,me,2);
-  else if(r===2) gain(me,1+rnd(12),2); else s.atk=-s.atk;
-});
+/* ⚠⚠ 예전에 여기 넷을 **내가 지어내 놓고** 성권이 물을 때까지 말하지 않았다.
+   원작 카드 글("This object is not defined and not well-behaved")과 openEtG 의
+   능력 설명("That was a bad idea")이 둘 다 아무 말도 안 해서 없는 줄 알았는데,
+   **구현은 openEtG 소스(src/rs/src/skill.rs)에 그대로 있었다.** 그걸 옮긴다. */
+def('singularity',null,
+  '공격력이 양수가 되면 도로 음수로 뒤집힌다. 그 밖에는 매 턴 하나가 일어난다 — '
+ +'상대가 모든 속성 퀀텀 +1 · 흡혈로 바뀜 · 실체 없음 · 체력이 늘고 공격력이 더 내려감 · '
+ +'아드레날린 · 자기 복제',
+  (g,me,s)=>{
+    /* 공격력이 양수면 그것부터 되돌린다 — 반물질로 고쳐 쓰지 못하게 하는 장치다 */
+    if(trueAtk(s)>0){ s.atk-=trueAtk(s)*2; return; }
+    let r=rnd(12); if(r>9) r=0;
+    if(r===0){ const f=foe(me); for(let e=1;e<=12;e++) gain(f,e,1); }
+    else if(r<3){ s.sk=s.sk.filter(k=>k.ev!=='hit').concat([{ev:'hit',id:'vampire',arg:null,args:[]}]); }
+    else if(r<5){ if(!s.flags.includes('immaterial')) s.flags.push('immaterial'); }
+    else if(r<7){ const b=rnd(25); buff(s,-(1+b%5),Math.floor(b/5)+1); }
+    else if(r<9){ s.adren=1; }
+    else { SK.parallel.f(g,me,s,s); }
+  });
 def('chimera',null,'자기 크리처를 하나로 합친다. 관성 · 중력 견인을 얻는다',(g,me)=>{
   let a=0,h=0; me.cr.forEach(u=>{ if(u){a+=u.atk;h+=u.hp;} });
   me.cr=new Array(MAXCR).fill(null);
@@ -631,7 +760,7 @@ def('chimera',null,'자기 크리처를 하나로 합친다. 관성 · 중력 �
   me.gpull=u;                      /* ⚠ 원문에 중력 견인도 있다 — 합친 몸이 전부 대신 맞는다 */
 });
 def('skyblitz',null,'바람 퀀텀을 모두 쓰고 비행 크리처가 급강하한다',(g,me)=>{
-  me.q[9]=0; me.cr.forEach(u=>{ if(u&&u.flags.includes('airborne')) u.dive=true; });
+  me.q[9]=0; me.cr.forEach(u=>{ if(u&&u.flags.includes('airborne')&&!u.flags.includes('immaterial')) u.dive=true; });
 });
 def('butterfly','cr','대상이 기물 파괴 능력을 얻는다',(g,me,s,t)=>{
   if(t.atk<3||t.hp<3){ t.sk=[{ev:'cast',id:'destroy',arg:null}]; t.cast=3; t.castel=1; }
@@ -641,20 +770,18 @@ def('butterfly','cr','대상이 기물 파괴 능력을 얻는다',(g,me,s,t)=>{
    가끔 '이상한 것'(무작위 강화 크리처)이 된다. */
 def('v_mutation','foecr','대상이 흉물이 된다. 낮은 확률로 죽거나 엉뚱한 것이 된다',(g,me,s,t)=>{
   if(!t)return;
-  const r=Math.random();
-  if(r<0.20){ kill(t); return; }
-  if(r<0.50){
-    const pool=ETG.cards.filter(c=>c.kind==='creature'&&c.up&&playable(CARD[c.code-2000]||c));
-    if(pool.length){ morph(t,pool[rnd(pool.length)].code); return; }
-  }
+  /* openEtG: upto(10) — 10% 죽음 · 40% 개량 돌연변이 · 50% 흉물 */
+  const r=rnd(10);
+  if(r<1){ kill(t); return; }
+  if(r<5){ SK.v_improve.f(g,me,s,t); return; }
   const c=BYNAME['Abomination']; if(c) morph(t,c.code);
 });
 /* 개량 돌연변이(강화) — 죽지 않고 더 나은 것이 된다 */
-def('v_improve','foecr','대상이 더 나은 돌연변이가 된다',(g,me,s,t)=>{
+/* ⚠ openEtG 는 **강화판이 아니라 기본 크리처** 아무거나로 바꾼다(`random_card(false, …)`). */
+def('v_improve','foecr','대상이 무작위 크리처로 바뀐다',(g,me,s,t)=>{
   if(!t)return;
-  const pool=ETG.cards.filter(c=>c.kind==='creature'&&c.up&&playable(CARD[c.code-2000]||c));
+  const pool=ETG.cards.filter(c=>c.kind==='creature'&&!c.up&&playable(c));
   if(pool.length) morph(t,pool[rnd(pool.length)].code);
-  else { const c=BYNAME['Abomination']; if(c) morph(t,c.code); }
 });
 /* ⚠⚠ openEtG: "Passive: base HP is equal to the number of Scarabs you control."
    **체력**인데 나는 공격력을 스카라브 수로 덮어쓰고 있었다 —
@@ -937,10 +1064,13 @@ function randomEffect(me,u){
      'rage' 로 고치면서 이 목록만 안 고쳐, 무작위 효과가 뜰 때마다 판이 통째로 죽었다.
      (아수라장·혼돈의 씨앗이 나오는 순간 조용히 멈췄다.) */
   if(!u||!u.c)return;
-  const opts=['bless','rage','freeze','v_slow','poison','antimatter','quint','platearmor'];
+  /* ⚠⚠ 예전 여덟 가지는 **내가 고른 것**이었다(축복·분노·냉동·감속·독·반물질·정수·판금).
+     openEtG `Self::v_cseed` 에는 **열두 가지가 그대로 적혀 있다.** 그걸 옮긴다. */
+  const opts=['v_drainlife','v_firebolt','freeze','gpullspell','v_icebolt','poison',
+              'lightning','lobotomize','parallel','v_rewind','snipe','swave'];
   const id=opts[rnd(opts.length)];
   const h=SK[id]; if(!h)return;
-  h.f(G,me,u,u,id==='freeze'?3:(id==='platearmor'?4:1));
+  h.f(G,me,u,u,id==='freeze'?3:(id==='poison'?1:0));
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -958,7 +1088,8 @@ function draw(p){
      문장 → 상대 독 → 기물(기둥) → 크리처 공격 → 무기 공격 */
 function endTurn(){
   const p=G.turn, f=foe(p);
-  syncAuras();                 /* 파편·범람의 지속 효과를 먼저 맞춰 놓고 시작한다 */
+  syncAuras();                 /* 땅거미·스카라브의 지속 값을 먼저 맞춰 놓는다 */
+  patienceTick(p);             /* 인내의 파편 — 묶고, 쌓아 준다 */
   /* 1) 문장 */
   if(p.mark===0){ for(let i=0;i<3;i++) gain(p,1+rnd(12),1); } else gain(p,p.mark,1);
   /* 2) 독 — 내 턴이 끝날 때 **상대**가 자기 독만큼 맞는다 */
@@ -999,15 +1130,16 @@ function attack(u){
     if(u.dead)return;
     if(u.frozen>0||u.delayed>0){ if(u.frozen>0)u.frozen--; if(u.delayed>0)u.delayed--; return; }
     if(u.kind==='creature'&&stasisOn(f)){ return; }
-    /* 인내의 파편 — "Your creatures do not attack" */
-    if(u.kind==='creature'&&patienceOn(p)){ u.used=false; return; }
     let atk=trueAtk(u);
     if(u.dive){ atk*=2; u.dive=false; }
     /* ⚠⚠ 자유의 파편 — "Airborne creatures gain a 25% chance to deal +50% damage,
        ignore shields...". 설명만 있고 구현이 `()=>{}` 였다. */
+    /* ⚠ 확률은 25% 고정이 아니라 **쌓인 파편 수 / 4** 다(`next32() & 3 < charges`). */
     let free=false;
-    if(u.kind==='creature'&&u.flags.includes('airborne')&&permNamed(p,'Shard of Freedom')
-       &&Math.random()<0.25){ free=true; atk=Math.floor(atk*1.5); }
+    if(u.kind==='creature'&&u.flags.includes('airborne')){
+      let ch=0; p.pm.forEach(x=>{ if(x&&x.c.en==='Shard of Freedom') ch+=(x.charges||1); });
+      if(ch&&rnd(4)<ch){ free=true; atk=Math.floor(atk*1.5); }
+    }
     if(atk!==0){
       if(u.flags.includes('psionic')) spellDmg(p,f,atk);
       else if(u.flags.includes('momentum')||atk<0){ dmgP(f,atk); trig(u,'hit',f,atk); }
@@ -1083,25 +1215,24 @@ function shieldReduce(sh,atk,dmg){
   if(id==='evade100') return {dmg:0,blocked:dmg};
   /* ⚠ 원문: "**more than** 5HP" — 딱 5인 몸은 지나간다. >= 로 적어 한 칸 세게 막고 있었다 */
   if(id==='weight') return (atk.hp>5&&atk.kind==='creature')?{dmg:0,blocked:dmg}:{dmg,blocked:0};
-  /* ⚠⚠ 소산 방패 — 원문: "Consume **1:1 per 3 damage** blocked"(엔트로피).
-     에테르 1 만 내고 **피해를 통째로** 막고 있었다. 낼 수 있는 만큼만 막는다. */
+  /* ⚠⚠ 소산 방패·장막 — openEtG 는 **언제나 통째로 막는다.** 값을 못 내면
+     그 속성 퀀텀을 **0 으로 만들고 방패가 부서진다** — 그 한 방은 그래도 막힌다.
+     '낼 수 있는 만큼만 막는다' 는 내가 지어낸 것이었다. */
   if(id==='disshield'){
-    const need=Math.ceil(dmg/3); let paid=0;
-    while(paid<need&&pay(p,1,1)) paid++;
-    const abs=Math.min(dmg,paid*3);
-    return {dmg:dmg-abs,blocked:abs};
+    if(!pay(p,1,Math.ceil(dmg/3))){ p.q[1]=0; destroyPerm(sh); }
+    return {dmg:0,blocked:dmg};
   }
-  /* 소산 장막(강화) — 아무 퀀텀이나 피해 1당 1 */
   if(id==='disfield'){
-    let paid=0; while(paid<dmg&&pay(p,0,1)) paid++;
-    return {dmg:dmg-paid,blocked:paid};
+    if(!pay(p,0,dmg)){ for(let e=1;e<=12;e++) p.q[e]=0; destroyPerm(sh); }
+    return {dmg:0,blocked:dmg};
   }
   if(id==='blockwithcharge'){ if(sh.charges>0){ sh.charges--; return {dmg:0,blocked:dmg}; } return {dmg,blocked:0}; }
   /* 희망은 shield 가 아니라 ownattack 으로 걸려 있다 — id 로만 찾으면 0 이 된다 */
   /* ⚠ 원문: "reduced by **1 + N**". 1 을 빼먹어 빛 크리처가 없으면 아무것도 안 막았다. */
+  /* ⚠⚠ 카드 글은 "1 + N" 이라 적혀 있지만 **openEtG 원작판은 N**(강화판만 +1)이다
+     (`set(c, hp, dr + Upped)`). 세는 것은 '공격할 때 빛 퀀텀을 만드는 내 크리처'. */
   if(sh.sk.some(s=>s.id==='v_hope'))
-    dr=1+p.cr.filter(x=>x&&x.sk.some(s=>s.id==='solar'||s.id==='luciferin'
-      ||s.id==='quanta')).length;
+    dr=(sh.up?1:0)+p.cr.filter(x=>x&&x.sk.some(s=>s.ev==='ownattack'&&s.id==='quanta'&&s.arg===8)).length;
   const b=Math.min(dr,dmg);
   return {dmg:dmg-b,blocked:b};
 }
@@ -1167,7 +1298,9 @@ function playCard(p,u,tgt){
   /* 자유의 파편 — "…and evade targeting if [바람]". 문장이 바람일 때만 붙는 몫이다. */
   if(u.kind==='spell'&&tgt&&tgt.c&&tgt.kind==='creature'&&tgt.own!==p
      &&tgt.flags.includes('airborne')&&permNamed(tgt.own,'Shard of Freedom')
-     &&tgt.own.mark===9&&Math.random()<0.25){
+     &&tgt.own.mark===9&&(()=>{ let ch=0;
+        tgt.own.pm.forEach(x=>{ if(x&&x.c.en==='Shard of Freedom') ch+=(x.charges||1); });
+        return ch&&rnd(4)<ch; })()){
     log(`${tgt.c.ko} 이(가) 겨냥을 흘렸다`,'c');
     checkEnd(); return true;
   }
@@ -1209,7 +1342,11 @@ function useAbility(p,u,tgt){
 
 /* ═══════════════════════════════════════════════════════════════════════════
    7. 아주 단순한 상대 — 낼 수 있는 걸 싼 것부터 낸다
-   ═══════════════════════════════════════════════════════════════════════════ */
+   ───────────────────────────────────────────────────────────────────────────
+   @지어냄: 상대의 수읽기. 원작(openEtG)의 AI 는 판을 점수 매겨 고르는 물건인데
+   여기 옮기지 않았다. 지금 상대는 '기둥이 모자라면 기둥부터, 아니면 싼 것부터'
+   낼 뿐이다 — 규칙이 아니라 **연습 상대**로 둔 것이다. */
+/* ═══════════════════════════════════════════════════════════════════════════ */
 function aiTurn(){
   if(G.over||G.turn!==G.ai)return;
   const p=G.ai;
@@ -1964,7 +2101,9 @@ function screenBuild(){
   $('#auto').onclick=()=>{DKB=autoDeck(BUILD_EL);screenBuild();};
   $('#go').onclick=()=>{ startGame(deckList(DKB),BUILD_MARK); };
 }
-/* 자동 구성 — 기둥 12 + 싼 것 위주 */
+/* 자동 구성 — 기둥 12 + 싼 것 위주
+   @지어냄: 이 배합(기둥 12장 + 싼 카드 위주 30장). 원작에는 '자동 구성' 이 없다 —
+   덱 짜기를 처음부터 하지 않아도 바로 놀아 볼 수 있게 내가 정한 것이다. */
 function autoDeck(el){
   const d={};
   const pool=POOLS[el].filter(c=>!c.sk.some(s=>s.id==='pillar'||s.id==='pend'));
