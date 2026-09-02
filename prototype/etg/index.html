@@ -38,10 +38,10 @@
   ■ 원작 규칙 중 여기서 지킨 것
     · 퀀텀은 **속성별로 쌓인다**(최대 75). 턴마다 초기화되지 않는다. ← TEN 과 가장 큰 차이
     · 기둥/탑/진자와 문장은 **자기 턴이 끝날 때** 퀀텀을 만든다 (openEtG v_endturn 순서 그대로)
-    · **막기가 없다.** 크리처는 언제나 상대 얼굴을 때리고, 방패만 그 피해를 깎는다
+    · **막기가 없다.** 유닛는 언제나 상대 얼굴을 때리고, 실드만 그 피해를 깎는다
     · 소환 멀미가 없다 — 낸 턴에 바로 때리고 능력도 쓴다
     · 체력 100, 덱 30~60장, 같은 카드 6장까지, 손패 8장 상한, 덱이 마르면 패배
-    · 크리처 23칸 · 기물 16칸 · 무기 1 · 방패 1
+    · 유닛 23칸 · 노드 16칸 · 웨폰 1 · 실드 1
 -->
 <style>
 /* ↓↓ 본편 prototype/index.html 에서 그대로 가져온 규격 — 손대지 말고 tools/build_etg_page.py 를 다시 돌릴 것 ↓↓ */
@@ -1383,7 +1383,7 @@ body{padding:0;height:100dvh;overflow:hidden;
    판은 packRow 가 겹쳐 주므로 23칸이어도 넘치지 않는다.
    ⚠⚠ 다만 **화면 높이에 묶어야 한다.** 78px 로 못 박았더니 740px·667px 짜리 폰에서
      손패가 화면 밖으로 잘렸다(전투 화면은 스크롤하지 않으므로 잘리면 못 만진다).
-     줄이 넷(상대 기물·상대 판·내 판·내 기물) + 손패 = 카드 다섯 줄이 세로로 들어가야 한다. */
+     줄이 넷(상대 노드·상대 판·내 판·내 노드) + 손패 = 카드 다섯 줄이 세로로 들어가야 한다. */
 /* ⚠⚠⚠ **이 body 규칙은 본편 CSS 뒤에 온다** — 본편이 걸어 둔
      `padding-top:env(safe-area-inset-top)` 을 통째로 덮어 버린다.
      제목줄이 있을 때는 그 32px 가 완충이 돼서 안 드러났는데, 제목줄을 없애자마자
@@ -1483,7 +1483,7 @@ body.deckmode .wrap{height:auto}
 
 /* 카드 그림 자리 — 이 모드는 일러스트가 없다. 원작 아트는 우리 것이 아니라 싣지 않았다.
    빈 상자로 두면 무슨 카드인지 알 수가 없으므로 **속성과 종류**를 앉힌다.
-   ⚠ 종류(주문·크리처·기물·무기·방패)는 테두리 모양만으로는 안 갈린다 — 본편은 크리처가
+   ⚠ 종류(액션·유닛·노드·웨폰·실드)는 테두리 모양만으로는 안 갈린다 — 본편은 유닛가
      대부분이라 테두리로 됐지만 여기는 다섯 종류가 고루 섞인다. 글로 적어야 한다. */
 /* 속성·종류 — **발치 줄 가운데**. 이미 있는 줄이라 카드 높이가 하나도 안 늘어난다.
    ⚠ 그림 자리(.tart)에는 아무것도 얹지 않는다. 나중에 일러스트가 들어갈 자리다. */
@@ -1527,14 +1527,14 @@ body.deckmode .wrap{height:auto}
 @media (prefers-reduced-motion:reduce){.qp.short{animation:none}}
 .mkl{font-style:normal;font-family:'Gowun Batang',serif;font-size:9px;margin-left:4px;opacity:.9}
 
-/* 기물줄은 크리처줄보다 낮게 — 세로 예산을 아끼려고 */
+/* 노드줄은 유닛줄보다 낮게 — 세로 예산을 아끼려고 */
 .board.pmrow{min-height:calc(var(--cardw)*1.0 + 8px);margin-bottom:8px;--eqw:calc(var(--cardw)*0.78)}
 .board.pmrow>.slot{width:calc(var(--cardw)*0.78)}
-.board.pmrow.empty::after{content:'기물'}
-.board.empty::after{content:'크리처'}
+.board.pmrow.empty::after{content:'노드'}
+.board.empty::after{content:'유닛'}
 
-/* ⚠⚠ 무기·방패는 **판에 하나씩뿐인 자리**다 — 새로 내면 앞의 것이 사라진다.
-   그런데 기둥·기물과 같은 줄에 그냥 섞여 있어서, 어느 게 무기인지 알 수가 없었다
+/* ⚠⚠ 웨폰·실드는 **판에 하나씩뿐인 자리**다 — 새로 내면 앞의 것이 사라진다.
+   그런데 기둥·노드과 같은 줄에 그냥 섞여 있어서, 어느 게 웨폰인지 알 수가 없었다
    (성권: "무기, 방패 슬롯이 없는데 어디에 놔?").
    줄을 새로 만들지 않고(전투는 한 화면 안에서 끝나야 한다) **양 끝에 못박는다.**
    비어 있을 때도 테두리와 이름이 보여서 '여기가 그 자리' 라는 게 늘 보인다. */
@@ -1546,9 +1546,9 @@ body.deckmode .wrap{height:auto}
   display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.22)}
 .pmrow .eq.mt::after{font-family:'Gowun Batang',serif;letter-spacing:.08em;
   font-size:calc(var(--eqw)*.17);color:var(--parch);opacity:.42}
-.pmrow .eq.wpn.mt::after{content:'무기'}
-.pmrow .eq.shd.mt::after{content:'방패'}
-/* ⚠ 카드가 놓이면 이름표를 따로 붙이지 않는다 — 카드 발치 줄이 이미 '무기'·'방패' 라고
+.pmrow .eq.wpn.mt::after{content:'웨폰'}
+.pmrow .eq.shd.mt::after{content:'실드'}
+/* ⚠ 카드가 놓이면 이름표를 따로 붙이지 않는다 — 카드 발치 줄이 이미 '웨폰'·'실드' 라고
    적고 있고, 위에 겹쳐 놓으면 카드 이름을 덮는다. 자리는 위치가 말한다. */
 
 /* ⚠⚠ 본편은 손패를 `margin-bottom:calc(cardw*-0.42)` 로 화면 밖에 걸쳐 놓는다
@@ -1638,7 +1638,7 @@ body.deckmode .wrap{height:auto}
 /* ⚠⚠ 본편 `.main` 은 자식을 **id 로 재배열한다**(#foeHand:0 … #hand:8).
    그래서 HTML 에 적은 순서가 화면 순서가 아니다 — 처음에 이걸 모르고 붙였다가
    상대 판·내 판·기록이 뒤죽박죽으로 섞여 나왔다.
-   이 모드의 기물줄은 본편 지형줄과 **같은 자리**를 쓴다(#foeLz:2 · #myLz:6).
+   이 모드의 노드줄은 본편 지형줄과 **같은 자리**를 쓴다(#foeLz:2 · #myLz:6).
    order 를 안 준 요소는 0 이 되어 맨 위로 튀므로 로그에도 반드시 준다. */
 #foePm{order:2} #myPm{order:6} #log{order:9}
 /* ⚠ 덱 설정 화면에서는 제목줄을 걷는다 — 성권: "덱설정 유아이만 있으면 됨".
@@ -1657,7 +1657,7 @@ body.deckmode .wrap{height:auto}
 <script src="data.js"></script>
 <script>
 'use strict';
-const VERSION='0.36.0', BUILD='2026-09-02';
+const VERSION='0.37.0', BUILD='2026-09-02';
 /* ⚠ 제목줄은 없다 — 성권: "배틀 유아이에서도 헤더 지우고 넓게 써".
    판 번호는 덱 화면 발치 한 줄에만 남는다(배포 확인이 이 번호에 걸려 있다). */
 
@@ -1667,7 +1667,7 @@ const VERSION='0.36.0', BUILD='2026-09-02';
 const ELS=ETG.els, ELKO=ETG.elko;
 const QCAP=75;              /* 원작(Original)의 속성별 퀀텀 상한 */
 const HANDMAX=8;            /* 손패 상한 — 넘치면 뽑은 카드가 버려진다 */
-const MAXCR=23, MAXPM=16;   /* 크리처 23칸 · 기물 16칸 */
+const MAXCR=23, MAXPM=16;   /* 유닛 23칸 · 노드 16칸 */
 const STARTHP=100;
 const DECKMIN=30, DECKMAX=60, COPYMAX=6;
 
@@ -1742,9 +1742,9 @@ function modded(code){
       빠진 목록은 docs/etg_import.md 에 그대로 적어 뒀다.
 
    각 항목: {t:대상종류, f:함수(g,me,src,tgt,arg), d:'한국어 설명'}
-     대상종류 — null(대상없음) · 'cr'(아무 크리처) · 'foecr' · 'mycr'
-                · 'pm'(아무 기물) · 'foepm' · 'any'(크리처+무기+방패+기물)
-                · 'crw'(크리처 또는 무기)
+     대상종류 — null(대상없음) · 'cr'(아무 유닛) · 'foecr' · 'mycr'
+                · 'pm'(아무 노드) · 'foepm' · 'any'(유닛+웨폰+실드+노드)
+                · 'crw'(유닛 또는 웨폰)
    ═══════════════════════════════════════════════════════════════════════════ */
 const SK={};
 const def=(id,t,d,f)=>{SK[id]={t,d,f};};
@@ -1776,7 +1776,7 @@ def('nova2',null,'12속성 퀀텀을 2씩 얻는다. 한 턴에 2장 이상 쓰�
   me.nova=(me.nova||0)+2;
   if(me.nova>=4){ const c=BYNAME['Singularity']; if(c) summon(me,c.code); me.nova=0; }
 });
-def('v_virusplague',null,'자신을 희생해 상대 크리처 전부에게 독을 준다',(g,me,s)=>{
+def('v_virusplague',null,'자신을 희생해 상대 유닛 전부에게 독을 준다',(g,me,s)=>{
   foe(me).cr.forEach(u=>{ if(u) addPoison(u,1); });
   kill(s);
 });
@@ -1793,11 +1793,11 @@ def('photosynthesis',null,'생명 퀀텀 2를 얻고, 이 능력을 다시 쓸 �
 });
 /* ⚠⚠ 원작 카드 글은 3 이라 적혀 있는데 **openEtG 원작판 코드는 기본 2 · 강화 3** 이다
    (`if cardset==Original && !Upped {2} else {3}`). 수치는 코드를 따른다. */
-def('soulcatch',null,'크리처가 죽을 때마다 죽음 퀀텀 {N} 을 얻는다',(g,me,s)=>{ gain(me,2,s.up?3:2); });
-/* ⚠⚠ 유지 비용(크리처 8마리마다 1)은 **openEtG 신판 전용**이다
+def('soulcatch',null,'유닛가 죽을 때마다 죽음 퀀텀 {N} 을 얻는다',(g,me,s)=>{ gain(me,2,s.up?3:2); });
+/* ⚠⚠ 유지 비용(유닛 8마리마다 1)은 **openEtG 신판 전용**이다
    (`if ctx.cardset() == CardSet::Open`). 이 모드는 원작판이라 값을 내지 않는다.
    skilltext.json 의 설명만 보고 넣었다가, 소스를 읽고 되돌렸다. */
-def('empathy',null,'턴 끝에 자기 크리처 수만큼 회복한다',(g,me,s)=>{
+def('empathy',null,'턴 끝에 자기 유닛 수만큼 회복한다',(g,me,s)=>{
   heal(me,me.cr.filter(Boolean).length);
 });
 def('v_gratitude',null,'턴 끝에 3 회복한다 (내 문장이 생명이면 5)',(g,me,s)=>{ heal(me,(me.mark===5)?5:3); });
@@ -1828,20 +1828,20 @@ def('lightning','any','피해 5',(g,me,s,t)=>{ spellDmg(me,t,5); });
 def('v_holylight','any','대상을 10 회복시킨다. 야행성이면 대신 10 피해',(g,me,s,t)=>{
   if(t&&t.flags&&t.flags.includes('nocturnal')) spellDmg(me,t,10); else healThing(t,10);
 });
-def('v_storm',null,'상대 크리처 전부에게 피해 {N}',(g,me,s,t,a)=>{
+def('v_storm',null,'상대 유닛 전부에게 피해 {N}',(g,me,s,t,a)=>{
   foe(me).cr.forEach(u=>{ if(u) spellDmg(me,u,a||3); });
 });
 /* ⚠ 원문: "attacking creatures have a 75% chance to be **infected**" — 피해는 없다.
-   피해 2 를 얹어 두는 바람에 원작보다 훨씬 센 방패가 돼 있었다. */
-def('v_thorn',null,'때린 크리처가 75% 확률로 독에 걸린다',(g,me,s,t)=>{
+   피해 2 를 얹어 두는 바람에 원작보다 훨씬 센 실드가 돼 있었다. */
+def('v_thorn',null,'때린 유닛가 75% 확률로 독에 걸린다',(g,me,s,t)=>{
   if(!t||t.kind!=='creature')return;
   if(Math.random()<0.75) addPoison(t,1);
 });
-def('v_firewall',null,'때린 크리처에게 피해 1',(g,me,s,t)=>{ if(t) spellDmg(me,t,1); });
-def('snipe','cr','대상 크리처에게 피해 3',(g,me,s,t)=>{ spellDmg(me,t,3); });
+def('v_firewall',null,'때린 유닛에게 피해 1',(g,me,s,t)=>{ if(t) spellDmg(me,t,1); });
+def('snipe','cr','대상 유닛에게 피해 3',(g,me,s,t)=>{ spellDmg(me,t,3); });
 /* ⚠ 원문: "Frozen creatures deal **50% more** damage. Poisoned creatures **transfer poisons**."
    얼면 두 배로 때리고 있었고(1.5배다), 독은 옮기지 않았다. */
-def('catapult','mycr','자기 크리처를 던진다. 체력이 클수록 큰 피해. 얼어 있으면 1.5배, 독은 상대에게 옮긴다',
+def('catapult','mycr','자기 유닛를 던진다. 체력이 클수록 큰 피해. 얼어 있으면 1.5배, 독은 상대에게 옮긴다',
   (g,me,s,t)=>{
     if(!t)return;
     /* openEtG 공식 그대로: (체력 × (얼었으면 151, 아니면 101) + 99) / (체력 + 100), 내림 */
@@ -1859,7 +1859,7 @@ def('v_blackhole',null,'상대 속성마다 퀀텀을 최대 3씩 빨아들이�
   for(let e=1;e<=12;e++){ const n=Math.min(3,f.q[e]); f.q[e]-=n; tot+=n; }
   heal(me,tot);
 });
-def('v_plague',null,'상대 크리처 전부에게 독 1',(g,me)=>{
+def('v_plague',null,'상대 유닛 전부에게 독 1',(g,me)=>{
   foe(me).cr.forEach(u=>{ if(u) u.poison=(u.poison||0)+1; });
 });
 def('poison','cr','대상에게 독 {N} 을 준다',(g,me,s,t,a)=>{ addPoison(t,a||1); });
@@ -1870,13 +1870,13 @@ def('aflatoxin','cr','대상에게 독 2. 그 몸이 죽으면 악성 세포가 
 /* ⚠⚠⚠ **대상 종류를 안 적어 놨었다.** 그래서 누르면 바이러스만 죽고 독은
    아무에게도 안 걸렸다 — 오류도 안 나고 카드만 사라진다.
    openEtG: `Self::virusinfect => Tgt::crea`. 성권이 "작동을 안 하는 것 같은데" 로 잡아 줬다. */
-def('virusinfect','cr','자신을 희생해 겨눈 크리처에게 독 1을 준다',(g,me,s,t)=>{
+def('virusinfect','cr','자신을 희생해 겨눈 유닛에게 독 1을 준다',(g,me,s,t)=>{
   if(!t)return; kill(s); addPoison(t,1);
 });
-/* ⚠ 원문은 "every **enemy** creature" 다. 내 크리처까지 굴리면 제 발등을 찍는 카드가 된다. */
-/* ⚠⚠ 예전에 '상대 크리처만' 으로 고쳐 놨는데 그건 **강화판**이다.
-   원작판 기본은 `masscc(foe, owner, …)` — **양쪽 크리처 전부**에 떨어진다. */
-def('v_pandemonium',null,'판 위 모든 크리처에게 무작위 효과 (내 크리처도 맞는다)',(g,me,s)=>{
+/* ⚠ 원문은 "every **enemy** creature" 다. 내 유닛까지 굴리면 제 발등을 찍는 카드가 된다. */
+/* ⚠⚠ 예전에 '상대 유닛만' 으로 고쳐 놨는데 그건 **강화판**이다.
+   원작판 기본은 `masscc(foe, owner, …)` — **양쪽 유닛 전부**에 떨어진다. */
+def('v_pandemonium',null,'판 위 모든 유닛에게 무작위 효과 (내 유닛도 맞는다)',(g,me,s)=>{
   const list=s&&s.up?foe(me).cr.slice():foe(me).cr.concat(me.cr);
   list.forEach(u=>{ if(u) randomEffect(owner(u),u); });
 });
@@ -1884,13 +1884,13 @@ def('v_cseed','cr','대상에게 무작위 효과',(g,me,s,t)=>{ randomEffect(me
 
 /* ── 파괴·제거 ─────────────────────────────────────────────────────────── */
 /* ⚠ 원문에 "Can not be destroyed or stolen" 이라 적힌 카드는 여기서 걸러진다.
-   기물 스스로 사라지는 길(유지 비용·희생)까지 막으면 안 되므로 **바깥에서 손대는
+   노드 스스로 사라지는 길(유지 비용·희생)까지 막으면 안 되므로 **바깥에서 손대는
    두 길**에서만 막는다. */
-def('destroy','pm','대상 기물을 파괴한다',(g,me,s,t)=>{
+def('destroy','pm','대상 노드을 파괴한다',(g,me,s,t)=>{
   if(isFixed(t)){ log(`${t.c.ko} 은(는) 파괴되지 않는다`,'c'); return; }
   destroyPerm(t,me);
 });
-def('v_steal','pm','대상 기물을 빼앗는다',(g,me,s,t)=>{
+def('v_steal','pm','대상 노드을 빼앗는다',(g,me,s,t)=>{
   if(isFixed(t)){ log(`${t.c.ko} 은(는) 빼앗기지 않는다`,'c'); return; }
   stealPerm(me,t);
 });
@@ -1920,8 +1920,8 @@ def('lobotomize','cr','대상의 능력과 관성·염동을 지운다',(g,me,s,
   t.flags=t.flags.filter(f=>f!=='momentum'&&f!=='psionic');
 });
 def('v_silence',null,'상대는 다음 턴에 카드를 낼 수 없다',(g,me)=>{ foe(me).sabbath=true; });
-def('appease','mycr','자기 크리처를 희생하고 +1|+1 을 얻는다',(g,me,s,t)=>{ kill(t); buff(s,1,1); });
-def('devour','devour','체력이 자기보다 작은 크리처를 먹고 +1|+1. 유독한 몸을 먹으면 자기도 중독된다',
+def('appease','mycr','자기 유닛를 희생하고 +1|+1 을 얻는다',(g,me,s,t)=>{ kill(t); buff(s,1,1); });
+def('devour','devour','체력이 자기보다 작은 유닛를 먹고 +1|+1. 유독한 몸을 먹으면 자기도 중독된다',
   (g,me,s,t)=>{
     if(!t||t.hp>=s.hp)return;
     const venom=t.flags.includes('poisonous');
@@ -1934,15 +1934,15 @@ def('bless','cr','대상에게 +3|+3',(g,me,s,t)=>{ buff(t,3,3); });
 /* ⚠⚠ openEtG: `incrAtk(t, n)` 다음 `spelldmg(t, n)` — **최대 체력은 안 깎이고**
    지금 체력만 n 줄어든다(그래서 죽을 수도 있다). `buff(t,n,-n)` 은 최대 체력까지
    깎아서 다른 카드였다. 얼음을 푸는 것도 신판 전용이라 뺐다. */
-def('rage','cr','대상에게 +{N} 공격력. 그만큼 주문 피해를 입는다',(g,me,s,t)=>{
+def('rage','cr','대상에게 +{N} 공격력. 그만큼 액션 피해를 입는다',(g,me,s,t)=>{
   if(!t)return; const n=s.up?6:5; t.atk+=n; spellDmg(me,t,n);
 });
 def('platearmor','cr','대상에게 +0|+{N}',(g,me,s,t,a)=>{ buff(t,0,a||4); });
 def('v_stoneform',null,'+0|+20 을 얻고 능력을 잃는다',(g,me,s)=>{ buff(s,0,20); s.sk=[]; });
 /* ⚠ 이건 **눌러서 쓰는 능력**이다(불의 정령·숲의 정령·중력자 불먹보 — 비용을 낸다).
-   독수리·콘도르에서는 같은 id 가 **크리처가 죽을 때마다** 도는 쪽으로 붙는다.
+   독수리·콘도르에서는 같은 id 가 **유닛가 죽을 때마다** 도는 쪽으로 붙는다.
    그래서 설명에 '언제' 를 적으면 한쪽이 반드시 거짓말이 된다 — '무엇을' 만 적고,
-   '언제' 는 확대창의 머리말(능력 · N불 / 크리처가 죽을 때마다)이 말하게 둔다.
+   '언제' 는 확대창의 머리말(능력 · N불 / 유닛가 죽을 때마다)이 말하게 둔다.
    성권이 "불의 정령은 공격할 때가 아니라 눌러서 쓰는 것 아니냐" 고 짚어 준 자리다. */
 def('growth',null,'+{A}|+{H} 를 얻는다',(g,me,s,t,a,ar)=>{
   const A=(ar&&ar.length?ar[0]:(a||2)), H=(ar&&ar.length>1?ar[1]:A);
@@ -1952,7 +1952,7 @@ def('v_bblood','cr','대상에게 +0|+20. 6턴 동안 공격도 능력도 못 �
 /* ⚠ openEtG 는 `delay(t, 2)` — **두 턴**이다. 한 턴으로 적어 뒀었다. */
 def('v_slow','cr','대상을 2턴 동안 못 움직이게 한다 (겹쳐 쌓인다)',(g,me,s,t)=>{ if(t) t.delayed=(t.delayed||0)+2; });
 def('freeze','crw','대상을 {N}턴 얼린다',(g,me,s,t,a)=>{ freeze(t,a||3); });
-def('v_cold',null,'때린 크리처를 확률로 3턴 얼린다',(g,me,s,t)=>{ if(t&&Math.random()<0.3) freeze(t,3); });
+def('v_cold',null,'때린 유닛를 확률로 3턴 얼린다',(g,me,s,t)=>{ if(t&&Math.random()<0.3) freeze(t,3); });
 def('purify','cr','독을 씻어내고 오히려 독 -{N} 을 준다',(g,me,s,t,a)=>{
   const n=a||2; t.poison=Math.min((t.poison||0)-n,-n);
 });
@@ -1960,7 +1960,7 @@ def('acceleration','cr','대상의 능력을 「공격할 때마다 +{N}|-1」 �
 def('accel',null,'공격할 때마다 +{N}|-1',(g,me,s,t,a)=>{ buff(s,a||2,-1); });
 def('adrenaline','cr','대상이 한 턴에 여러 번 공격한다. 약할수록 더 많이',(g,me,s,t)=>{ t.adren=1; });
 /* ⚠ 원문: "ignores shield effects **and gains +1/+1**". +1|+1 이 빠져 있었다. */
-def('momentum','cr','대상이 방패를 무시하고 +1|+1 을 얻는다',(g,me,s,t)=>{
+def('momentum','cr','대상이 실드를 무시하고 +1|+1 을 얻는다',(g,me,s,t)=>{
   if(!t.flags.includes('momentum'))t.flags.push('momentum'); buff(t,1,1);
 });
 def('quint','cr','대상이 실체를 잃는다 (겨눌 수 없고 얼지 않는다)',(g,me,s,t)=>{
@@ -2063,13 +2063,13 @@ def('v_integrity',null,'손에 있는 파편을 모두 합쳐 골렘 하나를 �
   });
 
 /* ── 회복 ──────────────────────────────────────────────────────────────── */
-def('mend','cr','대상 크리처를 5 회복시킨다',(g,me,s,t)=>{ healThing(t,s.up?10:5); });
+def('mend','cr','대상 유닛를 5 회복시킨다',(g,me,s,t)=>{ healThing(t,s.up?10:5); });
 def('v_heal',null,'체력을 20 회복한다',(g,me,s)=>{ heal(me,s.up?24:20); });
 def('miracle',null,'체력을 최대치보다 1 낮게 채운다. 빛 퀀텀을 모두 잃는다',(g,me)=>{
   me.q[8]=0; me.hp=Math.max(me.hp,me.maxhp-1);
 });
 
-def('v_hope',null,'받는 피해를 1 깎고, 빛을 내는 내 크리처 수만큼 더 깎는다',()=>{});
+def('v_hope',null,'받는 피해를 1 깎고, 빛을 내는 내 유닛 수만큼 더 깎는다',()=>{});
 def('vampire',null,'준 피해만큼 주인이 회복한다',(g,me,s,t,a)=>{ heal(me,a||0); });
 
 /* ── 소환·복제 ─────────────────────────────────────────────────────────── */
@@ -2080,7 +2080,7 @@ def('summon',null,'{SUM} 을(를) 부른다',(g,me,s,t,a)=>{
   if(c) summon(me,c.code);
 });
 /* ⚠ 원문은 "random **elite** creature" — 강화판으로 부화한다. */
-def('v_hatch',null,'무작위 강화 크리처로 변한다',(g,me,s)=>{
+def('v_hatch',null,'무작위 강화 유닛로 변한다',(g,me,s)=>{
   const base=ETG.cards.filter(c=>c.kind==='creature'&&!c.up&&playable(c)&&c.upcode);
   const c=base[rnd(base.length)];
   morph(s,CARD[c.upcode]?c.upcode:c.code);
@@ -2097,7 +2097,7 @@ def('mitosisspell','mycr','대상이 +0|+1 과 유사분열 능력을 얻는다 
 def('parallel','cr','대상을 그대로 복제해 자기 편에 놓는다',(g,me,s,t)=>{
   const u=summon(me,t.c.code); if(u){ u.atk=t.atk; u.hp=u.maxhp=t.hp; u.flags=t.flags.slice(); }
 });
-def('fractal','cr','손패를 그 크리처로 채운다',(g,me,s,t)=>{
+def('fractal','cr','손패를 그 유닛로 채운다',(g,me,s,t)=>{
   me.q[12]=0; while(me.hand.length<HANDMAX) me.hand.push(mk(t.c.code,me));
 });
 def('phoenix',null,'죽으면 잿더미가 남는다',(g,me,s)=>{
@@ -2121,7 +2121,7 @@ def('v_nymph','mypillar','겨눈 내 기둥·진자를 그 속성의 님프로 �
   const c=BYNAME[NYMPH[t.c.el]||NYMPH[1+rnd(12)]]; if(!c)return;
   const i=me.pm.indexOf(t); if(i>=0) me.pm[i]=null;
   const u=summon(me,t.up&&c.upcode?c.upcode:c.code);
-  if(!u){ me.pm[i]=t; return; }                 /* 크리처 칸이 없으면 기둥은 그대로 둔다 */
+  if(!u){ me.pm[i]=t; return; }                 /* 유닛 칸이 없으면 기둥은 그대로 둔다 */
   log(`${t.c.ko} → ${u.c.ko}`,'a');
 });
 /* ⚠ 원문: "up to 3 random **upgraded** cards. The first one will be an [엔트로피] card." */
@@ -2139,20 +2139,20 @@ def('v_serendipity',null,'무작위 카드 3장을 손에 넣는다 (적어도 �
 });
 /* ⚠ openEtG: "Whenever a creature **which isn't a Skeleton** dies". 해골이 죽어도
    또 해골이 나와서, 해골 한 마리가 판이 찰 때까지 불어나고 있었다. */
-def('boneyard',null,'해골이 아닌 크리처가 죽을 때마다 해골이 나온다',(g,me,s,t)=>{
+def('boneyard',null,'해골이 아닌 유닛가 죽을 때마다 해골이 나온다',(g,me,s,t)=>{
   if(t&&t.c&&/Skeleton$/.test(t.c.en))return;
   const c=BYNAME['Skeleton']; if(c) summon(me,s.up&&c.upcode?c.upcode:c.code);
 });
-def('v_flyingweapon','pm','무기가 크리처가 되어 날아오른다',(g,me,s,t)=>{
+def('v_flyingweapon','pm','웨폰가 유닛가 되어 날아오른다',(g,me,s,t)=>{
   if(!t||t.kind!=='weapon')return;
   const u=summon(me,t.c.code); if(u){ u.kind='creature'; u.flags=u.flags.concat(['airborne']); }
   me.weapon=null;
 });
 /* ⚠⚠ 원문: "Gain the target weapon's **ability** and +X|+2. X is the weapon's attack."
-   ① 겨누는 것은 판 위의 무기다(상대 무기로 굳혀 놨었다)
+   ① 겨누는 것은 판 위의 웨폰다(상대 웨폰로 굳혀 놨었다)
    ② **능력을 통째로 베낀다** — 이게 성전사의 본체인데 통째로 빠져 있었다
    ③ 체력도 +2 붙는다 */
-def('v_endow','weapon','겨눈 무기의 능력과 +X|+2 를 얻는다 (X 는 그 무기의 공격력)',(g,me,s,t)=>{
+def('v_endow','weapon','겨눈 웨폰의 능력과 +X|+2 를 얻는다 (X 는 그 웨폰의 공격력)',(g,me,s,t)=>{
   if(!t)return;
   buff(s,t.atk,2);
   t.sk.forEach(k=>{ if(k.ev!=='cast') s.sk.push({...k}); });
@@ -2166,7 +2166,7 @@ def('hasten',null,'카드를 1장 뽑는다',(g,me)=>{ draw(me); });
 /* ⚠⚠ 원문: "The target creature's skill cost is now **zero**.
    [시간] creatures can use their skill twice this turn."
    '이번 턴에 한 번 더' 만 구현돼 있었다 — 비용이 0 이 되는 쪽이 이 카드의 본체다. */
-def('v_readiness','mycr','겨눈 크리처의 능력 비용이 0 이 된다. 시간 크리처는 이번 턴에 한 번 더 쓸 수 있다',
+def('v_readiness','mycr','겨눈 유닛의 능력 비용이 0 이 된다. 시간 유닛는 이번 턴에 한 번 더 쓸 수 있다',
   (g,me,s,t)=>{
     if(!t)return;
     t.cast=0;
@@ -2175,11 +2175,11 @@ def('v_readiness','mycr','겨눈 크리처의 능력 비용이 0 이 된다. 시
 /* ⚠⚠ 원문: "Passive: whenever a permanent is destroyed, gain 1|1. Once per turn, when
    **opponent** destroys a permanent, add a copy of that permanent to your hand."
    내가 적어 둔 '상대가 버린 카드를 손에 넣는다' 는 원문에 없는 말이었고, 함수는 `()=>{}` 였다. */
-def('salvage',null,'기물이 부서질 때마다 +1|+1. 상대가 부순 기물은 턴에 한 번 사본이 손에 들어온다',
+def('salvage',null,'노드이 부서질 때마다 +1|+1. 상대가 부순 노드은 턴에 한 번 사본이 손에 들어온다',
   (g,me,s,t,by)=>{
     if(!t)return;
     /* ⚠ '+1|+1' 은 신판 전용이다(`if is_open`). 원작판 조건은
-       **내 턴이 아니고 · 부서진 기물이 내 것이 아닐 때 · 턴에 한 번**. */
+       **내 턴이 아니고 · 부서진 노드이 내 것이 아닐 때 · 턴에 한 번**. */
     if(G.turn===me)return;
     if(t.own===me)return;
     if(!s.salvaged&&me.hand.length<HANDMAX){
@@ -2192,11 +2192,11 @@ def('duality',null,'상대 덱 맨 위 카드를 복사해 손에 넣는다',(g,
   me.hand.push(mk(f.deck[f.deck.length-1],me));
 });
 
-/* ── 방패 ──────────────────────────────────────────────────────────────── */
+/* ── 실드 ──────────────────────────────────────────────────────────────── */
 /* ⚠ 같은 id 가 두 카드에 붙어 있다 —
-     소산 방패(shield 이벤트) = 엔트로피 1로 피해 3을 막는다  … shieldReduce 가 처리
+     소산 실드(shield 이벤트) = 엔트로피 1로 피해 3을 막는다  … shieldReduce 가 처리
      세라핌(cast 이벤트)      = **한 턴 동안 겨눌 수 없다**   … 여기서 처리
-   세라핌 쪽 설명이 방패 글로 나와 있어서, 눌러도 방패가 생기는 줄 알았다. */
+   세라핌 쪽 설명이 실드 글로 나와 있어서, 눌러도 실드가 생기는 줄 알았다. */
 def('v_dshield',null,'한 턴 동안 겨눌 수 없다',(g,me,s)=>{
   if(s&&s.flags&&!s.flags.includes('immaterial')){
     s.flags.push('immaterial'); s.dshield=1;      /* 내 턴이 시작될 때 풀린다 */
@@ -2206,49 +2206,49 @@ def('v_dshield',null,'한 턴 동안 겨눌 수 없다',(g,me,s)=>{
    (강화판은 원거리도 걸린다). */
 /* ⚠ '원거리는 안 걸린다' 는 **신판 전용**이다. 원작판은 원거리도 걸리고,
    대신 **이미 해골인 몸은 다시 안 걸린다**. */
-def('skull',null,'때린 크리처가 확률로 해골이 된다 (체력이 낮을수록 잘 걸린다)',(g,me,s,t)=>{
+def('skull',null,'때린 유닛가 확률로 해골이 된다 (체력이 낮을수록 잘 걸린다)',(g,me,s,t)=>{
   if(!t||t.kind!=='creature')return;
   if(/Skeleton$/.test(t.c.en))return;
   if(t.hp<=0||rnd(Math.max(1,t.hp*2))===0){ const c=BYNAME['Skeleton']; if(c) morph(t,c.code); }
 });
 def('wings',null,'날지도 원거리도 아닌 공격을 전부 막는다',()=>{});
 def('evade',null,'{N}% 확률로 공격을 흘린다',()=>{});
-def('v_freeevade',null,'내 문장이 바람이면, 날아다니는 내 크리처가 확률로 겨냥을 흘린다 (쌓을수록 확률이 오른다)',()=>{});
+def('v_freeevade',null,'내 문장이 바람이면, 날아다니는 내 유닛가 확률로 겨냥을 흘린다 (쌓을수록 확률이 오른다)',()=>{});
 def('disshield',null,'모든 피해를 막는다. 막은 피해 3마다 엔트로피 퀀텀 1을 쓰고, 못 내면 엔트로피를 다 잃고 부서진다',()=>{});
 def('disfield',null,'모든 피해를 막는다. 막은 피해 1마다 아무 퀀텀 1을 쓰고, 못 내면 퀀텀을 다 잃고 부서진다',()=>{});
 def('blockwithcharge',null,'뼈 하나로 공격 하나를 통째로 막는다',()=>{});
-def('gaincharge',null,'크리처가 죽을 때마다 뼈가 {N} 늘어난다',(g,me,s,t,a)=>{ s.charges=(s.charges||0)+(a||2); });
+def('gaincharge',null,'유닛가 죽을 때마다 뼈가 {N} 늘어난다',(g,me,s,t,a)=>{ s.charges=(s.charges||0)+(a||2); });
 /* ⚠ openEtG 는 **줄이기 전 값이 0 일 때** 사라진다. `줄이고 나서 0` 으로 적어 둬서
-   날개·해시계·차원 방패가 전부 한 턴씩 짧게 살았다. */
+   날개·해시계·차원 실드가 전부 한 턴씩 짧게 살았다. */
 def('losecharge',null,'턴마다 한 번씩 닳고, 다 닳으면 사라진다',(g,me,s)=>{
   if((s.charges||0)<=0){ destroyPerm(s); return; }
   s.charges--;
 });
-def('weight',null,'체력이 5를 넘는 크리처의 공격을 막는다',()=>{});
+def('weight',null,'체력이 5를 넘는 유닛의 공격을 막는다',()=>{});
 /* ⚠ openEtG: `spend(owner, Light, -data.blocked)` — **막은 피해만큼** 얻는다. 1 이 아니다. */
 def('solar',null,'막은 피해만큼 빛 퀀텀을 얻는다',(g,me,s,t,a)=>{ gain(me,8,(typeof a==='number'&&a>0)?a:1); });
 def('bow',null,'바람 문장이면 공격력이 1 오른다 (강화판은 빛 문장도)',()=>{});
 def('hammer',null,'중력·대지 문장이면 공격력이 1 오른다',()=>{});
 def('v_dagger',null,'죽음·어둠 문장이면 공격력이 1 오른다',()=>{});
 /* ⚠ openEtG 에서 `Self::v_noluci => ()` — **아무 일도 하지 않는 표식**이다(단검류 소검·장검).
-   원작 카드 글에도 "Deal 3 damages" 밖에 없다. '방패를 무시한다' 는 내가 지어낸 말이었다.
+   원작 카드 글에도 "Deal 3 damages" 밖에 없다. '실드를 무시한다' 는 내가 지어낸 말이었다.
    설명이 비면 ruleText 가 알아서 뺀다. */
 def('v_noluci',null,'',()=>{});
 
 /* ── 기타 지속 ─────────────────────────────────────────────────────────── */
-def('nightfall',null,'모든 야행성 크리처가 +{N}|+1',()=>{});
+def('nightfall',null,'모든 야행성 유닛가 +{N}|+1',()=>{});
 /* ⚠⚠ 성역의 실제 능력 id 는 `sanctuary` 가 아니라 **`regenerate 5,sanctify`** 다.
    그걸 모르고 'sanctuary' 라는 이름으로 새 능력을 만들어 뒀더니, 그 코드는 **아무 카드도
    안 쓰는 죽은 코드**였다(회복은 regenerate 가 1 도 아닌 5 로 하고 있었고, 보호는 없었다).
    id 를 지어내지 말고 표에 적힌 것을 볼 것. */
 def('regenerate',null,'턴 끝에 {N} 회복한다',(g,me,s,t,a)=>{ heal(me,regenN(a)); });
-def('stasis',null,'양쪽 크리처가 턴 끝에 공격하지 않는다 (무기는 그대로 때린다)',()=>{});
+def('stasis',null,'양쪽 유닛가 턴 끝에 공격하지 않는다 (웨폰는 그대로 때린다)',()=>{});
 /* ⚠ 내는 것은 **카드 속성**이다(`ctx.get_card(...).element`) — 비용 속성이 아니다. */
 def('upkeep',null,'매 턴 자기 속성 퀀텀 1을 낸다. 못 내면 사라진다',(g,me,s)=>{
   if(!pay(me,s.c.el,1)) destroyPerm(s);
 });
 /* ⚠⚠ 원문: "Add X HP's to your maximum life points. X is the number of [대지] that you own."
-   **크리처가 아니라 내 최대 체력**이다. 크리처에 +0|+N 을 주고 있었다 — 대상이 아예 틀렸다.
+   **유닛가 아니라 내 최대 체력**이다. 유닛에 +0|+N 을 주고 있었다 — 대상이 아예 틀렸다.
    openEtG 원작판은 거기서 이 카드의 비용을 한 번 더 뺀다(vanilla 전용 보정). */
 def('sskin',null,'남은 대지 퀀텀에서 이 카드 비용을 뺀 만큼 내 최대 체력이 늘어난다',(g,me,s)=>{
   const n=Math.max(0,me.q[4]-(s.c.cost||0));
@@ -2264,7 +2264,7 @@ def('dive',null,'다음 공격의 공격력이 두 배가 된다',(g,me,s)=>{ s.
    @지어냄: 원작은 범람을 깐 **첫 턴만 일곱 칸**을 봐준다(floodingIndex 7). 우리는 늘 여섯
    칸으로 뒀다 — 첫 턴만 다른 규칙은 판에서 읽어 낼 방법이 없어서 혼란만 준다고 봤다. */
 const EDGE=6;
-def('flood',null,'매 턴, 여섯 칸째부터의 크리처를 죽인다. 물 속성 크리처는 무사하다',(g)=>{
+def('flood',null,'매 턴, 여섯 칸째부터의 유닛를 죽인다. 물 속성 유닛는 무사하다',(g)=>{
   [g.me,g.ai].forEach(p=>{
     p.cr.forEach((u,i)=>{
       if(!u||i<EDGE)return;
@@ -2277,8 +2277,8 @@ def('flood',null,'매 턴, 여섯 칸째부터의 크리처를 죽인다. 물 �
 });
 /* ⚠⚠⚠ 인내의 파편 — 카드 글("+1/+0; 물 +2/+2, 범람하면 +4/+4")을 보고 **한 번 붙는
    고정 강화**로 만들어 뒀는데, openEtG 원작판(game.rs 공격 차례)은 전혀 다르다:
-     매 턴 **내 크리처를 한 턴 묶고**(그래서 공격하지 않는다) **+2|+2 씩 쌓아 준다.**
-     범람한 칸의 물 크리처는 **+5|+5**.
+     매 턴 **내 유닛를 한 턴 묶고**(그래서 공격하지 않는다) **+2|+2 씩 쌓아 준다.**
+     범람한 칸의 물 유닛는 **+5|+5**.
    즉 이건 '버티면 자란다' 는 카드다. 고정 강화로 두면 카드의 뜻이 통째로 사라진다.
    그래서 aura(syncPatience) 를 걷고, 턴마다 도는 것으로 옮겼다. */
 function patienceTick(p){
@@ -2292,7 +2292,7 @@ function patienceTick(p){
   });
 }
 function syncPatience(p){}                /* (더는 쓰지 않는다 — 위 tick 이 대신한다) */
-/* 땅거미·개기일식 — 야행성 크리처의 체력 몫. 공격력은 trueAtk 가 그때그때 센다. */
+/* 땅거미·개기일식 — 야행성 유닛의 체력 몫. 공격력은 trueAtk 가 그때그때 센다. */
 function syncNightfall(p){
   const n=nightfallArgs(p).hp;
   p.cr.forEach(u=>{
@@ -2318,7 +2318,7 @@ function syncAuras(){
   if(!(G&&G.me&&G.ai))return;
   [G.me,G.ai].forEach(p=>{ syncPatience(p); syncNightfall(p); syncSwarm(p); });
 }
-def('patience',null,'매 턴 내 크리처를 한 턴 묶고 +2|+2 를 쌓아 준다. 범람한 칸의 물 크리처는 +5|+5',()=>{});
+def('patience',null,'매 턴 내 유닛를 한 턴 묶고 +2|+2 를 쌓아 준다. 범람한 칸의 물 유닛는 +5|+5',()=>{});
 /* ⚠⚠ 원문: "Your opponent draws 2 cards, 3 if your mark is [불]. Draw an equal amount of cards."
    **공격력과는 아무 상관이 없다.** 예전 설명("카드를 2장 뽑고 공격력을 올린다")은
    내가 지어낸 것이고, 구현도 내 카드만 두 장 뽑고 상대는 아무것도 안 뽑았다.
@@ -2330,7 +2330,7 @@ def('bravery',null,'상대가 카드 2장을 뽑는다(내 문장이 불이면 3
     for(let i=0;i<n;i++){ const b=f.hand.length; draw(f); if(f.hand.length>b)drew++; }
     for(let i=0;i<drew;i++) draw(me);
   });
-def('v_freedom',null,'날아다니는 내 크리처가 확률로 피해 1.5배 · 방패 무시로 때린다 (쌓을수록 확률이 오른다)',()=>{});
+def('v_freedom',null,'날아다니는 내 유닛가 확률로 피해 1.5배 · 실드 무시로 때린다 (쌓을수록 확률이 오른다)',()=>{});
 def('evolve',null,'굴에서 나와 비명벌레로 자란다',(g,me,s)=>{ const c=BYNAME['Shrieker']; if(c) morph(s,s.up&&c.upcode?c.upcode:c.code); s.burrowed=false; });
 def('burrow',null,'땅에 숨는다 (공격력 절반, 겨눌 수 없다)',(g,me,s)=>{
   s.burrowed=!s.burrowed;
@@ -2346,18 +2346,18 @@ def('guard','cr','대상과 자신을 한 턴 묶는다. 대상이 날지 않으
     /* ⚠ '내가 날면 날아다니는 몸도 때린다' 는 신판 전용이다. 원작판은 대상이 안 날 때만. */
     if(!t.flags.includes('airborne')) spellDmg(me,t,trueAtk(s));
   });
-def('paradox','paradox','공격력이 체력보다 큰 크리처를 죽인다',(g,me,s,t)=>{ if(t&&trueAtk(t)>t.hp) kill(t); });
+def('paradox','paradox','공격력이 체력보다 큰 유닛를 죽인다',(g,me,s,t)=>{ if(t&&trueAtk(t)>t.hp) kill(t); });
 def('deadalive',null,'이 몸이 죽는다 — 죽음 효과가 터진다. 그래도 살아남는다',(g,me,s)=>{
   everyThing().forEach(x=>{ if(x&&x!==s&&!x.dead) trig(x,'death',s); });
 });
 /* 해골·미이라의 '시간 역행을 맞으면 변신한다' 는 v_rewind 안에 들어 있는데, 카드에는
    아무 글도 안 떠서 **없는 능력처럼 보였다.** 표시 전용 능력을 붙여 글로 알린다. */
-def('undead',null,'시간 역행을 맞으면 무작위 크리처로 변한다',()=>{});
+def('undead',null,'시간 역행을 맞으면 무작위 유닛로 변한다',()=>{});
 def('sanctify',null,'상대 턴에는 내 퀀텀과 손패를 건드릴 수 없다',()=>{});
 def('voodoo',null,'이 몸이 받은 피해를 상대도 똑같이 받는다',()=>{});
 def('mummy',null,'시간 역행을 맞으면 파라오로 변한다',()=>{});
 def('web','cr','대상이 비행을 잃는다',(g,me,s,t)=>{ t.flags=t.flags.filter(f=>f!=='airborne'); });
-def('ignite',null,'터져서 상대에게 20, 모든 크리처에게 1',(g,me,s)=>{
+def('ignite',null,'터져서 상대에게 20, 모든 유닛에게 1',(g,me,s)=>{
   spellDmg(me,foe(me),20); all().forEach(u=>{ if(u&&u.kind==='creature') spellDmg(me,u,1); });
   destroyPerm(s);
 });
@@ -2366,9 +2366,9 @@ def('steam',null,'+5 공격력을 얻는다. 매 턴 1씩 식는다',(g,me,s)=>{
 /* 식는 쪽은 공격 차례에 돈다 — 설명에 적어 놓고 구현을 빼면 그게 곧 거짓말이다 */
 def('steamdecay',null,'',(g,me,s)=>{ if(s.steam>0){ s.steam--; buff(s,-1,0); } });
 /* ⚠⚠ 원문(양쪽 다): "Gain {N}:6 plus 1 quanta of **each other element**."
-   크리처 체력을 불 퀀텀에 더하고 있었다 — 표에도 원문에도 없는 값이다.
+   유닛 체력을 불 퀀텀에 더하고 있었다 — 표에도 원문에도 없는 값이다.
    12속성 1씩 + 불 {N} → 불은 합쳐서 {N}+1 (분신 6, 화장 8). 원문의 "6 [불]" 과 맞는다. */
-def('immolate','mycr','자기 크리처를 태운다. 12속성 퀀텀 1씩과 불 퀀텀 {N} 을 더 얻는다',(g,me,s,t,a)=>{
+def('immolate','mycr','자기 유닛를 태운다. 12속성 퀀텀 1씩과 불 퀀텀 {N} 을 더 얻는다',(g,me,s,t,a)=>{
   if(!t)return; for(let e=1;e<=12;e++) gain(me,e,1); gain(me,6,(a||5)); kill(t);
 });
 def('fiery',null,'불 퀀텀 5마다 공격력 1',()=>{});
@@ -2380,7 +2380,7 @@ def('lycanthropy',null,'+5|+5 를 얻고 이 능력을 잃는다',(g,me,s)=>{
 /* ⚠⚠ 원문: "All of your creatures **without a skill** gain 'bioluminescence'."
    회복만 하고 능력은 아무에게도 안 주고 있었다.
    반딧불이의 그 능력 그대로 — 매 턴 빛 퀀텀 1(`quanta 8`). */
-def('luciferin',null,'체력을 10 회복하고, 능력이 없는 내 크리처 전부가 발광을 얻는다 (매 턴 빛 1)',
+def('luciferin',null,'체력을 10 회복하고, 능력이 없는 내 유닛 전부가 발광을 얻는다 (매 턴 빛 1)',
   (g,me)=>{
     heal(me,10);
     /* ⚠ openEtG 기준은 '능력이 없다' 가 아니라 **'스스로 하는 일이 없다'** 이다 —
@@ -2416,23 +2416,23 @@ def('singularity',null,
     else if(r<9){ s.adren=1; }
     else { SK.parallel.f(g,me,s,s); }
   });
-def('chimera',null,'자기 크리처를 하나로 합친다. 관성 · 중력 견인을 얻는다',(g,me)=>{
+def('chimera',null,'자기 유닛를 하나로 합친다. 관성 · 중력 견인을 얻는다',(g,me)=>{
   let a=0,h=0; me.cr.forEach(u=>{ if(u){a+=u.atk;h+=u.hp;} });
   me.cr=new Array(MAXCR).fill(null);
   const c=BYNAME['Chimera']; const u=mk(c.code,me);
   u.kind='creature'; u.atk=a; u.hp=u.maxhp=h; u.flags=['momentum']; u.slot=0; me.cr[0]=u;
   me.gpull=u;                      /* ⚠ 원문에 중력 견인도 있다 — 합친 몸이 전부 대신 맞는다 */
 });
-def('skyblitz',null,'바람 퀀텀을 모두 쓰고 비행 크리처가 급강하한다',(g,me)=>{
+def('skyblitz',null,'바람 퀀텀을 모두 쓰고 비행 유닛가 급강하한다',(g,me)=>{
   me.q[9]=0; me.cr.forEach(u=>{ if(u&&u.flags.includes('airborne')&&!u.flags.includes('immaterial')) u.dive=true; });
 });
 /* ⚠ 원작판 조건은 **공격력 3 미만**뿐이다(체력 조건은 신판). 겨냥 목록이 조건을 안다. */
-def('butterfly','butterfly','대상의 능력이 「3엔트로피 : 기물 파괴」 로 바뀐다',(g,me,s,t)=>{
+def('butterfly','butterfly','대상의 능력이 「3엔트로피 : 노드 파괴」 로 바뀐다',(g,me,s,t)=>{
   if(!t)return; t.sk=[{ev:'cast',id:'destroy',arg:null,args:[]}]; t.cast=3; t.castel=1;
 });
 /* ⚠ 원문: "Mutate target creature into an abomination, **unless it dies**… or turn into
    something weird." 죽을 확률이 반반이었다 — 원작은 훨씬 낮다(20%). 나머지는 흉물,
-   가끔 '이상한 것'(무작위 강화 크리처)이 된다. */
+   가끔 '이상한 것'(무작위 강화 유닛)이 된다. */
 def('v_mutation','cr','대상이 흉물이 된다. 낮은 확률로 죽거나 엉뚱한 것이 된다',(g,me,s,t)=>{
   if(!t)return;
   /* openEtG: upto(10) — 10% 죽음 · 40% 개량 돌연변이 · 50% 흉물 */
@@ -2442,8 +2442,8 @@ def('v_mutation','cr','대상이 흉물이 된다. 낮은 확률로 죽거나 �
   const c=BYNAME['Abomination']; if(c) morph(t,c.code);
 });
 /* 개량 돌연변이(강화) — 죽지 않고 더 나은 것이 된다 */
-/* ⚠ openEtG 는 **강화판이 아니라 기본 크리처** 아무거나로 바꾼다(`random_card(false, …)`). */
-def('v_improve','cr','대상이 무작위 크리처로 바뀐다',(g,me,s,t)=>{
+/* ⚠ openEtG 는 **강화판이 아니라 기본 유닛** 아무거나로 바꾼다(`random_card(false, …)`). */
+def('v_improve','cr','대상이 무작위 유닛로 바뀐다',(g,me,s,t)=>{
   if(!t)return;
   const pool=ETG.cards.filter(c=>c.kind==='creature'&&!c.up&&playable(c));
   if(pool.length) morph(t,pool[rnd(pool.length)].code);
@@ -2454,29 +2454,29 @@ def('v_improve','cr','대상이 무작위 크리처로 바뀐다',(g,me,s,t)=>{
 def('v_swarmhp',null,'체력이 내 스카라브 수와 같다',()=>{});
 /* ⚠ 원문: "Deal **1** spell damage to all creatures. **Gain 1:7 for each damage dealt.**"
    2를 때리고 물 퀀텀은 한 방울도 안 벌고 있었다 — 물 덱의 밑천이 통째로 빠져 있었다. */
-def('dryspell',null,'모든 크리처에게 피해 1. 준 피해만큼 물 퀀텀을 얻는다',(g,me)=>{
+def('dryspell',null,'모든 유닛에게 피해 1. 준 피해만큼 물 퀀텀을 얻는다',(g,me)=>{
   let n=0; all().forEach(u=>{ if(u&&u.kind==='creature') n+=spellDmg(me,u,1); });
   gain(me,7,n);
 });
-/* 건조(강화) — 상대 크리처에게 2, 준 만큼 물 */
-def('v_dessication',null,'상대 크리처에게 피해 2. 준 피해만큼 물 퀀텀을 얻는다',(g,me)=>{
+/* 건조(강화) — 상대 유닛에게 2, 준 만큼 물 */
+def('v_dessication',null,'상대 유닛에게 피해 2. 준 피해만큼 물 퀀텀을 얻는다',(g,me)=>{
   let n=0; foe(me).cr.forEach(u=>{ if(u) n+=spellDmg(me,u,2); });
   gain(me,7,n);
 });
 def('v_swarm',null,'체력이 내 스카라브 수와 같다',()=>{});
 
 /* ── 마지막 아홉 — 여기까지 넣어야 기본 239장이 전부 논다 ─────────────── */
-def('swave','any','대상에게 주문 피해 4. 얼어붙은 크리처는 그대로 죽는다',(g,me,s,t)=>{
+def('swave','any','대상에게 액션 피해 4. 얼어붙은 유닛는 그대로 죽는다',(g,me,s,t)=>{
   if(t&&t.c&&t.frozen>0){ kill(t); return; }
   spellDmg(me,t,4);
 });
-def('enchant','pm','대상 기물이 실체를 잃는다 (겨눌 수 없다)',(g,me,s,t)=>{
+def('enchant','pm','대상 노드이 실체를 잃는다 (겨눌 수 없다)',(g,me,s,t)=>{
   if(t&&!t.flags.includes('immaterial')) t.flags.push('immaterial');
 });
-def('v_rewind','cr','대상 크리처를 주인의 덱 맨 위로 되돌린다',(g,me,s,t)=>{
+def('v_rewind','cr','대상 유닛를 주인의 덱 맨 위로 되돌린다',(g,me,s,t)=>{
   if(!t||t.kind!=='creature')return;
   const p=t.own;
-  /* 원작의 특수 처리 — 해골은 아무 크리처로, 미이라는 파라오로 되돌아간다 */
+  /* 원작의 특수 처리 — 해골은 아무 유닛로, 미이라는 파라오로 되돌아간다 */
   let code=t.c.code;
   if(/^(Skeleton|Elite Skeleton)$/.test(t.c.en)){
     const pool=ETG.cards.filter(c=>c.kind==='creature'&&!c.up&&playable(c));
@@ -2487,7 +2487,7 @@ def('v_rewind','cr','대상 크리처를 주인의 덱 맨 위로 되돌린다',
   t.dead=true;                    /* 죽은 게 아니라 치운 것 — death 는 안 돈다 */
   p.deck.push(code);
 });
-def('wisdom','any','대상에게 +4|+0. 실체 없는 대상은 염동을 얻어 방패를 무시한다',(g,me,s,t)=>{
+def('wisdom','any','대상에게 +4|+0. 실체 없는 대상은 염동을 얻어 실드를 무시한다',(g,me,s,t)=>{
   if(!t||!t.c)return;
   buff(t,4,0);
   if(t.flags.includes('immaterial')&&!t.flags.includes('psionic')) t.flags.push('psionic');
@@ -2499,7 +2499,7 @@ def('sosa',null,'체력 48을 바치고 죽음 외 퀀텀을 모두 잃는다. �
     for(let e=1;e<=12;e++) if(e!==2) me.q[e]=0;
     me.sosa=2;
   });
-def('accretion','pm','대상 기물을 부수고 +0|+15. 체력이 45를 넘으면 스스로 무너져 블랙홀이 손에 들어온다',
+def('accretion','pm','대상 노드을 부수고 +0|+15. 체력이 45를 넘으면 스스로 무너져 블랙홀이 손에 들어온다',
   (g,me,s,t)=>{
     destroyPerm(t,me); buff(s,0,15);
     if(s.hp>45){ kill(s); const c=BYNAME['Black Hole'];
@@ -2541,7 +2541,7 @@ const rnd=n=>Math.floor(Math.random()*n);
 const foe=p=>p===G.me?G.ai:G.me;
 const owner=u=>u&&u.own?u.own:G.me;
 const all=()=>[].concat(G.me.cr,G.ai.cr,G.me.pm,G.ai.pm,[G.me.weapon,G.ai.weapon,G.me.shield,G.ai.shield]);
-/* 판 위에 실제로 놓여 있는 것 전부 — 양쪽 크리처·기물·무기·방패.
+/* 판 위에 실제로 놓여 있는 것 전부 — 양쪽 유닛·노드·웨폰·실드.
    전역 이벤트(죽음 등)는 반드시 이걸 돈다. 한 종류라도 빼면 그 카드만 조용히 안 돈다. */
 const everyThing=()=>all().filter(Boolean);
 
@@ -2588,10 +2588,10 @@ const sanctuaryOn=p=>p.pm.some(isSanctify);
 /* 기둥·진자인가 — 지진과 님프의 눈물이 겨누는 것은 이것뿐이다 */
 const isPillar=u=>!!(u&&u.sk&&u.sk.some(s=>s.id==='pillar'||s.id==='pend'));
 /* ⚠ "Can not be destroyed or stolen" 은 원작에서 **immaterial** 로 표현된다
-   (모닝스타·반사 방패·에메랄드 방패에 그 표식이 붙어 있다). 이름을 늘어놓지 말고
+   (모닝스타·반사 실드·에메랄드 실드에 그 표식이 붙어 있다). 이름을 늘어놓지 말고
    표에 이미 있는 표식을 볼 것 — 겨냥 목록은 이미 걸러 내고 있고, 여기서 한 번 더 막는다. */
 const isFixed=u=>!!(u&&u.flags&&u.flags.includes('immaterial'));
-/* 주문 피해를 되돌려 보내는 방패 — 표식 `reflective` 가 이미 있다 */
+/* 액션 피해를 되돌려 보내는 실드 — 표식 `reflective` 가 이미 있다 */
 const reflectOn=p=>!!(p&&p.shield&&p.shield.flags.includes('reflective'));
 /* 판 위의 지속 효과 — 이름이 아니라 표식으로 찾는다 */
 const permFlag=(p,f)=>p.pm.some(x=>x&&x.flags&&x.flags.includes(f));
@@ -2627,12 +2627,12 @@ function addPoison(u,n){ if(!u)return; if(u.c) u.poison=(u.poison||0)+n; else u.
 
 function log(t,cls){ G.log.push({t,cls}); if(G.log.length>200)G.log.shift(); }
 
-/* 피해 — 얼굴이면 방패를 안 탄다(주문 피해). 몸이면 체력을 깎는다 */
+/* 피해 — 얼굴이면 실드를 안 탄다(액션 피해). 몸이면 체력을 깎는다 */
 function spellDmg(me,t,n){
   if(!t)return 0;
   if(t.c) return dmgThing(t,n);
-  /* ⚠ 반사 방패·에메랄드 방패 — 원문: "Any damage from spells is reflected."
-     적혀 있는데 아무 데도 없었다. 주문 피해가 얼굴로 갈 때만 되돌린다. */
+  /* ⚠ 반사 실드·에메랄드 실드 — 원문: "Any damage from spells is reflected."
+     적혀 있는데 아무 데도 없었다. 액션 피해가 얼굴로 갈 때만 되돌린다. */
   if(n>0&&t!==me&&reflectOn(t)){ log(`${t.shield.c.ko} 반사`,'c'); return dmgP(me,n); }
   return dmgP(t,n);
 }
@@ -2641,7 +2641,7 @@ function dmgThing(u,n){
   u.hp-=n;
   /* ⚠ 부두 인형 — 원문: "damage and status is inflicted to your opponent as well".
      표시(flags 에 voodoo)만 있고 아무 데도 연결돼 있지 않았다. 피해가 지나가는
-     한 통로에서 처리한다 — 그래야 주문이든 공격이든 빠짐없이 돈다. */
+     한 통로에서 처리한다 — 그래야 액션이든 공격이든 빠짐없이 돈다. */
   if(n>0&&u.flags&&u.flags.includes('voodoo')&&u.hp>0) dmgP(foe(u.own),n);
   if(u.hp<=0) kill(u);
   return n;
@@ -2668,16 +2668,16 @@ function kill(u){
     /* ⚠⚠⚠ 죽음은 **두 갈래**다. openEtG 의 proc_data(Event::Death) 그대로:
          ① 죽은 몸 **자신**의 'owndeath'  — 불사조가 잿더미를 남긴다
          ② **양쪽 판 전부**의 'death'      — 백골 무덤 · 영혼 포집기 · 독수리 · 뼈 장벽
-       예전에는 이 둘을 **정확히 거꾸로** 걸어 놨다(죽은 몸에 'death', 기물에 'owndeath').
+       예전에는 이 둘을 **정확히 거꾸로** 걸어 놨다(죽은 몸에 'death', 노드에 'owndeath').
        두 이름이 다 존재하니 오류도 안 났고, **어느 쪽도 한 번도 안 돌았다** —
        불사조는 되살아나지 않았고 무덤은 해골을 한 마리도 못 냈다.
        TEN 에서 strike() 가 시체를 직접 지워 onDeath 가 통째로 죽었던 것과 같은 사고다.
-       ⚠ 기물만 보면 안 된다 — 독수리는 크리처, 뼈 장벽은 방패다. 판 위 전부를 본다. */
+       ⚠ 노드만 보면 안 된다 — 독수리는 유닛, 뼈 장벽은 실드다. 판 위 전부를 본다. */
     trig(u,'owndeath');
     everyThing().forEach(x=>{ if(x&&x!==u&&!x.dead) trig(x,'death',u); });
   } else destroyPerm(u);
 }
-/* ⚠ 해체공(salvage)은 **기물이 부서지는 순간**에 걸려 있다. 그 사건이 아예 없어서
+/* ⚠ 해체공(salvage)은 **노드이 부서지는 순간**에 걸려 있다. 그 사건이 아예 없어서
    두 장 다 아무 일도 안 하는 카드였다. 죽음과 같은 방식으로 한 통로에서 알린다 —
    `by` 는 부순 쪽(스스로 사라진 것이면 없다). */
 function destroyPerm(u,by){
@@ -2763,7 +2763,7 @@ function draw(p){
 }
 
 /* ⚠ 순서가 규칙이다 — openEtG v_endturn 그대로:
-     문장 → 상대 독 → 기물(기둥) → 크리처 공격 → 무기 공격 */
+     문장 → 상대 독 → 노드(기둥) → 유닛 공격 → 웨폰 공격 */
 function endTurn(){
   const p=G.turn, f=foe(p);
   syncAuras();                 /* 땅거미·스카라브의 지속 값을 먼저 맞춰 놓는다 */
@@ -2772,11 +2772,11 @@ function endTurn(){
   if(p.mark===0){ for(let i=0;i<3;i++) gain(p,1+rnd(12),1); } else gain(p,p.mark,1);
   /* 2) 독 — 내 턴이 끝날 때 **상대**가 자기 독만큼 맞는다 */
   if(f.poison>0){ dmgP(f,f.poison); log(`${f.name} 독 ${f.poison}`,'c'); }
-  /* 3) 기물 */
+  /* 3) 노드 */
   p.pm.forEach(pm=>{ if(pm){ trig(pm,'ownattack'); pm.used=false; if(pm.frozen>0)pm.frozen--; } });
-  /* 4) 크리처 */
+  /* 4) 유닛 */
   p.cr.forEach(u=>{ if(u) attack(u); });
-  /* 5) 방패·무기 */
+  /* 5) 실드·웨폰 */
   if(p.shield){ trig(p.shield,'ownattack'); p.shield.used=false; }
   if(p.weapon) attack(p.weapon);
   p.sabbath=false; p.nova=0; p.seefoe=false;
@@ -2838,7 +2838,7 @@ function attack(u){
   } while(u.adren&&loops<adrenCount(u));
 }
 function adrenCount(u){ const a=Math.abs(trueAtk(u)); return a<=1?4:a<=2?3:a<=4?2:1; }
-/* 무기의 문장 보너스 — openEtG: bow=1:8 1:9(강화)/1:9, hammer=1:3 1:4, v_dagger=1:2 1:11 */
+/* 웨폰의 문장 보너스 — openEtG: bow=1:8 1:9(강화)/1:9, hammer=1:3 1:4, v_dagger=1:2 1:11 */
 const MARKBONUS={hammer:[3,4], v_dagger:[2,11]};
 function markBonus(u){
   let n=0;
@@ -2873,28 +2873,28 @@ function nightfallArgs(p){
 const nightfallAtk=p=>nightfallArgs(p).atk;
 function nightfallOn(p){ return nightfallArgs(p).atk>0||nightfallArgs(p).hp>0; }
 /* ⚠ 원문: "Creatures do not attack at the end of **each player's** turn" —
-   해시계는 양쪽 크리처를 다 멈춘다(무기는 멈추지 않는다). */
+   해시계는 양쪽 유닛를 다 멈춘다(웨폰는 멈추지 않는다). */
 function stasisOn(f){ return [G.me,G.ai].some(q=>q.pm.some(x=>x&&x.sk.some(s=>s.id==='stasis')&&x.charges>0)); }
 
-/* 방패 — 원작의 특수 방패를 이름이 아니라 **능력 id** 로 가른다 */
+/* 실드 — 원작의 특수 실드를 이름이 아니라 **능력 id** 로 가른다 */
 function shieldReduce(sh,atk,dmg){
   const s0=sh.sk.find(s=>s.ev==='shield')||{};
   const id=s0.id, arg=s0.arg;
-  let dr=sh.hp||0;      /* 평범한 방패는 체력칸이 곧 감소량이다 */
+  let dr=sh.hp||0;      /* 평범한 실드는 체력칸이 곧 감소량이다 */
   const p=sh.own;
   /* ⚠ 원문: "Evade all **non-airborne, non-ranged** attackers." 원거리를 빠뜨려
-     올빼미의 눈 같은 원거리 무기가 날개에 막히고 있었다. */
+     올빼미의 눈 같은 원거리 웨폰가 날개에 막히고 있었다. */
   if(id==='wings')
     return (atk.flags.includes('airborne')||atk.flags.includes('ranged'))
       ?{dmg,blocked:0}:{dmg:0,blocked:dmg};
-  /* ⚠ 회피 확률은 카드마다 다르다 — 안개 방패는 40. 값을 무시하고 반반으로 굴리면 안 된다 */
+  /* ⚠ 회피 확률은 카드마다 다르다 — 안개 실드는 40. 값을 무시하고 반반으로 굴리면 안 된다 */
   if(id==='evade'||id==='v_freeevade')
     return Math.random()<((typeof arg==='number'?arg:50)/100)?{dmg:0,blocked:dmg}:{dmg,blocked:0};
   if(id==='evade100') return {dmg:0,blocked:dmg};
   /* ⚠ 원문: "**more than** 5HP" — 딱 5인 몸은 지나간다. >= 로 적어 한 칸 세게 막고 있었다 */
   if(id==='weight') return (atk.hp>5&&atk.kind==='creature')?{dmg:0,blocked:dmg}:{dmg,blocked:0};
-  /* ⚠⚠ 소산 방패·장막 — openEtG 는 **언제나 통째로 막는다.** 값을 못 내면
-     그 속성 퀀텀을 **0 으로 만들고 방패가 부서진다** — 그 한 방은 그래도 막힌다.
+  /* ⚠⚠ 소산 실드·장막 — openEtG 는 **언제나 통째로 막는다.** 값을 못 내면
+     그 속성 퀀텀을 **0 으로 만들고 실드가 부서진다** — 그 한 방은 그래도 막힌다.
      '낼 수 있는 만큼만 막는다' 는 내가 지어낸 것이었다. */
   if(id==='disshield'){
     if(!pay(p,1,Math.ceil(dmg/3))){ p.q[1]=0; destroyPerm(sh); }
@@ -2906,9 +2906,9 @@ function shieldReduce(sh,atk,dmg){
   }
   if(id==='blockwithcharge'){ if(sh.charges>0){ sh.charges--; return {dmg:0,blocked:dmg}; } return {dmg,blocked:0}; }
   /* 희망은 shield 가 아니라 ownattack 으로 걸려 있다 — id 로만 찾으면 0 이 된다 */
-  /* ⚠ 원문: "reduced by **1 + N**". 1 을 빼먹어 빛 크리처가 없으면 아무것도 안 막았다. */
+  /* ⚠ 원문: "reduced by **1 + N**". 1 을 빼먹어 빛 유닛가 없으면 아무것도 안 막았다. */
   /* ⚠⚠ 카드 글은 "1 + N" 이라 적혀 있지만 **openEtG 원작판은 N**(강화판만 +1)이다
-     (`set(c, hp, dr + Upped)`). 세는 것은 '공격할 때 빛 퀀텀을 만드는 내 크리처'. */
+     (`set(c, hp, dr + Upped)`). 세는 것은 '공격할 때 빛 퀀텀을 만드는 내 유닛'. */
   if(sh.sk.some(s=>s.id==='v_hope'))
     dr=(sh.up?1:0)+p.cr.filter(x=>x&&x.sk.some(s=>s.ev==='ownattack'&&s.id==='quanta'&&s.arg===8)).length;
   const b=Math.min(dr,dmg);
@@ -2945,7 +2945,7 @@ function targetsFor(kind,p,src){
   /* 님프의 눈물 · 지진 — **기둥/진자만** 겨눈다 */
   if(kind==='mypillar')return p.pm.filter(x=>pm(x)&&isPillar(x));
   if(kind==='foepillar')return f.pm.filter(x=>pm(x)&&isPillar(x));
-  /* 성전사 Endow — 판 위의 **무기**를 겨눈다 */
+  /* 성전사 Endow — 판 위의 **웨폰**를 겨눈다 */
   if(kind==='weapon')return [p.weapon,f.weapon].filter(x=>x&&!x.flags.includes('immaterial'));
   if(kind==='crw')return f.cr.filter(cr).concat([f.weapon].filter(Boolean));
   if(kind==='any')return [f].concat(p.cr.filter(cr),f.cr.filter(cr));
@@ -2973,8 +2973,8 @@ function needsTarget(u){
 }
 function playCard(p,u,tgt){
   /* ⚠⚠ **대상이 필요한 카드를 대상 없이 내면 안 된다.** 막지 않으면 능력 함수가
-     null 을 받아 그 자리에서 판이 죽는다(정화가 겨눌 크리처가 없을 때 실제로 그랬다).
-     한 판에 크리처가 하나도 없을 때 상대가 그 주문을 뽑으면 바로 터진다. */
+     null 을 받아 그 자리에서 판이 죽는다(정화가 겨눌 유닛가 없을 때 실제로 그랬다).
+     한 판에 유닛가 하나도 없을 때 상대가 그 액션을 뽑으면 바로 터진다. */
   if(needsTarget(u)&&!tgt)return false;
   const c=costOf(u);
   if(!pay(p,c.e,c.n))return false;
@@ -3059,7 +3059,7 @@ function aiTurn(){
   endTurn(); render();
 }
 /* 해로운 것은 상대에게 · 이로운 것은 제 편에 — 겨냥 목록이 양쪽을 다 담게 된 뒤로
-   무작위로 고르면 제 크리처에 저격을 쏘게 된다.
+   무작위로 고르면 제 유닛에 저격을 쏘게 된다.
    (원작 AI 는 판을 점수 매겨 고르지만 여기서는 '해롭냐 이롭냐' 두 갈래만 본다 —
    상대의 수읽기를 내가 정했다는 것은 7절 머리말에 이미 적어 뒀다.) */
 const AIHARM=new Set(['snipe','v_rewind','lobotomize','v_mutation','v_improve','liquid',
@@ -3099,7 +3099,7 @@ const SCR=$('#screen');
 /* 13속성 색 — 본편의 보석 팔레트 감각에 맞춰 잡았다(양피지 위에서 읽히는 채도) */
 const ELC=['#8894A6','#a578e0','#7d8fa2','#b0762e','#8a6a3a','#57ab3c','#c04a3f',
            '#4d6fd4','#e0c65e','#4fb8d8','#d99a2b','#6b5a80','#4fd1c0'];
-const KINDKO={creature:'크리처',spell:'주문',perm:'기물',weapon:'무기',shield:'방패'};
+const KINDKO={creature:'유닛',spell:'액션',perm:'노드',weapon:'웨폰',shield:'실드'};
 /* 설명 속 {N} 은 **그 카드의 실제 수치**로 바꾼다.
    ⚠ 안 바꾸면 "+N|+N 을 얻는다" 가 그대로 카드에 찍힌다 — 읽는 사람에게는 아무 말도 아니다.
      수치를 설명에 손으로 박아 넣으면 카드마다 값이 다를 때(독수리 1 · 불의 정령 2) 틀린다. */
@@ -3125,21 +3125,21 @@ function abilName(c,s){
 }
 const kindKo=k=>KINDKO[k]||k;
 const FLAGKO={airborne:'비행',momentum:'관성',immaterial:'실체 없음',poisonous:'유독',
-  aquatic:'수생',ranged:'원거리',nocturnal:'야행성',burrowed:'굴속',reflective:'주문 반사',
+  aquatic:'수생',ranged:'원거리',nocturnal:'야행성',burrowed:'굴속',reflective:'액션 반사',
   voodoo:'부두',psionic:'염동',token:'토큰',stackable:'쌓임',additive:'합산',
   patience:'인내',cloak:'장막',flooding:'범람'};
 /* 확대창에서 풀어 주는 말 — 본편 용어집(zdef)과 같은 자리에 뜬다 */
 const FLAGDEF={
-  airborne:'날아다닌다. 지상만 막는 방패(날개)를 지나친다.',
-  momentum:'방패를 통째로 무시하고 그대로 때린다.',
-  immaterial:'겨눌 수 없고 얼지 않는다. 주문의 대상이 되지 않는다.',
+  airborne:'날아다닌다. 지상만 막는 실드(날개)를 지나친다.',
+  momentum:'실드를 통째로 무시하고 그대로 때린다.',
+  immaterial:'겨눌 수 없고 얼지 않는다. 액션의 대상이 되지 않는다.',
   poisonous:'때릴 때마다 상대에게 독을 남긴다.',
   aquatic:'범람이 깔려도 물에서 죽지 않는다.',
-  ranged:'원거리 — 지상 방패에 걸리지 않는다.',
+  ranged:'원거리 — 지상 실드에 걸리지 않는다.',
   nocturnal:'야행성. 땅거미·일식이 깔리면 +1|+1.',
   burrowed:'땅에 숨어 있다. 겨눌 수 없지만 공격력이 절반이다.',
-  reflective:'자기에게 오는 주문을 상대에게 되돌린다.',
-  psionic:'주문 피해로 때린다 — 방패에 깎이지 않는다.',
+  reflective:'자기에게 오는 액션을 상대에게 되돌린다.',
+  psionic:'액션 피해로 때린다 — 실드에 깎이지 않는다.',
   stackable:'같은 카드를 한 칸에 쌓는다. 쌓인 수만큼 일한다.',
   token:'능력이 만들어 낸 몸. 덱에 넣을 수 없다.'};
 
@@ -3163,7 +3163,7 @@ function cardCls(c,u){
   return c.kind==='spell'?'sp':'en';
 }
 /* 카드 설명란 — **인쇄된 글이 아니라 지금 그 개체의 상태**를 보여 준다(본편과 같은 원칙).
-   능력을 잃은 몸(뇌엽절제 맞은 크리처)은 설명도 같이 사라져야 판을 보고 판단할 수 있다. */
+   능력을 잃은 몸(뇌엽절제 맞은 유닛)은 설명도 같이 사라져야 판을 보고 판단할 수 있다. */
 /* ⚠⚠ 예전엔 `h.d.split('.')[0]` 로 **첫 문장만** 실었다. 두 문장짜리 능력은
    뒷문장이 통째로 사라져서, 카드만 보고는 무슨 일이 일어나는지 알 수가 없었다
    (성권: "카드 안에 카드 설명이 약식으로 들어가면 어떡해"). 이제 언제나 전문이다.
@@ -3181,7 +3181,7 @@ function ruleText(c,u,full){
   if(c.txt) return fillCard(c,esc(c.txt));
   /* ⚠⚠ 카드에 실리는 글은 **인쇄된 원문을 문장 그대로 옮긴 한국어**(kotxt)다.
      예전에는 능력 하나하나의 설명을 ' · ' 로 이어 붙여 만들었는데, 그건 원문이 아니라
-     내가 쓴 요약이라 문장이 조각나고 무기의 첫 줄('무기 — 매 턴 피해를 준다') 같은
+     내가 쓴 요약이라 문장이 조각나고 웨폰의 첫 줄('웨폰 — 매 턴 피해를 준다') 같은
      것이 통째로 빠졌다(불협화음이 '상대 퀀텀을 뒤섞는다' 한 줄로만 보였다).
      ⚠ 표식(비행·야행성…)은 원문에도 따로 안 적히므로 앞에 그대로 세운다. */
   if(c.kotxt){
@@ -3189,7 +3189,7 @@ function ruleText(c,u,full){
     const fl=(u?u.flags:c.flags)
       .filter(f=>FLAGKO[f]&&shid0.indexOf(f)<0&&!['stackable','additive','token'].includes(f));
     let body=fillCard(c,esc(c.kotxt));
-    /* 앞에 세운 표식을 글이 또 부르면 한 번만 — '관성 · 관성 — 방패를…' 이 되지 않게 */
+    /* 앞에 세운 표식을 글이 또 부르면 한 번만 — '관성 · 관성 — 실드를…' 이 되지 않게 */
     fl.forEach(f=>{ const k=FLAGKO[f];
       if(body.startsWith(k+' — ')) body=body.slice(k.length+3); });
     const head=fl.length?'<b>'+fl.map(f=>FLAGKO[f]).join(' · ')+'</b>':'';
@@ -3218,9 +3218,9 @@ function ruleText(c,u,full){
     } else out.push((nm?`<b>${nm}</b> · `:'')+d);
   });
   if(u&&u.sk.length===0&&c.sk.length) out.push('<b>능력을 잃었다</b>');
-  /* ⚠ 평범한 방패는 능력이 없고 감소량이 체력칸에 숫자로만 있었다 —
+  /* ⚠ 평범한 실드는 능력이 없고 감소량이 체력칸에 숫자로만 있었다 —
      설명란이 통째로 비어 '아무 일도 안 하는 카드' 처럼 보였다. 글로도 적어 준다. */
-  /* ⚠ 에메랄드 방패처럼 표식이 붙은 방패는 이 줄이 통째로 빠져 있었다
+  /* ⚠ 에메랄드 실드처럼 표식이 붙은 실드는 이 줄이 통째로 빠져 있었다
      ('설명이 하나도 없을 때만' 적고 있었다) — 감소량은 언제나 적는다. */
   if(c.kind==='shield'&&!(u?u.sk:c.sk).some(s=>s.ev==='shield')){
     const dr=u?u.hp:c.hp;
@@ -3271,8 +3271,8 @@ function effClass(t){
 }
 /* ⚠⚠ 속성·종류는 **일러스트 영역에 얹지 않는다.** 그림 자리는 그림 자리다.
    높이를 새로 만들지도 않는다(그러면 그림이나 설명 상자를 먹는다) —
-   이미 있는 **발치 줄** 가운데의 빈 자리를 쓴다. 크리처는 좌우에 공/체가 있고
-   가운데가 비어 있고, 주문·기물은 줄 전체가 비어 있다. */
+   이미 있는 **발치 줄** 가운데의 빈 자리를 쓴다. 유닛는 좌우에 공/체가 있고
+   가운데가 비어 있고, 액션·노드은 줄 전체가 비어 있다. */
 function typeTag(c){
   /* ⚠ 속성은 **테두리 색이 이미 말하고 있다.** 글로 또 적으면 자리만 먹고
      '엔트로피' 같은 긴 이름은 발치 줄을 넘친다. 종류만 적는다. */
@@ -3341,7 +3341,7 @@ function packRow(el){
   el.classList.toggle('packed',!!n);
   if(!n)return;
   const cw=cards[0].offsetWidth||60;
-  /* 무기·방패 자리는 양 끝에 못박혀 있다 — 기물이 그 위로 올라가면 안 된다 */
+  /* 웨폰·실드 자리는 양 끝에 못박혀 있다 — 노드이 그 위로 올라가면 안 된다 */
   const eq=el.querySelector('.eq');
   const pad=eq?(eq.offsetWidth||0)+8:0;
   const avail=Math.max(40,el.clientWidth-8-pad*2);
@@ -3358,7 +3358,7 @@ function boardHTML(p,k){
   const arr=k==='cr'?p.cr:p.pm;
   return arr.filter(Boolean).map(u=>slotHTML(u,p)).join('');
 }
-/* 무기·방패 — 기물 줄의 양 끝에 붙는 전용 자리 */
+/* 웨폰·실드 — 노드 줄의 양 끝에 붙는 전용 자리 */
 function eqHTML(p){
   const one=(u,cls)=> u ? `<div class="eq ${cls}">${slotHTML(u,p)}</div>`
                         : `<div class="eq ${cls} mt"></div>`;
@@ -3497,7 +3497,7 @@ function bind(){
     }
     showZoom(u.c,u);
   });
-  /* 얼굴을 겨누는 주문(any) — 체력 막대를 누른다 */
+  /* 얼굴을 겨누는 액션(any) — 체력 막대를 누른다 */
   SCR.querySelectorAll('.hpbar').forEach((el,i)=>el.onclick=()=>{
     if(!TGT||TGT.kind!=='any')return;
     const p=i===0?G.ai:G.me;
@@ -3519,20 +3519,20 @@ function zoomHTML(c,u){
   const sks=u?u.sk:c.sk;
   /* ⚠⚠ **효과로 얻은 것을 표시해 준다.** 관성·정수·유동·나비 효과처럼 능력과 표식을
      나중에 붙이는 카드가 많은데, 확대창이 인쇄된 것과 얻은 것을 구별 없이 보여 주면
-     "이 몸이 왜 방패를 무시하지?" 를 판에서 알 수가 없다. */
+     "이 몸이 왜 실드를 무시하지?" 를 판에서 알 수가 없다. */
   const printed=new Set(c.sk.map(x=>x.id));
   const GOT=' <b style="color:#6ee08a">효과로 얻음</b>';
   sks.forEach(s=>{ const h=SK[s.id]; if(!h)return;
     const cst=u?u.cast:c.cast, ce=u?u.castel:c.castel;
-    /* ⚠ 'death' 는 **아무 크리처나 죽었을 때**(전역), 'owndeath' 는 **이 몸이 죽었을 때**다.
+    /* ⚠ 'death' 는 **아무 유닛나 죽었을 때**(전역), 'owndeath' 는 **이 몸이 죽었을 때**다.
        예전에 이 둘을 뒤집어 적어 뒀다 — 카드를 눌러 봐도 언제 도는지 알 수가 없었다. */
-    const EVKO={cast:'', ownattack:'매 턴', hit:'때릴 때', death:'크리처가 죽을 때마다',
+    const EVKO={cast:'', ownattack:'매 턴', hit:'때릴 때', death:'유닛가 죽을 때마다',
       owndeath:'이 몸이 죽을 때', shield:'맞을 때', ownplay:'낼 때', postauto:'공격을 마치고',
-      attack:'공격할 때', buff:'지속', ownbuff:'지속', destroy:'기물이 부서질 때',
-      prespell:'주문을 맞을 때', discard:'버려질 때', owndiscard:'손에서 버려질 때',
+      attack:'공격할 때', buff:'지속', ownbuff:'지속', destroy:'노드이 부서질 때',
+      prespell:'액션을 맞을 때', discard:'버려질 때', owndiscard:'손에서 버려질 때',
       ownhp:'체력 계산', hp:'체력 계산'};
     const nm=abilName(c,s);
-    const when=s.ev==='cast'?(c.kind==='spell'?'주문 효과':`${cst?cst+' '+ELKO[ce]:'무료'}`)
+    const when=s.ev==='cast'?(c.kind==='spell'?'액션 효과':`${cst?cst+' '+ELKO[ce]:'무료'}`)
       :(EVKO[s.ev]||'지속');
     /* 이름이 있으면 이름을 머리에 세우고 '언제' 는 뒤에 작게 — 이름이 곧 그 능력이다 */
     const got=(u&&!printed.has(s.id))?GOT:'';
@@ -3559,7 +3559,7 @@ function zoomHTML(c,u){
      원문은 그대로 데이터에 남아 있고, **카드 에디터**에서 고칠 때 옆에 뜬다 —
      대조는 거기서 한다. 검사(test_etg 29·30)도 데이터의 otxt 를 그대로 쓴다. */
   /* ⚠⚠ **지금 이 몸에 걸린 것 전부.** 예전에는 얼음·지연·독·사용·쌓임 다섯뿐이라,
-     중력 견인·아드레날린·급강하·굴속·증기·아플라톡신·신성한 방패처럼 **효과로 붙은 상태**가
+     중력 견인·아드레날린·급강하·굴속·증기·아플라톡신·신성한 실드처럼 **효과로 붙은 상태**가
      확대창 어디에도 안 나왔다(성권: "카드 효과로 상태가 부여되면 그 효과도 나와야 하는데").
      여기 빠진 상태는 판에서 읽을 방법이 없다 — 하나도 빠뜨리지 않는다. */
   if(u){
@@ -3580,7 +3580,7 @@ function zoomHTML(c,u){
     if(u.burrowed) st.push('굴속 — 겨눌 수 없지만 공격력이 절반');
     if(u.steam>0) st.push(`증기 ${u.steam} — 매 턴 공격력이 1씩 식는다`);
     if(u.afla) st.push('아플라톡신 — 죽으면 그 자리에 악성 세포가 남는다');
-    if(u.dshield) st.push('신성한 방패 — 다음 내 턴까지 겨눌 수 없다');
+    if(u.dshield) st.push('신성한 실드 — 다음 내 턴까지 겨눌 수 없다');
     if(u.silenced) st.push('뇌엽절제 — 능력이 지워졌다');
     if(u.pat&&(u.pat.a||u.pat.h)) st.push(`인내의 파편 — 공격하지 않는 대신 +${u.pat.a}|+${u.pat.h}`);
     if(u.nf) st.push(`땅거미 — 야행성이라 +${u.nf} 체력`);
@@ -3637,10 +3637,10 @@ document.addEventListener('contextmenu',e=>{ if(cardAt(e.target))e.preventDefaul
    드래그·타게팅을 그대로 옮겼고, CSS(.dgh · .dztip · #tgtsvg · .tgtdim · .toast)는
    build_etg_page.py 가 본편에서 통째로 가져다 붙인 것을 쓴다 — 규격이 두 벌이 되지 않게.
 
-   ⚠ 본편과 다른 점 하나: 이 게임은 **기물 자리와 크리처 자리가 갈려 있다.**
+   ⚠ 본편과 다른 점 하나: 이 게임은 **노드 자리와 유닛 자리가 갈려 있다.**
      그래서 '어디에 떨궜는가' 는 안 본다 — 손패 밖으로 나가면 곧 발동이고,
      자리는 카드 종류가 정한다. 끼워 넣을 자리를 고르는 dropbar 도 쓰지 않는다
-     (엘리멘츠는 크리처 순서가 규칙에 아무 영향을 주지 않는다).
+     (엘리멘츠는 유닛 순서가 규칙에 아무 영향을 주지 않는다).
    ═══════════════════════════════════════════════════════════════════════════ */
 function toast(msg){
   document.querySelectorAll('.toast').forEach(e=>e.remove());
@@ -3654,8 +3654,8 @@ function whyNot(p,u){
   if(p.sabbath) return '침묵 — 이번 턴엔 카드를 못 낸다';
   const c=costOf(u);
   if(!canPay(p,c.e,c.n)) return `${c.n}${c.e?ELKO[c.e]:'(아무)'} 퀀텀이 모자라다`;
-  if(u.kind==='creature'&&p.cr.indexOf(null)<0) return '크리처 자리가 없다';
-  if(u.kind==='perm'&&!u.c.flags.includes('stackable')&&p.pm.indexOf(null)<0) return '기물 자리가 없다';
+  if(u.kind==='creature'&&p.cr.indexOf(null)<0) return '유닛 자리가 없다';
+  if(u.kind==='perm'&&!u.c.flags.includes('stackable')&&p.pm.indexOf(null)<0) return '노드 자리가 없다';
   const t=needsTarget(u);
   if(t&&!targetsFor(t,p,u).length) return '겨눌 대상이 없다';
   return '';

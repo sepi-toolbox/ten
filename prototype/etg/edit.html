@@ -1380,10 +1380,10 @@ body{padding:0;height:100dvh;overflow:hidden;
   ■ 원작 규칙 중 여기서 지킨 것
     · 퀀텀은 **속성별로 쌓인다**(최대 75). 턴마다 초기화되지 않는다. ← TEN 과 가장 큰 차이
     · 기둥/탑/진자와 문장은 **자기 턴이 끝날 때** 퀀텀을 만든다 (openEtG v_endturn 순서 그대로)
-    · **막기가 없다.** 크리처는 언제나 상대 얼굴을 때리고, 방패만 그 피해를 깎는다
+    · **막기가 없다.** 유닛는 언제나 상대 얼굴을 때리고, 실드만 그 피해를 깎는다
     · 소환 멀미가 없다 — 낸 턴에 바로 때리고 능력도 쓴다
     · 체력 100, 덱 30~60장, 같은 카드 6장까지, 손패 8장 상한, 덱이 마르면 패배
-    · 크리처 23칸 · 기물 16칸 · 무기 1 · 방패 1
+    · 유닛 23칸 · 노드 16칸 · 웨폰 1 · 실드 1
 -->
 <!--TENCSS-->
 <style>
@@ -1394,7 +1394,7 @@ body{padding:0;height:100dvh;overflow:hidden;
    판은 packRow 가 겹쳐 주므로 23칸이어도 넘치지 않는다.
    ⚠⚠ 다만 **화면 높이에 묶어야 한다.** 78px 로 못 박았더니 740px·667px 짜리 폰에서
      손패가 화면 밖으로 잘렸다(전투 화면은 스크롤하지 않으므로 잘리면 못 만진다).
-     줄이 넷(상대 기물·상대 판·내 판·내 기물) + 손패 = 카드 다섯 줄이 세로로 들어가야 한다. */
+     줄이 넷(상대 노드·상대 판·내 판·내 노드) + 손패 = 카드 다섯 줄이 세로로 들어가야 한다. */
 /* ⚠⚠⚠ **이 body 규칙은 본편 CSS 뒤에 온다** — 본편이 걸어 둔
      `padding-top:env(safe-area-inset-top)` 을 통째로 덮어 버린다.
      제목줄이 있을 때는 그 32px 가 완충이 돼서 안 드러났는데, 제목줄을 없애자마자
@@ -1494,7 +1494,7 @@ body.deckmode .wrap{height:auto}
 
 /* 카드 그림 자리 — 이 모드는 일러스트가 없다. 원작 아트는 우리 것이 아니라 싣지 않았다.
    빈 상자로 두면 무슨 카드인지 알 수가 없으므로 **속성과 종류**를 앉힌다.
-   ⚠ 종류(주문·크리처·기물·무기·방패)는 테두리 모양만으로는 안 갈린다 — 본편은 크리처가
+   ⚠ 종류(액션·유닛·노드·웨폰·실드)는 테두리 모양만으로는 안 갈린다 — 본편은 유닛가
      대부분이라 테두리로 됐지만 여기는 다섯 종류가 고루 섞인다. 글로 적어야 한다. */
 /* 속성·종류 — **발치 줄 가운데**. 이미 있는 줄이라 카드 높이가 하나도 안 늘어난다.
    ⚠ 그림 자리(.tart)에는 아무것도 얹지 않는다. 나중에 일러스트가 들어갈 자리다. */
@@ -1538,14 +1538,14 @@ body.deckmode .wrap{height:auto}
 @media (prefers-reduced-motion:reduce){.qp.short{animation:none}}
 .mkl{font-style:normal;font-family:'Gowun Batang',serif;font-size:9px;margin-left:4px;opacity:.9}
 
-/* 기물줄은 크리처줄보다 낮게 — 세로 예산을 아끼려고 */
+/* 노드줄은 유닛줄보다 낮게 — 세로 예산을 아끼려고 */
 .board.pmrow{min-height:calc(var(--cardw)*1.0 + 8px);margin-bottom:8px;--eqw:calc(var(--cardw)*0.78)}
 .board.pmrow>.slot{width:calc(var(--cardw)*0.78)}
-.board.pmrow.empty::after{content:'기물'}
-.board.empty::after{content:'크리처'}
+.board.pmrow.empty::after{content:'노드'}
+.board.empty::after{content:'유닛'}
 
-/* ⚠⚠ 무기·방패는 **판에 하나씩뿐인 자리**다 — 새로 내면 앞의 것이 사라진다.
-   그런데 기둥·기물과 같은 줄에 그냥 섞여 있어서, 어느 게 무기인지 알 수가 없었다
+/* ⚠⚠ 웨폰·실드는 **판에 하나씩뿐인 자리**다 — 새로 내면 앞의 것이 사라진다.
+   그런데 기둥·노드과 같은 줄에 그냥 섞여 있어서, 어느 게 웨폰인지 알 수가 없었다
    (성권: "무기, 방패 슬롯이 없는데 어디에 놔?").
    줄을 새로 만들지 않고(전투는 한 화면 안에서 끝나야 한다) **양 끝에 못박는다.**
    비어 있을 때도 테두리와 이름이 보여서 '여기가 그 자리' 라는 게 늘 보인다. */
@@ -1557,9 +1557,9 @@ body.deckmode .wrap{height:auto}
   display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.22)}
 .pmrow .eq.mt::after{font-family:'Gowun Batang',serif;letter-spacing:.08em;
   font-size:calc(var(--eqw)*.17);color:var(--parch);opacity:.42}
-.pmrow .eq.wpn.mt::after{content:'무기'}
-.pmrow .eq.shd.mt::after{content:'방패'}
-/* ⚠ 카드가 놓이면 이름표를 따로 붙이지 않는다 — 카드 발치 줄이 이미 '무기'·'방패' 라고
+.pmrow .eq.wpn.mt::after{content:'웨폰'}
+.pmrow .eq.shd.mt::after{content:'실드'}
+/* ⚠ 카드가 놓이면 이름표를 따로 붙이지 않는다 — 카드 발치 줄이 이미 '웨폰'·'실드' 라고
    적고 있고, 위에 겹쳐 놓으면 카드 이름을 덮는다. 자리는 위치가 말한다. */
 
 /* ⚠⚠ 본편은 손패를 `margin-bottom:calc(cardw*-0.42)` 로 화면 밖에 걸쳐 놓는다
@@ -1649,7 +1649,7 @@ body.deckmode .wrap{height:auto}
 /* ⚠⚠ 본편 `.main` 은 자식을 **id 로 재배열한다**(#foeHand:0 … #hand:8).
    그래서 HTML 에 적은 순서가 화면 순서가 아니다 — 처음에 이걸 모르고 붙였다가
    상대 판·내 판·기록이 뒤죽박죽으로 섞여 나왔다.
-   이 모드의 기물줄은 본편 지형줄과 **같은 자리**를 쓴다(#foeLz:2 · #myLz:6).
+   이 모드의 노드줄은 본편 지형줄과 **같은 자리**를 쓴다(#foeLz:2 · #myLz:6).
    order 를 안 준 요소는 0 이 되어 맨 위로 튀므로 로그에도 반드시 준다. */
 #foePm{order:2} #myPm{order:6} #log{order:9}
 /* ⚠ 덱 설정 화면에서는 제목줄을 걷는다 — 성권: "덱설정 유아이만 있으면 됨".

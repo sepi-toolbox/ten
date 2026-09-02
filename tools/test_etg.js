@@ -677,9 +677,13 @@ const TEN =path.join(__dirname,'..','data','cards.json');
       const t=d.querySelector('.tstat .ttag');
       return t?t.textContent.trim():null;};
     return {cr:g('Crimson Dragon'), sp:g('Fire Bolt'), pm:g('Burning Pillar'),
-      wp:g('Fahrenheit'), sh:g('Fire Shield')};});
+      wp:g('Fahrenheit'), sh:g('Fire Shield'), K:D.KINDKO};});
+  /* ⚠⚠ 종류 이름을 여기 **글자로 박지 않는다.** 성권이 크리처→유닛처럼 이름을 갈면
+     검사가 먼저 빨간불을 내고, 정작 재려던 것('종류가 카드에 적히나')은 그대로다.
+     이름표(KINDKO)를 읽어서 **그 이름이 카드에 나오는가**를 잰다. */
   ok('카드에 종류가 적힌다',
-     kd.cr==='크리처'&&kd.sp==='주문'&&kd.pm==='기물'&&kd.wp==='무기'&&kd.sh==='방패',
+     kd.cr===kd.K.creature&&kd.sp===kd.K.spell&&kd.pm===kd.K.perm
+     &&kd.wp===kd.K.weapon&&kd.sh===kd.K.shield,
      [kd.cr,kd.sp,kd.pm,kd.wp,kd.sh].join(' · '));
   const wide=await p.evaluate(()=>{
     const D=window.ETGDBG;
@@ -702,8 +706,8 @@ const TEN =path.join(__dirname,'..','data','cards.json');
     G.me.hand.push(D.mk(D.BYNAME['Fire Bolt'].code,G.me));
     D.render();
     const q=s=>{const e=document.querySelector(s);return e?e.textContent.trim():'';};
-    return {board:q('#myBoard .slot.occ .ttag'), hand:q('#hand .hcw .ttag')};});
-  ok('판과 손패에서도 보인다', kb.board==='크리처'&&kb.hand==='주문',
+    return {board:q('#myBoard .slot.occ .ttag'), hand:q('#hand .hcw .ttag'), K:D.KINDKO};});
+  ok('판과 손패에서도 보인다', kb.board===kb.K.creature&&kb.hand===kb.K.spell,
      `판 "${kb.board}" · 손패 "${kb.hand}"`);
 
   /* ── 26) 카드에 규칙 **전문**이 실린다 ────────────────────────────── */
@@ -1138,6 +1142,7 @@ const TEN =path.join(__dirname,'..','data','cards.json');
     const row0=document.getElementById('myPm').getBoundingClientRect().height;
     o.emptyH=row0;
     /* 비어 있을 때도 두 자리가 보인다 */
+    o.K=D.KINDKO;
     o.emptyTags=[...document.querySelectorAll('#myPm .eq.mt')].map(e=>
       getComputedStyle(e,'::after').content).join('|');
     o.emptyCount=document.querySelectorAll('#myPm .eq.mt').length;
@@ -1174,7 +1179,9 @@ const TEN =path.join(__dirname,'..','data','cards.json');
     o.winH=innerHeight;
     return o;});
 
-  ok('빈 무기·방패 자리가 보인다', E.emptyCount===2&&/무기/.test(E.emptyTags)&&/방패/.test(E.emptyTags),
+  /* ⚠ 이름을 글자로 박지 않는다 — 종류 이름은 성권이 갈 수 있다(KINDKO). */
+  ok('빈 웨폰·실드 자리가 보인다',
+     E.emptyCount===2&&E.emptyTags.includes(E.K.weapon)&&E.emptyTags.includes(E.K.shield),
      `${E.emptyCount}자리 ${E.emptyTags}`);
   ok('무기는 왼쪽 끝, 방패는 오른쪽 끝', E.leftmost&&E.rightmost,
      `왼쪽 ${E.leftmost} · 오른쪽 ${E.rightmost}`);
@@ -1400,16 +1407,18 @@ const TEN =path.join(__dirname,'..','data','cards.json');
       d.innerHTML=D.etgCardHTML(D.BYNAME[n],{size:'md'});
       return d.querySelector('.teff').textContent.trim();};
     return {n:play.length, miss,
-      /* 무기는 '매 턴 피해를 준다' 는 첫 줄이 살아 있어야 한다 */
-      weapon:play.filter(c=>c.kind==='weapon'&&!/무기 —/.test(c.kotxt||'')).map(c=>c.en),
+      /* 웨폰은 '매 턴 피해를 준다' 는 첫 줄이 살아 있어야 한다.
+         ⚠ 머리말은 종류 이름이라 성권이 갈 수 있다(크리처→유닛처럼). KINDKO 를 읽는다. */
+      weapon:play.filter(c=>c.kind==='weapon'
+        &&(c.kotxt||'').indexOf(D.KINDKO.weapon+' —')!==0).map(c=>c.en),
       discord:txt('Discord'), virus:txt('Virus')};});
   /* ⚠ 장수를 숫자로 박아 두면 카드를 하나 뺄 때마다 여기가 거짓으로 실패한다.
      재야 하는 것은 '몇 장인가' 가 아니라 **놀 수 있는 카드에 글이 빠진 게 없는가** 다. */
   ok('놀 수 있는 카드에 글이 다 있다', KT.miss.length===0,
      KT.miss.slice(0,4).join(',')||`${KT.n}장`);
-  ok('무기 글에 첫 줄이 살아 있다', KT.weapon.length===0, KT.weapon.join(',')||'전부 확인');
+  ok('웨폰 글에 첫 줄이 살아 있다', KT.weapon.length===0, KT.weapon.join(',')||'전부 확인');
   ok('원문 문장 그대로 읽힌다',
-     /무기 — 매 턴 끝에 피해를 준다/.test(KT.discord)&&/뒤섞는다/.test(KT.discord)
+     /웨폰 — 매 턴 끝에 피해를 준다/.test(KT.discord)&&/뒤섞는다/.test(KT.discord)
      &&/감염 —/.test(KT.virus),
      KT.discord);
 
