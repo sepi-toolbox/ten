@@ -1143,6 +1143,50 @@ const TEN =path.join(__dirname,'..','data','cards.json');
   ok('판 번호는 덱 화면 발치에 남는다', H.deck.foot.includes('v'+H.ver),
      H.deck.foot.slice(-26));
 
+  /* ── 34) 안전영역(노치·홈 인디케이터) ──────────────────────────────
+     ⚠⚠ 이 페이지의 body 규칙은 본편 CSS **뒤에** 온다 — 본편이 걸어 둔
+     `padding-top:env(safe-area-inset-top)` 을 덮어 버린다. 제목줄이 있을 땐
+     그 32px 가 완충이라 안 보였고, 없애자마자 상대 체력줄이 시계 밑으로 들어갔다.
+     env() 는 검사에서 못 만드니 **같은 이름의 변수**를 덮어 흉내 낸다. */
+  for(const [vh,st,sb] of [[932,59,34],[844,47,34],[667,0,0]]){
+    await p.setViewportSize({width:390,height:vh});
+    await p.goto(FILE); await p.waitForFunction(()=>window.ETGDBG);
+    const r=await p.evaluate(([st,sb])=>{
+      const D=window.ETGDBG;
+      const el=document.createElement('style');
+      el.textContent=':root{--safeT:'+st+'px;--safeB:'+sb+'px}';
+      document.head.appendChild(el);
+      D.startGame(D.deckList(D.autoDeck(6)),6); const G=D.G;
+      G.me.hand=[];
+      for(let i=0;i<8;i++) G.me.hand.push(D.mk(D.BYNAME['Crimson Dragon'].code,G.me));
+      for(let i=0;i<6;i++) G.me.cr[i]=D.mk(D.BYNAME['Crimson Dragon'].code,G.me);
+      for(let i=0;i<6;i++) G.ai.cr[i]=D.mk(D.BYNAME['Skeleton'].code,G.ai);
+      const w=D.mk(D.BYNAME['Titan'].code,G.me); G.me.weapon=w; w.own=G.me;
+      D.render();
+      const m=document.querySelector('.main').getBoundingClientRect();
+      const bar=document.getElementById('foeBar').getBoundingClientRect();
+      return {top:Math.round(bar.top), bot:Math.round(m.bottom), win:innerHeight};},[st,sb]);
+    ok(`안전영역을 침범하지 않는다 (${vh}·${st}/${sb})`,
+       r.top>=st&&r.bot<=r.win-sb,
+       `상대 체력줄 y=${r.top}(≥${st}) · 판 아래끝 ${r.bot}(≤${r.win-sb})`);
+  }
+  await p.setViewportSize({width:390,height:844});
+  await p.goto(FILE); await p.waitForFunction(()=>window.ETGDBG);
+
+  /* ── 35) 기록줄에 틀이 그대로 찍히지 않는다 ────────────────────────
+     ⚠ {N} 만 갈아 끼우고 있어서 값이 둘인 능력이 "+{A}|+{H} 를 얻는다" 로 찍혔다. */
+  const LG=await p.evaluate(()=>{
+    const D=window.ETGDBG;
+    D.startGame(D.deckList(D.autoDeck(6)),6); const G=D.G;
+    G.me.q=new Array(13).fill(30);
+    const u=D.mk(D.BYNAME['Fire Spirit'].code,G.me); G.me.cr[0]=u;   // growth 2 0
+    D.useAbility(G.me,u,null);
+    const v=D.mk(D.BYNAME['Photosynthesis']?D.BYNAME['Photosynthesis'].code:D.BYNAME['Fire Spirit'].code,G.me);
+    return {lines:G.log.map(l=>l.t)};});
+  const braces=LG.lines.filter(t=>/[{}]/.test(t));
+  ok('기록줄에 {틀}이 남지 않는다', braces.length===0,
+     braces.length?braces[0]:LG.lines[LG.lines.length-1]);
+
   if(errs.length){ bad++; console.log('   ERR',errs.slice(0,4)); }
   console.log(`\n미구현 능력 ${cov.miss.length}종: ${cov.miss.join(' ')}`);
   console.log(bad?`❌ ${bad}건 실패`:'✅ 전부 통과');

@@ -53,12 +53,30 @@
    ⚠⚠ 다만 **화면 높이에 묶어야 한다.** 78px 로 못 박았더니 740px·667px 짜리 폰에서
      손패가 화면 밖으로 잘렸다(전투 화면은 스크롤하지 않으므로 잘리면 못 만진다).
      줄이 넷(상대 기물·상대 판·내 판·내 기물) + 손패 = 카드 다섯 줄이 세로로 들어가야 한다. */
-/* ⚠⚠ 카드 크기는 **세로에 묶여 있다**(8.4dvh). 폰에서 가로는 남아도는데 세로가 모자라서다.
-   제목줄이 없어진 만큼(≈32px) 세로가 풀렸으니 그만큼 키운다.
-   ⚠ 여기 숫자를 올릴 때는 반드시 667px 짜리 화면에서 '한 화면' 검사를 다시 돌릴 것 —
-     넘치는 순간 손패가 화면 밖으로 밀려 나가 마지막 장을 못 누른다. */
-:root{ --cardw:min(96px, calc(12.5dvh - 21px), 24vw); --foecw:min(64px, calc(8.3dvh - 14px)); }
-body{padding:3px 4px 8px}
+/* ⚠⚠⚠ **이 body 규칙은 본편 CSS 뒤에 온다** — 본편이 걸어 둔
+     `padding-top:env(safe-area-inset-top)` 을 통째로 덮어 버린다.
+     제목줄이 있을 때는 그 32px 가 완충이 돼서 안 드러났는데, 제목줄을 없애자마자
+     상대 체력줄이 시계 밑으로 기어 들어갔다(성권: "화면이 이상하게 위로 올라가있어").
+     앱으로 깔면 `viewport-fit=cover` 라 100dvh 는 노치·홈 인디케이터 **밑까지** 센다.
+     여백을 덮어쓸 거면 안전영역도 같이 챙겨야 한다. */
+:root{
+  --safeT:env(safe-area-inset-top, 0px);
+  --safeB:env(safe-area-inset-bottom, 0px);
+  --safeL:env(safe-area-inset-left, 0px);
+  --safeR:env(safe-area-inset-right, 0px);
+  /* 진짜로 쓸 수 있는 세로 — 안전영역을 뺀 값이다. 카드 크기도 여기에 맞춘다.
+     ⚠ 100dvh 로 재면 노치 있는 폰에서 한 화면 계산이 그만큼 어긋난다. */
+  --vh:calc(100dvh - var(--safeT) - var(--safeB));
+  /* ⚠ 카드는 **세로에 묶여 있다** — 폰에서 가로는 남고 세로가 모자란다.
+     667·740·844·932 네 높이에서 판 아래끝을 재는 sweep 으로 넘치기 직전 값을 잡았다.
+     기울기(12.5%)와 절편(−21px)을 따로 둔 이유: dvh 만 쓰면 제일 작은 폰이 상한을
+     정해 버려서 큰 폰이 손해를 본다.
+     ⚠ 이 숫자를 올릴 때는 반드시 667px 화면에서 '한 화면' 검사를 다시 돌릴 것. */
+  --cardw:min(96px, calc(var(--vh)*0.125 - 21px), 24vw);
+  --foecw:min(64px, calc(var(--vh)*0.083 - 14px));
+}
+body{padding:calc(var(--safeT) + 3px) calc(var(--safeR) + 4px)
+              calc(var(--safeB) + 8px) calc(var(--safeL) + 4px)}
 
 /* ══ 덱 편집 화면만은 **스크롤한다** ═══════════════════════════════════════
    ⚠⚠ 본편 CSS 는 html·body 를 `height:100dvh; overflow:hidden` 으로 묶는다 —
@@ -69,7 +87,8 @@ body{padding:3px 4px 8px}
      고 한 것이 이것이다.
    ⚠ html 에도 걸어야 한다 — body 만 풀면 html 의 overflow:hidden 이 그대로 자른다. */
 html.deckmode,body.deckmode{height:auto;min-height:100dvh;overflow-y:auto;overflow-x:hidden;
-  -webkit-overflow-scrolling:touch;padding-bottom:24px}   /* 덱 화면은 끝까지 내려가야 한다 */
+  -webkit-overflow-scrolling:touch;
+  padding-bottom:calc(var(--safeB) + 24px)}   /* 덱 화면은 끝까지 내려가야 한다 */
 body.deckmode .wrap{height:auto}
 .foot{text-align:center;font-size:11px;color:var(--gold);opacity:.65;margin:10px 0 0}
 .panel{border:1px solid var(--rule);border-radius:8px;padding:9px 10px;margin-bottom:8px;
@@ -207,7 +226,7 @@ body.deckmode .wrap{height:auto}
 <script src="data.js"></script>
 <script>
 'use strict';
-const VERSION='0.22.0', BUILD='2026-09-02';
+const VERSION='0.23.0', BUILD='2026-09-02';
 /* ⚠ 제목줄은 없다 — 성권: "배틀 유아이에서도 헤더 지우고 넓게 써".
    판 번호는 덱 화면 발치 한 줄에만 남는다(배포 확인이 이 번호에 걸려 있다). */
 
@@ -1341,7 +1360,9 @@ function useAbility(p,u,tgt){
   if(SK[s.id].t&&!tgt)return false;          /* 위와 같은 이유 — 대상 없이는 못 쓴다 */
   if(!pay(p,u.castel,u.cast))return false;
   u.used=true;
-  log(`${u.c.ko} — ${SK[s.id].d.split('.')[0].replace(/\{N\}/g,typeof s.arg==='number'?s.arg:'N')}`,p===G.me?'b':'a');
+  /* ⚠ {N} 만 갈아 끼우고 있었다 — 값이 둘인 능력({A}|{H})은 기록에 **틀 그대로**
+     찍혔다("불의 정령 — +{A}|+{H} 를 얻는다"). 카드 설명과 같은 함수를 쓴다. */
+  log(`${u.c.ko} — ${fillN(SK[s.id].d,s).split('.')[0]}`,p===G.me?'b':'a');
   SK[s.id].f(G,p,u,tgt,typeof s.arg==='number'?s.arg:s.arg,s.args||[]);
   syncAuras();
   if(u.neuro) u.poison=(u.poison||0)+1;      /* 신경독에 걸린 몸이 능력을 쓰면 독이 는다 */
