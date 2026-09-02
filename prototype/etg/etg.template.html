@@ -53,8 +53,12 @@
    ⚠⚠ 다만 **화면 높이에 묶어야 한다.** 78px 로 못 박았더니 740px·667px 짜리 폰에서
      손패가 화면 밖으로 잘렸다(전투 화면은 스크롤하지 않으므로 잘리면 못 만진다).
      줄이 넷(상대 기물·상대 판·내 판·내 기물) + 손패 = 카드 다섯 줄이 세로로 들어가야 한다. */
-:root{ --cardw:min(78px, 8.4dvh, 21vw); --foecw:min(52px, 5.6dvh); }
-body{padding:8px 8px 24px}
+/* ⚠⚠ 카드 크기는 **세로에 묶여 있다**(8.4dvh). 폰에서 가로는 남아도는데 세로가 모자라서다.
+   제목줄이 없어진 만큼(≈32px) 세로가 풀렸으니 그만큼 키운다.
+   ⚠ 여기 숫자를 올릴 때는 반드시 667px 짜리 화면에서 '한 화면' 검사를 다시 돌릴 것 —
+     넘치는 순간 손패가 화면 밖으로 밀려 나가 마지막 장을 못 누른다. */
+:root{ --cardw:min(96px, calc(12.5dvh - 21px), 24vw); --foecw:min(64px, calc(8.3dvh - 14px)); }
+body{padding:3px 4px 8px}
 
 /* ══ 덱 편집 화면만은 **스크롤한다** ═══════════════════════════════════════
    ⚠⚠ 본편 CSS 는 html·body 를 `height:100dvh; overflow:hidden` 으로 묶는다 —
@@ -65,11 +69,8 @@ body{padding:8px 8px 24px}
      고 한 것이 이것이다.
    ⚠ html 에도 걸어야 한다 — body 만 풀면 html 의 overflow:hidden 이 그대로 자른다. */
 html.deckmode,body.deckmode{height:auto;min-height:100dvh;overflow-y:auto;overflow-x:hidden;
-  -webkit-overflow-scrolling:touch}
+  -webkit-overflow-scrolling:touch;padding-bottom:24px}   /* 덱 화면은 끝까지 내려가야 한다 */
 body.deckmode .wrap{height:auto}
-h1.tt{font-family:'Cinzel',serif;font-size:15px;letter-spacing:.1em;color:var(--gold-bright);
-  text-align:center;margin:2px 0 1px}
-h1.tt small{font-family:'Gowun Batang',serif;letter-spacing:0;font-size:10px;color:var(--gold);opacity:.7}
 .foot{text-align:center;font-size:11px;color:var(--gold);opacity:.65;margin:10px 0 0}
 .panel{border:1px solid var(--rule);border-radius:8px;padding:9px 10px;margin-bottom:8px;
   background:linear-gradient(180deg,rgba(0,0,0,.3),rgba(0,0,0,.12))}
@@ -148,8 +149,13 @@ h1.tt small{font-family:'Gowun Batang',serif;letter-spacing:0;font-size:10px;col
 /* ⚠ 카드가 놓이면 이름표를 따로 붙이지 않는다 — 카드 발치 줄이 이미 '무기'·'방패' 라고
    적고 있고, 위에 겹쳐 놓으면 카드 이름을 덮는다. 자리는 위치가 말한다. */
 
+/* ⚠⚠ 본편은 손패를 `margin-bottom:calc(cardw*-0.42)` 로 화면 밖에 걸쳐 놓는다
+   (거기선 손패 아래에 아무것도 없다). 여기는 손패 **아래에 기록줄**이 있어서,
+   그 음수 여백이 기록줄을 손패 밑으로 끌어올려 **첫 줄이 카드에 가려 안 보였다.**
+   기록은 이 게임에서 무슨 일이 일어났는지 아는 유일한 창이다. 겹치지 않게 되돌린다. */
+.hand{margin-bottom:0}
 /* 기록도 화면 높이에 맞춰 준다 — 여기가 넘치면 손패가 밀려 나간다 */
-.logbox{height:clamp(40px,7.5dvh,74px);overflow-y:auto;font-family:'Gowun Batang',serif;font-size:11px;line-height:1.55;
+.logbox{height:clamp(34px,6dvh,66px);overflow-y:auto;font-family:'Gowun Batang',serif;font-size:11px;line-height:1.55;
   border:1px solid var(--rule);border-radius:6px;padding:5px 8px;margin-top:8px;
   background:rgba(0,0,0,.3);color:var(--parch)}
 .logbox .a{color:var(--gold-bright)}.logbox .b{color:#9ecbff}.logbox .c{color:#ff9a9a}
@@ -188,14 +194,12 @@ h1.tt small{font-family:'Gowun Batang',serif;letter-spacing:0;font-size:10px;col
 /* ⚠ 덱 설정 화면에서는 제목줄을 걷는다 — 성권: "덱설정 유아이만 있으면 됨".
    전투 화면에는 그대로 둔다(거기선 판 위 정보가 아니라 게임 이름표 노릇을 한다).
    판 번호는 덱 화면 맨 아래 한 줄로 옮겨 붙는다 — 어떤 판이 떠 있는지는 봐야 한다. */
-body.deckmode h1.tt{display:none}
 </style>
 </head>
 <body>
 <div class="wrap">
   <!-- 대상 지정 딤 — .wrap 안에 있어야 .slot.pick 이 이 위로 올라온다(본편과 같다) -->
   <div class="tgtdim" id="tgtdim"></div>
-  <h1 class="tt">ELEMENTS<br><small>엘리멘츠 대전 — Elements the Game 이식 · TEN 카드는 나오지 않습니다</small></h1>
   <div id="screen"></div>
 </div>
 <div class="zoom" id="zoom"></div>
@@ -203,10 +207,9 @@ body.deckmode h1.tt{display:none}
 <script src="data.js"></script>
 <script>
 'use strict';
-const VERSION='0.21.0', BUILD='2026-09-02';
-/* 판 번호는 제목줄에 붙인다 — 아래 h1.tt 안 small */
-document.addEventListener('DOMContentLoaded',()=>{const t=document.querySelector('h1.tt small');
-  if(t)t.insertAdjacentHTML('beforeend',` · v${VERSION}`);});
+const VERSION='0.22.0', BUILD='2026-09-02';
+/* ⚠ 제목줄은 없다 — 성권: "배틀 유아이에서도 헤더 지우고 넓게 써".
+   판 번호는 덱 화면 발치 한 줄에만 남는다(배포 확인이 이 번호에 걸려 있다). */
 
 /* ═══════════════════════════════════════════════════════════════════════════
    0. 원작 상수
@@ -1126,7 +1129,7 @@ function endTurn(){
   f.pm.forEach(u=>{ if(u){ u.used=false; u.salvaged=false; } });
   draw(f);
   if(checkEnd())return;
-  log(`── ${f.name} 의 턴 ──`,'b');
+  log(`── ${f.name}의 턴 ──`,'b');
   if(f===G.ai) setTimeout(aiTurn,420);
 }
 

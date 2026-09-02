@@ -567,12 +567,33 @@ const TEN =path.join(__dirname,'..','data','cards.json');
   ok('덱 목록이 스크롤된다', scr.deck&&scr.h>scr.w&&bot.y>0&&bot.last,
      `문서 ${scr.h} / 창 ${scr.w} · 맨 아래 카드 보임 ${bot.last}`);
 
-  /* 전투 화면은 반대로 **한 화면에서 끝나야 한다**(본편과 같다) */
-  await p.evaluate(()=>{const D=window.ETGDBG;D.startGame(D.deckList(D.autoDeck(6)),6);});
+  /* 전투 화면은 반대로 **한 화면에서 끝나야 한다**(본편과 같다).
+     ⚠⚠ `scrollHeight` 로 재면 아무것도 못 잡는다 — html·body 가 `100dvh; overflow:hidden`
+       이라 넘쳐도 항상 창 높이와 같은 값이 나온다. **판(.main)의 아래끝**을 재야 한다.
+       카드 크기를 키운 뒤 이 검사가 초록인 채로 손패가 화면 밖으로 나갈 뻔했다. */
+  await p.evaluate(()=>{const D=window.ETGDBG;const G=D.startGame(D.deckList(D.autoDeck(6)),6);
+    const g=D.G; g.me.hand=[];
+    for(let i=0;i<8;i++) g.me.hand.push(D.mk(D.BYNAME['Crimson Dragon'].code,g.me));
+    for(let i=0;i<6;i++) g.me.cr[i]=D.mk(D.BYNAME['Crimson Dragon'].code,g.me);
+    for(let i=0;i<6;i++) g.ai.cr[i]=D.mk(D.BYNAME['Skeleton'].code,g.ai);
+    const w=D.mk(D.BYNAME['Titan'].code,g.me); g.me.weapon=w; w.own=g.me;
+    D.render();});
   await p.waitForTimeout(300);
-  const onescr=await p.evaluate(()=>({h:document.documentElement.scrollHeight,w:window.innerHeight,
-    deck:document.body.classList.contains('deckmode')}));
-  ok('전투는 한 화면에서 끝난다', !onescr.deck&&onescr.h<=onescr.w+2, `문서 ${onescr.h} / 창 ${onescr.w}`);
+  const onescr=await p.evaluate(()=>({
+    bottom:Math.round(document.querySelector('.main').getBoundingClientRect().bottom),
+    w:window.innerHeight, deck:document.body.classList.contains('deckmode'),
+    head:!!document.querySelector('h1.tt')}));
+  ok('전투는 한 화면에서 끝난다', !onescr.deck&&onescr.bottom<=onescr.w-4,
+     `판 아래끝 ${onescr.bottom} / 창 ${onescr.w}`);
+  ok('전투 화면에도 제목줄이 없다', onescr.head===false, onescr.head?'남아 있다':'없다');
+  /* ⚠ 본편의 손패 음수 여백(--myhide)이 기록줄을 손패 밑으로 끌어올려
+     첫 줄이 카드에 통째로 가려 있었다. 기록은 무슨 일이 일어났는지 아는 유일한 창이다. */
+  const lap=await p.evaluate(()=>{
+    const h=document.getElementById('hand').getBoundingClientRect();
+    const l=document.getElementById('log').getBoundingClientRect();
+    return {gap:Math.round(l.top-h.bottom), lines:document.getElementById('log').children.length};});
+  ok('기록줄이 손패에 안 가린다', lap.gap>=0&&lap.lines>0,
+     `틈 ${lap.gap}px · ${lap.lines}줄`);
 
   /* ── 24) 덱 목록 — 눌러서 넣고, 훑어 넘길 땐 안 들어간다 ───────────── */
   await p.evaluate(()=>{ETGDBG.render();document.querySelector('#quit')&&document.querySelector('#quit').click();});
@@ -1085,8 +1106,10 @@ const TEN =path.join(__dirname,'..','data','cards.json');
     const w2=D.mk(D.BYNAME['Short Sword'].code,G.me); G.me.hand=[w2];
     D.playCard(G.me,w2,null); D.render();
     o.replaced=(G.me.weapon===w2)&&document.querySelectorAll('#myPm .eq.wpn .tcard').length===1;
-    /* 한 화면 규칙 — 무기·방패 자리가 세로를 새로 먹지 않았다 */
-    o.docH=document.documentElement.scrollHeight; o.winH=innerHeight;
+    /* 한 화면 규칙 — 무기·방패 자리가 세로를 새로 먹지 않았다
+       (⚠ scrollHeight 는 overflow:hidden 때문에 항상 창 높이다 — 판 아래끝을 잰다) */
+    o.docH=Math.round(document.querySelector('.main').getBoundingClientRect().bottom);
+    o.winH=innerHeight;
     return o;});
 
   ok('빈 무기·방패 자리가 보인다', E.emptyCount===2&&/무기/.test(E.emptyTags)&&/방패/.test(E.emptyTags),
@@ -1098,7 +1121,7 @@ const TEN =path.join(__dirname,'..','data','cards.json');
   ok('무기·방패가 기물에 섞이지 않는다', E.mixed===false, E.mixed?'섞였다':'분리됨');
   ok('무기 자리도 눌러서 쓸 수 있다', E.clickable===true, E.clickable?'data-uid 있음':'없음');
   ok('새로 내면 조용히 교체된다', E.replaced===true, E.replaced?'한 장만 남음':'교체 안 됨');
-  ok('자리를 만들어도 한 화면', E.docH<=E.winH+1, `문서 ${E.docH} / 창 ${E.winH}`);
+  ok('자리를 만들어도 한 화면', E.docH<=E.winH-4, `판 아래끝 ${E.docH} / 창 ${E.winH}`);
 
   /* ── 33) 덱 설정 화면에는 제목줄이 없다 ────────────────────────────
      성권: "덱 설정창의 헤더 지워줘. 덱설정 유아이만 있으면 됨."
@@ -1106,18 +1129,17 @@ const TEN =path.join(__dirname,'..','data','cards.json');
   await p.goto(FILE);
   await p.waitForFunction(()=>window.ETGDBG);
   const H=await p.evaluate(()=>{
-    const D=window.ETGDBG, vis=()=>{
-      const h=document.querySelector('h1.tt');
-      return h?getComputedStyle(h).display:'(없음)';
-    };
-    const deck={disp:vis(), foot:(document.querySelector('.foot')||{textContent:''}).textContent.trim(),
-                pick:!!document.querySelector('.pickgrid')};
+    const D=window.ETGDBG;
+    const deck={head:!!document.querySelector('h1.tt'),
+                foot:(document.querySelector('.foot')||{textContent:''}).textContent.trim(),
+                pick:!!document.querySelector('.pickgrid'),
+                top:Math.round(document.querySelector('.panel').getBoundingClientRect().top)};
     D.startGame(D.deckList(D.autoDeck(6)),6); D.render();
-    const battle={disp:vis(), board:!!document.getElementById('myBoard')};
+    const battle={head:!!document.querySelector('h1.tt'), board:!!document.getElementById('myBoard')};
     return {deck,battle,ver:D.VERSION};});
   ok('덱 설정 화면에 제목줄이 없다',
-     H.deck.disp==='none'&&H.deck.pick&&H.battle.disp!=='none'&&H.battle.board,
-     `덱 ${H.deck.disp} · 전투 ${H.battle.disp}`);
+     H.deck.head===false&&H.deck.pick&&H.battle.head===false&&H.battle.board&&H.deck.top<12,
+     `제목줄 ${H.deck.head?'있음':'없음'} · 첫 패널 y=${H.deck.top}`);
   ok('판 번호는 덱 화면 발치에 남는다', H.deck.foot.includes('v'+H.ver),
      H.deck.foot.slice(-26));
 
