@@ -725,9 +725,14 @@ const TEN =path.join(__dirname,'..','data','cards.json');
     apple:!!document.querySelector('link[rel=apple-touch-icon]'),
     title:(document.querySelector('meta[name="apple-mobile-web-app-title"]')||{}).content||'',
     theme:!!document.querySelector('meta[name=theme-color]')}));
+  /* ⚠ 앱 이름은 성권이 정한다 — 이름 자체를 못 박지 말고 **manifest 와 같은지**만 본다.
+     (지금은 '테스트.' 다. 예전엔 여기 '엘리멘츠' 가 박혀 있어서 이름을 바꾸자마자 깨졌다.) */
+  const mf=JSON.parse(require('fs').readFileSync(
+    require('path').join(__dirname,'..','prototype','etg','manifest.webmanifest'),'utf8'));
   ok('앱 선언이 붙어 있다',
-     app.manifest==='manifest.webmanifest'&&app.apple&&app.theme&&app.title==='엘리멘츠',
-     JSON.stringify(app));
+     app.manifest==='manifest.webmanifest'&&app.apple&&app.theme
+     &&!!app.title&&app.title===mf.short_name,
+     JSON.stringify({...app,manifest_short:mf.short_name}));
   const fsx=require('fs'), pth=require('path');
   const dir=pth.join(__dirname,'..','prototype','etg');
   const appFiles=['manifest.webmanifest','sw.js','icon-192.png','icon-512.png',
@@ -1094,6 +1099,27 @@ const TEN =path.join(__dirname,'..','data','cards.json');
   ok('무기 자리도 눌러서 쓸 수 있다', E.clickable===true, E.clickable?'data-uid 있음':'없음');
   ok('새로 내면 조용히 교체된다', E.replaced===true, E.replaced?'한 장만 남음':'교체 안 됨');
   ok('자리를 만들어도 한 화면', E.docH<=E.winH+1, `문서 ${E.docH} / 창 ${E.winH}`);
+
+  /* ── 33) 덱 설정 화면에는 제목줄이 없다 ────────────────────────────
+     성권: "덱 설정창의 헤더 지워줘. 덱설정 유아이만 있으면 됨."
+     ⚠ class 를 손으로 붙여 재면 아무것도 못 잡는다 — **실제 두 화면**을 그려서 잰다. */
+  await p.goto(FILE);
+  await p.waitForFunction(()=>window.ETGDBG);
+  const H=await p.evaluate(()=>{
+    const D=window.ETGDBG, vis=()=>{
+      const h=document.querySelector('h1.tt');
+      return h?getComputedStyle(h).display:'(없음)';
+    };
+    const deck={disp:vis(), foot:(document.querySelector('.foot')||{textContent:''}).textContent.trim(),
+                pick:!!document.querySelector('.pickgrid')};
+    D.startGame(D.deckList(D.autoDeck(6)),6); D.render();
+    const battle={disp:vis(), board:!!document.getElementById('myBoard')};
+    return {deck,battle,ver:D.VERSION};});
+  ok('덱 설정 화면에 제목줄이 없다',
+     H.deck.disp==='none'&&H.deck.pick&&H.battle.disp!=='none'&&H.battle.board,
+     `덱 ${H.deck.disp} · 전투 ${H.battle.disp}`);
+  ok('판 번호는 덱 화면 발치에 남는다', H.deck.foot.includes('v'+H.ver),
+     H.deck.foot.slice(-26));
 
   if(errs.length){ bad++; console.log('   ERR',errs.slice(0,4)); }
   console.log(`\n미구현 능력 ${cov.miss.length}종: ${cov.miss.join(' ')}`);

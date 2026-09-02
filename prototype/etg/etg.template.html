@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
 <meta name="color-scheme" content="light only">
-<title>엘리멘츠 대전</title>
+<title>테스트.</title>
 <!-- 앱(PWA) — **게임·카드 뷰어와 별개의 앱**으로 깔린다. scope 가 /prototype/etg/ 라
      홈 화면 아이콘도 따로 생긴다(열두 갈래 색 고리). -->
 <link rel="manifest" href="manifest.webmanifest">
@@ -12,7 +12,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="엘리멘츠">
+<meta name="apple-mobile-web-app-title" content="테스트.">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -185,6 +185,10 @@ h1.tt small{font-family:'Gowun Batang',serif;letter-spacing:0;font-size:10px;col
    이 모드의 기물줄은 본편 지형줄과 **같은 자리**를 쓴다(#foeLz:2 · #myLz:6).
    order 를 안 준 요소는 0 이 되어 맨 위로 튀므로 로그에도 반드시 준다. */
 #foePm{order:2} #myPm{order:6} #log{order:9}
+/* ⚠ 덱 설정 화면에서는 제목줄을 걷는다 — 성권: "덱설정 유아이만 있으면 됨".
+   전투 화면에는 그대로 둔다(거기선 판 위 정보가 아니라 게임 이름표 노릇을 한다).
+   판 번호는 덱 화면 맨 아래 한 줄로 옮겨 붙는다 — 어떤 판이 떠 있는지는 봐야 한다. */
+body.deckmode h1.tt{display:none}
 </style>
 </head>
 <body>
@@ -199,7 +203,7 @@ h1.tt small{font-family:'Gowun Batang',serif;letter-spacing:0;font-size:10px;col
 <script src="data.js"></script>
 <script>
 'use strict';
-const VERSION='0.20.0', BUILD='2026-09-02';
+const VERSION='0.21.0', BUILD='2026-09-02';
 /* 판 번호는 제목줄에 붙인다 — 아래 h1.tt 안 small */
 document.addEventListener('DOMContentLoaded',()=>{const t=document.querySelector('h1.tt small');
   if(t)t.insertAdjacentHTML('beforeend',` · v${VERSION}`);});
@@ -2023,7 +2027,7 @@ function screenBuild(){
         <div class="pctl"><button data-m="${c.code}">−</button><b>${k}</b><button data-p="${c.code}">+</button></div>
       </div>`;}).join('')}
   </div>
-  <p class="foot">카드를 <b>누르면</b> 덱에 한 장 들어가고, <b>길게 누르면</b> 효과 전문이 뜬다.</p>`;
+  <p class="foot">카드를 <b>누르면</b> 덱에 한 장 들어가고, <b>길게 누르면</b> 효과 전문이 뜬다. · v${VERSION}</p>`;
   SCR.querySelectorAll('[data-el]').forEach(b=>b.onclick=()=>{BUILD_EL=+b.dataset.el;screenBuild();});
   SCR.querySelectorAll('[data-mk]').forEach(b=>b.onclick=()=>{BUILD_MARK=+b.dataset.mk;screenBuild();});
   SCR.querySelectorAll('[data-p]').forEach(b=>b.onclick=ev=>{ev.stopPropagation();
