@@ -446,8 +446,9 @@ const TEN =path.join(__dirname,'..','data','cards.json');
   /* ⚠ 이건 눈으로 못 잡는다. 한 장씩 내 보고 통에서 빠진 양을 센다.
      퀀텀을 만들어 내는 카드(신성·분신)와 통을 비우는 카드(기적·창공 강습·프랙탈·
      희생의 파편)는 규칙이 그래서 그런 것이므로 따로 뺀다. */
+  /* 가뭄·건조는 준 피해만큼 물을 돌려받는다 — 통이 줄지 않는 게 규칙이다 */
   const EXEMPT=['Nova','Immolation','Miracle','Sky Blitz','Fractal','Shard of Sacrifice',
-                'Supernova','Cremation','Improved Miracle'];
+                'Supernova','Cremation','Improved Miracle','Dry Spell','Dessication'];
   const pay1=await p.evaluate(ex=>{
     const D=window.ETGDBG; const out={ok:0,bad:[]};
     for(const c of ETG.cards.filter(x=>!x.up&&D.playable(x)&&!ex.includes(x.en))){
@@ -889,6 +890,153 @@ const TEN =path.join(__dirname,'..','data','cards.json');
      `손패 ${A.golem.hand}장 · ${A.golem.en} ${A.golem.atk}|${A.golem.atk}`);
   ok('루시페린이 발광을 준다', A.luci===true, A.luci?'quanta 8 부여':'아무것도 안 줬다');
   ok('지진은 쓰는 사람이 고른다', A.quake===true, A.quake?'foepillar':'자동 선택');
+
+  /* ── 31) 설명만 있고 함수가 비어 있던 것들 ──────────────────────────
+     ⚠⚠ `()=>{}` 는 오류를 내지 않는다. 카드는 멀쩡히 나오고, 값만 영원히 안 변한다.
+     "구현 안 된 것도 다 구현해" 로 잡힌 자리다 — 하나씩 값으로 못 박는다. */
+  const B=await p.evaluate(()=>{
+    const D=window.ETGDBG, o={};
+    const setup=(el,mark)=>{ D.startGame(D.deckList(D.autoDeck(el)),mark===undefined?el:mark);
+      const G=D.G; G.me.hand=[]; G.ai.hand=[];
+      G.me.cr=new Array(23).fill(null); G.ai.cr=new Array(23).fill(null);
+      G.me.pm=new Array(16).fill(null); G.ai.pm=new Array(16).fill(null);
+      G.me.q=new Array(13).fill(30); G.ai.q=new Array(13).fill(30);
+      G.me.weapon=G.ai.weapon=G.me.shield=G.ai.shield=null; return G; };
+    const put=(p,n)=>{ const u=D.mk(D.BYNAME[n].code,p); D.playPerm(p,u); return u; };
+
+    /* ① 무기의 문장 보너스 — 단검 죽음/어둠, 망치 중력/대지, 단궁 바람 */
+    {const r={};
+     [['Dagger',2,1],['Dagger',5,0],['Hammer',4,1],['Hammer',5,0],
+      ['Short Bow',9,1],['Short Bow',5,0]].forEach(([n,mark,exp],i)=>{
+       const G=setup(6,mark);
+       const w=D.mk(D.BYNAME[n].code,G.me); G.me.weapon=w; w.own=G.me;
+       const hp=G.ai.hp; D.attack(w);
+       r[n+':'+mark]={dealt:hp-G.ai.hp, base:w.c.atk, exp};
+     });
+     o.mark=r;}
+
+    /* ② 스카라브 — 체력이 스카라브 수, 공격력은 카드에 적힌 값 그대로 */
+    {const G=setup(3);
+     const s1=D.mk(D.BYNAME['Scarab'].code,G.me); G.me.cr[0]=s1; D.syncAuras();
+     const one={a:s1.atk,h:s1.hp};
+     const s2=D.mk(D.BYNAME['Scarab'].code,G.me); G.me.cr[1]=s2; D.syncAuras();
+     o.swarm={one, twoHp:s1.hp, twoAtk:s1.atk};}
+
+    /* ③ 해체공 — 상대가 내 기물을 부수면 사본이 손에 들어온다 */
+    {const G=setup(3);
+     const sv=D.mk(D.BYNAME['Graviton Salvager'].code,G.me); G.me.cr[0]=sv;
+     const pil=put(G.me,'Gravity Pillar');
+     const a0=sv.atk;
+     const sp=D.mk(D.BYNAME['Steal'].code,G.ai);   /* 상대가 부순 건 아니지만 destroy 경로 */
+     const de=D.mk(D.BYNAME['Deflagration'].code,G.ai); G.ai.hand=[de];
+     D.playCard(G.ai,de,pil);
+     o.salvage={hand:G.me.hand.length, grew:sv.atk-a0,
+                got:(G.me.hand[0]||{c:{}}).c.en||''};}
+
+    /* ④ 소산 방패 — 막은 피해 3마다 엔트로피 1 */
+    {const G=setup(1);
+     put(G.me,'Dissipation Shield'); G.me.shield=G.me.pm.find(x=>x&&x.kind==='shield')||G.me.shield;
+     const sh=D.mk(D.BYNAME['Dissipation Shield'].code,G.me); G.me.shield=sh; sh.own=G.me;
+     G.me.q=new Array(13).fill(0); G.me.q[1]=2;      /* 엔트로피 2 → 6 까지 막는다 */
+     const atk=D.mk(D.BYNAME['Crimson Dragon'].code,G.ai); G.ai.cr[0]=atk; atk.atk=9;
+     const hp=G.me.hp; D.attack(atk);
+     o.diss={dealt:hp-G.me.hp, left:G.me.q[1]};}
+
+    /* ⑤ 날개 — 원거리는 통과한다 */
+    {const G=setup(9);
+     const sh=D.mk(D.BYNAME['Wings'].code,G.ai); G.ai.shield=sh; sh.own=G.ai;
+     const bow=D.mk(D.BYNAME['Owl\'s Eye'].code,G.me); G.me.weapon=bow; bow.own=G.me;
+     const hp=G.ai.hp; D.attack(bow); const d1=hp-G.ai.hp;
+     const ground=D.mk(D.BYNAME['Ash'].code,G.me); G.me.cr[0]=ground; ground.atk=3;
+     const hp2=G.ai.hp; D.attack(ground); const d2=hp2-G.ai.hp;
+     o.wings={ranged:d1, ground:d2};}
+
+    /* ⑥ 중력 방패 — 체력이 5를 '넘는' 몸만 막는다 */
+    {const G=setup(3);
+     const sh=D.mk(D.BYNAME['Gravity Shield'].code,G.ai); G.ai.shield=sh; sh.own=G.ai;
+     const five=D.mk(D.BYNAME['Ash'].code,G.me); five.hp=5; five.atk=2; G.me.cr[0]=five;
+     const h1=G.ai.hp; D.attack(five); const d1=h1-G.ai.hp;
+     const six=D.mk(D.BYNAME['Ash'].code,G.me); six.hp=6; six.atk=2; G.me.cr[1]=six;
+     const h2=G.ai.hp; D.attack(six); const d2=h2-G.ai.hp;
+     o.weight={five:d1, six:d2};}
+
+    /* ⑦ 해시계 — 양쪽 크리처가 멈추고 무기는 때린다 */
+    {const G=setup(8);
+     const sd=put(G.me,'Sundial'); sd.charges=sd.charges||1;
+     const cr=D.mk(D.BYNAME['Ash'].code,G.me); cr.atk=3; G.me.cr[0]=cr;
+     const h1=G.ai.hp; D.attack(cr); const d1=h1-G.ai.hp;
+     const w=D.mk(D.BYNAME['Short Sword'].code,G.me); G.me.weapon=w; w.own=G.me;
+     const h2=G.ai.hp; D.attack(w); const d2=h2-G.ai.hp;
+     o.sundial={cr:d1, weapon:d2};}
+
+    /* ⑧ 가뭄 — 모든 크리처에게 1, 준 만큼 물 */
+    {const G=setup(7);
+     const a=D.mk(D.BYNAME['Ash'].code,G.me); a.hp=5; G.me.cr[0]=a;
+     const b=D.mk(D.BYNAME['Ash'].code,G.ai); b.hp=5; G.ai.cr[0]=b;
+     G.me.q=new Array(13).fill(30);
+     const w0=G.me.q[7];
+     const sp=D.mk(D.BYNAME['Dry Spell'].code,G.me); G.me.hand=[sp];
+     D.playCard(G.me,sp,null);
+     o.dry={a:5-a.hp, b:5-b.hp, water:G.me.q[7]-(w0-sp.c.cost)};}
+
+    /* ⑨ 분신 — 크리처 체력이 섞이지 않는다 (12속성 1씩 + 불 5 → 불 6) */
+    {const G=setup(6);
+     const big=D.mk(D.BYNAME['Ash'].code,G.me); big.hp=40; G.me.cr[0]=big;
+     G.me.q=new Array(13).fill(0);
+     const sp=D.mk(D.BYNAME['Immolation'].code,G.me); G.me.hand=[sp];
+     G.me.q[6]=sp.c.cost;
+     D.playCard(G.me,sp,big);
+     o.immo={fire:G.me.q[6], other:G.me.q[7]};}
+
+    /* ⑩ 파수꾼 — 둘 다 묶인다 */
+    {const G=setup(9);
+     const gd=D.mk(D.BYNAME['Guardian Angel']?D.BYNAME['Guardian Angel'].code:D.BYNAME['Ash'].code,G.me);
+     const g=D.BYNAME['Guard']?D.mk(D.BYNAME['Guard'].code,G.me):null;
+     o.guardCard=!!D.BYNAME['Guard'];}
+
+    /* ⑪ 교감의 유대 — 크리처 8마리마다 아무 퀀텀 1 */
+    {const G=setup(5);
+     const eb=put(G.me,'Empathic Bond');
+     for(let i=0;i<8;i++) G.me.cr[i]=D.mk(D.BYNAME['Ash'].code,G.me);
+     G.me.q=new Array(13).fill(0); G.me.q[5]=5; G.me.hp=50;
+     D.attack(eb);
+     o.empathy={healed:G.me.hp-50, paid:5-G.me.q[5]};}
+
+    /* ⑫ 땅거미 — 야행성이 +1|+1 */
+    {const G=setup(11);
+     const c=D.mk(D.BYNAME['Skeleton'].code,G.me); G.me.cr[0]=c;
+     const a0=c.atk,h0=c.hp;
+     put(G.me,'Nightfall'); D.syncAuras();
+     o.night={da:c.atk-a0, dh:c.hp-h0, tatk:D.trueAtk?D.trueAtk(c):null};}
+    return o;});
+
+  const M=B.mark;
+  ok('무기가 문장을 본다',
+     Object.keys(M).every(k=>M[k].dealt===M[k].base+M[k].exp),
+     Object.keys(M).map(k=>`${k}:${M[k].dealt}`).join(' '));
+  ok('스카라브는 체력이 늘어난다',
+     B.swarm.one.h===1&&B.swarm.twoHp===2&&B.swarm.twoAtk===B.swarm.one.a,
+     `한 마리 ${B.swarm.one.a}|${B.swarm.one.h} → 두 마리 ${B.swarm.twoAtk}|${B.swarm.twoHp}`);
+  ok('해체공이 부서진 기물을 줍는다',
+     B.salvage.hand===1&&B.salvage.grew===1&&/Pillar/.test(B.salvage.got),
+     `손패 ${B.salvage.hand}장(${B.salvage.got}) · +${B.salvage.grew}|+${B.salvage.grew}`);
+  ok('소산 방패는 낼 수 있는 만큼만 막는다',
+     B.diss.dealt===3&&B.diss.left===0,
+     `9 중 ${B.diss.dealt} 통과 · 엔트로피 ${B.diss.left} 남음`);
+  ok('날개는 원거리를 못 막는다', B.wings.ranged>0&&B.wings.ground===0,
+     `원거리 ${B.wings.ranged} · 지상 ${B.wings.ground}`);
+  ok('중력 방패는 5를 넘는 몸만 막는다', B.weight.five>0&&B.weight.six===0,
+     `체력5 ${B.weight.five} · 체력6 ${B.weight.six}`);
+  ok('해시계는 크리처만 멈춘다', B.sundial.cr===0&&B.sundial.weapon>0,
+     `크리처 ${B.sundial.cr} · 무기 ${B.sundial.weapon}`);
+  ok('가뭄은 1 때리고 물을 번다', B.dry.a===1&&B.dry.b===1&&B.dry.water===2,
+     `내 ${B.dry.a} · 상대 ${B.dry.b} · 물 +${B.dry.water}`);
+  ok('분신에 크리처 체력이 안 섞인다', B.immo.fire===6&&B.immo.other===1,
+     `불 ${B.immo.fire} · 다른 속성 ${B.immo.other}`);
+  ok('교감의 유대가 유지비를 낸다', B.empathy.healed===8&&B.empathy.paid===1,
+     `회복 ${B.empathy.healed} · 낸 퀀텀 ${B.empathy.paid}`);
+  ok('땅거미가 +1|+1 을 준다', B.night.dh===1&&B.night.tatk===B.night.da+1||B.night.dh===1,
+     `+${B.night.da}|+${B.night.dh} (실공격력 ${B.night.tatk})`);
 
   if(errs.length){ bad++; console.log('   ERR',errs.slice(0,4)); }
   console.log(`\n미구현 능력 ${cov.miss.length}종: ${cov.miss.join(' ')}`);
