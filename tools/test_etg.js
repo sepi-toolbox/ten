@@ -713,6 +713,33 @@ const TEN =path.join(__dirname,'..','data','cards.json');
   await p.setViewportSize({width:390,height:844});
   ok('작은 폰에서도 안 잘린다', fits.every(x=>x.endsWith('OK')), fits.join(' · '));
 
+  /* ── 28) **별개의 앱**으로 깔린다 ─────────────────────────────────── */
+  /* ⚠ 본편 모드 고르기에서 뺐으므로(성권 지시) 이제 이쪽이 유일한 입구다.
+     manifest·서비스워커·아이콘이 없으면 홈 화면에 못 깔리고, 그러면 '따로 딴 링크' 가
+     주소창에 붙은 웹페이지 하나로 끝난다. 파일과 선언을 함께 잰다. */
+  const app=await p.evaluate(()=>({
+    manifest:(document.querySelector('link[rel=manifest]')||{}).getAttribute
+      ?document.querySelector('link[rel=manifest]').getAttribute('href'):null,
+    apple:!!document.querySelector('link[rel=apple-touch-icon]'),
+    title:(document.querySelector('meta[name="apple-mobile-web-app-title"]')||{}).content||'',
+    theme:!!document.querySelector('meta[name=theme-color]')}));
+  ok('앱 선언이 붙어 있다',
+     app.manifest==='manifest.webmanifest'&&app.apple&&app.theme&&app.title==='엘리멘츠',
+     JSON.stringify(app));
+  const fsx=require('fs'), pth=require('path');
+  const dir=pth.join(__dirname,'..','prototype','etg');
+  const appFiles=['manifest.webmanifest','sw.js','icon-192.png','icon-512.png',
+                  'icon-maskable.png','apple-touch-icon.png'];
+  const miss=appFiles.filter(f=>!fsx.existsSync(pth.join(dir,f)));
+  ok('앱 파일이 다 있다', miss.length===0, miss.join(',')||appFiles.length+'개');
+  /* ⚠ 캐시 이름이 게임·뷰어와 겹치면 한쪽이 activate 될 때 다른 쪽 캐시를 지운다
+     (scope 는 달라도 캐시 저장소는 출처 하나를 공유한다). */
+  const swtxt=fsx.readFileSync(pth.join(dir,'sw.js'),'utf8');
+  const gm=fsx.readFileSync(pth.join(__dirname,'..','prototype','sw.js'),'utf8');
+  const nameOf=x=>(x.match(/const CACHE\s*=\s*'([^']+)'/)||[])[1];
+  ok('캐시 이름이 게임과 다르다', nameOf(swtxt)&&nameOf(swtxt)!==nameOf(gm),
+     `${nameOf(swtxt)} ↔ ${nameOf(gm)}`);
+
   if(errs.length){ bad++; console.log('   ERR',errs.slice(0,4)); }
   console.log(`\n미구현 능력 ${cov.miss.length}종: ${cov.miss.join(' ')}`);
   console.log(bad?`❌ ${bad}건 실패`:'✅ 전부 통과');

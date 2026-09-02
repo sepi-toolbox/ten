@@ -16,8 +16,13 @@ const FILE='file://'+path.join(__dirname,'..','prototype','index.html');
   /* ⚠ 세 갈래다 — 원정 · 대전 · **엘리멘츠 대전**.
      엘리멘츠는 규칙이 다른 게임이라 이 흐름을 안 타고 etg/ 페이지로 나간다.
      그래서 여기서는 '단추가 있고 그 주소를 가리키는가' 까지만 본다. */
+  /* ⚠ 엘리멘츠 대전은 **여기 없다.** 규칙이 다른 게임이라 모드 고르기에 끼면
+     'TEN 의 한 모드' 로 읽히는데, 실제로는 카드도 규칙도 엔진도 공유하지 않는다.
+     주소를 따로 뒀고(prototype/etg/) 앱으로도 따로 깔린다. */
   const modes=await p.$$eval('#page .chsi',e=>e.map(x=>x.dataset.m));
-  ok('모드 3개', modes.length===3&&modes.includes('etg'), modes.join(' · '));
+  ok('모드 2개 · 엘리멘츠는 빠짐',
+     modes.length===2&&modes.includes('rogue')&&modes.includes('battle')&&!modes.includes('etg'),
+     modes.join(' · '));
 
   // 대전 흐름
   await p.click('#page .chsi[data-m="battle"]'); await p.waitForTimeout(700);

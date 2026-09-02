@@ -6256,7 +6256,7 @@ document.getElementById('restart').onclick=()=>{
        엘리멘츠 대전은 규칙이 다른 게임이라 여기 흐름을 안 타고 etg/ 페이지로 나간다.
      패배 → 다시 도전하기(덱 선택으로) · 초기 화면(모드 선택으로)
    ⚠ ?dev=1 로 열면 페이지를 건너뛰고 바로 대전으로 들어간다(자동 테스트용). */
-const VERSION='0.46.0', BUILD='2026-08-05';
+const VERSION='0.47.0', BUILD='2026-08-05';
 const DEV=/[?&]dev=1/.test(location.search);
 let PAGE=null, FLOW={mode:'battle', my:null, foe:null};
 function pageOpen(html){
@@ -6281,21 +6281,16 @@ function pgMode(){
   pageOpen(`<div class="pgstep">STEP 1 / 3</div>
     <div class="pgh">TE<span>N</span></div>
     <div class="pgs">무엇을 할지 고르세요.</div>
-    <div class="chs three">
+    <div class="chs two">
       <button class="chsi big" data-m="rogue" style="--c:var(--emerald)">
         <b>원정</b><s>지도를 따라 올라가며<br>덱을 키우는 로그라이크.</s></button>
       <button class="chsi big" data-m="battle" style="--c:var(--gold)">
         <b>대전</b><s>덱 하나로 한 판.<br>상대 덱도 직접 고릅니다.</s></button>
-      <button class="chsi big" data-m="etg" style="--c:var(--sapphire)">
-        <b>엘리멘츠 대전</b><s>Elements the Game 의 카드와 규칙.<br>퀀텀이 쌓이고 막기가 없습니다.</s></button>
     </div>`);
+  /* ⚠ 엘리멘츠 대전은 **여기 없다.** 규칙이 다른 게임이라 이 모드 고르기에 끼면
+     "TEN 의 한 모드" 로 읽히는데, 실제로는 카드도 규칙도 엔진도 공유하지 않는다.
+     주소를 따로 뒀다(prototype/etg/) — 앱으로도 따로 깔린다. */
   document.querySelectorAll('#page .chsi').forEach(b=>b.onclick=()=>{
-    /* ⚠ 엘리멘츠는 **규칙이 다른 게임**이라 엔진을 공유하지 않는다(별도 페이지).
-       같은 scope 안이라 앱에서 눌러도 앱 안에서 열린다 — 브라우저로 튕기지 않는다.
-       sw.js SHELL 에 etg/ 를 넣어 둬야 오프라인에서도 열린다. */
-    /* ⚠ 'etg/' 로만 쓰면 안 된다 — file:// 로 열었을 때(검사와 로컬 확인이 그렇다)
-       디렉터리 목록이 뜨고 페이지가 통째로 안 뜬다. 파일 이름까지 적는다. */
-    if(b.dataset.m==='etg'){ veilRun('엘리멘츠로 가는 중…',()=>{location.href='etg/index.html';}); return; }
     FLOW.mode=b.dataset.m; veilRun('덱을 고르러 가는 중…',()=>pgDeck());
   });
 }

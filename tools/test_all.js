@@ -41,7 +41,7 @@ for(const f of files){
     /* ⚠ ❌ 만 걸러 내면 **페이지 오류로 죽은 실패는 한 줄도 안 보인다** —
        그 경우 검사가 찍는 건 `ERR [...]` 이지 ❌ 가 아니다(test_burnfx 가 실제로 그랬다).
        무엇이 틀렸는지 모른 채 '1건 실패' 만 남아 재현에 한참 걸렸다. 둘 다 보여 준다. */
-    out.split('\n').filter(l=>l.includes('❌')||/^\s*ERR\b/.test(l))
+    out.split('\n').filter(l=>l.includes('❌')||l.includes('⛔')||/^\s*ERR\b/.test(l))
        .slice(0,6).forEach(l=>console.log('      '+l.trim())); }
   else { pass++; console.log(`✅ ${f.padEnd(22)} ${sec}s`); }
 }

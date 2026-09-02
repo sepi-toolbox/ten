@@ -4,7 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
 <meta name="color-scheme" content="light only">
-<title>엘리멘츠 대전 — TEN</title>
+<title>엘리멘츠 대전</title>
+<!-- 앱(PWA) — **게임·카드 뷰어와 별개의 앱**으로 깔린다. scope 가 /prototype/etg/ 라
+     홈 화면 아이콘도 따로 생긴다(열두 갈래 색 고리). -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#120d09">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="엘리멘츠">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Gothic+A1:wght@700&family=Gowun+Batang:wght@400;700&family=Noto+Serif+KR:wght@400;700&display=swap" rel="stylesheet">
@@ -1503,7 +1512,7 @@ h1.tt small{font-family:'Gowun Batang',serif;letter-spacing:0;font-size:10px;col
 <script src="data.js"></script>
 <script>
 'use strict';
-const VERSION='0.12.0', BUILD='2026-08-05';
+const VERSION='0.13.0', BUILD='2026-08-05';
 /* 판 번호는 제목줄에 붙인다 — 아래 h1.tt 안 small */
 document.addEventListener('DOMContentLoaded',()=>{const t=document.querySelector('h1.tt small');
   if(t)t.insertAdjacentHTML('beforeend',` · v${VERSION}`);});
@@ -2989,6 +2998,19 @@ window.ETGDBG={get G(){return G;},SK,MISS,POOLS,CARD,BYNAME,playable,startGame,a
   showZoom,etgCardHTML,VERSION};
 screenBuild();
 
+/* ── 앱으로 깔기 ─────────────────────────────────────────────────────────
+   ⚠ `updateViaCache:'none'` 이 없으면 브라우저가 HTTP 캐시에 있는 옛 sw.js 와 비교해
+     바뀐 걸 못 알아챈다 — 자동 갱신이 통째로 안 돈다(본편에서 실제로 그랬다).
+   ⚠ file:// 에서는 등록이 예외를 던진다(검사가 그 경로다). 프로토콜을 먼저 본다. */
+if('serviceWorker' in navigator&&location.protocol!=='file:')
+  addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(reg=>{
+      const poke=()=>{ try{ reg.update(); }catch(e){} };
+      setInterval(poke,10*60*1000);
+      addEventListener('visibilitychange',()=>{ if(!document.hidden)poke(); });
+      poke();
+    }).catch(()=>{});
+  });
 </script>
 </body>
 </html>
