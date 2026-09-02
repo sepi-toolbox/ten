@@ -49,10 +49,17 @@ FILES = [
     ("cards/apple-touch-icon.png", "cards/apple-touch-icon.png"),
     ("tools/card_gallery.html",    "gallery.html"),
     ("tools/card_editor.html",     "editor.html"),
-    # 엘리멘츠 대전 — 본편과 규칙이 다른 별도 모드. data.js 는 gen_etg.py 가 만든다.
-    # ⚠ 본편 index.html 과 파일을 하나도 공유하지 않는다. 둘 다 올려야 모드가 뜬다.
-    ("prototype/etg/index.html",   "prototype/etg/index.html"),
-    ("prototype/etg/data.js",      "prototype/etg/data.js"),
+    # 엘리멘츠 대전 — **별개의 앱**이다. 본편과 파일을 하나도 공유하지 않고,
+    # 자기 manifest·서비스워커·아이콘을 따로 갖는다(홈 화면 아이콘도 따로 생긴다).
+    # ⚠ 여섯 개를 다 올려야 앱으로 깔린다. 하나라도 빠지면 그냥 웹페이지가 된다.
+    ("prototype/etg/index.html",           "prototype/etg/index.html"),
+    ("prototype/etg/data.js",              "prototype/etg/data.js"),
+    ("prototype/etg/manifest.webmanifest", "prototype/etg/manifest.webmanifest"),
+    ("prototype/etg/sw.js",                "prototype/etg/sw.js"),
+    ("prototype/etg/icon-192.png",         "prototype/etg/icon-192.png"),
+    ("prototype/etg/icon-512.png",         "prototype/etg/icon-512.png"),
+    ("prototype/etg/icon-maskable.png",    "prototype/etg/icon-maskable.png"),
+    ("prototype/etg/apple-touch-icon.png", "prototype/etg/apple-touch-icon.png"),
 ]
 DOCS = ["sample_decks", "land_system", "meta_design", "element_design",
         "keywords", "spells", "effects_table", "design_deck", "art_prompts"]
@@ -68,7 +75,8 @@ def sh(*args, cwd=None, check=True):
 def build():
     # 카드 뷰어는 프로토타입에서 카드 CSS/마크업을 떼어다 만든다 —
     # 올릴 때마다 다시 뽑아야 게임과 규격이 어긋나지 않는다.
-    for t in ("build_cards_icons.py", "build_cards_page.py"):
+    for t in ("build_cards_icons.py", "build_cards_page.py",
+              "build_etg_icons.py", "build_etg_page.py"):
         r = sh("python3", os.path.join(ROOT, "tools", t), check=False)
         print("  " + (r.stdout.strip() or r.stderr.strip()))
     if os.path.exists(OUT):
@@ -111,7 +119,8 @@ def stamp_sw():
     그래서 배포할 때 여기서 자동으로 찍는다. 저장소의 sw.js 는 읽기 좋은 이름 그대로 둔다.
     """
     for page, sw in (("prototype/index.html", "prototype/sw.js"),
-                     ("cards/index.html", "cards/sw.js")):
+                     ("cards/index.html", "cards/sw.js"),
+                     ("prototype/etg/index.html", "prototype/etg/sw.js")):
         pf, sf = os.path.join(OUT, page), os.path.join(OUT, sw)
         if not (os.path.exists(pf) and os.path.exists(sf)):
             continue
