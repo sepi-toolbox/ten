@@ -53,6 +53,8 @@ FILES = [
     # 자기 manifest·서비스워커·아이콘을 따로 갖는다(홈 화면 아이콘도 따로 생긴다).
     # ⚠ 여섯 개를 다 올려야 앱으로 깔린다. 하나라도 빠지면 그냥 웹페이지가 된다.
     ("prototype/etg/index.html",           "prototype/etg/index.html"),
+    ("prototype/etg/edit.html",            "prototype/etg/edit.html"),
+    ("prototype/etg/engine.js",            "prototype/etg/engine.js"),
     ("prototype/etg/data.js",              "prototype/etg/data.js"),
     ("prototype/etg/manifest.webmanifest", "prototype/etg/manifest.webmanifest"),
     ("prototype/etg/sw.js",                "prototype/etg/sw.js"),

@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="light only">
+<title>카드 에디터</title>
+<meta name="theme-color" content="#120d09">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Gothic+A1:wght@700&family=Gowun+Batang:wght@400;700&family=Noto+Serif+KR:wght@400;700&display=swap" rel="stylesheet">
+<!--
+  카드 에디터 — 성권이 이 게임을 **자기 게임으로 고쳐 쓰는** 자리.
+
+  ⚠⚠ 이 파일은 **생성물이다.** prototype/etg/edit.template.html 을 고친 뒤
+      `python3 tools/build_etg_page.py` 를 다시 돌릴 것.
+
+  ■ 왜 엔진을 통째로 불러오나
+    카드를 그리는 규격(.tcard)과 설명을 짓는 규칙(ruleText·fillN·abilName)은
+    **게임과 한 벌이어야 한다.** 에디터가 자기 나름대로 그리기 시작하면 미리보기와
+    실제 카드가 어긋나고, 그러면 에디터를 믿을 수가 없다.
+    그래서 engine.js(= 게임과 같은 파일)를 그대로 불러오고, 판만 안 연다
+    (`window.ETG_NOBOOT`).
+
+  ■ 무엇을 고치나
+    ① 카드     — 이름 · 능력 이름 · 설명 · 비용 · 능력 비용 · 공격 · 체력
+    ② 속성 이름 — 엔트로피 … 에테르 (12)
+    ③ 키워드   — 비행 · 관성 · 야행성 …
+    ④ 능력 글  — 같은 능력을 쓰는 카드 전부에 걸린다
+
+  ■ 어디에 남나
+    이 기기(localStorage)에 바로 저장되고, JSON 한 장으로 내보낼 수 있다.
+    원본(data.js)은 **한 글자도 안 고친다** — 언제든 되돌릴 수 있어야 하기 때문이다.
+-->
+<!--TENCSS-->
+<style>
+:root{ --cardw:84px; }
+*{box-sizing:border-box}
+html,body{height:auto;min-height:100dvh;overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch}
+body{padding:calc(env(safe-area-inset-top,0px) + 8px) 10px
+             calc(env(safe-area-inset-bottom,0px) + 28px)}
+.wrap{max-width:900px;margin:0 auto}
+
+.edbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.edbar b{font-family:'Cinzel',serif;font-size:15px;letter-spacing:.06em;color:var(--gold-bright)}
+.edbar .edv{font-family:'Gowun Batang',serif;font-size:11px;color:var(--gold);opacity:.6}
+.edbar .sp{flex:1}
+.edbar button{font-family:'Gowun Batang',serif;font-size:12px;padding:5px 10px}
+
+.edtabs{display:flex;gap:4px;margin-bottom:10px}
+.edtabs button{flex:1;font-family:'Gowun Batang',serif;font-size:13px;padding:7px 4px;
+  border-radius:5px;border:1px solid var(--rule);background:#150e08;color:var(--gold)}
+.edtabs button.on{background:var(--gold);color:#1a1209;border-color:var(--gold-bright);font-weight:700}
+
+.edrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.edrow input[type=search]{flex:1;min-width:120px}
+input,textarea,select{font-family:'Gowun Batang',serif;font-size:13px;color:var(--parch);
+  background:#12100c;border:1px solid var(--rule);border-radius:5px;padding:6px 8px;width:100%}
+textarea{line-height:1.5;resize:vertical}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold-bright)}
+/* ⚠ iOS 는 글자 16px 미만인 입력칸을 누르면 **화면을 확대해 버린다.** 고치는 내내
+   판이 들썩이면 못 쓴다. 확대를 막는 대신(접근성) 입력칸만 16px 로 올린다. */
+@media (max-width:900px){ input,textarea,select{font-size:16px} }
+
+.elbar{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.elbar button{font-family:'Gowun Batang',serif;font-size:12px;padding:4px 9px;border-radius:4px;
+  border:1px solid var(--rule);background:#150e08;color:var(--dc,var(--gold))}
+.elbar button.on{background:var(--dc,var(--gold));color:#12100c;font-weight:700;border-color:#fff3}
+
+/* ⚠ `.tcard.md` 는 `--cw:var(--cardw)` 를 쓴다 — **길이**여야 한다.
+   `--cw:100%` 로 덮었더니 안쪽 글자 크기 계산(calc(var(--cw)*.079))이 통째로 무너져
+   카드가 제 규격을 잃었다. 규격은 건드리지 말고 `--cardw` 만 정해 준다. */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px;
+  justify-items:center;--cardw:92px}
+.gcard{position:relative;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}
+.gcard.dirty::after{content:'';position:absolute;right:-2px;top:-2px;width:9px;height:9px;
+  border-radius:50%;background:#6ee08a;box-shadow:0 0 6px rgba(110,224,138,.9)}
+.gname{font-family:'Gowun Batang',serif;font-size:10px;color:var(--gold);opacity:.75;
+  text-align:center;line-height:1.25;word-break:keep-all}
+
+/* 고치는 자리 — 아래에서 올라오는 시트 */
+.sheet{position:fixed;inset:0;z-index:90;display:none;background:rgba(0,0,0,.72)}
+.sheet.on{display:block}
+.sheetin{position:absolute;left:0;right:0;bottom:0;max-height:94dvh;overflow-y:auto;
+  background:linear-gradient(180deg,#1b1409,#120d07);border-top:1px solid var(--gold);
+  border-radius:12px 12px 0 0;padding:12px 12px calc(env(safe-area-inset-bottom,0px) + 20px)}
+.shhead{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.shhead b{font-family:'Cinzel',serif;font-size:13px;color:var(--gold-bright);flex:1}
+.prevwrap{display:flex;justify-content:center;margin-bottom:12px}
+.prevwrap{--cardw:150px}
+
+.ef{margin-bottom:9px}
+.ef>label{display:block;font-family:'Gowun Batang',serif;font-size:11px;color:var(--gold);
+  opacity:.8;margin-bottom:3px}
+.ef2{display:flex;gap:6px}
+.ef2>*{flex:1}
+.ehint{font-family:'Gowun Batang',serif;font-size:11px;color:var(--parch);opacity:.55;
+  line-height:1.5;margin-top:3px}
+.eorig{font-family:'Gowun Batang',serif;font-size:11px;color:#9ecbff;opacity:.85;
+  line-height:1.55;background:rgba(0,0,0,.35);border:1px solid var(--rule);
+  border-radius:5px;padding:6px 8px;margin-top:3px;white-space:pre-wrap}
+.warn{font-family:'Gowun Batang',serif;font-size:11.5px;color:#ffb0a4;line-height:1.5;
+  background:rgba(70,18,14,.5);border:1px solid #8a3b2f;border-radius:5px;
+  padding:6px 8px;margin-top:6px}
+
+.list{display:flex;flex-direction:column;gap:8px}
+.item{border:1px solid var(--rule);border-radius:6px;padding:8px 9px;background:rgba(0,0,0,.25)}
+.item .ek{font-family:'Gothic A1',sans-serif;font-size:11px;color:var(--gold-bright);
+  letter-spacing:.04em;margin-bottom:4px}
+.item .ewho{font-family:'Gowun Batang',serif;font-size:10.5px;color:var(--parch);opacity:.5;
+  margin-top:4px;line-height:1.4}
+.item.dirty{border-color:#4c9a63;box-shadow:0 0 0 1px rgba(110,224,138,.35)}
+
+.io textarea{height:34dvh;font-family:ui-monospace,Menlo,monospace;font-size:12px}
+.efoot{text-align:center;font-family:'Gowun Batang',serif;font-size:11px;color:var(--gold);
+  opacity:.6;margin-top:14px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="edbar">
+    <b>카드 에디터</b><span class="edv" id="ver"></span>
+    <span class="sp"></span>
+    <button class="ghost" id="io">주고받기</button>
+    <button class="ghost" id="back">← 게임</button>
+  </div>
+  <div class="edtabs">
+    <button data-t="card" class="on">카드</button>
+    <button data-t="el">속성 이름</button>
+    <button data-t="flag">키워드</button>
+    <button data-t="sk">능력 글</button>
+  </div>
+  <div id="body"></div>
+  <p class="efoot">고친 것은 <b>이 기기에 바로 저장</b>된다. 다른 기기로 옮기거나 나한테 주려면
+    <b>주고받기 → 내보내기</b>.<br>원본은 손대지 않는다 — 언제든 되돌릴 수 있다.</p>
+</div>
+<div class="sheet" id="sheet"><div class="sheetin" id="sheetin"></div></div>
+<div id="screen" hidden></div>
+
+<script>window.ETG_NOBOOT=1;</script>
+<script src="data.js"></script>
+<script src="engine.js"></script>
+<script>
+'use strict';
+/* ⚠ 엔진과 **같은 전역**을 쓴다 — 엔진에 이미 `$`·`esc` 가 있어서 여기서 또 선언하면
+   `Identifier '$' has already been declared` 로 페이지가 통째로 죽는다.
+   에디터 코드는 통째로 제 방(IIFE) 안에 둔다. */
+(function(){
+const D=window.ETGDBG;
+const $=s=>document.querySelector(s);
+const esc=D.esc;
+document.getElementById('ver').textContent='v'+D.VERSION;
+$('#back').onclick=()=>{ location.href='index.html'; };
+
+let TAB='card', ELF=-1, Q='';
+
+/* 고친 값을 넣고 · 저장하고 · 다시 덮고 · 다시 그린다. 이 넷은 늘 같이 간다 —
+   하나라도 빠지면 화면과 저장된 값이 어긋난다. */
+function put(path,key,val){
+  const M=D.MODREF;
+  if(!M[path]) M[path]={};
+  if(val===''||val===null||val===undefined) delete M[path][key];
+  else M[path][key]=val;
+  if(!Object.keys(M[path]).length) delete M[path];
+  D.saveMod(); D.applyMod();
+}
+function putCard(code,field,val){
+  const M=D.MODREF;
+  if(!M.card) M.card={};
+  const o=M.card[code]||(M.card[code]={});
+  if(val===''||val===null||val===undefined) delete o[field];
+  else o[field]=val;
+  if(!Object.keys(o).length) delete M.card[code];
+  if(!Object.keys(M.card).length) delete M.card;
+  D.saveMod(); D.applyMod();
+}
+
+/* ── 카드 탭 ────────────────────────────────────────────────────────── */
+const PLAY=()=>ETG.cards.filter(c=>!c.up&&D.playable(c));
+function cardTab(){
+  const els=D.ELKO;
+  const btn=(i,ko)=>`<button data-el="${i}" class="${ELF===i?'on':''}"
+     style="--dc:${D.ELC[i]||D.ELC[0]}">${esc(ko)}</button>`;
+  let list=PLAY();
+  if(ELF>=0) list=list.filter(c=>c.el===ELF);
+  if(Q) list=list.filter(c=>(c.ko+' '+c.en).toLowerCase().includes(Q));
+  return `<div class="elbar">
+      <button data-el="-1" class="${ELF<0?'on':''}">전부</button>
+      ${els.map((k,i)=>i?btn(i,k):'').join('')}
+      <button data-el="0" class="${ELF===0?'on':''}">무색</button>
+    </div>
+    <div class="edrow"><input type="search" id="q" placeholder="이름으로 찾기" value="${esc(Q)}">
+      <span class="ehint">${list.length}장</span></div>
+    <div class="grid">${list.map(c=>`
+      <div class="gcard${D.modded(c.code)?' dirty':''}" data-code="${c.code}">
+        ${D.etgCardHTML(c,{size:'md'})}
+        <div class="gname">${esc(c.ko)}</div>
+      </div>`).join('')}</div>`;
+}
+
+/* ── 속성 이름 · 키워드 · 능력 글 ──────────────────────────────────── */
+function elTab(){
+  return `<div class="list">${D.ELKO.map((k,i)=>i?`
+    <div class="item${(D.MODREF.el||{})[i]?' dirty':''}">
+      <div class="ek" style="color:${D.ELC[i]}">${i}</div>
+      <input data-el="${i}" value="${esc(k)}">
+      <div class="ewho">원래 이름 — ${esc(D.ORIG.el[i])}</div>
+    </div>`:'').join('')}</div>`;
+}
+function flagTab(){
+  const M=D.MODREF.flag||{};
+  return `<div class="list">${Object.keys(D.FLAGKO).map(k=>`
+    <div class="item${M[k]?' dirty':''}">
+      <div class="ek">${k}</div>
+      <input data-flag="${k}" value="${esc(D.FLAGKO[k])}">
+      <div class="ewho">원래 이름 — ${esc(D.ORIG.flag[k])}</div>
+    </div>`).join('')}</div>`;
+}
+/* 어느 카드가 이 능력을 쓰는지 — 글을 고칠 때 '어디에 걸리나' 를 봐야 한다 */
+const SKUSERS=(()=>{
+  const m={};
+  PLAY().forEach(c=>c.sk.forEach(s=>{ (m[s.id]=m[s.id]||[]).push(c); }));
+  return m;
+})();
+function skTab(){
+  const M=D.MODREF.sk||{};
+  const ids=Object.keys(D.SK).filter(id=>D.SK[id].d&&SKUSERS[id])
+    .filter(id=>!Q||(id+' '+D.SK[id].d).toLowerCase().includes(Q))
+    .sort();
+  return `<div class="edrow"><input type="search" id="q" placeholder="능력 이름·글로 찾기"
+      value="${esc(Q)}"><span class="ehint">${ids.length}종</span></div>
+    <div class="ehint" style="margin-bottom:8px">중괄호는 <b>카드마다 다른 값이 들어가는 자리</b>다 —
+      <b>{N}</b> 숫자 · <b>{A}|{H}</b> 공격|체력 · <b>{EL}</b> 속성 · <b>{SUM}</b> 불러내는 카드.
+      그대로 두면 카드마다 알맞은 값이 들어간다.</div>
+    <div class="list">${ids.map(id=>{
+      const who=SKUSERS[id]||[];
+      return `<div class="item${M[id]?' dirty':''}">
+        <div class="ek">${id}</div>
+        <textarea data-sk="${id}" rows="2">${esc(D.SK[id].d)}</textarea>
+        <div class="ewho">${who.length}장에 걸린다 —
+          ${who.slice(0,4).map(c=>esc(c.ko)).join(' · ')}${who.length>4?' …':''}</div>
+        <div class="ewho">원래 글 — ${esc(D.ORIG.sk[id])}</div>
+      </div>`;}).join('')}</div>`;
+}
+
+/* ── 그리기 ────────────────────────────────────────────────────────── */
+function draw(){
+  $('#body').innerHTML=TAB==='card'?cardTab():TAB==='el'?elTab()
+    :TAB==='flag'?flagTab():skTab();
+  bind();
+}
+function bind(){
+  document.querySelectorAll('[data-el]').forEach(el=>{
+    if(el.tagName==='BUTTON'){ el.onclick=()=>{ ELF=+el.dataset.el; draw(); }; return; }
+    el.oninput=()=>{ put('el',el.dataset.el,el.value.trim()); };
+  });
+  document.querySelectorAll('[data-flag]').forEach(el=>{
+    el.oninput=()=>{ put('flag',el.dataset.flag,el.value.trim()); };
+  });
+  document.querySelectorAll('[data-sk]').forEach(el=>{
+    el.oninput=()=>{ put('sk',el.dataset.sk,el.value.trim()); };
+  });
+  document.querySelectorAll('.gcard').forEach(el=>{
+    el.onclick=()=>openCard(+el.dataset.code);
+  });
+  const q=$('#q');
+  if(q) q.oninput=()=>{ Q=q.value.trim().toLowerCase();
+    const at=q.selectionStart; draw(); const n=$('#q'); if(n){n.focus();n.setSelectionRange(at,at);} };
+}
+document.querySelectorAll('.edtabs button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.edtabs button').forEach(x=>x.classList.toggle('on',x===b));
+  TAB=b.dataset.t; Q=''; draw();
+});
+
+/* ── 카드 한 장 고치기 ─────────────────────────────────────────────── */
+let CUR=null;
+function autoText(c){
+  /* 개조 글을 잠깐 걷고 **자동으로 지어지는 글**을 본다 — 무엇을 덮어쓰는지 알아야 한다 */
+  const keep=c.txt; delete c.txt;
+  const t=D.ruleText(c,null).replace(/<[^>]+>/g,'');
+  if(keep!==undefined) c.txt=keep;
+  return t;
+}
+function openCard(code){
+  CUR=code; $('#sheet').classList.add('on'); drawSheet();
+}
+function drawSheet(){
+  const c=D.CARD[CUR], o=(D.MODREF.card||{})[CUR]||{}, og=D.ORIG.card[CUR];
+  const hasAct=c.sk.some(s=>s.ev==='cast'&&c.kind!=='spell');
+  const isBody=(c.kind==='creature'||c.kind==='weapon');
+  const elsel=(name,val)=>`<select data-f="${name}">${D.ELKO.map((k,i)=>
+      `<option value="${i}"${(+val)===i?' selected':''}>${i?esc(k):'무색'}</option>`).join('')}</select>`;
+  /* 숫자를 고쳤는데 설명에 옛 숫자가 그대로 남아 있으면 짚어 준다 —
+     '설명은 곧 규칙' 이라 어긋나는 순간 카드가 거짓말을 한다 */
+  const shown=c.txt||autoText(c);
+  const drift=['cost','atk','hp','cast'].filter(f=>
+    o[f]!==undefined&&+o[f]!==og[f]&&og[f]&&
+    new RegExp('(^|[^0-9])'+og[f]+'([^0-9]|$)').test(shown));
+  $('#sheetin').innerHTML=`
+    <div class="shhead"><b>${esc(c.en)}</b>
+      <button class="ghost" id="revert">이 카드 되돌리기</button>
+      <button id="close">닫기</button></div>
+    <div class="prevwrap">${D.etgCardHTML(c,{size:'md'})}</div>
+    <div class="ef"><label>이름</label><input data-f="ko" value="${esc(c.ko)}"></div>
+    ${c.abilko!==undefined&&c.abilko!==''||og.abilko?`
+      <div class="ef"><label>능력 이름</label>
+        <input data-f="abilko" value="${esc(c.abilko||'')}"
+          placeholder="비우면 이름 없음"></div>`:''}
+    <div class="ef"><label>비용</label><div class="ef2">
+      <input data-f="cost" type="number" inputmode="numeric" value="${c.cost}">
+      ${elsel('costel',c.costel)}</div></div>
+    ${hasAct?`<div class="ef"><label>능력 비용</label><div class="ef2">
+      <input data-f="cast" type="number" inputmode="numeric" value="${c.cast||0}">
+      ${elsel('castel',c.castel||0)}</div></div>`:''}
+    ${isBody?`<div class="ef"><label>공격 · 체력</label><div class="ef2">
+      <input data-f="atk" type="number" inputmode="numeric" value="${c.atk}">
+      <input data-f="hp" type="number" inputmode="numeric" value="${c.hp}"></div></div>`
+      :(c.kind==='shield'?`<div class="ef"><label>막는 양</label>
+        <input data-f="hp" type="number" inputmode="numeric" value="${c.hp}"></div>`:'')}
+    <div class="ef"><label>설명 — 비우면 능력에서 저절로 지어진다</label>
+      <textarea data-f="txt" rows="3" placeholder="${esc(autoText(c))}">${esc(c.txt||'')}</textarea>
+      <div class="ehint">저절로 지어지는 글: ${esc(autoText(c))}</div></div>
+    ${drift.length?`<div class="warn">숫자를 바꿨는데 설명에 옛 값(${
+        drift.map(f=>og[f]).join(' · ')})이 그대로 남아 있다. 설명도 같이 고칠 것.</div>`:''}
+    <div class="ef"><label>원문 (Elements the Game)</label>
+      <div class="eorig">${esc(c.otxt||'(없음)')}</div></div>`;
+  $('#close').onclick=closeSheet;
+  $('#revert').onclick=()=>{
+    const M=D.MODREF; if(M.card) delete M.card[CUR];
+    if(M.card&&!Object.keys(M.card).length) delete M.card;
+    D.saveMod(); D.applyMod(); drawSheet(); markDirty();
+  };
+  $('#sheetin').querySelectorAll('[data-f]').forEach(el=>{
+    const ev=el.tagName==='SELECT'?'onchange':'oninput';
+    el[ev]=()=>{
+      const f=el.dataset.f;
+      const v=(el.type==='number'||f==='costel'||f==='castel')
+        ?(el.value===''?'':+el.value):el.value;
+      putCard(CUR,f,v);
+      /* 미리보기와 어긋남 경고만 다시 그린다 — 입력칸을 다시 그리면 커서가 튄다 */
+      const box=$('#sheetin .prevwrap');
+      if(box) box.innerHTML=D.etgCardHTML(D.CARD[CUR],{size:'md'});
+      markDirty();
+    };
+  });
+}
+function closeSheet(){ $('#sheet').classList.remove('on'); CUR=null; draw(); }
+$('#sheet').onclick=e=>{ if(e.target.id==='sheet') closeSheet(); };
+function markDirty(){
+  const g=document.querySelector(`.gcard[data-code="${CUR}"]`);
+  if(g) g.classList.toggle('dirty',D.modded(CUR));
+}
+
+/* ── 주고받기 ──────────────────────────────────────────────────────── */
+$('#io').onclick=()=>{
+  const json=JSON.stringify(D.MODREF,null,1);
+  const n=(D.MODREF.card?Object.keys(D.MODREF.card).length:0);
+  $('#sheet').classList.add('on');
+  $('#sheetin').innerHTML=`
+    <div class="shhead"><b>주고받기</b><button id="close">닫기</button></div>
+    <div class="ehint">카드 ${n}장 · 속성 ${Object.keys(D.MODREF.el||{}).length} ·
+      키워드 ${Object.keys(D.MODREF.flag||{}).length} ·
+      능력 글 ${Object.keys(D.MODREF.sk||{}).length} 을 고쳤다.</div>
+    <div class="ef io"><label>내보내기 — 이 글을 통째로 저장하거나 나한테 주면 된다</label>
+      <textarea id="out" readonly>${esc(json)}</textarea>
+      <div class="ef2" style="margin-top:6px">
+        <button id="copy">복사</button><button class="ghost" id="dl">파일로 내려받기</button>
+      </div></div>
+    <div class="ef io"><label>가져오기 — 받은 글을 붙여 넣고 적용</label>
+      <textarea id="in" placeholder='{"card":{…}}'></textarea>
+      <div class="ef2" style="margin-top:6px">
+        <input type="file" id="file" accept=".json,application/json">
+        <button id="apply">적용</button></div>
+      <div class="ehint" id="msg"></div></div>
+    <div class="ef"><button class="ghost" id="wipe">전부 되돌리기</button>
+      <div class="ehint">고친 것을 모두 버리고 원래 엘리멘츠로 돌아간다.</div></div>`;
+  $('#close').onclick=closeSheet;
+  $('#copy').onclick=async()=>{
+    try{ await navigator.clipboard.writeText(json); $('#copy').textContent='복사했다'; }
+    catch(e){ const t=$('#out'); t.focus(); t.select(); $('#copy').textContent='길게 눌러 복사'; }
+  };
+  $('#dl').onclick=()=>{
+    const b=new Blob([json],{type:'application/json'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(b); a.download='ten-etg-mod.json'; a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  };
+  const load=txt=>{
+    try{
+      const m=JSON.parse(txt);
+      if(typeof m!=='object'||!m) throw 0;
+      D.setMod(m); D.saveMod(); D.applyMod();
+      $('#msg').textContent='적용했다.'; draw();
+    }catch(e){ $('#msg').textContent='이 글은 못 읽겠다 — JSON 이 맞는지 봐 줘.'; }
+  };
+  $('#apply').onclick=()=>load($('#in').value);
+  $('#file').onchange=e=>{
+    const f=e.target.files[0]; if(!f)return;
+    const r=new FileReader(); r.onload=()=>load(String(r.result)); r.readAsText(f);
+  };
+  $('#wipe').onclick=()=>{
+    if(!confirm('고친 것을 모두 버린다. 되돌릴 수 없다.'))return;
+    D.setMod({}); D.saveMod(); D.applyMod(); closeSheet();
+  };
+};
+
+draw();
+window.EDDBG={get MOD(){return D.MODREF;},draw,openCard,closeSheet,put,putCard,
+  get tab(){return TAB;},
+  setTab(t){ TAB=t; Q='';
+    document.querySelectorAll('.edtabs button').forEach(x=>x.classList.toggle('on',x.dataset.t===t));
+    draw(); }};
+})();
+</script>
+</body>
+</html>

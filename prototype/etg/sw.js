@@ -6,6 +6,7 @@
       (배포 때 tools/build_pages.py 가 내용 해시를 뒤에 붙여 준다). */
 const CACHE = 'ten-etg-v1';
 const SHELL = ['./', './index.html', './data.js', './manifest.webmanifest',
+               './edit.html', './engine.js',        /* 카드 에디터도 오프라인에서 열린다 */
                './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {

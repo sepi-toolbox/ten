@@ -274,7 +274,7 @@ body.deckmode .wrap{height:auto}
 <script src="data.js"></script>
 <script>
 'use strict';
-const VERSION='0.25.0', BUILD='2026-09-02';
+const VERSION='0.26.0', BUILD='2026-09-02';
 /* ⚠ 제목줄은 없다 — 성권: "배틀 유아이에서도 헤더 지우고 넓게 써".
    판 번호는 덱 화면 발치 한 줄에만 남는다(배포 확인이 이 번호에 걸려 있다). */
 
@@ -292,6 +292,61 @@ const CARD={};              /* code → 카드 */
 ETG.cards.forEach(c=>{CARD[c.code]=c;});
 const BYNAME={};
 ETG.cards.forEach(c=>{ if(!c.up) BYNAME[c.en]=c; });
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   0-2. 개조(MOD) — 성권이 자기 게임으로 고쳐 쓰는 층
+   ───────────────────────────────────────────────────────────────────────────
+   ⚠⚠ **원본 데이터는 한 글자도 안 고친다.** data.js 는 그대로 두고, 그 **위에** 덮는다.
+     그래야 ① 언제든 원래대로 되돌릴 수 있고 ② 무엇을 바꿨는지 대조할 수 있고
+     ③ 원작 자료를 다시 뽑아도(gen_etg.py) 고친 것이 안 날아간다.
+   ⚠ 덮어쓰기는 **되돌린 뒤 다시 덮는** 방식이다(applyMod). 그래야 에디터에서
+     고칠 때마다 불러도 값이 겹겹이 쌓이지 않는다.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const MODKEY='ten-etg-mod-v1';
+let MOD=(()=>{ try{ return JSON.parse(localStorage.getItem(MODKEY))||{}; }catch(e){ return {}; } })();
+function saveMod(){ try{ localStorage.setItem(MODKEY,JSON.stringify(MOD)); }catch(e){} }
+/* 손대기 전의 값 — '되돌리기' 와 '원래 뭐였나' 가 전부 여기서 나온다 */
+const ORIG={el:null,flag:null,sk:null,card:null};
+const CARDFIELDS=['ko','abilko','cost','costel','atk','hp','cast','castel'];
+function snapOrig(){
+  if(ORIG.el)return;                      /* 한 번만 — 두 번 뜨면 고친 값이 원본이 된다 */
+  ORIG.el=ELKO.slice();
+  ORIG.flag=Object.assign({},FLAGKO);
+  ORIG.sk={}; for(const k in SK) ORIG.sk[k]=SK[k].d;
+  ORIG.card={};
+  ETG.cards.forEach(c=>{ const o={}; CARDFIELDS.forEach(f=>o[f]=c[f]); ORIG.card[c.code]=o; });
+}
+function resetToOrig(){
+  ORIG.el.forEach((v,i)=>{ ELKO[i]=v; });
+  for(const k in ORIG.flag) FLAGKO[k]=ORIG.flag[k];
+  for(const k in ORIG.sk) if(SK[k]) SK[k].d=ORIG.sk[k];
+  for(const code in ORIG.card){
+    const c=CARD[code]; if(!c)continue;
+    CARDFIELDS.forEach(f=>{ c[f]=ORIG.card[code][f]; });
+    delete c.txt;
+  }
+}
+function applyMod(){
+  snapOrig(); resetToOrig();
+  const m=MOD||{};
+  if(m.el) for(const i in m.el){ if(m.el[i]) ELKO[+i]=m.el[i]; }
+  if(m.flag) for(const k in m.flag){ if(m.flag[k]) FLAGKO[k]=m.flag[k]; }
+  if(m.sk) for(const k in m.sk){ if(SK[k]&&m.sk[k]) SK[k].d=m.sk[k]; }
+  if(m.card) for(const code in m.card){
+    const c=CARD[+code]; if(!c)continue;
+    const o=m.card[code];
+    CARDFIELDS.forEach(f=>{
+      if(o[f]===undefined||o[f]===null||o[f]==='')return;
+      c[f]=(typeof ORIG.card[code][f]==='number')?+o[f]:o[f];
+    });
+    if(o.txt) c.txt=o.txt;
+  }
+}
+/* 이 카드를 손댔나 — 에디터의 '고침' 표시와 '되돌리기' 가 쓴다 */
+function modded(code){
+  const o=(MOD.card||{})[code]; if(!o)return false;
+  return Object.keys(o).some(k=>o[k]!==undefined&&o[k]!==null&&o[k]!=='');
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    1. 능력 — 구현한 것만 여기 있다
@@ -1543,6 +1598,13 @@ function cardCls(c,u){
    (성권: "카드 안에 카드 설명이 약식으로 들어가면 어떡해"). 이제 언제나 전문이다.
    대신 **글이 길면 글자를 줄인다**(effClass) — 잘라 내는 대신 작게 적는다. */
 function ruleText(c,u,full){
+  /* ⚠ 개조로 **설명을 통째로 적어 둔 카드**는 그 글이 곧 카드 글이다.
+     단, 능력을 잃은 몸은 그대로 '능력을 잃었다' 를 보여 준다 —
+     판을 보고 판단할 수 있어야 한다는 원칙이 개조보다 앞선다. */
+  if(c.txt){
+    if(u&&u.sk.length===0&&c.sk.length) return '<b>능력을 잃었다</b>';
+    return esc(c.txt);
+  }
   const out=[];
   /* ⚠ 표시 전용 능력(SHOWSK)이 이미 그 말을 하고 있으면 깃발로 또 적지 않는다.
      부두 인형이 '부두 · 야행성 · 부두 · …' 로 제 이름을 두 번 부르고 있었다. */
@@ -2092,6 +2154,7 @@ function screenBuild(){
         <button class="ghost" id="auto">자동 구성</button>
         <button class="ghost" id="clr">비우기</button>
         <button id="go"${(n<DECKMIN||n>DECKMAX)?' disabled':''}>싸우러 간다 →</button>
+        <button class="ghost" id="edit">카드 고치기</button>
         <button class="ghost" id="home">← TEN</button>
       </span>
     </div>
@@ -2104,6 +2167,7 @@ function screenBuild(){
       </div>`;}).join('')}
   </div>
   <p class="foot">카드를 <b>누르면</b> 덱에 한 장 들어가고, <b>길게 누르면</b> 효과 전문이 뜬다. · v${VERSION}</p>`;
+  const ed=$('#edit'); if(ed) ed.onclick=()=>{ location.href='edit.html'; };
   SCR.querySelectorAll('[data-el]').forEach(b=>b.onclick=()=>{BUILD_EL=+b.dataset.el;screenBuild();});
   SCR.querySelectorAll('[data-mk]').forEach(b=>b.onclick=()=>{BUILD_MARK=+b.dataset.mk;screenBuild();});
   SCR.querySelectorAll('[data-p]').forEach(b=>b.onclick=ev=>{ev.stopPropagation();
@@ -2181,14 +2245,20 @@ window.addEventListener('resize',()=>{ if(!G)return;
 /* ═══════════════════════════════════════════════════════════════════════════ */
 window.ETGDBG={get G(){return G;},SK,MISS,POOLS,CARD,BYNAME,playable,startGame,autoDeck,
   deckList,endTurn,render,attack,kill,summon,mk,playCard,useAbility,draw,canPlay,
-  showZoom,etgCardHTML,VERSION,playPerm,syncAuras,spellDmg,destroyPerm,ruleText,trueAtk};
-screenBuild();
+  showZoom,etgCardHTML,VERSION,playPerm,syncAuras,spellDmg,destroyPerm,ruleText,trueAtk,
+  MOD,get MODREF(){return MOD;},setMod(m){MOD=m;},saveMod,applyMod,modded,ORIG,
+  ELKO,FLAGKO,ELC,MODKEY,esc};
+/* 개조를 먼저 덮고 나서 화면을 그린다 — 순서가 바뀌면 첫 화면만 원본으로 뜬다 */
+applyMod();
+/* ⚠ 카드 에디터(edit.html)가 **같은 엔진 파일**을 쓴다. 거기서는 판을 열면 안 되므로
+   시작 한 줄만 막는다 — 규칙과 카드 그리기는 한 벌만 존재해야 하기 때문이다. */
+if(!window.ETG_NOBOOT) screenBuild();
 
 /* ── 앱으로 깔기 ─────────────────────────────────────────────────────────
    ⚠ `updateViaCache:'none'` 이 없으면 브라우저가 HTTP 캐시에 있는 옛 sw.js 와 비교해
      바뀐 걸 못 알아챈다 — 자동 갱신이 통째로 안 돈다(본편에서 실제로 그랬다).
    ⚠ file:// 에서는 등록이 예외를 던진다(검사가 그 경로다). 프로토콜을 먼저 본다. */
-if('serviceWorker' in navigator&&location.protocol!=='file:')
+if('serviceWorker' in navigator&&location.protocol!=='file:'&&!window.ETG_NOBOOT)
   addEventListener('load',()=>{
     navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(reg=>{
       const poke=()=>{ try{ reg.update(); }catch(e){} };
