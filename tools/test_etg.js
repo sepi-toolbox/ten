@@ -1340,6 +1340,24 @@ const TEN =path.join(__dirname,'..','data','cards.json');
     return {deck:window.scrollY,cls:document.body.className};});
   ok('덱 화면은 그대로 스크롤된다', SD.deck>0, `scrollY ${SD.deck} · ${SD.cls}`);
 
+  /* ── 37.5) 주소로 받은 개조는 **게임 쪽에서도** 걸린다 ─────────────
+     성권: "이름이랑 설명 바꿔달라한건 적용이 안되어있는데?"
+     ⚠⚠ 처음에 이걸 에디터에만 넣었다. 링크를 받은 사람이 게임을 열면 아무 일도
+       안 일어난다 — 받는 눈에는 그냥 고장이다. 두 쪽 다 먹어야 한다. */
+  {
+    const payload={card:{1101:{ko:'아포리아 집행자'}},el:{1:'이상'}};
+    const b64=Buffer.from(JSON.stringify(payload),'utf8').toString('base64url');
+    await p.goto(FILE+'#mod='+b64); await p.waitForTimeout(500);
+    const H=await p.evaluate(()=>({el1:window.ETGDBG.ELKO[1], ko:window.ETGDBG.CARD[1101].ko,
+      left:location.hash, saved:!!localStorage.getItem(window.ETGDBG.MODKEY)}));
+    ok('게임에서도 주소로 개조를 받는다',
+       H.el1==='이상'&&H.ko==='아포리아 집행자'&&H.saved, `${H.ko} · ${H.el1}`);
+    /* ⚠ 주소에 남기면 새로고침마다 옛 개조가 그 뒤 작업을 덮어쓴다 */
+    ok('쓰고 나면 주소에서 지운다', H.left==='', `남은 주소 "${H.left}"`);
+    await p.evaluate(()=>{const D=window.ETGDBG;D.setMod({});D.saveMod();D.applyMod();});
+    await p.goto(FILE); await p.waitForTimeout(400);
+  }
+
   /* ── 38) 지어낸 규칙은 문서에 올라 있어야 한다 ─────────────────────
      성권: "왜 내가 물어봐야 그런 걸 말해 주는 거야? 자의적으로 규칙을 바꾼 건데
      당연히 보고는 해야 하는 거 아냐?"

@@ -3,7 +3,7 @@
    게임(index.html)과 카드 에디터(edit.html)가 **이 한 벌**을 같이 쓴다. */
 'use strict';
 
-const VERSION='0.38.0', BUILD='2026-09-02';
+const VERSION='0.39.0', BUILD='2026-09-02';
 /* ⚠ 제목줄은 없다 — 성권: "배틀 유아이에서도 헤더 지우고 넓게 써".
    판 번호는 덱 화면 발치 한 줄에만 남는다(배포 확인이 이 번호에 걸려 있다). */
 
@@ -2292,9 +2292,39 @@ window.ETGDBG={get G(){return G;},SK,MISS,POOLS,CARD,BYNAME,playable,startGame,a
   MOD,get MODREF(){return MOD;},setMod(m){MOD=m;},saveMod,applyMod,modded,ORIG,
   /* ⚠ FLAGKO 만 내보내면 뜻풀이(FLAGDEF)와 카드 종류 이름(KINDKO)이 문서 만드는 쪽에
      따로 베껴져 곧 어긋난다. 낱말집은 **한 벌만** 있어야 한다. */
-  ELKO,FLAGKO,FLAGDEF,KINDKO,ELC,MODKEY,esc};
+  ELKO,FLAGKO,FLAGDEF,KINDKO,ELC,MODKEY,esc,modFromHash};
 /* 개조를 먼저 덮고 나서 화면을 그린다 — 순서가 바뀌면 첫 화면만 원본으로 뜬다 */
-applyMod();
+/* ── 주소로 개조 받기 (#mod=base64) ────────────────────────────────────
+   개조는 그 기기의 localStorage 에만 산다. 그래서 남이 만든 개조를 옮기는 길이
+   'JSON 을 복사해 붙여넣기' 뿐이었는데, 폰에서 그건 고역이다. 링크 한 번으로 끝낸다.
+
+   ⚠⚠ 처음에는 이걸 **에디터에만** 넣었다. 그런데 링크를 받은 사람이 게임 쪽을 열면
+     아무 일도 안 일어난다 — 받는 눈에는 그냥 고장이다. 엔진에 두면 두 쪽 다 먹는다.
+   ⚠ 쓰고 나면 주소에서 지운다. 남겨 두면 새로고침할 때마다 **옛 개조가 그 뒤 작업을
+     덮어쓴다** — 고쳐 놓은 것이 조용히 사라지는, 제일 억울한 버그가 된다.
+   ⚠ base64url 은 `=` 채움이 떨어져 오기도 한다. 그대로 atob 에 주면 통째로 실패한다.
+   ⚠ 한글이 들어가므로 UTF-8 로 풀어야 한다 — atob 결과를 그냥 쓰면 글자가 깨진다. */
+function modFromHash(){
+  const m=/[#&]mod=([^&]+)/.exec(location.hash||''); if(!m)return false;
+  try{
+    let b=decodeURIComponent(m[1]).replace(/-/g,'+').replace(/_/g,'/');
+    while(b.length%4) b+='=';
+    const bin=atob(b);
+    const mod=JSON.parse(new TextDecoder().decode(Uint8Array.from(bin,ch=>ch.charCodeAt(0))));
+    if(typeof mod!=='object'||!mod) throw 0;
+    MOD=mod; saveMod(); applyMod();
+    history.replaceState(null,'',location.pathname+location.search);
+    return true;
+  }catch(e){ console.warn('주소로 받은 개조를 못 읽었다',e); return false; }
+}
+/* ⚠ 이 줄은 화면을 그리기 **전**에 돈다. 그래서 에디터 쪽 코드가 시작될 때는 이미
+   끝나 있어 'etg:mod' 이벤트를 못 듣는다 — 깃발을 남겨 준다. */
+window.ETG_MODLINK=modFromHash();
+if(!window.ETG_MODLINK) applyMod();
+/* 이미 열어 둔 채로 링크를 누르면 **같은 문서 이동**이라 페이지가 다시 안 열린다 */
+addEventListener('hashchange',()=>{ if(!modFromHash())return;
+  document.dispatchEvent(new Event('etg:mod'));
+  if(!window.ETG_NOBOOT) screenBuild(); });
 /* ⚠ 카드 에디터(edit.html)가 **같은 엔진 파일**을 쓴다. 거기서는 판을 열면 안 되므로
    시작 한 줄만 막는다 — 규칙과 카드 그리기는 한 벌만 존재해야 하기 때문이다. */
 if(!window.ETG_NOBOOT) screenBuild();

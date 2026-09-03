@@ -2,7 +2,7 @@
 
 자동 생성 문서다 — 손으로 고치지 말 것. `node tools/dump_etg_md.js` 로 다시 뽑는다.
 
-- 판: **0.38.0** · 기준 데이터: openEtG serprex/openEtG src/vanilla/cards.csv (원작 vanilla 표)
+- 판: **0.39.0** · 기준 데이터: openEtG serprex/openEtG src/vanilla/cards.csv (원작 vanilla 표)
 - 기본 카드 **227장** (강화판 239장은 표에 싣지 않고 "강화" 칸에 차이만 적었다)
 - 능력 **151종**
 - 데이터에는 있지만 **덱에 못 넣는 카드 12장**은 표에서 뺐다: 엔트로피 문장(Mark of Entropy), 죽음 문장(Mark of Death), 중력 문장(Mark of Gravity), 대지 문장(Mark of Earth), 생명 문장(Mark of Life), 불 문장(Mark of Fire), 물 문장(Mark of Water), 빛 문장(Mark of Light), 바람 문장(Mark of Air), 시간 문장(Mark of Time), 어둠 문장(Mark of Darkness), 에테르 문장(Mark of Aether)
