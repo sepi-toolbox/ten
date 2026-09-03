@@ -57,19 +57,9 @@ const OUT = path.join(__dirname, '..', 'docs', 'etg_cards.md');
   const base = D.cards.filter(c => !c.up && !D.out.some(o => o.en === c.en));
   const byCode = {}; D.cards.forEach(c => { byCode[c.code] = c; });
 
-  /* 강화판은 따로 싣지 않는다 — 수치만 다르고 컨셉이 같아서 논의에 방해만 된다.
-     대신 '강화하면 무엇이 달라지나' 를 한 줄로 붙인다. */
-  const upNote = c => {
-    const u = c.upcode && byCode[c.upcode];
-    if (!u) return '';
-    const d = [];
-    if (u.cost !== c.cost) d.push(`비용 ${c.cost}→${u.cost}`);
-    if (u.atk !== c.atk || u.hp !== c.hp) d.push(`${c.atk}/${c.hp}→${u.atk}/${u.hp}`);
-    const a = c.sk.map(s => s.id).join(','), b2 = u.sk.map(s => s.id).join(',');
-    if (a !== b2) d.push(`능력 ${b2 || '없음'}`);
-    if (u.ko !== c.ko) d.push(`이름 ${u.ko}`);
-    return d.join(' · ');
-  };
+  /* ⚠ 강화판은 **게임에 없다**(성권: "강화판 자체가 없을거니까 지워 데이터상으로만 남겨").
+     데이터에는 남아 있지만 카드로도, 판 위에도 나오지 않으므로 문서에서도 뺀다 —
+     싣는 순간 밖에서 보는 사람은 그런 카드가 있는 줄 안다. */
 
   const cost = c => (c.cost ? `${c.cost}${c.costel ? ` ${D.elko[c.costel]}` : ''}` : '0');
   const stat = c => (c.kind === 'creature' || c.kind === 'weapon' ? `${c.atk}/${c.hp}`
@@ -81,7 +71,7 @@ const OUT = path.join(__dirname, '..', 'docs', 'etg_cards.md');
   s += `- 판: **${D.ver}** · 기준 데이터: ${D.src}\n`;
   /* ⚠ 강화판 수를 (전체 - 기본) 로 세면 안 된다 — 뺀 카드가 강화판으로 둔갑한다 */
   const ups = D.cards.filter(c => c.up).length;
-  s += `- 기본 카드 **${base.length}장** (강화판 ${ups}장은 표에 싣지 않고 "강화" 칸에 차이만 적었다)\n`;
+  s += `- 카드 **${base.length}장** (강화판 ${ups}장은 데이터에만 남아 있고 게임에는 없다 — 싣지 않는다)\n`;
   s += `- 능력 **${Object.keys(D.sk).length}종**\n`;
   if (D.out.length) {
     s += `- 데이터에는 있지만 **덱에 못 넣는 카드 ${D.out.length}장**은 표에서 뺐다: `
@@ -116,7 +106,7 @@ const OUT = path.join(__dirname, '..', 'docs', 'etg_cards.md');
     const n = k => cs.filter(c => c.kind === k).length;
     s += `### ${el}. ${D.elko[el]} (${D.els[el]}) — ${cs.length}장\n\n`;
     s += `크리처 ${n('creature')} · 주문 ${n('spell')} · 기물 ${n('perm')} · 무기 ${n('weapon')} · 방패 ${n('shield')}\n\n`;
-    s += '| 이름 | 원어 | 종류 | 비용 | 공/체 | 표식 | 효과 | 강화 |\n|---|---|---|---|---|---|---|---|\n';
+    s += '| 이름 | 원어 | 종류 | 비용 | 공/체 | 표식 | 효과 |\n|---|---|---|---|---|---|---|\n';
     /* 기둥·진자를 맨 위로, 그다음 종류별로 — 읽는 사람이 자원부터 보게 한다 */
     const ord = { perm: 0, creature: 1, spell: 2, weapon: 3, shield: 4 };
     cs.sort((a, b2) => {
@@ -127,7 +117,7 @@ const OUT = path.join(__dirname, '..', 'docs', 'etg_cards.md');
       const fl = c.flags.filter(f => D.flagko[f] && f !== 'stackable' && f !== 'additive')
         .map(f => D.flagko[f]).join(' ');
       s += `| **${cell(c.ko)}** | ${cell(c.en)} | ${D.kindko[c.kind]} | ${cost(c)} | ${stat(c)} `
-         + `| ${fl} | ${cell(c.kotxt)} | ${cell(upNote(c))} |\n`;
+         + `| ${fl} | ${cell(c.kotxt)} |\n`;
     }
     s += '\n';
   }
@@ -145,7 +135,7 @@ const OUT = path.join(__dirname, '..', 'docs', 'etg_cards.md');
     if (!k.d) continue;
     const cards = used[id] || [];
     s += `| \`${id}\` | ${k.t ? (TGTKO[k.t] || k.t) : ''} | ${cell(k.d)} `
-       + `| ${cards.length ? cell(cards.join(', ')) : '(강화판·토큰 전용)'} |\n`;
+       + `| ${cards.length ? cell(cards.join(', ')) : '(어느 카드도 안 쓴다)'} |\n`;
   }
   s += '\n';
 

@@ -6,11 +6,13 @@
 원작에 답이 있는데 내가 틀리게 옮긴 것은 여기가 아니라 **버그**다(`docs/etg_import.md` 참조).
 여기 있는 것은 전부 **성권이 뒤집어도 되는 결정**이다. 카드 에디터에서 바로 고칠 수 있다.
 
-지금 **3건**.
+지금 **4건**.
 
+- **운명의 알이 강화판이 아니라 **기본 유닛**으로 부화한다. 성권이 강화판을 게임에서 빼기로 했으므로(데이터에만 남긴다) 원작대로 두면 판 위에만 있고 덱에는 없는 몸이 튀어나온다 — 카드로 볼 수도, 다시 얻을 수도 없는 유령이 된다. 되돌리려면 강화판을 목록에 다시 올리고 이 줄을 원작대로 바꾸면 된다.**
+  <br><sub>prototype/etg/etg.template.html:771</sub>
 - **원작은 범람을 깐 **첫 턴만 일곱 칸**을 봐준다(floodingIndex 7). 우리는 늘 여섯 칸으로 뒀다 — 첫 턴만 다른 규칙은 판에서 읽어 낼 방법이 없어서 혼란만 준다고 봤다.**
-  <br><sub>prototype/etg/etg.template.html:952</sub>
+  <br><sub>prototype/etg/etg.template.html:956</sub>
 - **상대의 수읽기. 원작(openEtG)의 AI 는 판을 점수 매겨 고르는 물건인데 여기 옮기지 않았다. 지금 상대는 '기둥이 모자라면 기둥부터, 아니면 싼 것부터' 낼 뿐이다 — 규칙이 아니라 **연습 상대**로 둔 것이다.**
-  <br><sub>prototype/etg/etg.template.html:1719</sub>
+  <br><sub>prototype/etg/etg.template.html:1723</sub>
 - **이 배합(기둥 12장 + 싼 카드 위주 30장). 원작에는 '자동 구성' 이 없다 — 덱 짜기를 처음부터 하지 않아도 바로 놀아 볼 수 있게 내가 정한 것이다.**
-  <br><sub>prototype/etg/etg.template.html:2569</sub>
+  <br><sub>prototype/etg/etg.template.html:2573</sub>

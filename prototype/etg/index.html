@@ -1676,7 +1676,7 @@ body.deckmode .wrap{height:auto}
 <script src="data.js"></script>
 <script>
 'use strict';
-const VERSION='0.41.0', BUILD='2026-09-02';
+const VERSION='0.42.0', BUILD='2026-09-02';
 /* ⚠ 제목줄은 없다 — 성권: "배틀 유아이에서도 헤더 지우고 넓게 써".
    판 번호는 덱 화면 발치 한 줄에만 남는다(배포 확인이 이 번호에 걸려 있다). */
 
@@ -2098,11 +2098,15 @@ def('summon',null,'{SUM} 을(를) 부른다',(g,me,s,t,a)=>{
   const c=(typeof a==='number')?CARD[a]:BYNAME[a];
   if(c) summon(me,c.code);
 });
-/* ⚠ 원문은 "random **elite** creature" — 강화판으로 부화한다. */
-def('v_hatch',null,'무작위 강화 유닛으로 변한다',(g,me,s)=>{
-  const base=ETG.cards.filter(c=>c.kind==='creature'&&!c.up&&playable(c)&&c.upcode);
+/* 원문은 "random **elite** creature" — 원작에서는 강화판으로 부화한다.
+   /* @지어냄: 운명의 알이 강화판이 아니라 **기본 유닛**으로 부화한다. 성권이 강화판을
+      게임에서 빼기로 했으므로(데이터에만 남긴다) 원작대로 두면 판 위에만 있고
+      덱에는 없는 몸이 튀어나온다 — 카드로 볼 수도, 다시 얻을 수도 없는 유령이 된다.
+      되돌리려면 강화판을 목록에 다시 올리고 이 줄을 원작대로 바꾸면 된다. */
+def('v_hatch',null,'무작위 유닛으로 변한다',(g,me,s)=>{
+  const base=ETG.cards.filter(c=>c.kind==='creature'&&!c.up&&playable(c));
   const c=base[rnd(base.length)];
-  morph(s,CARD[c.upcode]?c.upcode:c.code);
+  morph(s,c.code);
 });
 def('deja',null,'자신을 한 번 복제하고 이 능력을 잃는다',(g,me,s)=>{
   const u=summon(me,s.c.code); if(u) u.sk=u.sk.filter(k=>k.id!=='deja'); s.sk=s.sk.filter(k=>k.id!=='deja');
@@ -3550,7 +3554,7 @@ function zoomHTML(c,u){
   box.push(`<div class="zdef"><div class="k"><span class="kn">${esc(c.ko)}</span>
     <span class="kc">${esc(c.en)}</span></div>
     <div class="kd">${ELKO[c.el]} · ${kindKo(c.kind)} · 비용 ${c.cost?c.cost+' '+ELKO[c.costel]:'없음'}
-    ${c.upcode&&CARD[c.upcode]?`<br>강화판: ${esc(CARD[c.upcode].ko)}`:''}</div></div>`);
+    </div></div>`);
   const sks=u?u.sk:c.sk;
   /* ⚠⚠ **효과로 얻은 것을 표시해 준다.** 관성·정수·유동·나비 효과처럼 능력과 표식을
      나중에 붙이는 카드가 많은데, 확대창이 인쇄된 것과 얻은 것을 구별 없이 보여 주면
