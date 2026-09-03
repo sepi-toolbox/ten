@@ -3,7 +3,7 @@
    게임(index.html)과 카드 에디터(edit.html)가 **이 한 벌**을 같이 쓴다. */
 'use strict';
 
-const VERSION='0.40.0', BUILD='2026-09-02';
+const VERSION='0.41.0', BUILD='2026-09-02';
 /* ⚠ 제목줄은 없다 — 성권: "배틀 유아이에서도 헤더 지우고 넓게 써".
    판 번호는 덱 화면 발치 한 줄에만 남는다(배포 확인이 이 번호에 걸려 있다). */
 
@@ -1535,9 +1535,13 @@ function ruleText(c,u,full){
     const fl=(u?u.flags:c.flags)
       .filter(f=>FLAGKO[f]&&shid0.indexOf(f)<0&&!['stackable','additive','token'].includes(f));
     let body=fillCard(c,mdText(esc(c.kotxt)));
-    /* 앞에 세운 표식을 글이 또 부르면 한 번만 — '관성 · 관성 — 실드를…' 이 되지 않게 */
+    /* 앞에 세운 표식을 글이 또 부르면 한 번만 — '관성 · 관성 — 실드를…' 이 되지 않게.
+       ⚠ 예전에는 `키워드 — ` 한 가지 꼴만 걷어냈다. 성권이 카드 글을 직접 쓰면서
+         '비행, 역설 …' 처럼 쉼표로 적자 **'비행 · 비행, 역설'** 이 되어 버렸다.
+         사람이 쓰는 이음말을 몇 가지 더 받는다. */
     fl.forEach(f=>{ const k=FLAGKO[f];
-      if(body.startsWith(k+' — ')) body=body.slice(k.length+3); });
+      [' — ',', ',' · ',' ・ ','/'].forEach(sep=>{
+        if(body.startsWith(k+sep)) body=body.slice(k.length+sep.length); }); });
     const head=fl.length?'<b>'+fl.map(f=>FLAGKO[f]).join(' · ')+'</b>':'';
     return head&&body?head+' · '+body:(head||body);
   }

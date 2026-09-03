@@ -39,13 +39,16 @@ OUT = os.path.join(ROOT, "data", "etg_cards.json")
 # openEtG src/ui.js eleNames 순서. 0 은 무색(Chroma/Other).
 ELS = ["other", "entropy", "death", "gravity", "earth", "life", "fire",
        "water", "light", "air", "time", "dark", "aether"]
-ELKO = ["무색", "엔트로피", "죽음", "중력", "대지", "생명", "불",
+ELKO = ["무색", "이상", "죽음", "중력", "대지", "생명", "불",
         "물", "빛", "바람", "시간", "어둠", "에테르"]
 # openEtG src/rs/src/game.rs enum Kind
 KINDS = ["weapon", "shield", "perm", "spell", "creature"]
 
 # ── 이름 (한국어) ─────────────────────────────────────────────────────────────
 # 고유명사는 소리를 살리고, 뜻이 규칙과 붙어 있는 것(Momentum·Purify 등)은 뜻으로.
+# ⚠⚠ 아래 KO 는 **원작 카드 이름을 옮긴 것**이다. 성권이 자기 게임으로 갈아 끼운
+#    이름은 뒤쪽 SEPI 에 따로 모은다 — 섞어 두면 무엇이 원작이고 무엇이 우리 것인지
+#    다시는 못 가른다.
 KO = {
 "Quantum Pillar":"양자 기둥","Quantum Tower":"양자 탑",
 "Mark of Entropy":"엔트로피 문장","Mark of Death":"죽음 문장","Mark of Gravity":"중력 문장",
@@ -164,6 +167,28 @@ KO = {
 # 토큰(덱에 못 넣는 몸) — 능력이 만들어 낸다
 "Pack Wolf":"무리 늑대","Elite Pack Wolf":"정예 무리 늑대",
 }
+
+# ── 성권이 갈아 끼운 이름 ────────────────────────────────────────────────────
+# ⚠⚠ 여기부터는 **원작 번역이 아니라 이 게임의 이름**이다. 위 KO 와 섞지 말 것 —
+#    섞는 순간 무엇이 원작이고 무엇이 우리가 지은 것인지 다시는 못 가른다.
+#    원작 이름은 카드 데이터의 `en`(영문)과 data/etg_src/cards.csv 에 그대로 남아 있고,
+#    에디터의 '원문' 칸도 계속 원작을 보여 준다 — 대조는 거기서 한다.
+# ⚠ 이걸 코드에 박는 이유: 개조(localStorage)는 **그 브라우저 안에만** 산다.
+#   폰의 홈화면 앱, 채팅 앱 안의 브라우저, 사파리가 서로 다른 저장소를 쓰기 때문에
+#   링크로 넘긴 개조가 엉뚱한 곳에 저장되어 정작 게임에는 안 보이는 일이 생겼다.
+#   데이터에 넣으면 어느 기기·어느 브라우저로 열어도 그냥 그 이름이다.
+SEPI = {
+    "Mark of Entropy": "변이 표식",
+    "Amethyst Pillar": "이상 물질",
+    "Amethyst Tower": "이상 물질 응축체",
+    "Maxwell's Demon": "아포리아 집행자",
+    "Abomination": "실패작 13호",
+    "Micro Abomination": "실패작 13호 잔해",
+    "Purple Dragon": "APX-Ω 베히모스",
+    "Dissipation Shield": "제로스 필드",
+    "Lycanthrope": "잠복형 키메라",
+}
+KO.update(SEPI)
 
 
 # ── 능력 이름 (원작) ─────────────────────────────────────────────────────────
