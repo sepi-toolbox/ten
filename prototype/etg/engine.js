@@ -3,7 +3,7 @@
    게임(index.html)과 카드 에디터(edit.html)가 **이 한 벌**을 같이 쓴다. */
 'use strict';
 
-const VERSION='0.42.0', BUILD='2026-09-02';
+const VERSION='0.43.0', BUILD='2026-09-02';
 /* ⚠ 제목줄은 없다 — 성권: "배틀 유아이에서도 헤더 지우고 넓게 써".
    판 번호는 덱 화면 발치 한 줄에만 남는다(배포 확인이 이 번호에 걸려 있다). */
 
@@ -208,10 +208,16 @@ def('v_blackhole',null,'상대 속성마다 퀀텀을 최대 3씩 빨아들이�
 def('v_plague',null,'상대 유닛 전부에게 독 1',(g,me)=>{
   foe(me).cr.forEach(u=>{ if(u) u.poison=(u.poison||0)+1; });
 });
-def('poison','cr','대상에게 독 {N} 을 준다',(g,me,s,t,a)=>{ addPoison(t,a||1); });
-def('poisonfoe',null,'상대에게 독 {N} 을 준다',(g,me,s,t,a)=>{ foe(me).poison+=(a||1); });
+/* ⚠⚠ 독은 **그 자리에서는 아무 일도 안 일어난다** — 턴 끝에야 깎인다. 그래서 판에
+   한 줄도 안 남기면 성권처럼 "독 액션이 아무 효과도 안 생긴다" 고 읽힌다(실제로는
+   걸려 있었다). 값이 눈에 보이게 기록을 남긴다. 규칙은 그대로다. */
+def('poison','cr','대상에게 독 {N} 을 준다',(g,me,s,t,a)=>{ addPoison(t,a||1);
+  if(t) log(`${t.c.ko} — 독 ${a||1} (모두 ${t.poison})`,'c'); });
+def('poisonfoe',null,'상대에게 독 {N} 을 준다',(g,me,s,t,a)=>{ const f=foe(me); f.poison+=(a||1);
+  log(`${f.name} — 독 ${a||1} (모두 ${f.poison}) · 턴 끝마다 그만큼 깎인다`,'c'); });
 def('aflatoxin','cr','대상에게 독 2. 그 몸이 죽으면 악성 세포가 된다',(g,me,s,t)=>{
   addPoison(t,2); t.afla=true;
+  if(t) log(`${t.c.ko} — 독 2 (모두 ${t.poison}) · 죽으면 악성 세포가 남는다`,'c');
 });
 /* ⚠⚠⚠ **대상 종류를 안 적어 놨었다.** 그래서 누르면 바이러스만 죽고 독은
    아무에게도 안 걸렸다 — 오류도 안 나고 카드만 사라진다.

@@ -1398,6 +1398,47 @@ const TEN =path.join(__dirname,'..','data','cards.json');
   ok('화면 높이가 변해도 판이 안 움직인다', hspread<0.6,
      `${HOFF.join(' / ')} (차이 ${hspread.toFixed(1)}px)`);
 
+  /* ── 37.45) 손패가 비어도 판이 안 움직인다 ────────────────────────
+     성권(사진): "패가 없을때 화면처럼 유아이 위치가 또 갑자기 바뀌어버림"
+     ⚠⚠ 손패 줄은 카드가 있을 때만 높이를 가졌다. 마지막 장을 내는 순간 그 줄이 0 이 되고
+       위의 줄들이 78px 씩 쏟아졌다. 카드가 몇 장이든 **자리는 늘 잡아 둔다.** */
+  const HAND=await p.evaluate(()=>{
+    const D=window.ETGDBG;
+    const st=document.createElement('style');
+    st.textContent=':root{--safeT:59px;--safeB:34px}'; document.head.appendChild(st);
+    D.startGame(D.deckList(D.autoDeck(2)),2);
+    const G=D.G, out={};
+    const y=()=>{ const w=document.querySelector('.wrap').getBoundingClientRect();
+      const b=document.querySelector('#myBoard').getBoundingClientRect();
+      return +(b.top-w.top).toFixed(1); };
+    [0,1,3,5,8].forEach(n=>{
+      G.me.hand=Array.from({length:n},()=>D.mk(D.BYNAME['Poison'].code,G.me));
+      D.render(); out[n]=y(); });
+    st.remove();
+    return out;});
+  const hv=Object.values(HAND), hsp=Math.max(...hv)-Math.min(...hv);
+  ok('손패가 0장이어도 판이 안 움직인다', hsp<0.6,
+     `0·1·3·5·8장 → ${hv.join(' / ')} (차이 ${hsp.toFixed(1)}px)`);
+
+  /* ── 37.46) 독은 **걸렸다는 것이 보여야 한다** ─────────────────────
+     성권: "독 주문 아무효과도 안생기는데 확인좀" — 규칙은 멀쩡히 돌고 있었다.
+     독은 그 자리에서 아무 일도 안 하고 **턴 끝에** 깎이기 때문에, 판에 한 줄도 안 남기면
+     아무 일도 안 일어난 것처럼 보인다. 값이 보이는지까지가 이 기능이다. */
+  const POI=await p.evaluate(()=>{
+    const D=window.ETGDBG;
+    D.startGame(D.deckList(D.autoDeck(2)),2);
+    const G=D.G; G.me.q=new Array(13).fill(30);
+    const before=G.ai.hp;
+    const u=D.mk(D.BYNAME['Poison'].code,G.me); G.me.hand=[u];
+    D.playCard(G.me,u,null);
+    const said=G.log.slice(-2).map(x=>x.t).join(' | ');
+    const stuck=G.ai.poison;
+    D.endTurn();
+    return {said,stuck,before,after:G.ai.hp};});
+  ok('독 액션이 실제로 독을 건다', POI.stuck===2&&POI.after===POI.before-2,
+     `독 ${POI.stuck} · 체력 ${POI.before}→${POI.after}`);
+  ok('독이 걸린 것이 판에 보인다', /독 2/.test(POI.said)&&/모두 2/.test(POI.said), POI.said);
+
   /* ── 37.5) 주소로 받은 개조는 **게임 쪽에서도** 걸린다 ─────────────
      성권: "이름이랑 설명 바꿔달라한건 적용이 안되어있는데?"
      ⚠⚠ 처음에 이걸 에디터에만 넣었다. 링크를 받은 사람이 게임을 열면 아무 일도

@@ -130,6 +130,13 @@ body.playmode .main{flex:1;min-height:0;justify-content:flex-start}
    그래서 이 줄의 높이를 **고정 px** 로 못 박는다. 뒷면은 그 안에서 잘려 딱 그만큼만
    보인다(연출은 그대로다). 카드가 커지든 작아지든 아래 줄들의 시작점은 안 움직인다. */
 body.playmode #foeHand{margin-top:0;height:16px;min-height:16px;flex:none;overflow:hidden}
+/* ⚠⚠ **손패가 비면 판이 통째로 움직이던 자리.**
+   손패 줄은 카드가 있을 때만 높이를 가진다. 마지막 카드를 내는 순간 그 줄이 0 이 되고,
+   위의 유닛·노드 줄이 78px 씩 아래로 쏟아진다 — 성권: "패가 없을때 유아이 위치가 또
+   갑자기 바뀌어버림". 카드가 몇 장이든 **자리는 늘 잡아 둔다.**
+   ⚠ 높이는 카드 규격에서 나온다(세로/가로 = 1.4) + 위 여백 4px. 숫자를 바꾸려면
+     반드시 손패 0장↔여러 장에서 판이 안 움직이는지 검사로 다시 확인할 것. */
+body.playmode #hand{min-height:calc(var(--cardw)*1.4 + 4px);flex:none}
 /* 확대창은 제 안에서 세로로 굴러야 한다 — 몸통의 touch-action:none 이 그것까지 막는다 */
 .zoom{touch-action:pan-y}
 .zoom,.logbox{overscroll-behavior:contain}
@@ -345,7 +352,7 @@ body.deckmode .wrap{height:auto}
 <script src="data.js"></script>
 <script>
 'use strict';
-const VERSION='0.42.0', BUILD='2026-09-02';
+const VERSION='0.43.0', BUILD='2026-09-02';
 /* ⚠ 제목줄은 없다 — 성권: "배틀 유아이에서도 헤더 지우고 넓게 써".
    판 번호는 덱 화면 발치 한 줄에만 남는다(배포 확인이 이 번호에 걸려 있다). */
 
@@ -550,10 +557,16 @@ def('v_blackhole',null,'상대 속성마다 퀀텀을 최대 3씩 빨아들이�
 def('v_plague',null,'상대 유닛 전부에게 독 1',(g,me)=>{
   foe(me).cr.forEach(u=>{ if(u) u.poison=(u.poison||0)+1; });
 });
-def('poison','cr','대상에게 독 {N} 을 준다',(g,me,s,t,a)=>{ addPoison(t,a||1); });
-def('poisonfoe',null,'상대에게 독 {N} 을 준다',(g,me,s,t,a)=>{ foe(me).poison+=(a||1); });
+/* ⚠⚠ 독은 **그 자리에서는 아무 일도 안 일어난다** — 턴 끝에야 깎인다. 그래서 판에
+   한 줄도 안 남기면 성권처럼 "독 액션이 아무 효과도 안 생긴다" 고 읽힌다(실제로는
+   걸려 있었다). 값이 눈에 보이게 기록을 남긴다. 규칙은 그대로다. */
+def('poison','cr','대상에게 독 {N} 을 준다',(g,me,s,t,a)=>{ addPoison(t,a||1);
+  if(t) log(`${t.c.ko} — 독 ${a||1} (모두 ${t.poison})`,'c'); });
+def('poisonfoe',null,'상대에게 독 {N} 을 준다',(g,me,s,t,a)=>{ const f=foe(me); f.poison+=(a||1);
+  log(`${f.name} — 독 ${a||1} (모두 ${f.poison}) · 턴 끝마다 그만큼 깎인다`,'c'); });
 def('aflatoxin','cr','대상에게 독 2. 그 몸이 죽으면 악성 세포가 된다',(g,me,s,t)=>{
   addPoison(t,2); t.afla=true;
+  if(t) log(`${t.c.ko} — 독 2 (모두 ${t.poison}) · 죽으면 악성 세포가 남는다`,'c');
 });
 /* ⚠⚠⚠ **대상 종류를 안 적어 놨었다.** 그래서 누르면 바이러스만 죽고 독은
    아무에게도 안 걸렸다 — 오류도 안 나고 카드만 사라진다.
