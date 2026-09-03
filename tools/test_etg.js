@@ -1340,6 +1340,64 @@ const TEN =path.join(__dirname,'..','data','cards.json');
     return {deck:window.scrollY,cls:document.body.className};});
   ok('덱 화면은 그대로 스크롤된다', SD.deck>0, `scrollY ${SD.deck} · ${SD.cls}`);
 
+  /* ── 37.4) 판의 세로 자리는 **화면이 흔들려도 안 움직인다** ────────
+     성권(사진 두 장): "게임 유아이 위치를 고정시키라했는데 가운데 텍스트 줄 수에 따라
+     계속 위치가 달라져. 이거 아주 치명적인 문제야."
+
+     ⚠⚠⚠ 앞서 나는 **스크롤**을 막아 놓고 고쳤다고 했다. 아니었다. 움직인 것은 스크롤이
+       아니라 **레이아웃 자체**였다. 상대 손패 줄은 본편에서 `margin-top: 카드폭*-0.42` 로
+       위로 당겨 놓는데, 그 여백이 카드 크기에 비례하고 카드 크기는 `100dvh` 에 묶여 있다.
+       그래서 화면 높이가 조금만 달라져도(iOS 주소줄·홈 인디케이터) 판 전체가 오르내렸고,
+       심하면 상대 체력줄이 노치 밑으로 잘려 들어갔다.
+     ⚠ 그래서 재는 것은 '스크롤이 0 인가' 가 아니라 **첫 줄이 늘 같은 자리인가** 다. */
+  const ANCHOR=await p.evaluate(async()=>{
+    const D=window.ETGDBG;
+    const wait=ms=>new Promise(r=>setTimeout(r,ms));
+    const st=document.createElement('style');
+    st.textContent=':root{--safeT:59px;--safeB:34px}'; document.head.appendChild(st);
+    D.startGame(D.deckList(D.autoDeck(9)),9);
+    const G=D.G; G.me.q=new Array(13).fill(40);
+    ['Dragonfly','Lycanthrope','Singularity'].forEach(n=>D.summon(G.me,D.BYNAME[n].code));
+    G.ai.hand=[1,2,3,4,5,6,7].map(()=>D.mk(D.BYNAME['Nova'].code,G.ai));
+    D.render();
+    const off=()=>{ const w=document.querySelector('.wrap').getBoundingClientRect();
+      const b=document.querySelector('.bar').getBoundingClientRect();
+      return +(b.top-w.top).toFixed(1); };
+    const a=off();
+    /* ① 알림글이 길어져도 */
+    document.getElementById('hint').innerHTML=
+      '<span>아주 아주 아주 긴 알림 글이 들어와서 두 줄이 되어도 판은 움직이면 안 된다</span>';
+    const b2=off();
+    /* ② 상대 손패가 늘거나 줄어도 (카드 크기에 비례하던 여백이 여기 있었다) */
+    G.ai.hand=[]; D.render(); const c=off();
+    G.ai.hand=[1,2,3,4,5,6,7,8].map(()=>D.mk(D.BYNAME['Nova'].code,G.ai)); D.render();
+    const d=off();
+    /* ③ 내 손패가 늘어도 */
+    G.me.hand=[1,2,3,4,5,6,7,8].map(()=>D.mk(D.BYNAME['Nova'].code,G.me)); D.render();
+    await wait(60);
+    const e=off();
+    st.remove();
+    return {a,b:b2,c,d,e};});
+  const spread=Math.max(...Object.values(ANCHOR))-Math.min(...Object.values(ANCHOR));
+  ok('알림글·손패가 변해도 판이 안 움직인다', spread<0.6,
+     `첫 줄 자리 ${Object.values(ANCHOR).join(' / ')} (차이 ${spread.toFixed(1)}px)`);
+
+  /* ⚠⚠ 진짜 현장은 **화면 높이가 도중에 바뀌는 것**이다(iOS 주소줄이 숨었다 나타난다).
+     그때 카드 크기가 달라지는 건 괜찮다 — 판이 **움직이면** 안 된다. */
+  const HOFF=[];
+  for(const h of [852,920,800,852]){
+    await p.setViewportSize({width:390,height:h});
+    await p.waitForTimeout(180);
+    HOFF.push(await p.evaluate(()=>{
+      const w=document.querySelector('.wrap').getBoundingClientRect();
+      const b=document.querySelector('.bar').getBoundingClientRect();
+      return +(b.top-w.top).toFixed(1);}));
+  }
+  await p.setViewportSize({width:390,height:844}); await p.waitForTimeout(180);
+  const hspread=Math.max(...HOFF)-Math.min(...HOFF);
+  ok('화면 높이가 변해도 판이 안 움직인다', hspread<0.6,
+     `${HOFF.join(' / ')} (차이 ${hspread.toFixed(1)}px)`);
+
   /* ── 37.5) 주소로 받은 개조는 **게임 쪽에서도** 걸린다 ─────────────
      성권: "이름이랑 설명 바꿔달라한건 적용이 안되어있는데?"
      ⚠⚠ 처음에 이걸 에디터에만 넣었다. 링크를 받은 사람이 게임을 열면 아무 일도

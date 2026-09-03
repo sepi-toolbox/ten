@@ -3,7 +3,7 @@
    게임(index.html)과 카드 에디터(edit.html)가 **이 한 벌**을 같이 쓴다. */
 'use strict';
 
-const VERSION='0.39.0', BUILD='2026-09-02';
+const VERSION='0.40.0', BUILD='2026-09-02';
 /* ⚠ 제목줄은 없다 — 성권: "배틀 유아이에서도 헤더 지우고 넓게 써".
    판 번호는 덱 화면 발치 한 줄에만 남는다(배포 확인이 이 번호에 걸려 있다). */
 
@@ -1795,6 +1795,7 @@ function deckMode(on){
 function render(){
   if(!G){ screenBuild(); return; }
   deckMode(false);
+  fitBoard();          /* ⚠ 그리기 전에 재야 이번 그림부터 맞는 크기로 나온다 */
   const m=G.me,a=G.ai;
   SCR.innerHTML=`<div class="main">
     <div class="hand foe" id="foeHand">${a.hand.map(()=>'<div class="hcw back"><div class="cback"></div></div>').join('')}</div>
@@ -2261,7 +2262,21 @@ function isTarget(u){
   if(k==='any')return true;
   return false;
 }
-window.addEventListener('resize',()=>{ if(!G)return;
+/* ⚠⚠ 카드 크기를 **잰 값**으로 고정한다.
+   `100dvh` 는 iOS 에서 주소줄이 나타났다 사라질 때마다 값이 달라진다. 카드 크기가 거기
+   묶여 있으면 카드가 커졌다 작아지고, 카드에 비례하는 여백들이 따라 움직여 **판이 통째로
+   오르내린다.** 판의 겉틀은 안전영역에 못박혀 있으므로 그 높이를 직접 재서 쓰면 흔들릴
+   일이 없다.
+   ⚠ 겉틀 높이는 카드 크기에 안 달렸다(고정 배치다) — 되먹임이 생기지 않는다.
+   ⚠ 덱 화면·에디터에서는 겉틀이 길게 늘어나므로 재면 안 된다. 판일 때만 잰다. */
+function fitBoard(){
+  const w=document.querySelector('.wrap');
+  if(!w||!document.body.classList.contains('playmode')){
+    document.documentElement.style.removeProperty('--vhpx'); return; }
+  const h=Math.round(w.clientHeight);
+  if(h>200) document.documentElement.style.setProperty('--vhpx',h+'px');
+}
+window.addEventListener('resize',()=>{ if(!G)return; fitBoard();
   ['foePm','foeBoard','myBoard','myPm'].forEach(id=>packRow(document.getElementById(id)));
   packHand(); });
 
