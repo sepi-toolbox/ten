@@ -1398,6 +1398,45 @@ const TEN =path.join(__dirname,'..','data','cards.json');
   ok('화면 높이가 변해도 판이 안 움직인다', hspread<0.6,
      `${HOFF.join(' / ')} (차이 ${hspread.toFixed(1)}px)`);
 
+  /* ── 37.4a) 상대가 **나를 도와주지 않는다** ────────────────────────
+     성권: "상대가 뭔가 나한테 이득인 카드를 내 몬스터에 써주는 거 같은데..?"
+     ⚠⚠ 맞았다. aiTarget 은 능력을 '해로움/이로움' 표로 가르는데, **표에 없는 능력은
+       아무 데나** 쓴다(가릴 수 없으니 목록 전체에서 무작위). 성광·기물 봉인·아플라톡신·
+       집적이 그 상태였고, 그래서 상대가 내 몸을 회복시키고 내 노드를 지켜 줬다.
+     ⚠ 재는 것은 '지금 네 개를 고쳤나' 가 아니라 **빠진 것이 하나도 없나** 다 —
+       능력을 새로 만들 때마다 같은 일이 되풀이되기 때문이다. */
+  const AI=await p.evaluate(()=>{
+    const D=window.ETGDBG;
+    const used={};
+    ETG.cards.filter(c=>!c.up&&D.playable(c)).forEach(c=>c.sk.forEach(s=>{
+      if(D.SK[s.id]&&D.SK[s.id].t) (used[s.id]=used[s.id]||[]).push(c.ko); }));
+    const miss=Object.keys(used).filter(id=>
+      !D.AIHARM.has(id)&&!D.AIHELP.has(id)&&!D.AISMART[id]);
+    /* 실제로 겨눠 보게 한다 — 표만 채우고 동작이 딴판이면 소용없다 */
+    D.startGame(D.deckList(D.autoDeck(6)),6);
+    const G=D.G; G.ai.q=new Array(13).fill(30); G.me.q=new Array(13).fill(30);
+    const mine=D.summon(G.me,D.BYNAME['Fire Spirit'].code);
+    const theirs=D.summon(G.ai,D.BYNAME['Fire Spirit'].code);
+    const pick=(id,kind,n)=>{ const c={me:0,foe:0};
+      for(let i=0;i<n;i++){ const t=D.aiTarget(kind,G.ai,id,null);
+        if(!t)continue; const o=(t.own||t); if(o===G.me)c.me++; else c.foe++; }
+      return c; };
+    const harm=pick('aflatoxin','cr',40);       /* 독은 나에게 와야 한다 */
+    const help=pick('bless','cr',40);           /* 축복은 제 몸에 써야 한다 */
+    /* 성광 — 야행성이면 해로움, 아니면 이로움. 대상을 봐야 갈린다 */
+    const noct=D.summon(G.me,D.BYNAME['Skeleton'].code);
+    const holy=pick('v_holylight','any',60);
+    return {miss,harm,help,holy,
+            noctMine:!!(noct&&noct.flags.includes('nocturnal'))};});
+  ok('대상 능력이 하나도 안 빠졌다', AI.miss.length===0,
+     AI.miss.slice(0,4).join(', ')||'전부 분류됨');
+  ok('상대가 해로운 것은 나에게 쓴다', AI.harm.me>0&&AI.harm.foe===0,
+     `나 ${AI.harm.me} · 제 몸 ${AI.harm.foe}`);
+  ok('상대가 이로운 것은 제 몸에 쓴다', AI.help.foe>0&&AI.help.me===0,
+     `나 ${AI.help.me} · 제 몸 ${AI.help.foe}`);
+  ok('성광은 대상을 보고 가른다', AI.holy.me>0&&AI.holy.foe>0,
+     `나(야행성) ${AI.holy.me} · 제 몸 ${AI.holy.foe}`);
+
   /* ── 37.4b) 자동 구성은 **매번 다르고, 결국 카드를 다 쓴다** ──────
      성권: "모든 카드를 써볼 수 있도록 속성별로 프리셋을 여러개 만들고 누를 때마다
      그 덱들이 랜덤으로 나오게."

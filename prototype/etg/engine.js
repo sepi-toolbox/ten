@@ -3,7 +3,7 @@
    게임(index.html)과 카드 에디터(edit.html)가 **이 한 벌**을 같이 쓴다. */
 'use strict';
 
-const VERSION='0.44.0', BUILD='2026-09-02';
+const VERSION='0.45.0', BUILD='2026-09-02';
 /* ⚠ 제목줄은 없다 — 성권: "배틀 유아이에서도 헤더 지우고 넓게 써".
    판 번호는 덱 화면 발치 한 줄에만 남는다(배포 확인이 이 번호에 걸려 있다). */
 
@@ -1418,13 +1418,27 @@ function aiTurn(){
    무작위로 고르면 제 유닛에 저격을 쏘게 된다.
    (원작 AI 는 판을 점수 매겨 고르지만 여기서는 '해롭냐 이롭냐' 두 갈래만 본다 —
    상대의 수읽기를 내가 정했다는 것은 7절 머리말에 이미 적어 뒀다.) */
+/* ⚠⚠ **여기 빠진 능력은 상대가 아무 데나 쓴다.**
+   분류가 없으면 aiTarget 이 '가릴 수 없으니 아무거나' 로 떨어지고, 그러면 상대가
+   **나에게 이로운 카드를 내 몸에 걸어 준다.** 성권: "상대가 뭔가 나한테 이득인 카드를
+   내 몬스터에 써주는 거 같은데..?" — 실제로 성광·기물 봉인이 그랬다.
+   ⚠ 새 능력에 대상을 붙일 때는 반드시 둘 중 하나에 넣을 것. 검사가 빠진 것을 센다. */
 const AIHARM=new Set(['snipe','v_rewind','lobotomize','v_mutation','v_improve','liquid',
   'nightmare','poison','freeze','v_bblood','v_slow','v_cseed','paradox','web','antimatter',
   'v_icebolt','v_firebolt','v_drainlife','lightning','swave','devour','butterfly',
-  'gpullspell','virusinfect','guard','fractal','destroy','v_steal','earthquake']);
+  'gpullspell','virusinfect','guard','fractal','destroy','v_steal','earthquake',
+  'aflatoxin','accretion']);
 const AIHELP=new Set(['bless','mend','platearmor','momentum','quint','adrenaline','cpower',
   'wisdom','v_readiness','mitosisspell','acceleration','purify','parallel','rage','v_endow',
-  'v_nymph','immolate','catapult','v_flyingweapon']);
+  'v_nymph','immolate','catapult','v_flyingweapon','enchant']);
+/* 어느 쪽인지 **대상을 봐야** 정해지는 능력. 성광은 야행성 몸에게는 피해,
+   그 밖에는 회복이다 — 한쪽으로 못 박으면 반은 틀린다. */
+const AISMART={
+  v_holylight:(x,p,f)=>{
+    const noct=x&&x.flags&&x.flags.includes('nocturnal');
+    return noct ? (x.own===f) : (x===p||x.own===p);
+  },
+};
 function aiTarget(kind,p,id,src){
   /* ⚠ 사람이 고를 수 있는 것과 **같은 목록**에서 고른다. 예전엔 여기만 따로 짜서
      실체 없는 몸을 겨누거나, 빈 목록에서 null 을 돌려주고 그대로 발동했다. */
@@ -1432,7 +1446,8 @@ function aiTarget(kind,p,id,src){
   if(!pool.length)return null;
   const f=foe(p);
   const side=x=>(x===f||x===p)?x:(x.own||null);
-  const want=AIHARM.has(id)?pool.filter(x=>side(x)===f)
+  const want=AISMART[id]?pool.filter(x=>AISMART[id](x,p,f))
+            :AIHARM.has(id)?pool.filter(x=>side(x)===f)
             :AIHELP.has(id)?pool.filter(x=>side(x)===p):[];
   const use=want.length?want:pool;
   return use[rnd(use.length)];
@@ -2379,7 +2394,7 @@ window.ETGDBG={get G(){return G;},SK,MISS,POOLS,CARD,BYNAME,playable,startGame,a
   deckList,endTurn,render,attack,kill,summon,mk,playCard,useAbility,draw,canPlay,
   showZoom,etgCardHTML,VERSION,playPerm,syncAuras,spellDmg,destroyPerm,ruleText,trueAtk,targetsFor,
   MOD,get MODREF(){return MOD;},setMod(m){MOD=m;},saveMod,applyMod,modded,ORIG,
-  DECKPLAN,get AUTOPLAN(){return AUTOPLAN;},
+  DECKPLAN,get AUTOPLAN(){return AUTOPLAN;},AIHARM,AIHELP,AISMART,aiTarget,
   /* ⚠ FLAGKO 만 내보내면 뜻풀이(FLAGDEF)와 카드 종류 이름(KINDKO)이 문서 만드는 쪽에
      따로 베껴져 곧 어긋난다. 낱말집은 **한 벌만** 있어야 한다. */
   ELKO,FLAGKO,FLAGDEF,KINDKO,ELC,MODKEY,esc,modFromHash};
