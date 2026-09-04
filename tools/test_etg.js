@@ -1398,6 +1398,47 @@ const TEN =path.join(__dirname,'..','data','cards.json');
   ok('화면 높이가 변해도 판이 안 움직인다', hspread<0.6,
      `${HOFF.join(' / ')} (차이 ${hspread.toFixed(1)}px)`);
 
+  /* ── 37.3) 기동효과는 **값이 구슬로 적혀 있다** ────────────────────
+     성권: "자원소모하는 기동효과들 — 효과 이름 [자원아이콘]: 효과 이런식으로.
+     자원 두 개 이상을 숫자로 적지 말고 개수만큼 연달아 표기해줘."
+     ⚠⚠ 인쇄된 원문은 `포식 — 자기보다 …` 꼴이라 **비용이 글에 없었다.** 아무 때나
+       공짜로 쓰는 것처럼 읽힌다. 값을 구슬로, 개수만큼 그린다. */
+  const ACT=await p.evaluate(()=>{
+    const D=window.ETGDBG;
+    const bad=[], num=[];
+    let n=0;
+    ETG.cards.filter(c=>!c.up&&D.playable(c)&&c.kind!=='spell'&&c.cast>0
+                        &&c.sk.some(s=>s.ev==='cast')&&!c.txt).forEach(c=>{
+      n++;
+      const d=document.createElement('div');
+      d.innerHTML=D.etgCardHTML(c,{size:'md'});
+      const eff=d.querySelector('.teff');
+      const want=D.ELKO[c.castel];
+      const pips=[...eff.querySelectorAll('.elp')].filter(i=>i.getAttribute('title')===want);
+      /* ① 값만큼 구슬이 있는가 */
+      if(pips.length<c.cast) bad.push(`${c.ko} 구슬 ${pips.length}/${c.cast}`);
+      /* ② 쌍점으로 '자원을 내고 쓴다' 를 말하는가 */
+      if(!/:/.test(eff.textContent)) bad.push(`${c.ko} 쌍점 없음`);
+      /* ③ 숫자로 적힌 자리가 남아 있지 않은가 ('2 중력' 같은 것) */
+      if(new RegExp('\\d+\\s*'+want).test(eff.textContent)) num.push(c.ko);
+    });
+    /* 확대창도 같은 표기여야 한다 — 한쪽만 숫자면 둘을 다른 것으로 읽는다 */
+    const u=D.BYNAME['Otyugh'];
+    D.startGame(D.deckList(D.autoDeck(3)),3);
+    D.showZoom(u,null);
+    const z=document.getElementById('zoom');
+    const zp=[...z.querySelectorAll('.elp')].map(i=>i.getAttribute('title'));
+    /* ⚠ 확대창 머리에는 **카드 자신의 비용**('비용 1 중력')이 숫자로 적힌다 — 그건
+       기동 비용이 아니다. 여기서 볼 것은 능력 칸('언제')뿐이다. */
+    const znum=[...z.querySelectorAll('.zdef .kc')].some(e=>/\d+\s*중력/.test(e.textContent));
+    return {n,bad,num,zoomPips:zp.filter(t=>t==='중력').length,znum};});
+  ok('기동 비용이 구슬로 적힌다', ACT.bad.length===0,
+     ACT.bad.slice(0,3).join(' · ')||`${ACT.n}장 확인`);
+  ok('기동 비용을 숫자로 안 적는다', ACT.num.length===0,
+     ACT.num.slice(0,3).join(' · ')||'없음');
+  ok('확대창도 같은 표기', ACT.zoomPips>=1&&!ACT.znum,
+     `확대창 구슬 ${ACT.zoomPips}개 · 숫자 표기 ${ACT.znum}`);
+
   /* ── 37.4a) 상대가 **나를 도와주지 않는다** ────────────────────────
      성권: "상대가 뭔가 나한테 이득인 카드를 내 몬스터에 써주는 거 같은데..?"
      ⚠⚠ 맞았다. aiTarget 은 능력을 '해로움/이로움' 표로 가르는데, **표에 없는 능력은
