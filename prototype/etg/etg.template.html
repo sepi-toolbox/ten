@@ -352,7 +352,7 @@ body.deckmode .wrap{height:auto}
 <script src="data.js"></script>
 <script>
 'use strict';
-const VERSION='0.43.0', BUILD='2026-09-02';
+const VERSION='0.44.0', BUILD='2026-09-02';
 /* ⚠ 제목줄은 없다 — 성권: "배틀 유아이에서도 헤더 지우고 넓게 써".
    판 번호는 덱 화면 발치 한 줄에만 남는다(배포 확인이 이 번호에 걸려 있다). */
 
@@ -2534,7 +2534,9 @@ function screenBuild(){
   <div class="panel">
     <div class="ctl" style="justify-content:space-between">
       <div class="hint ${n<DECKMIN||n>DECKMAX?'idle':'act'}">덱 ${n}장 ${
-        n<DECKMIN?`· ${DECKMIN-n}장 더`:n>DECKMAX?`· ${n-DECKMAX}장 많다`:'· 준비됐다'}</div>
+        n<DECKMIN?`· ${DECKMIN-n}장 더`:n>DECKMAX?`· ${n-DECKMAX}장 많다`:'· 준비됐다'}${
+        /* 무엇으로 짠 덱인지 — 이름이 없으면 '자동 구성' 이 그냥 무작위로만 보인다 */
+        AUTOPLAN?` <span style="opacity:.7">· ${esc(AUTOPLAN.n)}</span>`:''}</div>
       <span class="ctl">
         <button class="ghost" id="auto">자동 구성</button>
         <button class="ghost" id="clr">비우기</button>
@@ -2579,29 +2581,87 @@ function screenBuild(){
   });
   $('#clr').onclick=()=>{DKB={};screenBuild();};
   $('#home').onclick=()=>{ location.href='../index.html';   /* ⚠ '../' 는 file:// 에서 목록이 뜬다 */ };
+  /* 누를 때마다 다른 덱이 나온다 — 그게 이 단추의 전부다 */
   $('#auto').onclick=()=>{DKB=autoDeck(BUILD_EL);screenBuild();};
   $('#go').onclick=()=>{ startGame(deckList(DKB),BUILD_MARK); };
 }
 /* 자동 구성 — 기둥 12 + 싼 것 위주
    @지어냄: 이 배합(기둥 12장 + 싼 카드 위주 30장). 원작에는 '자동 구성' 이 없다 —
    덱 짜기를 처음부터 하지 않아도 바로 놀아 볼 수 있게 내가 정한 것이다. */
-function autoDeck(el){
+/* ── 자동 구성 ─────────────────────────────────────────────────────────
+   성권: "모든 카드를 써볼 수 있도록 속성별로 프리셋을 여러개 만들고 누를 때마다
+   그 덱들이 랜덤으로 나오게."
+
+   ⚠⚠ 예전 자동 구성은 **늘 같은 덱**이었다 — 싼 카드부터 채웠기 때문에 비싼 카드는
+     영영 손에 안 들어왔다. 카드를 다 만들어 놓고 절반을 못 써 보는 셈이었다.
+
+   ■ 왜 덱 목록을 손으로 12속성 × N개 적지 않았나
+     그건 성권이 정할 **설계**지 내가 지어낼 것이 아니고, 카드를 하나 고칠 때마다
+     그 목록이 낡는다. 대신 **짜는 방식**을 몇 가지 두고, 거기에 **아직 안 나온 카드부터
+     쓰는 차례표**를 얹었다. 그러면 눌러 보는 것만으로 그 속성 카드를 전부 지나간다.
+     (손으로 고른 프리셋이 필요하면 그때 이 표에 얹으면 된다.) */
+const DECKPLAN=[
+  {n:'돌격',      p:6,  ok:c=>c.cost<=3},
+  {n:'중반 싸움',  p:8,  ok:c=>c.cost>=3&&c.cost<=6},
+  {n:'후반 한 방', p:10, ok:c=>c.cost>=6},
+  {n:'유닛 위주',  p:7,  ok:c=>c.kind==='creature'},
+  {n:'액션·노드',  p:8,  ok:c=>c.kind!=='creature'},
+  {n:'뒤죽박죽',   p:7,  ok:()=>true},
+];
+/* 속성마다 '아직 안 써 본 카드' 차례표. 다 돌면 새로 섞는다 —
+   그래서 계속 누르면 그 속성 카드를 **빠짐없이** 한 번씩 지나간다. */
+const COVERQ={};
+let AUTOPLAN=null;      /* 방금 무엇으로 짰는지 — 화면에 이름을 보여 준다 */
+function coverQ(el,pool){
+  if(!COVERQ[el]||!COVERQ[el].length) COVERQ[el]=shuffle(pool.slice());
+  return COVERQ[el];
+}
+function autoDeck(el,plan){
+  /* 같은 것이 연달아 나오면 '랜덤이 아니다' 로 읽힌다 — 직전 것은 피한다 */
+  if(!plan){
+    let list=DECKPLAN.filter(x=>x!==AUTOPLAN);
+    plan=list[rnd(list.length)]||DECKPLAN[0];
+  }
+  AUTOPLAN=plan;
   const d={};
-  const pool=POOLS[el].filter(c=>!c.sk.some(s=>s.id==='pillar'||s.id==='pend'));
+  const all=POOLS[el].filter(c=>!c.sk.some(s=>s.id==='pillar'||s.id==='pend'));
   const pillar=POOLS[el].find(c=>c.sk.some(s=>s.id==='pillar'));
-  if(pillar) d[pillar.code]=6;
-  const qp=BYNAME['Quantum Pillar']; if(qp&&playable(qp)) d[qp.code]=6;
-  const sorted=pool.slice().sort((a,b)=>a.cost-b.cost);
-  let n=12;
-  for(const c of sorted){ if(n>=DECKMIN+6)break; const k=Math.min(COPYMAX,DECKMIN+6-n);
-    d[c.code]=k; n+=k; }
+  const qp=BYNAME['Quantum Pillar'];
+  /* 기둥 — 제 속성 기둥을 먼저 채우고(6장 상한) 모자라면 양자 기둥으로 메운다 */
+  let np=plan.p;
+  if(pillar){ d[pillar.code]=Math.min(COPYMAX,np); np-=d[pillar.code]; }
+  if(np>0&&qp&&playable(qp)) d[qp.code]=Math.min(COPYMAX,np);
+  let n=Object.values(d).reduce((a,b)=>a+b,0);
+
+  /* ⚠ 거르고 나서 남는 카드가 너무 적은 속성이 있다(후반 한 방 · 액션 위주 …).
+     그럴 때 억지로 채우면 덱이 30장을 못 넘겨 '싸우러 간다' 가 잠긴다.
+     짜는 방식은 **우선순위**로만 쓰고, 모자라면 나머지 카드로 채운다. */
+  const first=all.filter(plan.ok), rest=all.filter(c=>!plan.ok(c));
+  const q=coverQ(el,all);
+  const order=q.filter(c=>first.includes(c)).concat(
+              q.filter(c=>rest.includes(c)));
+  const used=[];
+  for(const c of order){
+    if(n>=DECKMIN+4)break;
+    /* 싼 카드는 여러 장, 비싼 카드는 한두 장 — 뽑히는 흐름을 그럴듯하게 */
+    const want=c.cost<=2?4:c.cost<=5?3:2;
+    const k=Math.min(COPYMAX,want,DECKMIN+4-n);
+    if(k<=0)break;
+    d[c.code]=(d[c.code]||0)+k; n+=k; used.push(c);
+  }
+  /* 이번에 쓴 카드는 차례표 뒤로 보낸다 — 다음에 누르면 다른 카드가 나온다 */
+  COVERQ[el]=q.filter(c=>!used.includes(c)).concat(used);
   return d;
 }
 
 /* ── 판 시작 ───────────────────────────────────────────────────────────── */
 function startGame(deck,mark){
   const aiEl=1+rnd(12);
+  /* ⚠ 상대 덱도 같은 함수로 짓는다(그래서 상대도 매번 다르다). 다만 AUTOPLAN 은
+     **덱 화면에 성권이 무엇으로 짰는지** 보여 주는 값이므로 상대 덱이 덮어쓰면 안 된다. */
+  const keepPlan=AUTOPLAN;
   const aiDeck=deckList(autoDeck(aiEl));
+  AUTOPLAN=keepPlan;
   G={me:newPlayer(deck,mark,'나'),ai:newPlayer(aiDeck,aiEl,'상대'),turn:null,log:[],over:false};
   for(let i=0;i<7;i++){ draw(G.me); draw(G.ai); }
   G.turn=G.me;
@@ -2668,6 +2728,7 @@ window.ETGDBG={get G(){return G;},SK,MISS,POOLS,CARD,BYNAME,playable,startGame,a
   deckList,endTurn,render,attack,kill,summon,mk,playCard,useAbility,draw,canPlay,
   showZoom,etgCardHTML,VERSION,playPerm,syncAuras,spellDmg,destroyPerm,ruleText,trueAtk,targetsFor,
   MOD,get MODREF(){return MOD;},setMod(m){MOD=m;},saveMod,applyMod,modded,ORIG,
+  DECKPLAN,get AUTOPLAN(){return AUTOPLAN;},
   /* ⚠ FLAGKO 만 내보내면 뜻풀이(FLAGDEF)와 카드 종류 이름(KINDKO)이 문서 만드는 쪽에
      따로 베껴져 곧 어긋난다. 낱말집은 **한 벌만** 있어야 한다. */
   ELKO,FLAGKO,FLAGDEF,KINDKO,ELC,MODKEY,esc,modFromHash};

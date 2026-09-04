@@ -1398,6 +1398,46 @@ const TEN =path.join(__dirname,'..','data','cards.json');
   ok('화면 높이가 변해도 판이 안 움직인다', hspread<0.6,
      `${HOFF.join(' / ')} (차이 ${hspread.toFixed(1)}px)`);
 
+  /* ── 37.4b) 자동 구성은 **매번 다르고, 결국 카드를 다 쓴다** ──────
+     성권: "모든 카드를 써볼 수 있도록 속성별로 프리셋을 여러개 만들고 누를 때마다
+     그 덱들이 랜덤으로 나오게."
+     ⚠⚠ 예전 자동 구성은 싼 카드부터 채워 **늘 같은 덱**이었다 — 비싼 카드는 영영
+       손에 안 들어왔다. 그러니 여기서 재야 하는 것은 셋이다.
+       ① 눌러 보면 그 속성 카드를 **빠짐없이** 지나가는가
+       ② 매번 다른 덱인가
+       ③ 그러면서도 **늘 낼 수 있는 덱**인가(30~60장·같은 카드 6장까지) */
+  const AUTO=await p.evaluate(()=>{
+    const D=window.ETGDBG;
+    const bad=[], sizes=[], plans=new Set();
+    let worst=0;
+    for(let el=1;el<=12;el++){
+      const pool=D.POOLS[el].filter(c=>!c.sk.some(s=>s.id==='pillar'||s.id==='pend'));
+      const seen=new Set(); let press=0;
+      for(let i=0;i<20;i++){
+        const d=D.autoDeck(el); press++;
+        plans.add(D.AUTOPLAN.n);
+        const n=Object.values(d).reduce((a,b)=>a+b,0);
+        sizes.push(n);
+        if(n<30||n>60) bad.push(`${D.ELKO[el]} ${n}장`);
+        for(const k in d) if(d[k]>6) bad.push(`${D.CARD[+k].ko} ${d[k]}장`);
+        Object.keys(d).forEach(k=>{ const c=D.CARD[+k]; if(pool.includes(c)) seen.add(+k); });
+        if(seen.size>=pool.length) break;
+      }
+      if(seen.size<pool.length) bad.push(`${D.ELKO[el]} 카드 ${pool.length-seen.size}장 안 나옴`);
+      worst=Math.max(worst,press);
+    }
+    /* 연달아 같은 방식이 나오면 '랜덤이 아니다' 로 읽힌다 */
+    let same=0, prev=null;
+    for(let i=0;i<30;i++){ D.autoDeck(3); if(D.AUTOPLAN.n===prev) same++; prev=D.AUTOPLAN.n; }
+    return {bad,plans:[...plans],worst,same,
+            min:Math.min(...sizes),max:Math.max(...sizes)};});
+  ok('자동 구성이 그 속성 카드를 다 쓴다', AUTO.bad.length===0,
+     AUTO.bad.slice(0,3).join(' · ')||`속성마다 ${AUTO.worst}번 안에 전부`);
+  ok('자동 구성이 매번 같지 않다', AUTO.plans.length>=5&&AUTO.same===0,
+     `짜는 방식 ${AUTO.plans.length}가지 · 연속 반복 ${AUTO.same}번`);
+  ok('자동 구성은 늘 낼 수 있는 덱', AUTO.min>=30&&AUTO.max<=60,
+     `${AUTO.min}~${AUTO.max}장`);
+
   /* ── 37.45) 손패가 비어도 판이 안 움직인다 ────────────────────────
      성권(사진): "패가 없을때 화면처럼 유아이 위치가 또 갑자기 바뀌어버림"
      ⚠⚠ 손패 줄은 카드가 있을 때만 높이를 가졌다. 마지막 장을 내는 순간 그 줄이 0 이 되고

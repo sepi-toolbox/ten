@@ -15,4 +15,4 @@
 - **상대의 수읽기. 원작(openEtG)의 AI 는 판을 점수 매겨 고르는 물건인데 여기 옮기지 않았다. 지금 상대는 '기둥이 모자라면 기둥부터, 아니면 싼 것부터' 낼 뿐이다 — 규칙이 아니라 **연습 상대**로 둔 것이다.**
   <br><sub>prototype/etg/etg.template.html:1736</sub>
 - **이 배합(기둥 12장 + 싼 카드 위주 30장). 원작에는 '자동 구성' 이 없다 — 덱 짜기를 처음부터 하지 않아도 바로 놀아 볼 수 있게 내가 정한 것이다.**
-  <br><sub>prototype/etg/etg.template.html:2586</sub>
+  <br><sub>prototype/etg/etg.template.html:2589</sub>
