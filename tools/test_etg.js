@@ -1398,6 +1398,67 @@ const TEN =path.join(__dirname,'..','data','cards.json');
   ok('화면 높이가 변해도 판이 안 움직인다', hspread<0.6,
      `${HOFF.join(' / ')} (차이 ${hspread.toFixed(1)}px)`);
 
+  /* ── 37.2) 덱에 넣을 수 있는 카드 **전수검사** ──────────────────────
+     성권: "덱에 넣는 카드가 아니면 덱에 못넣게 해야지; 파편골렘 여전히 덱에 넣을 수
+     있어. 이런거 전수조사해"
+
+     ⚠⚠ 걸러내는 조건이 `c.kind==='perm' && token` 이었다. 그런데 원작 표에서 token 이
+       붙은 카드는 **넷 다 유닛**이라(악성 세포·특이점·파편 골렘·잿더미) 그 줄은
+       **한 장도 거르지 못하고** 있었다. 조건이 있으니 되는 줄 알았던 것이다.
+     ⚠ 그래서 여기서는 우리 데이터가 아니라 **원작 표(cards.csv)를 직접 읽어** 대조한다.
+       우리 쪽 표시가 틀어져 있으면 우리 표시로 재는 검사는 같이 틀어진다. */
+  {
+    const fs=require('fs');
+    const csv=fs.readFileSync(path.join(__dirname,'..','data','etg_src','cards.csv'),'utf8');
+    const srcTok=new Set(), srcName={};
+    csv.split('\n').filter(Boolean).forEach(l=>{
+      const r=l.split('|');
+      if(r.length!==10)return;
+      srcName[+r[0]]=r[1];
+      if((r[9]||'').split('+').indexOf('token')>=0) srcTok.add(+r[0]);
+    });
+    const POOL=await p.evaluate(()=>{
+      const D=window.ETGDBG, out=[];
+      for(const e in D.POOLS) D.POOLS[e].forEach(c=>out.push(
+        {code:c.code,ko:c.ko,en:c.en,up:c.up,sk:c.sk.map(s=>s.id)}));
+      const skills=Object.keys(D.SK);
+      const dropped=ETG.cards.filter(c=>!c.up&&!D.playable(c))
+        .map(c=>({code:c.code,ko:c.ko,en:c.en}));
+      return {pool:out,skills,dropped};});
+    const bad=[];
+    POOL.pool.forEach(c=>{
+      if(c.up) bad.push(`${c.ko} 강화판`);
+      if(srcTok.has(c.code)) bad.push(`${c.ko} 토큰`);
+      if(/^Mark of /.test(c.en)) bad.push(`${c.ko} 문장 카드`);
+      c.sk.forEach(id=>{ if(POOL.skills.indexOf(id)<0) bad.push(`${c.ko} 미구현 ${id}`); });
+    });
+    ok('덱에 못 넣을 카드가 목록에 없다', bad.length===0,
+       bad.slice(0,4).join(' · ')||`${POOL.pool.length}장 확인`);
+    /* ⚠ 반대쪽도 본다 — 멀쩡한 카드를 실수로 빼 버리면 그건 그것대로 조용한 손실이다 */
+    const wrong=POOL.dropped.filter(c=>!srcTok.has(c.code)&&!/^Mark of /.test(c.en));
+    ok('멀쩡한 카드를 빼지 않았다', wrong.length===0,
+       wrong.slice(0,4).map(c=>c.ko).join(' · ')
+       ||`뺀 카드 ${POOL.dropped.length}장 = 문장 12 + 토큰 ${srcTok.size/2}`);
+    /* ⚠⚠ 뺐다고 **판에 못 나오는 것은 아니다.** 토큰은 능력이 만들어 내는 몸이라,
+       덱에서 빼면서 소환까지 막히면 불사조·신성·완전의 파편이 통째로 죽는다. */
+    const TOK=await p.evaluate(()=>{
+      const D=window.ETGDBG;
+      D.startGame(D.deckList(D.autoDeck(6)),6);
+      const G=D.G; G.me.q=new Array(13).fill(60);
+      const ph=D.summon(G.me,D.BYNAME['Phoenix'].code); D.kill(ph);
+      const ash=G.me.cr.some(u=>u&&u.c.en==='Ash');
+      for(let i=0;i<3;i++){ const n=D.mk(D.BYNAME['Nova'].code,G.me);
+        G.me.hand=[n]; D.playCard(G.me,n,null); }
+      const sing=G.me.cr.some(u=>u&&u.c.en==='Singularity');
+      G.me.hand=[D.mk(D.BYNAME['Shard of Bravery'].code,G.me)];
+      const it=D.mk(D.BYNAME['Shard of Integrity'].code,G.me); G.me.hand.push(it);
+      D.playCard(G.me,it,null);
+      const golem=G.me.cr.some(u=>u&&u.c.en==='Shard Golem');
+      return {ash,sing,golem};});
+    ok('토큰은 능력으로는 여전히 나온다', TOK.ash&&TOK.sing&&TOK.golem,
+       `잿더미 ${TOK.ash} · 특이점 ${TOK.sing} · 파편 골렘 ${TOK.golem}`);
+  }
+
   /* ── 37.3) 기동효과는 **값이 구슬로 적혀 있다** ────────────────────
      성권: "자원소모하는 기동효과들 — 효과 이름 [자원아이콘]: 효과 이런식으로.
      자원 두 개 이상을 숫자로 적지 말고 개수만큼 연달아 표기해줘."

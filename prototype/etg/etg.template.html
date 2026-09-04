@@ -352,7 +352,7 @@ body.deckmode .wrap{height:auto}
 <script src="data.js"></script>
 <script>
 'use strict';
-const VERSION='0.46.0', BUILD='2026-09-02';
+const VERSION='0.47.0', BUILD='2026-09-02';
 /* ⚠ 제목줄은 없다 — 성권: "배틀 유아이에서도 헤더 지우고 넓게 써".
    판 번호는 덱 화면 발치 한 줄에만 남는다(배포 확인이 이 번호에 걸려 있다). */
 
@@ -1230,7 +1230,12 @@ const MISS=new Set();
 const MARKCARD=new Set(ETG.cards.filter(c=>/^Mark of /.test(c.en)).map(c=>c.code));
 function playable(c){
   if(MARKCARD.has(c.code)) return false;
-  if(c.kind==='perm'&&c.flags.includes('token')) return false;
+  /* ⚠⚠ 예전에는 `c.kind==='perm' && token` 이라고 적어 두었다. 그런데 원작 표에서
+     token 이 붙은 카드는 **넷 다 유닛**이다(악성 세포·특이점·파편 골렘·잿더미).
+     그래서 이 줄은 **한 장도 거르지 못하고** 있었고, 성권이 파편 골렘을 덱에 넣을 수
+     있었다. 토큰은 능력이 만들어 내는 몸이라 종류를 가리지 않고 전부 뺀다.
+     ⚠ 조건에 종류를 섞어 적지 말 것 — 걸러지는지 눈으로 확인하기 어려워진다. */
+  if(c.flags.includes('token')) return false;
   for(const s of c.sk){ if(!SK[s.id]){ MISS.add(s.id); return false; } }
   return true;
 }
