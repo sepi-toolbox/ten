@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light only">
+<title>TEN — 카드 배틀러 작업실</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@700;900&family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root{
+  --paper:#EDEFF2;--paper-2:#E3E6EB;--ink:#141821;--ink-soft:#4A5364;--ink-faint:#8A94A6;--rule:#C6CCD6;
+  --fire:#C1462E;--water:#2A6FB5;--nature:#3F8B3A;--steel:#6B7686;--earth:#8A6A33;--dark:#5B3E86;--light:#B8912A;
+  --ok:#0F8A80;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:'Noto Sans KR',sans-serif;
+  -webkit-font-smoothing:antialiased;padding:26px 16px 70px;line-height:1.7}
+.wrap{max-width:840px;margin:0 auto}
+.meta{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint)}
+h1{font-family:'Gothic A1',sans-serif;font-weight:900;font-size:clamp(30px,6vw,44px);letter-spacing:-.03em;line-height:1.05;margin-top:4px}
+.lede{font-size:15px;color:var(--ink-soft);font-weight:300;max-width:60ch;margin:12px 0 4px}
+h2{font-family:'Gothic A1',sans-serif;font-weight:900;font-size:17px;margin:40px 0 4px;padding-top:16px;border-top:2px solid var(--ink)}
+h2 span{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;color:var(--ink-faint);
+  letter-spacing:.16em;display:block;margin-bottom:5px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-top:14px}
+a.card{display:block;text-decoration:none;border:1px solid var(--rule);border-left:5px solid var(--c,var(--ink));
+  border-radius:7px;padding:13px 16px;background:var(--paper-2);transition:.16s}
+a.card:hover{transform:translateY(-2px);box-shadow:0 5px 14px rgba(20,24,33,.13);background:#fff}
+a.card b{display:block;font-family:'Gothic A1',sans-serif;font-weight:700;font-size:15px;color:var(--ink);letter-spacing:-.01em}
+a.card s{display:block;text-decoration:none;font-size:12.5px;color:var(--ink-soft);font-weight:300;margin-top:3px;line-height:1.55}
+a.play{grid-column:1/-1;--c:var(--ok);background:linear-gradient(100deg,#141821,#242c3d);border-color:#141821}
+a.play b{color:#fff;font-size:19px}
+a.play s{color:#B6C0D0}
+.foot{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-faint);margin-top:44px;
+  padding-top:14px;border-top:1px solid var(--rule);line-height:1.9}
+.foot a{color:var(--ink-soft)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="meta">SEPI-TOOLBOX / TEN</div>
+<h1>TEN — 카드 배틀러 작업실</h1>
+<p class="lede">슬롯 10개. 크리처끼리 싸우지 않고, 각자 턴이 끝날 때 상대를 자동으로 때린다.
+개입 수단은 <b>스펠</b>과 <b>수호</b>뿐. 아래는 플레이 가능한 프로토타입과 설계 문서들이다.</p>
+
+<h2><span>01 — 플레이</span>직접 해보기</h2>
+<div class="grid">
+  <a class="play" href="prototype/"><b>▶ 프로토타입 플레이</b><s><b>배틀</b> — 속성별 단색 덱 7종을 골라 바로 플레이. <b>로그라이크</b> — 지도에서 경로를 고르고, 이기며 덱을 키워 보스까지. 카드 140종 + 강화 140종.</s></a>
+  <a class="play" style="--c:var(--water)" href="prototype/etg/"><b>◇ 엘리멘츠 대전 (실험 · 별도 앱)</b><s><b>Elements the Game</b> 의 카드 239종과 규칙을 그대로 옮긴 <b>다른 게임</b>. 퀀텀이 속성별로 쌓이고, 막기가 없고, 문장이 있다. TEN 본편과 카드도 규칙도 엔진도 공유하지 않는다. 홈 화면에 <b>따로 깔린다</b>.</s></a>
+  <a class="card" style="--c:var(--gold,#c9a24b)" href="cards/"><b>카드 목록 (뷰어 · 앱)</b><s>덱별로 묶어 실제 게임 규격 그대로 본다. 원정 적 35명의 난이도별 덱, 희귀도·속성·종류 필터와 검색. 홈 화면에 앱으로 깔 수 있고 오프라인에서도 열린다</s></a>
+  <a class="card" style="--c:var(--steel)" href="gallery.html"><b>카드 갤러리 (구판)</b><s>옛 흰 배경 목록 — 규격이 게임과 다르다. 새 목록을 볼 것</s></a>
+  <a class="card" style="--c:var(--steel)" href="editor.html"><b>카드 에디터</b><s>이름·코스트·능력치·아트를 편집하고 JSON으로 내보낸다</s></a>
+</div>
+
+<h2><span>02 — 설계 문서</span>규칙이 왜 이렇게 됐는가</h2>
+<div class="grid">
+  <a class="card" style="--c:var(--dark)" href="docs/sample_decks.html"><b>속성별 견본 덱 140종</b><s>7속성 × 20종 역디자인 — 메커니즘·카드 목록·커브·키워드 예산표</s></a>
+  <a class="card" style="--c:var(--earth)" href="docs/land_system.html"><b>지형 시스템</b><s>지형 매수 확률 계산과 유색/무색 코스트 개편</s></a>
+  <a class="card" style="--c:var(--fire)" href="docs/meta_design.html"><b>메타 설계</b><s>아키타입·상성·위협↔해답 짝짓기</s></a>
+  <a class="card" style="--c:var(--nature)" href="docs/element_design.html"><b>7속성 설계</b><s>속성마다 메인 테마 1 + 서브 테마 2, 그리고 가격 규칙</s></a>
+  <a class="card" style="--c:var(--water)" href="docs/keywords.html"><b>크리처 키워드</b><s>속성별 키워드 14종과 예산 환산·상성</s></a>
+  <a class="card" style="--c:var(--light)" href="docs/spells.html"><b>시그니처 스펠</b><s>속성별 대표 스펠 14종과 티어 확장</s></a>
+  <a class="card" style="--c:var(--steel)" href="docs/effects_table.html"><b>효과 종합표 49종</b><s>속성·구분 필터가 붙은 전체 효과 목록</s></a>
+  <a class="card" style="--c:var(--ink-faint)" href="docs/design_deck.html"><b>최초 설계 덱</b><s>예산 공식이 처음 만들어진 문서</s></a>
+</div>
+
+<h2><span>03 — 아트 작업</span>이미지 생성용</h2>
+<div class="grid">
+  <a class="play" href="docs/art_prompts.html" style="--c:var(--fire)"><b>◈ 이미지 생성 프롬프트</b><s>프레임 21장 + 일러스트 140장. 상자마다 복사 버튼이 있어 ChatGPT에 바로 붙여넣을 수 있다.</s></a>
+</div>
+
+<div class="foot">
+저장소 · <a href="https://github.com/sepi-toolbox/ten">github.com/sepi-toolbox/ten</a><br>
+이 페이지는 <code>gh-pages</code> 브랜치에서 자동 게시된다. 갱신하려면 <code>python3 tools/build_pages.py</code>.
+</div>
+
+</div>
+</body>
+</html>

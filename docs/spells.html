@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light only">
+<title>TEN — 속성 스펠</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@700;900&family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDEFF2;--paper-2:#E3E6EB;--ink:#141821;--ink-soft:#4A5364;--ink-faint:#8A94A6;--rule:#C6CCD6;
+  --fire:#C1462E;--water:#2A6FB5;--nature:#3F8B3A;--steel:#6B7686;--earth:#8A6A33;--dark:#5B3E86;--light:#B8912A;
+  --ok:#0F8A80;--bad:#B03A3F;--warn:#B87400;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:'Noto Sans KR',sans-serif;
+  -webkit-font-smoothing:antialiased;padding:20px 16px 60px;line-height:1.7}
+.wrap{max-width:1020px;margin:0 auto}
+h1{font-family:'Gothic A1';font-weight:900;font-size:clamp(26px,4vw,38px);letter-spacing:-.03em;line-height:1.1}
+.lede{font-size:15px;color:var(--ink-soft);font-weight:300;max-width:66ch;margin:10px 0 6px}
+.meta{font-family:'JetBrains Mono';font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint)}
+h2{font-family:'Gothic A1';font-weight:900;font-size:clamp(18px,2.4vw,23px);margin:40px 0 6px;padding-top:18px;border-top:2px solid var(--ink)}
+h2 .n{font-family:'JetBrains Mono';font-size:11px;font-weight:500;color:var(--ink-faint);letter-spacing:.16em;display:block;margin-bottom:6px}
+p{font-size:14px;color:var(--ink-soft);font-weight:300;max-width:70ch}
+p b,td b{color:var(--ink);font-weight:700}
+.note{font-family:'JetBrains Mono';font-size:11.5px;color:var(--ink-faint);line-height:1.65;margin-top:10px}
+table{border-collapse:collapse;width:100%;font-size:13px;margin:12px 0}
+th{text-align:left;font-family:'JetBrains Mono';font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-faint);padding:0 10px 8px 0;border-bottom:1.5px solid var(--ink);white-space:nowrap}
+td{padding:8px 10px 8px 0;border-bottom:1px solid var(--rule);color:var(--ink-soft);vertical-align:top}
+td:first-child{color:var(--ink);font-weight:700;white-space:nowrap}
+.mono{font-family:'JetBrains Mono';font-variant-numeric:tabular-nums}
+.tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.ok{color:var(--ok);font-weight:700}.warn{color:var(--warn);font-weight:700}
+
+.el{border:1px solid var(--rule);border-left:6px solid var(--c);border-radius:6px;padding:14px 18px;margin:16px 0;background:var(--paper-2);--c:var(--ink)}
+.el.fire{--c:var(--fire)}.el.water{--c:var(--water)}.el.nature{--c:var(--nature)}
+.el.steel{--c:var(--steel)}.el.earth{--c:var(--earth)}.el.dark{--c:var(--dark)}.el.light{--c:var(--light)}
+.el .eh{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:2px}
+.el h3{font-family:'Gothic A1';font-weight:900;font-size:20px;color:var(--c)}
+.el .theme{font-size:12.5px;color:var(--ink-faint);font-family:'JetBrains Mono'}
+.sp{background:var(--paper);border:1px solid var(--rule);border-radius:5px;padding:11px 14px;margin:10px 0}
+.sp .sh{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+.sp .name{font-family:'Gothic A1';font-weight:900;font-size:16px;color:var(--c)}
+.sp .cost{font-family:'JetBrains Mono';font-size:11px;font-weight:700;color:#fff;background:var(--c);border-radius:11px;padding:1px 9px}
+.sp .kind{font-family:'JetBrains Mono';font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-faint);border:1px solid var(--rule);border-radius:3px;padding:1px 6px}
+.sp .rule{font-size:13.5px;color:var(--ink);margin:6px 0 0;font-weight:400}
+.sp .why{font-size:12.5px;color:var(--ink-soft);font-weight:300;margin-top:5px}
+.sp .chk{font-family:'JetBrains Mono';font-size:11.5px;color:var(--ink-soft);margin-top:7px;padding-top:6px;border-top:1px dashed var(--rule)}
+.sp .chk b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="meta">TEN · ELEMENT SPELLS · 2026.07</div>
+<h1>속성 스펠 — 14종</h1>
+<p class="lede">속성마다 그 <b>자원 레버를 즉발로 구현한</b> 시그니처 스펠 2종. 크리처 키워드가 &ldquo;지속적으로 자원을 거래&rdquo;한다면, 스펠은 <b>그 거래를 한 번에</b> 성사시킨다. 티어 5종을 신설했고 14종 전부 검산을 통과했다.</p>
+
+<h2><span class="n">00 — 티어 확장</span>기존 3종 + 신설 5종</h2>
+<p>기존 티어는 단일 제거·광역·직접 피해뿐이었다. 속성 스펠을 가격 매기려면 강화·회복·바운스·소환·파쇄가 필요하다.</p>
+<div class="tbl-scroll">
+<table>
+<tr><th>코스트</th><th>단일</th><th>광역</th><th>직접</th><th>약화<br><span style="font-weight:400">×0.75</span></th><th>강화<br><span style="font-weight:400">×1.2</span></th><th>회복<br><span style="font-weight:400">×2.0</span></th><th>파쇄</th><th>바운스</th></tr>
+<tr><td class="mono">1</td><td class="mono">2</td><td class="mono">–</td><td class="mono">2</td><td class="mono">2</td><td class="mono">2</td><td class="mono">4</td><td class="mono">2</td><td class="mono">–</td></tr>
+<tr><td class="mono">2</td><td class="mono">4</td><td class="mono">2</td><td class="mono">3</td><td class="mono">3</td><td class="mono">5</td><td class="mono">8</td><td class="mono">4</td><td class="mono">–</td></tr>
+<tr><td class="mono">3</td><td class="mono">6</td><td class="mono">3</td><td class="mono">5</td><td class="mono">4</td><td class="mono">7</td><td class="mono">12</td><td class="mono">전체</td><td class="mono">1개체</td></tr>
+<tr><td class="mono">4</td><td class="mono">8</td><td class="mono">5</td><td class="mono">7</td><td class="mono">6</td><td class="mono">10</td><td class="mono">16</td><td class="mono">전체</td><td class="mono">3코↓ 전체</td></tr>
+<tr><td class="mono">5</td><td class="mono">12</td><td class="mono">7</td><td class="mono">10</td><td class="mono">9</td><td class="mono">14</td><td class="mono">24</td><td class="mono">전체</td><td class="mono">3코↓ 전체</td></tr>
+<tr><td class="mono">6</td><td class="mono">파괴</td><td class="mono">10</td><td class="mono">12</td><td class="mono">파괴</td><td class="mono">—</td><td class="mono">—</td><td class="mono">전체</td><td class="mono">3코↓ 전체</td></tr>
+</table>
+</div>
+<p class="note"><b>계수 근거</b> — <b>약화</b>는 몸체가 남아 상대 슬롯을 계속 점유시키므로 제거보다 약간 싸다(×0.75). <b>강화</b>는 대상이 제거되면 2장을 한 번에 잃는 리스크가 있어 약간 비싸다(×1.2). <b>회복</b>은 보드에 전혀 영향을 주지 않는 순수 방어라 수치가 크다(×2.0). <b>소환</b>은 별도 티어 없이 같은 코스트의 <b>크리처 예산</b>으로 환산한다.</p>
+
+<div class="el fire">
+  <div class="eh"><h3>불</h3><span class="theme">수명을 태워 즉발로 바꾼다</span></div>
+  <div class="sp"><div class="sh"><span class="cost">2</span><span class="name">분신</span><span class="kind">광역 · 자원 전환</span></div>
+    <p class="rule">내 크리처 1개체를 소멸시키고, <b>그 크리처의 ATK만큼</b> 적 전체 개체에 피해.</p>
+    <p class="why">불의 서브테마 &ldquo;태워서 즉발로&rdquo;를 그대로 카드화한 것. 연소 크리처가 어차피 사라질 운명이므로, <b>남은 수명을 현금화</b>하는 콤보가 성립한다.</p>
+    <div class="chk"><b>검산</b> 2코 광역 기준 2 → 실효 4 (평균 ATK 4 가정) <span class="warn">의도적 상향</span> · 대가: 카드 1장 + 슬롯 1칸</div></div>
+  <div class="sp"><div class="sh"><span class="cost">5</span><span class="name">겁화</span><span class="kind">광역 · 양날</span></div>
+    <p class="rule">적 전체 개체에 <b>9 피해.</b> 내 크리처 전체도 <b>3 피해</b>를 받는다.</p>
+    <p class="why">티어(5코 광역 7)를 넘는 화력을 자해로 산다. 불 덱은 어차피 크리처가 소멸하므로 손실이 상대적으로 작다 — 속성 정체성이 페널티를 완화하는 구조.</p>
+    <div class="chk"><b>검산</b> 5코 광역 기준 7 → 9 <span class="warn">자해 +2</span></div></div>
+</div>
+
+<div class="el water">
+  <div class="eh"><h3>물</h3><span class="theme">되돌려 다시 쓴다</span></div>
+  <div class="sp"><div class="sh"><span class="cost">3</span><span class="name">역류</span><span class="kind">바운스</span></div>
+    <p class="rule">상대 크리처 1개체를 <b>손으로 되돌린다</b> (코스트 제한 없음).</p>
+    <p class="why">6코 위협도 3마나로 되돌리지만 <b>영구히 없애지 못한다.</b> 물이 &ldquo;제거 없이 보드를 치우는&rdquo; 유일한 속성인 이유이며, 그 사이에 이겨야 한다는 압박이 붙는다.</p>
+    <div class="chk"><b>검산</b> 바운스 티어 3코 = 1개체 무제한 <span class="ok">적정</span></div></div>
+  <div class="sp"><div class="sh"><span class="cost">2</span><span class="name">환수</span><span class="kind">회수 + 드로우</span></div>
+    <p class="rule">내 크리처 1개체를 손으로 회수하고 <b>카드 1장을 뽑는다.</b></p>
+    <p class="why">&ldquo;소환 시&rdquo; 효과를 재사용하는 엔진. 어둠의 <b>대가</b>·빛의 <b>축복</b>처럼 소환 시 발동하는 키워드와 결합하면 밸류가 누적된다. 다만 덱 소진=패배 규칙이 드로우에 브레이크를 건다.</p>
+    <div class="chk"><b>검산</b> 자기 바운스(가치 낮음) + 드로우 1 ≈ 2코 <span class="ok">적정</span></div></div>
+</div>
+
+<div class="el nature">
+  <div class="eh"><h3>자연</h3><span class="theme">현재를 팔아 미래를 산다</span></div>
+  <div class="sp"><div class="sh"><span class="cost">3</span><span class="name">번성</span><span class="kind">강화</span></div>
+    <p class="rule">내 크리처 1개체에 <b>+2/+3</b>을 영구히 부여한다.</p>
+    <p class="why">성장의 즉발 버전. 성장 크리처에 얹으면 상대의 &ldquo;지금 제거할까&rdquo; 판단을 한 턴 앞당겨 강제한다.</p>
+    <div class="chk"><b>검산</b> 소모 2·2+3 = 7 / 강화 티어 3코 = 7 <span class="ok">적정</span></div></div>
+  <div class="sp"><div class="sh"><span class="cost">4</span><span class="name">번식</span><span class="kind">소환</span></div>
+    <p class="rule"><b>2/2 크리처 3개체</b>를 소환한다.</p>
+    <p class="why">공격 횟수를 한 번에 3회 늘린다 — 수호 벽을 갈아내는 군세의 핵심. 대신 슬롯 3칸을 즉시 먹고 광역 한 장에 전멸한다.</p>
+    <div class="chk"><b>검산</b> 소모 6×3 = 18 / 4코 크리처 예산 18 <span class="ok">적정</span></div></div>
+</div>
+
+<div class="el steel">
+  <div class="eh"><h3>강철</h3><span class="theme">받는 피해를 깎는다</span></div>
+  <div class="sp"><div class="sh"><span class="cost">2</span><span class="name">주조</span><span class="kind">부여</span></div>
+    <p class="rule">내 크리처 1개체에 <b>경화 1</b>을 부여한다.</p>
+    <p class="why">키워드를 스펠로 이식하는 형태. 상대의 제거 티어 계산을 사후에 어긋나게 만들어, 이미 조준된 제거를 헛돌게 한다.</p>
+    <div class="chk"><b>검산</b> 경화1 = 예산 −4 / 2코 단일 기준 4 <span class="ok">적정</span></div></div>
+  <div class="sp"><div class="sh"><span class="cost">2</span><span class="name">파쇄</span><span class="kind">파쇄</span></div>
+    <p class="rule">상대 인챈트 1개의 <b>충전을 4 제거</b>한다.</p>
+    <p class="why">설계 개요의 &ldquo;스펠은 크리처 HP와 인챈트 충전을 같은 눈금으로 다룬다&rdquo;를 전문 카드로 구현. 인챈트 대응이 전무하던 구멍(Hole 02)을 메운다.</p>
+    <div class="chk"><b>검산</b> 파쇄 티어 2코 = 4 <span class="ok">적정</span> · 상대가 인챈트를 안 쓰면 죽은 카드</div></div>
+</div>
+
+<div class="el earth">
+  <div class="eh"><h3>대지</h3><span class="theme">배치 순서를 자원으로 쓴다</span></div>
+  <div class="sp"><div class="sh"><span class="cost">3</span><span class="name">함몰</span><span class="kind">광역 · 위치 지정</span></div>
+    <p class="rule">상대 <b>슬롯 1~3번</b>의 크리처에 각각 <b>4 피해.</b></p>
+    <p class="why">&ldquo;왼쪽부터 배치&rdquo; 규칙 때문에 앞자리에는 수호가 몰린다. 함몰은 그 구간만 노려 <b>수호 벽을 통째로</b> 걷어낸다 — 위치를 읽는 광역.</p>
+    <div class="chk"><b>검산</b> 3코 광역 기준 3 → 4 <span class="warn">대상 제한 +1</span></div></div>
+  <div class="sp"><div class="sh"><span class="cost">2</span><span class="name">관통 사격</span><span class="kind">단일 · 관통</span></div>
+    <p class="rule">상대 크리처 1개체에 <b>3 피해.</b> 초과분은 <b>같은 슬롯의 다음 개체로 이월</b>된다.</p>
+    <p class="why">관통 키워드의 스펠 버전. 스택을 쌓은 저HP 수호 무리를 한 장으로 정리한다 — 상대가 스택을 안 쌓으면 그냥 약한 제거.</p>
+    <div class="chk"><b>검산</b> 2코 단일 기준 4 → 3 <span class="ok">조건부 −1</span></div></div>
+</div>
+
+<div class="el dark">
+  <div class="eh"><h3>어둠</h3><span class="theme">피를 팔아 즉발을 산다</span></div>
+  <div class="sp"><div class="sh"><span class="cost">2</span><span class="name">피의 계약</span><span class="kind">단일 · 대가</span></div>
+    <p class="rule">내 플레이어 HP를 <b>6 지불</b>한다. 크리처 1개체에 <b>7 피해.</b></p>
+    <p class="why">2마나로 4코 크리처를 잡는다. 마나를 아껴 <b>같은 턴에 전개와 제거를 동시에</b> 하는 것이 어둠의 템포 이점이며, 그 대가가 자기 HP다.</p>
+    <div class="chk"><b>검산</b> 2코 단일 4 + HP 6 지불(+3) = 7 <span class="ok">적정</span></div></div>
+  <div class="sp"><div class="sh"><span class="cost">3</span><span class="name">어둠의 부름</span><span class="kind">소환 · 대가</span></div>
+    <p class="rule">내 플레이어 HP를 <b>8 지불</b>한다. <b>2/3 크리처 2개체</b>를 소환한다.</p>
+    <p class="why">어둠 서브테마 1 &ldquo;피를 팔아 머릿수&rdquo;의 정수. 3마나에 4코급 전개를 얻지만 HP 8을 잃으므로, 그만큼 게임을 빨리 끝내야 한다.</p>
+    <div class="chk"><b>검산</b> 소모 14 / 3코 예산 12 + HP 8(+4) = 16 <span class="ok">여유 2</span></div></div>
+</div>
+
+<div class="el light">
+  <div class="eh"><h3>빛</h3><span class="theme">피를 벌고 지킨다</span></div>
+  <div class="sp"><div class="sh"><span class="cost">3</span><span class="name">가호의 빛</span><span class="kind">부여</span></div>
+    <p class="rule">내 크리처 1개체에 <b>가호</b>(받는 첫 피해 1회 무효)를 부여한다.</p>
+    <p class="why">초과 피해가 소멸하는 규칙과 맞물려, 12 피해 제거도 &ldquo;1회&rdquo;로 계산돼 통째로 무효가 된다. 정예 축의 고코스트 크리처를 지키는 보험.</p>
+    <div class="chk"><b>검산</b> 가호 = 예산 −6 / 3코 단일 기준 6 <span class="ok">적정</span></div></div>
+  <div class="sp"><div class="sh"><span class="cost">4</span><span class="name">성광</span><span class="kind">회복</span></div>
+    <p class="rule">내 플레이어 HP를 <b>16 회복</b>한다.</p>
+    <p class="why">어둠의 <b>피의 계약</b>과 정확히 대칭. 보드에 전혀 개입하지 않는 대신 6마나 구간까지 도달할 <b>1.5턴가량을 직접 만들어낸다.</b></p>
+    <div class="chk"><b>검산</b> 회복 티어 4코 = 16 <span class="ok">적정</span></div></div>
+</div>
+
+<h2><span class="n">01 — 요약</span>14종 한눈에</h2>
+<div class="tbl-scroll">
+<table>
+<tr><th>속성</th><th>스펠</th><th>코스트</th><th>분류</th><th>효과</th><th>검산</th></tr>
+<tr><td style="color:var(--fire)">불</td><td>분신</td><td class="mono">2</td><td>광역·전환</td><td>내 크리처 소멸 → 그 ATK만큼 적 전체</td><td class="warn">의도적 상향</td></tr>
+<tr><td style="color:var(--fire)">불</td><td>겁화</td><td class="mono">5</td><td>광역·양날</td><td>적 전체 9 / 내 크리처도 3</td><td class="warn">자해 +2</td></tr>
+<tr><td style="color:var(--water)">물</td><td>역류</td><td class="mono">3</td><td>바운스</td><td>상대 크리처 1개체 손으로</td><td class="ok">적정</td></tr>
+<tr><td style="color:var(--water)">물</td><td>환수</td><td class="mono">2</td><td>회수·드로우</td><td>내 크리처 회수 + 1장 드로우</td><td class="ok">적정</td></tr>
+<tr><td style="color:var(--nature)">자연</td><td>번성</td><td class="mono">3</td><td>강화</td><td>내 크리처 1개체 +2/+3</td><td class="ok">7/7</td></tr>
+<tr><td style="color:var(--nature)">자연</td><td>번식</td><td class="mono">4</td><td>소환</td><td>2/2 크리처 3개체</td><td class="ok">18/18</td></tr>
+<tr><td style="color:var(--steel)">강철</td><td>주조</td><td class="mono">2</td><td>부여</td><td>내 크리처에 경화1</td><td class="ok">4/4</td></tr>
+<tr><td style="color:var(--steel)">강철</td><td>파쇄</td><td class="mono">2</td><td>파쇄</td><td>인챈트 충전 4 제거</td><td class="ok">4/4</td></tr>
+<tr><td style="color:var(--earth)">대지</td><td>함몰</td><td class="mono">3</td><td>광역·위치</td><td>슬롯 1~3 크리처에 각 4</td><td class="warn">대상 제한 +1</td></tr>
+<tr><td style="color:var(--earth)">대지</td><td>관통 사격</td><td class="mono">2</td><td>단일·관통</td><td>3 피해, 초과분 이월</td><td class="ok">조건부 −1</td></tr>
+<tr><td style="color:var(--dark)">어둠</td><td>피의 계약</td><td class="mono">2</td><td>단일·대가</td><td>HP 6 지불 → 7 피해</td><td class="ok">7/7</td></tr>
+<tr><td style="color:var(--dark)">어둠</td><td>어둠의 부름</td><td class="mono">3</td><td>소환·대가</td><td>HP 8 지불 → 2/3 ×2</td><td class="ok">14/16</td></tr>
+<tr><td style="color:var(--light)">빛</td><td>가호의 빛</td><td class="mono">3</td><td>부여</td><td>내 크리처에 가호</td><td class="ok">6/6</td></tr>
+<tr><td style="color:var(--light)">빛</td><td>성광</td><td class="mono">4</td><td>회복</td><td>내 HP 16 회복</td><td class="ok">16/16</td></tr>
+</table>
+</div>
+<p class="note">코스트 분포가 2~5코에 몰려 있다(2코 6장·3코 5장·4코 2장·5코 1장). 1코와 6코가 비어 있으므로, 카드풀을 채울 때 <b>속성별 1코 저코스트 개입</b>과 <b>6코 결정타</b>를 추가로 설계해야 커브가 완성된다.</p>
+
+<h2><span class="n">02 — 다음 단계</span></h2>
+<p>스펠 티어 5종이 신설됐으므로 <code>data/rules.json</code>의 <b>spell_tier</b>를 확장하고, 검산기에 분류별 판정을 추가해야 한다. 그 뒤 키워드 14종 + 스펠 14종을 데이터에 반영하면 카드풀이 20종 → 48종이 된다.</p>
+<p class="note">주의 — <b>분신·겁화</b>는 티어를 의도적으로 넘는다(대가 부착형). 검산기는 이런 카드를 &ldquo;초과&rdquo;로 잡을 것이므로, <b>대가 필드</b>를 두어 예외 처리하거나 판정에서 제외하는 장치가 필요하다.</p>
+
+</div>
+</body>
+</html>

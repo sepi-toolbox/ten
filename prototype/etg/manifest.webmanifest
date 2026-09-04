@@ -1,0 +1,29 @@
+{
+  "name": "테스트.",
+  "short_name": "테스트.",
+  "description": "Elements the Game 의 카드 239종과 규칙을 그대로 옮긴 별도 게임. 퀀텀이 속성별로 쌓이고, 막기가 없고, 문장이 있다.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#120d09",
+  "theme_color": "#120d09",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
