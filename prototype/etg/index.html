@@ -1683,7 +1683,7 @@ body.deckmode .wrap{height:auto}
 <script src="data.js"></script>
 <script>
 'use strict';
-const VERSION='0.47.0', BUILD='2026-09-02';
+const VERSION='0.48.0', BUILD='2026-09-02';
 /* ⚠ 제목줄은 없다 — 성권: "배틀 유아이에서도 헤더 지우고 넓게 써".
    판 번호는 덱 화면 발치 한 줄에만 남는다(배포 확인이 이 번호에 걸려 있다). */
 
@@ -3289,23 +3289,35 @@ function ruleText(c,u,full){
          스카라브·포식자·뇌엽절제기). 이들은 글 앞머리가 **다른(저절로 도는) 능력**이라
          맨 앞에 값을 붙이면 엉뚱한 능력에 값이 붙는다 — '웨폰 — 매 턴 피해' 에
          비용이 달리는 식이다. 그래서 순서대로 이렇게 찾는다.
-           ① 마지막 `키워드 — ` (분쇄기의 '파괴', 포식자의 '굴 파기' …)
-              ⚠ 종류 이름(웨폰·실드…)은 키워드가 아니다 — 영겁이 그 함정이었다.
-           ② 그것도 없으면 **마지막 문장** 앞에 붙인다(영겁·뇌엽절제기).
-           ③ 문장이 하나뿐이면 결국 맨 앞이다(투석기). */
-      if(!done&&pips){
+           ① **문장 첫머리의** `키워드 — ` 중 마지막 것 (분쇄기 '파괴', 포식자 '굴 파기')
+           ② 그것도 없고 값이 있으면 **마지막 문장** 앞에 붙인다(영겁·뇌엽절제기).
+           ③ 문장이 하나뿐이면 결국 맨 앞이다(투석기).
+         ⚠⚠ 아무 데나 있는 ` — ` 를 잡으면 안 된다. 인내의 파편 글은
+           '…한 턴씩 묶는다 — 공격하지 않는 대신…' 이라 문장 **한가운데**에 줄표가 있고,
+           그걸 키워드로 읽으면 엉뚱한 말에 표시가 붙는다. **문장이 시작하는 자리**에서,
+           짧은 말(7자 이내)만 키워드로 친다.
+         ⚠ 종류 이름(웨폰·실드…)은 키워드가 아니다 — 영겁이 그 함정이었다. */
+      if(!done){
         const kinds=Object.values(KINDKO);
-        const re=/([^\s<>—.]{1,8}(?: [^\s<>—.]{1,8})?) — /g;
+        /* 문장 첫머리 = 글 맨 앞이거나 '. ' 바로 뒤 */
+        const re=/(^|\. )([^\s<>—.]{1,7}(?: [^\s<>—.]{1,7})?) — /g;
         let m,last=null;
-        while((m=re.exec(body))){ if(kinds.indexOf(m[1])<0) last=m; }
+        while((m=re.exec(body))){ if(kinds.indexOf(m[2])<0) last=m; }
         if(last){
-          body=body.slice(0,last.index)+`<b>${last[1]}</b> ${pips}: `
-              +body.slice(last.index+last[0].length);
-        }else{
-          const at=body.lastIndexOf('. ');
-          body=at<0?`${pips}: `+body
-              :body.slice(0,at+2)+`${pips}: `+body.slice(at+2);
+          const at=last.index+last[1].length;
+          body=body.slice(0,at)+`<b>${last[2]}</b>${pips?' '+pips:''}: `
+              +body.slice(at+last[2].length+3);
+          done=true;
         }
+      }
+      /* ⚠ 값이 있는데 걸 자리를 못 찾았으면 마지막 문장 앞에 세운다.
+         ⚠⚠ 값이 **없는데** 자리도 못 찾았으면 아무것도 안 한다 — 인내의 파편이 그 경우다.
+           그 카드의 기동효과는 '스스로 부서지기'이고 글은 저절로 도는 쪽을 적고 있어서,
+           표시를 붙이면 없는 말을 지어내는 셈이 된다. */
+      if(!done&&pips){
+        const at=body.lastIndexOf('. ');
+        body=at<0?`${pips}: `+body
+            :body.slice(0,at+2)+`${pips}: `+body.slice(at+2);
       }
     }
     const head=fl.length?'<b>'+fl.map(f=>FLAGKO[f]).join(' · ')+'</b>':'';

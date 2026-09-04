@@ -1499,6 +1499,26 @@ const TEN =path.join(__dirname,'..','data','cards.json');
      ACT.num.slice(0,3).join(' · ')||'없음');
   ok('확대창도 같은 표기', ACT.zoomPips>=1&&!ACT.znum,
      `확대창 구슬 ${ACT.zoomPips}개 · 숫자 표기 ${ACT.znum}`);
+  /* ⚠⚠ **공짜로 쓰는 기동효과**도 눌러서 쓰는 것이다. 값이 0 이라고 줄표로 두면
+     '저절로 도는 능력' 으로 읽힌다 — 성권: "집중의 파편은 그럼 언제 저 효과가 도는건데?"
+     그래서 값이 없어도 쌍점은 찍는다(구슬만 없다).
+     ⚠ 반대로 **글이 기동효과를 말하고 있지 않으면** 아무 표시도 하지 않는다.
+       인내의 파편의 기동효과는 '스스로 부서지기' 인데 글은 저절로 도는 쪽을 적고 있다 —
+       거기에 쌍점을 찍으면 없는 말을 지어내는 셈이다. */
+  const FREE=await p.evaluate(()=>{
+    const D=window.ETGDBG;
+    const rd=n=>{ const d=document.createElement('div');
+      d.innerHTML=D.etgCardHTML(D.BYNAME[n],{size:'md'});
+      const e=d.querySelector('.teff');
+      return {t:e.textContent.replace(/\s+/g,' ').trim(),
+              pips:e.querySelectorAll('.elp').length}; };
+    return {focus:rd('Shard of Focus'), virus:rd('Virus'), pat:rd('Shard of Patience')};});
+  ok('공짜 기동효과도 쌍점으로 적는다',
+     /^집적:/.test(FREE.focus.t)&&FREE.focus.pips===0
+     &&/감염:/.test(FREE.virus.t)&&FREE.virus.pips===0,
+     `${FREE.focus.t.slice(0,18)} · ${FREE.virus.t.slice(0,22)}`);
+  ok('기동효과를 말하지 않는 글은 안 건드린다',
+     !/:/.test(FREE.pat.t)&&/—/.test(FREE.pat.t), FREE.pat.t.slice(0,34));
 
   /* ── 37.4a) 상대가 **나를 도와주지 않는다** ────────────────────────
      성권: "상대가 뭔가 나한테 이득인 카드를 내 몬스터에 써주는 거 같은데..?"
@@ -1715,9 +1735,11 @@ const TEN =path.join(__dirname,'..','data','cards.json');
   ok('놀 수 있는 카드에 글이 다 있다', KT.miss.length===0,
      KT.miss.slice(0,4).join(',')||`${KT.n}장`);
   ok('웨폰 글에 첫 줄이 살아 있다', KT.weapon.length===0, KT.weapon.join(',')||'전부 확인');
+  /* ⚠ v0.48.0 부터 **눌러서 쓰는 능력**은 줄표(—)가 아니라 쌍점(:)으로 적는다.
+     여기서 재려는 것은 '원문 문장이 통째로 살아 있나' 지 이음말이 무엇인가가 아니다. */
   ok('원문 문장 그대로 읽힌다',
      /웨폰 — 매 턴 끝에 피해를 준다/.test(KT.discord)&&/뒤섞는다/.test(KT.discord)
-     &&/감염 —/.test(KT.virus),
+     &&/감염:/.test(KT.virus)&&/희생해 대상 유닛에게 독 1을 준다/.test(KT.virus),
      KT.discord);
 
   /* ── 40.5) 글 속의 속성은 **구슬**로 나온다 ────────────────────────
